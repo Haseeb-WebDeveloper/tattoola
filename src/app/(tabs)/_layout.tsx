@@ -1,35 +1,50 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import "@/global.css";
 
-import { Colors } from '@/constants/theme';
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import CustomTabBar from "@/components/CustomTabBar";
+import { Tabs } from "expo-router";
+import React from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+    <SafeAreaView className="flex-1 text-foreground bg-background">
+      <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
         }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Home",
+          }}
+        />
+        <Tabs.Screen
+          name="search"
+          options={{
+            title: "Search",
+          }}
+        />
+        <Tabs.Screen
+          name="upload"
+          options={{
+            title: "Upload",
+          }}
+        />
+        <Tabs.Screen
+          name="inbox"
+          options={{
+            title: "Inbox",
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+          }}
+        />
+      </Tabs>
+    </SafeAreaView>
   );
 }

@@ -3,3 +3,58 @@
 @tailwind utilities;
 
 
+
+.sheet-title {
+    @apply text-[38px] font-bold leading-[36px] tracking-[-0.5px] text-foreground;
+}
+
+.section-title {
+    @apply text-[24px] font-semibold leading-[36px] tracking-[-0.5px] text-foreground;
+}
+
+.tat-body-1 {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 23px;
+    /* letter-spacing: 0px; */
+}
+.tat-body-2-para {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 23px;
+    /* letter-spacing: 0%; */
+}
+.tat-body-2-light {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 23px;
+    /* letter-spacing: 0%; */
+}
+.tat-body-2-med {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 23px;
+    /* letter-spacing: 0%; */
+}
+.ta-body-2-semibold {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 23px;
+    /* letter-spacing: 0%; */
+}
+
+.ta-body-3-button-text {
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 23px;
+    /* letter-spacing: 0%; */
+}
+
+.ta-body-4 {
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 130%;
+    /* letter-spacing: 0%; */
+}
+
+
