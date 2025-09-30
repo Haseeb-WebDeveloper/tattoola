@@ -5,7 +5,6 @@ import 'react-native-url-polyfill/auto';
 // Use Expo public env vars so they are embedded in the app bundle
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceRoleKey = process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
 
 // Temporarily remove Database typing until schema is set up
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -17,18 +16,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     flowType: 'pkce',
   },
 });
-
-// TEMPORARY: Admin client for testing (DO NOT ship to production)
-export const supabaseAdmin = supabaseServiceRoleKey
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: false,
-        persistSession: false,
-        detectSessionInUrl: false,
-      },
-    })
-  : null;
 
 // Auth helpers
 export const getUser = () => supabase.auth.getUser();

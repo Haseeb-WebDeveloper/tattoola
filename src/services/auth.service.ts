@@ -9,7 +9,7 @@ import type {
   User,
 } from '../types/auth';
 import { UserRole } from '../types/auth';
-import { supabase, supabaseAdmin } from '../utils/supabase';
+import { supabase } from '../utils/supabase';
 
 export class AuthService {
   /**
@@ -62,7 +62,7 @@ export class AuthService {
     }
 
     // Create user profile (use admin client if available to bypass RLS during testing)
-    const client = supabaseAdmin ?? supabase;
+    const client = supabase;
     const now = new Date().toISOString();
     const { data: userProfile, error: profileError } = await client
       .from('users')
@@ -212,7 +212,7 @@ export class AuthService {
     }
 
     // Create artist profile
-    const adminOrUserClient = supabaseAdmin ?? supabase;
+    const adminOrUserClient = supabase;
     const now2 = new Date().toISOString();
     const { data: artistProfile, error: artistError } = await adminOrUserClient
       .from('artist_profiles')
