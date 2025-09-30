@@ -13,20 +13,26 @@ datasource db {
 // ================================
 
 model User {
-  id          String    @id @default(cuid())
-  email       String    @unique
-  username    String?   @unique
-  name        String
-  avatar      String?
-  bio         String?
-  phone       String?
-  country     String?
-  isActive    Boolean   @default(true)
-  isVerified  Boolean   @default(false)
-  role        UserRole  @default(TATTOO_LOVER)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  lastLoginAt DateTime?
+  id           String    @id @default(cuid())
+  email        String    @unique
+  username     String    @unique
+  firstName    String?
+  lastName     String?
+  avatar       String?
+  bio          String?
+  phone        String?
+  country      String?
+  province     String?
+  municipality String?
+  instagram    String?
+  tiktok       String?
+  isActive     Boolean   @default(true)
+  isVerified   Boolean   @default(false)
+  isPublic     Boolean   @default(true) // Public vs Private profile
+  role         UserRole  @default(TATTOO_LOVER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLoginAt  DateTime?
 
   // Role-specific profiles
   artistProfile ArtistProfile?
@@ -34,17 +40,17 @@ model User {
 
   // Social features
   posts       Post[]
-  postLikes   PostLike[]
+  likedPosts  PostLike[]
   comments    Comment[]
   collections Collection[]
   followers   Follow[]     @relation("UserFollowers")
   following   Follow[]     @relation("UserFollowing")
 
-  // Magazine features
-  magazines        Magazine[]
-  magazineLikes    MagazineLike[]
-  magazineComments MagazineComment[]
-  magazineViews    MagazineView[]
+  // Magazine features (all users can interact with magazines)
+  magazines        Magazine[] // Only admins create magazines
+  likedMagazines   MagazineLike[] // All users can like magazines
+  magazineComments MagazineComment[] // All users can comment on magazines
+  magazineViews    MagazineView[] // Track all user views
 
   // Messaging system
   sentMessages     Message[]           @relation("MessageSender")
@@ -63,6 +69,9 @@ model User {
   sentNotifications     Notification[] @relation("NotificationSender")
   receivedNotifications Notification[] @relation("NotificationReceiver")
 
+  // User preferences
+  favoriteStyles UserFavoriteStyle[]
+
   @@index([email])
   @@index([username])
   @@index([role])
@@ -71,30 +80,48 @@ model User {
 }
 
 model ArtistProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  certificateUrl    String?
-  portfolioComplete Boolean  @default(false) // True when 4+ images uploaded
+  id                String           @id @default(cuid())
+  userId            String           @unique
+  certificateUrl    String? // Upload certificates/attestations
+  portfolioComplete Boolean          @default(false) // True when 4+ projects uploaded
   yearsExperience   Int?
   specialties       String[] // Array of specialties
+  businessName      String? // Business/Studio name
+  studioAddress     String?
+  province          String?
+  municipality      String?
   location          String?
   city              String?
   country           String?
   instagram         String?
   website           String?
-  isStudioOwner     Boolean  @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  phone             String?
+  workArrangement   WorkArrangement? // Studio owner, employee, freelance
+  isStudioOwner     Boolean          @default(false)
+  minimumPrice      Float? // Minimum price for a job
+  hourlyRate        Float? // Hourly rate
+  coverPhoto        String? // Cover photo/video for Premium plan
+  coverVideo        String?
+  mainStyleId       String? // Main preferred style (only 1)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   // Relations
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mainStyle         TattooStyle?          @relation("ArtistMainStyle", fields: [mainStyleId], references: [id])
   services          ArtistService[]
-  ownedStudios      Studio[]         @relation("StudioOwner")
+  ownedStudios      Studio[]              @relation("StudioOwner")
   studioMemberships StudioMember[]
+  portfolioProjects PortfolioProject[]
+  bodyParts         ArtistBodyPart[]
+  favoriteStyles    ArtistFavoriteStyle[]
 
   @@index([userId])
   @@index([portfolioComplete])
   @@index([city])
+  @@index([province])
+  @@index([workArrangement])
+  @@index([mainStyleId])
   @@map("artist_profiles")
 }
 
@@ -266,34 +293,34 @@ model Post {
 }
 
 model Magazine {
-  id            String      @id @default(cuid())
+  id            String    @id @default(cuid())
   title         String
   content       String? // Rich text content or description
   excerpt       String? // Short summary for previews
   coverImage    String // Main cover image
-  mediaType     MediaType   @default(IMAGE)
+  mediaType     MediaType @default(IMAGE)
   mediaUrl      String? // Additional media (video, gallery, etc.)
   thumbnailUrl  String? // For videos
   styleId       String?
   tags          String[] // Array of tags for categorization
-  isPublished   Boolean     @default(false)
-  isFeatured    Boolean     @default(false) // Featured magazines appear prominently
+  isPublished   Boolean   @default(false)
+  isFeatured    Boolean   @default(false) // Featured magazines appear prominently
   publishedAt   DateTime?
   scheduledAt   DateTime? // For scheduled publishing
-  viewsCount    Int         @default(0)
-  likesCount    Int         @default(0)
-  commentsCount Int         @default(0)
+  viewsCount    Int       @default(0)
+  likesCount    Int       @default(0)
+  commentsCount Int       @default(0)
   readTime      Int? // Estimated read time in minutes
-  authorId      String // Admin who created it
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  authorId      String // Admin who created it (must be admin role)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
-  author   User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  style    TattooStyle?         @relation(fields: [styleId], references: [id])
-  likes    MagazineLike[]
-  comments MagazineComment[]
-  views    MagazineView[]
+  author   User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  style    TattooStyle?      @relation(fields: [styleId], references: [id])
+  likes    MagazineLike[] // All users can like magazines
+  comments MagazineComment[] // All users can comment on magazines
+  views    MagazineView[] // Track views from all users
 
   @@index([authorId])
   @@index([styleId])
@@ -329,9 +356,9 @@ model MagazineComment {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  magazine Magazine         @relation(fields: [magazineId], references: [id], onDelete: Cascade)
-  author   User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent   MagazineComment? @relation("MagazineCommentReplies", fields: [parentId], references: [id])
+  magazine Magazine          @relation(fields: [magazineId], references: [id], onDelete: Cascade)
+  author   User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent   MagazineComment?  @relation("MagazineCommentReplies", fields: [parentId], references: [id])
   replies  MagazineComment[] @relation("MagazineCommentReplies")
 
   @@index([magazineId])
@@ -498,6 +525,147 @@ model Message {
 }
 
 // ================================
+// USER PREFERENCES & PORTFOLIO
+// ================================
+
+model UserFavoriteStyle {
+  id      String @id @default(cuid())
+  userId  String
+  styleId String
+  order   Int    @default(0) // For ordering preferences
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  style TattooStyle @relation(fields: [styleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, styleId])
+  @@index([userId])
+  @@index([styleId])
+  @@map("user_favorite_styles")
+}
+
+model ArtistFavoriteStyle {
+  id       String @id @default(cuid())
+  artistId String
+  styleId  String
+  order    Int    @default(0) // For ordering preferences
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  style  TattooStyle   @relation(fields: [styleId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, styleId])
+  @@index([artistId])
+  @@index([styleId])
+  @@map("artist_favorite_styles")
+}
+
+model BodyPart {
+  id          String   @id @default(cuid())
+  name        String   @unique // "Behind the ear", "Ears", "Face", etc.
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  artists ArtistBodyPart[]
+
+  @@index([name])
+  @@index([isActive])
+  @@map("body_parts")
+}
+
+model ArtistBodyPart {
+  id         String @id @default(cuid())
+  artistId   String
+  bodyPartId String
+
+  artist   ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  bodyPart BodyPart      @relation(fields: [bodyPartId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, bodyPartId])
+  @@index([artistId])
+  @@index([bodyPartId])
+  @@map("artist_body_parts")
+}
+
+model PortfolioProject {
+  id          String   @id @default(cuid())
+  artistId    String
+  title       String?
+  description String? // Description or meaning
+  order       Int      @default(0) // For ordering the 4 projects
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  artist ArtistProfile           @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  media  PortfolioProjectMedia[]
+  styles PortfolioProjectStyle[]
+
+  @@index([artistId])
+  @@index([order])
+  @@map("portfolio_projects")
+}
+
+model PortfolioProjectMedia {
+  id        String    @id @default(cuid())
+  projectId String
+  mediaType MediaType @default(IMAGE)
+  mediaUrl  String
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  project PortfolioProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([order])
+  @@map("portfolio_project_media")
+}
+
+model PortfolioProjectStyle {
+  id        String @id @default(cuid())
+  projectId String
+  styleId   String
+
+  project PortfolioProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  style   TattooStyle      @relation(fields: [styleId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, styleId])
+  @@index([projectId])
+  @@index([styleId])
+  @@map("portfolio_project_styles")
+}
+
+model Province {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String?  @unique // Province code
+  country   String   @default("Italy")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  municipalities Municipality[]
+
+  @@index([name])
+  @@index([code])
+  @@map("provinces")
+}
+
+model Municipality {
+  id         String   @id @default(cuid())
+  name       String
+  provinceId String
+  postalCode String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+
+  @@index([name])
+  @@index([provinceId])
+  @@index([postalCode])
+  @@map("municipalities")
+}
+
+// ================================
 // SERVICES & STYLES SYSTEM
 // ================================
 
@@ -510,9 +678,13 @@ model TattooStyle {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  posts     Post[]
-  services  Service[]
-  magazines Magazine[]
+  posts             Post[]
+  services          Service[]
+  magazines         Magazine[]
+  userFavorites     UserFavoriteStyle[]
+  artistFavorites   ArtistFavoriteStyle[]
+  portfolioProjects PortfolioProjectStyle[]
+  artistMainStyles  ArtistProfile[]         @relation("ArtistMainStyle")
 
   @@index([name])
   @@index([isActive])
@@ -556,7 +728,6 @@ model ArtistService {
   @@index([serviceId])
   @@map("artist_services")
 }
-
 
 // ================================
 // SOCIAL FEATURES
@@ -663,4 +834,10 @@ enum NotificationType {
   SUBSCRIPTION_EXPIRY
   STUDIO_INVITATION
   SYSTEM
+}
+
+enum WorkArrangement {
+  STUDIO_OWNER
+  STUDIO_EMPLOYEE
+  FREELANCE
 }
