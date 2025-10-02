@@ -5,12 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -60,7 +60,7 @@ export default function EmailConfirmationScreen() {
           </View>
           <Text style={styles.title}>Verify Your Email</Text>
           <Text style={styles.subtitle}>
-            We've sent a verification email to your inbox. Please click the link in the email to verify your account and continue.
+            We&apos;ve sent a verification email to your inbox. Please click the link in the email to verify your account and continue.
           </Text>
         </View>
 
@@ -93,7 +93,7 @@ export default function EmailConfirmationScreen() {
         </View>
 
         <View style={styles.troubleshooting}>
-          <Text style={styles.troubleTitle}>Don't see the email?</Text>
+          <Text style={styles.troubleTitle}>Don&apos;t see the email?</Text>
           <Text style={styles.troubleText}>
             • Check your spam or junk folder{'\n'}
             • Make sure you entered the correct email address{'\n'}

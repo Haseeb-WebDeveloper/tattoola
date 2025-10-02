@@ -180,6 +180,11 @@ export const UserStep3ValidationSchema = {
   municipality: { required: true },
 };
 
+export const UserStep5ValidationSchema = {
+  instagram: ValidationRules.instagram,
+  tiktok: ValidationRules.tiktok,
+};
+
 export const UserStep6ValidationSchema = {
   favoriteStyles: {
     required: true,

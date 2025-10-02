@@ -29,13 +29,39 @@ export class AuthService {
       throw new Error('Authentication failed');
     }
 
-    // Get user profile
-    const userProfile = await this.getUserProfile(data.user.id);
+    // Construct a minimal user object based on auth user for pre-setup flow
+    const authUser = data.user as any;
+    const isVerified = !!authUser.email_confirmed_at;
+    const role = (authUser.user_metadata?.displayName === 'AR') ? UserRole.ARTIST : UserRole.TATTOO_LOVER;
+    const minimalUser: User = {
+      id: authUser.id,
+      email: authUser.email,
+      username: authUser.user_metadata?.username || '',
+      firstName: undefined,
+      lastName: undefined,
+      avatar: undefined,
+      bio: undefined,
+      phone: undefined,
+      country: undefined,
+      province: undefined,
+      municipality: undefined,
+      instagram: undefined,
+      tiktok: undefined,
+      isActive: true,
+      isVerified,
+      isPublic: role === UserRole.TATTOO_LOVER,
+      role,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      artistProfile: undefined,
+      adminProfile: undefined,
+    };
 
     return {
-      user: userProfile,
+      user: minimalUser,
       session: {
-        user: userProfile,
+        user: minimalUser,
         accessToken: data.session.access_token,
         refreshToken: data.session.refresh_token,
         expiresAt: data.session.expires_at || 0,
@@ -47,10 +73,17 @@ export class AuthService {
    * Sign up with email and password
    */
   static async signUp(credentials: RegisterCredentials): Promise<{ user: User; needsVerification: boolean }> {
-    // First, create the auth user
+    // Create Supabase auth user only, tagging metadata for onboarding flow (TL/AR)
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
+      options: {
+        data: {
+          displayName: credentials.role === UserRole.ARTIST ? 'AR' : 'TL',
+          username: credentials.username,
+        },
+        emailRedirectTo: 'tattoola://', // Use app scheme for deep linking
+      },
     });
 
     if (error) {
@@ -60,35 +93,36 @@ export class AuthService {
     if (!data.user) {
       throw new Error('User creation failed');
     }
-
-    // Create user profile (use admin client if available to bypass RLS during testing)
-    const client = supabase;
-    const now = new Date().toISOString();
-    const { data: userProfile, error: profileError } = await client
-      .from('users')
-      .insert({
-        id: data.user.id,
-        email: credentials.email,
-        username: credentials.username,
-        role: credentials.role,
-        isVerified: false,
-        isActive: true,
-        isPublic: credentials.role === UserRole.TATTOO_LOVER, // Default to public for regular users
-        createdAt: now,
-        updatedAt: now,
-      })
-      .select()
-      .single();
-
-    if (profileError) {
-      // Log the error for debugging
-      console.error('Profile creation failed:', profileError);
-      throw new Error(`Profile creation failed: ${profileError.message}`);
-    }
+    
+    // Build a minimal user object for the UI; full DB profile will be created after setup
+    const minimalUser: User = {
+      id: data.user.id,
+      email: credentials.email,
+      username: credentials.username,
+      firstName: undefined,
+      lastName: undefined,
+      avatar: undefined,
+      bio: undefined,
+      phone: undefined,
+      country: undefined,
+      province: undefined,
+      municipality: undefined,
+      instagram: undefined,
+      tiktok: undefined,
+      isActive: true,
+      isVerified: false,
+      isPublic: credentials.role === UserRole.TATTOO_LOVER,
+      role: credentials.role,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastLoginAt: undefined,
+      artistProfile: undefined,
+      adminProfile: undefined,
+    };
 
     return {
-      user: this.transformDatabaseUser(userProfile),
-      needsVerification: !data.session, // If no session, email verification is required
+      user: minimalUser,
+      needsVerification: !data.session,
     };
   }
 
@@ -96,9 +130,23 @@ export class AuthService {
    * Sign out
    */
   static async signOut(): Promise<void> {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      throw new Error(error.message);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        // If there's no active session, that's actually fine for sign out
+        if (error.message.includes('Auth session missing')) {
+          console.log('No active session to sign out from');
+          return;
+        }
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      // If there's no active session, that's actually fine for sign out
+      if (error.message && error.message.includes('Auth session missing')) {
+        console.log('No active session to sign out from');
+        return;
+      }
+      throw error;
     }
   }
 
@@ -139,43 +187,110 @@ export class AuthService {
 
     const userId = session.session.user.id;
 
-    // Update user profile with all collected data
-    const { data: updatedUser, error } = await supabase
+    // Ensure a row exists in users; insert if missing, otherwise update
+    const { data: existingUser, error: existError } = await supabase
       .from('users')
-      .update({
-        firstName: data.step2.firstName,
-        lastName: data.step2.lastName,
-        phone: data.step2.phone,
-        province: data.step3.province,
-        municipality: data.step3.municipality,
-        avatar: data.step4.avatar,
-        instagram: data.step5.instagram,
-        tiktok: data.step5.tiktok,
-        isPublic: data.step7.isPublic,
-        updatedAt: new Date().toISOString(),
-      })
+      .select('id')
       .eq('id', userId)
-      .select()
-      .single();
+      .maybeSingle();
 
-    if (error) {
-      throw new Error(error.message);
+    if (existError) {
+      throw new Error(existError.message);
     }
 
-    // Add favorite styles
-    if (data.step6.favoriteStyles.length > 0) {
-      const favoriteStylesData = data.step6.favoriteStyles.map((styleId, index) => ({
-        userId: userId,
-        styleId: styleId,
-        order: index,
-      }));
+    let updatedUser: any = null;
+    if (!existingUser) {
+      // Insert new user row
+      const { data: inserted, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: session.session.user.email!,
+          username: session.session.user.user_metadata?.username || session.session.user.email!.split('@')[0],
+          firstName: data.step1.firstName,
+          lastName: data.step1.lastName,
+          phone: data.step1.phone,
+          province: data.step2.province,
+          municipality: data.step2.municipality,
+          avatar: data.step3.avatar,
+          instagram: data.step4.instagram,
+          tiktok: data.step4.tiktok,
+          isPublic: data.step6.isPublic,
+          isActive: true,
+          isVerified: true,
+          role: UserRole.TATTOO_LOVER,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .select()
+        .single();
 
-      const { error: stylesError } = await supabase
-        .from('user_favorite_styles')
-        .insert(favoriteStylesData);
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+      updatedUser = inserted;
+    } else {
+      // Update existing user row
+      const { data: updated, error: updateError } = await supabase
+        .from('users')
+        .update({
+          firstName: data.step1.firstName,
+          lastName: data.step1.lastName,
+          phone: data.step1.phone,
+          province: data.step2.province,
+          municipality: data.step2.municipality,
+          avatar: data.step3.avatar,
+          instagram: data.step4.instagram,
+          tiktok: data.step4.tiktok,
+          isPublic: data.step6.isPublic,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select()
+        .single();
 
-      if (stylesError) {
-        throw new Error(stylesError.message);
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+      updatedUser = updated;
+    }
+
+    // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
+    if (data.step5.favoriteStyles.length > 0) {
+      const uniqueRequestedStyleIds = Array.from(new Set(data.step5.favoriteStyles.filter(Boolean)));
+
+      // Validate that requested style IDs exist to satisfy FK constraint
+      const { data: validStyles, error: validStylesError } = await supabase
+        .from('tattoo_styles')
+        .select('id')
+        .in('id', uniqueRequestedStyleIds);
+
+      if (validStylesError) {
+        throw new Error(validStylesError.message);
+      }
+
+      const validStyleIds = (validStyles || []).map(s => s.id);
+
+      if (validStyleIds.length > 0) {
+        // Optional: clear existing to avoid unique violations on re-run
+        await supabase
+          .from('user_favorite_styles')
+          .delete()
+          .eq('userId', userId);
+
+        const favoriteStylesData = validStyleIds.map((styleId, index) => ({
+          userId: userId,
+          styleId: styleId,
+          order: index,
+        }));
+
+        const { error: stylesError } = await supabase
+          .from('user_favorite_styles')
+          .insert(favoriteStylesData);
+
+        if (stylesError) {
+          throw new Error(stylesError.message);
+        }
       }
     }
 
@@ -197,10 +312,10 @@ export class AuthService {
     const { data: updatedUser, error: userError } = await supabase
       .from('users')
       .update({
-        firstName: data.step2.firstName,
-        lastName: data.step2.lastName,
-        avatar: data.step3.avatar,
-        bio: data.step6.bio,
+        firstName: data.step1.firstName,
+        lastName: data.step1.lastName,
+        avatar: data.step2.avatar,
+        bio: data.step5.bio,
         updatedAt: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -218,18 +333,18 @@ export class AuthService {
       .from('artist_profiles')
       .insert({
         userId: userId,
-        workArrangement: data.step4.workArrangement,
-        businessName: data.step5.businessName,
-        province: data.step5.province,
-        municipality: data.step5.municipality,
-        studioAddress: data.step5.studioAddress,
-        website: data.step5.website,
-        phone: data.step5.phone,
-        certificateUrl: data.step5.certificateUrl,
-        mainStyleId: data.step8.mainStyleId,
-        minimumPrice: data.step11.minimumPrice,
-        hourlyRate: data.step11.hourlyRate,
-        isStudioOwner: data.step4.workArrangement === 'STUDIO_OWNER',
+        workArrangement: data.step3.workArrangement,
+        businessName: data.step4.businessName,
+        province: data.step4.province,
+        municipality: data.step4.municipality,
+        studioAddress: data.step4.studioAddress,
+        website: data.step4.website,
+        phone: data.step4.phone,
+        certificateUrl: data.step4.certificateUrl,
+        mainStyleId: data.step6.mainStyleId,
+        minimumPrice: data.step9.minimumPrice,
+        hourlyRate: data.step9.hourlyRate,
+        isStudioOwner: data.step3.workArrangement === 'STUDIO_OWNER',
         createdAt: now2,
         updatedAt: now2,
       })
@@ -240,26 +355,47 @@ export class AuthService {
       throw new Error(artistError.message);
     }
 
-    // Add favorite styles
-    if (data.step7.favoriteStyles.length > 0) {
-      const favoriteStylesData = data.step7.favoriteStyles.map((styleId, index) => ({
-        artistId: artistProfile.id,
-        styleId: styleId,
-        order: index,
-      }));
+    // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
+    if (data.step6.favoriteStyles.length > 0) {
+      const uniqueRequestedStyleIds = Array.from(new Set(data.step6.favoriteStyles.filter(Boolean)));
 
-      const { error: stylesError } = await supabase
-        .from('artist_favorite_styles')
-        .insert(favoriteStylesData);
+      const { data: validStyles, error: validStylesError } = await supabase
+        .from('tattoo_styles')
+        .select('id')
+        .in('id', uniqueRequestedStyleIds);
 
-      if (stylesError) {
-        throw new Error(stylesError.message);
+      if (validStylesError) {
+        throw new Error(validStylesError.message);
+      }
+
+      const validStyleIds = (validStyles || []).map(s => s.id);
+
+      if (validStyleIds.length > 0) {
+        // Optional: clear existing to avoid unique violations on re-run
+        await supabase
+          .from('artist_favorite_styles')
+          .delete()
+          .eq('artistId', artistProfile.id);
+
+        const favoriteStylesData = validStyleIds.map((styleId, index) => ({
+          artistId: artistProfile.id,
+          styleId: styleId,
+          order: index,
+        }));
+
+        const { error: stylesError } = await supabase
+          .from('artist_favorite_styles')
+          .insert(favoriteStylesData);
+
+        if (stylesError) {
+          throw new Error(stylesError.message);
+        }
       }
     }
 
-    // Add services
-    if (data.step9.services.length > 0) {
-      const servicesData = data.step9.services.map((serviceId) => ({
+    // Add services - let Supabase generate UUIDs
+    if (data.step7.services.length > 0) {
+      const servicesData = data.step7.services.map((serviceId) => ({
         artistId: artistProfile.id,
         serviceId: serviceId,
       }));
@@ -273,9 +409,9 @@ export class AuthService {
       }
     }
 
-    // Add body parts
-    if (data.step10.bodyParts.length > 0) {
-      const bodyPartsData = data.step10.bodyParts.map((bodyPartId) => ({
+    // Add body parts - let Supabase generate UUIDs
+    if (data.step8.bodyParts.length > 0) {
+      const bodyPartsData = data.step8.bodyParts.map((bodyPartId) => ({
         artistId: artistProfile.id,
         bodyPartId: bodyPartId,
       }));
@@ -290,49 +426,88 @@ export class AuthService {
     }
 
     // Add portfolio projects
-    if (data.step12.projects.length > 0) {
-      for (const project of data.step12.projects) {
-        const { data: portfolioProject, error: projectError } = await adminOrUserClient
-          .from('portfolio_projects')
-          .insert({
-            artistId: artistProfile.id,
-            title: project.title,
-            description: project.description,
-            order: project.order,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .select()
-          .single();
+    const projects = [
+      data.step10?.projects,
+      (data as any).step11?.projects,
+      (data as any).step12?.projects,
+    ].filter((project: any) => project && project.length > 0);
 
-        if (projectError) {
-          throw new Error(projectError.message);
-        }
+    if (projects.length > 0) {
+      let projectOrder = 1;
+      for (let stepIndex = 0; stepIndex < projects.length; stepIndex++) {
+        const stepProjects = projects[stepIndex];
+        if (!stepProjects || stepProjects.length === 0) continue;
 
-        // Add project media
-        if (project.media.length > 0) {
-          const mediaData = project.media.map((media) => ({
-            projectId: portfolioProject.id,
-            mediaType: media.mediaType,
-            mediaUrl: media.mediaUrl,
-            order: media.order,
-          }));
+        for (const project of stepProjects) {
+          if (!project.title) continue;
 
-          const { error: mediaError } = await adminOrUserClient
-            .from('portfolio_project_media')
-            .insert(mediaData);
+          const { data: portfolioProject, error: projectError } = await adminOrUserClient
+            .from('portfolio_projects')
+            .insert({
+              artistId: artistProfile.id,
+              title: project.title,
+              description: project.description,
+              order: projectOrder,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            .select()
+            .single();
 
-          if (mediaError) {
-            throw new Error(mediaError.message);
+          if (projectError) {
+            throw new Error(projectError.message);
           }
+
+          // Add project media - let Supabase generate UUIDs
+          const allMedia = [
+            ...(project.photos || []).map((url: string) => ({ url, type: 'IMAGE' })),
+            ...(project.videos || []).map((url: string) => ({ url, type: 'VIDEO' }))
+          ];
+
+          if (allMedia.length > 0) {
+            const mediaData = allMedia.map((media, mediaIndex) => ({
+              projectId: portfolioProject.id,
+              mediaType: media.type,
+              mediaUrl: media.url,
+              order: mediaIndex + 1,
+            }));
+
+            const { error: mediaError } = await adminOrUserClient
+              .from('portfolio_project_media')
+              .insert(mediaData);
+
+            if (mediaError) {
+              throw new Error(mediaError.message);
+            }
+          }
+
+          // Add project styles - let Supabase generate UUIDs
+          if (project.associatedStyles && project.associatedStyles.length > 0) {
+            const projectStylesData = project.associatedStyles.map((styleId: string) => ({
+              projectId: portfolioProject.id,
+              styleId: styleId,
+            }));
+
+            const { error: projectStylesError } = await adminOrUserClient
+              .from('portfolio_project_styles')
+              .insert(projectStylesData);
+
+            if (projectStylesError) {
+              throw new Error(projectStylesError.message);
+            }
+          }
+
+          projectOrder++;
         }
       }
 
-      // Mark portfolio as complete (4 projects uploaded)
-      await adminOrUserClient
-        .from('artist_profiles')
-        .update({ portfolioComplete: true })
-        .eq('id', artistProfile.id);
+      // Mark portfolio as complete if we have projects
+      if (projectOrder > 1) {
+        await adminOrUserClient
+          .from('artist_profiles')
+          .update({ portfolioComplete: true })
+          .eq('id', artistProfile.id);
+      }
     }
 
     return this.transformDatabaseUser(updatedUser);
@@ -390,7 +565,7 @@ export class AuthService {
   static async resendVerificationEmail(): Promise<void> {
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email: '', // Will use the email from the current session
+      email: '',
     });
 
     if (error) {

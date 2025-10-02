@@ -7,12 +7,15 @@
     "icon": "./src/assets/images/icon.png",
     "scheme": "tattoola",
     "userInterfaceStyle": "dark",
+    "platforms": ["ios", "android"],
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.haseebahmedrazakhan.tattoola",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "The app accesses your photos to let you share them with your friends.",
+        "NSCameraUsageDescription": "The app accesses your camera to let you take photos and share them with your friends."
       }
     },
     "android": {
@@ -34,6 +37,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends.",
+          "cameraPermission": "The app accesses your camera to let you take photos and share them with your friends."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./src/assets/images/splash-icon.png",
@@ -52,6 +62,7 @@
       "eas": {
         "projectId": "46764065-3a82-4506-92f2-8af0c57c2c22"
       }
-    }
+    },
+    "owner": "haseebfigmenta"
   }
 }

@@ -1,3 +1,4 @@
+import { RequireGuest } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -7,17 +8,17 @@ import { LoginValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function LoginScreen() {
+function LoginScreenContent() {
   const { signIn, loading } = useAuth();
   const [formData, setFormData] = useState<LoginCredentials>({
     email: "",
@@ -161,5 +162,13 @@ export default function LoginScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+export default function LoginScreen() {
+  return (
+    <RequireGuest>
+      <LoginScreenContent />
+    </RequireGuest>
   );
 }

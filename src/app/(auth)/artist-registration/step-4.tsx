@@ -1,50 +1,60 @@
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { StepIndicator } from '@/components/ui/StepIndicator';
-import { useUserRegistrationStore } from '@/stores';
-import type { FormErrors, UserRegistrationStep2 } from '@/types/auth';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { cloudinaryService } from '@/services/cloudinary.service';
+import { useArtistRegistrationStore } from '@/stores';
+import type { ArtistRegistrationStep4, FormErrors } from '@/types/auth';
 import { supabase } from '@/utils/supabase';
-import { UserStep3ValidationSchema, ValidationUtils } from '@/utils/validation';
+import { ArtistStep5ValidationSchema, ValidationUtils } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function UserRegistrationStep2() {
+export default function ArtistRegistrationStep4() {
   const { 
-    step2, 
+    step4, 
     updateStep, 
     setErrors, 
     clearErrors,
     setCurrentStep 
-  } = useUserRegistrationStore();
+  } = useArtistRegistrationStore();
   
-  const [formData, setFormData] = useState<UserRegistrationStep2>({
+  const { pickFiles, uploadToCloudinary, uploading, uploadedFiles } = useFileUpload();
+  const [formData, setFormData] = useState<ArtistRegistrationStep4>({
+    businessName: '',
     province: '',
     municipality: '',
+    studioAddress: '',
+    website: '',
+    phone: '',
+    certificateUrl: '',
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
   const [provinces, setProvinces] = useState<any[]>([]);
   const [municipalities, setMunicipalities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showProvinceModal, setShowProvinceModal] = useState(false);
   const [showMunicipalityModal, setShowMunicipalityModal] = useState(false);
 
   // Load existing data if available
   useEffect(() => {
-    if (step2 && Object.keys(step2).length > 0) {
-      setFormData(step2 as UserRegistrationStep2);
+    if (step4 && Object.keys(step4).length > 0) {
+      setFormData(step4 as ArtistRegistrationStep4);
     }
-  }, [step2]);
+  }, [step4]);
 
   // Load provinces on mount
   useEffect(() => {
@@ -71,18 +81,8 @@ export default function UserRegistrationStep2() {
 
       if (error) {
         console.error('Error loading provinces:', error);
-        // Fallback to mock data
-        const mockProvinces = [
-          { id: '1', name: 'AGRIGENTO' },
-          { id: '2', name: 'PALERMO' },
-          { id: '3', name: 'CATANIA' },
-          { id: '4', name: 'MESSINA' },
-          { id: '5', name: 'SIRACUSA' },
-        ];
-        setProvinces(mockProvinces);
-      } else {
-        setProvinces(data || []);
       }
+      setProvinces(data || []);
     } catch (error) {
       console.error('Error loading provinces:', error);
     } finally {
@@ -102,17 +102,8 @@ export default function UserRegistrationStep2() {
 
       if (error) {
         console.error('Error loading municipalities:', error);
-        // Fallback to mock data
-        const mockMunicipalities = [
-          { id: '1', name: 'Aragona', provinceId: '1' },
-          { id: '2', name: 'Agrigento', provinceId: '1' },
-          { id: '3', name: 'Palermo', provinceId: '2' },
-          { id: '4', name: 'Catania', provinceId: '3' },
-        ].filter(m => m.provinceId === provinceId);
-        setMunicipalities(mockMunicipalities);
-      } else {
-        setMunicipalities(data || []);
       }
+      setMunicipalities(data || []);
     } catch (error) {
       console.error('Error loading municipalities:', error);
     } finally {
@@ -120,7 +111,7 @@ export default function UserRegistrationStep2() {
     }
   };
 
-  const handleInputChange = (field: keyof UserRegistrationStep2, value: string) => {
+  const handleInputChange = (field: keyof ArtistRegistrationStep4, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error for this field
@@ -130,8 +121,34 @@ export default function UserRegistrationStep2() {
     }
   };
 
+  const handleCertificationUpload = async () => {
+    try {
+      const files = await pickFiles({
+        mediaType: 'all',
+        allowsMultipleSelection: true,
+        maxFiles: 5,
+        cloudinaryOptions: cloudinaryService.getCertificateUploadOptions(),
+      });
+
+      if (files.length > 0) {
+        const uploadedFiles = await uploadToCloudinary(files, cloudinaryService.getCertificateUploadOptions());
+        const uploadedUrls = uploadedFiles
+          .filter(file => file.cloudinaryResult)
+          .map(file => file.cloudinaryResult!.secureUrl);
+        
+        setFormData(prev => ({
+          ...prev,
+          certificateUrl: uploadedUrls[0] || '',
+        }));
+      }
+    } catch (error) {
+      console.error('Certificate upload error:', error);
+      Alert.alert('Error', 'Failed to upload certificates. Please try again.');
+    }
+  };
+
   const validateForm = (): boolean => {
-    const formErrors = ValidationUtils.validateForm(formData, UserStep3ValidationSchema);
+    const formErrors = ValidationUtils.validateForm(formData, ArtistStep5ValidationSchema);
     setLocalErrors(formErrors);
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
@@ -143,24 +160,13 @@ export default function UserRegistrationStep2() {
     }
 
     // Store data in Zustand store
-    updateStep('step2', formData);
-    setCurrentStep(3);
-    router.push('/(auth)/user-registration/step-3');
+    updateStep('step4', formData);
+    setCurrentStep(5);
+    router.push('/(auth)/artist-registration/step-5');
   };
 
   const handleBack = () => {
     router.back();
-  };
-
-  const handleProvinceSelect = (province: any) => {
-    setFormData(prev => ({ ...prev, province: province.id, municipality: '' }));
-    setShowProvinceModal(false);
-    setMunicipalities([]); // Clear municipalities when province changes
-  };
-
-  const handleMunicipalitySelect = (municipality: any) => {
-    setFormData(prev => ({ ...prev, municipality: municipality.id }));
-    setShowMunicipalityModal(false);
   };
 
   return (
@@ -181,15 +187,24 @@ export default function UserRegistrationStep2() {
               <Ionicons name="chevron-back" size={24} color="#000000" />
             </TouchableOpacity>
             
-            <StepIndicator currentStep={2} totalSteps={6} />
+            <StepIndicator currentStep={4} totalSteps={13} />
             
-            <Text style={styles.title}>Where are you located?</Text>
+            <Text style={styles.title}>Business Information</Text>
             <Text style={styles.subtitle}>
-              Help us connect you with local tattoo artists and events
+              Tell us about your studio or business
             </Text>
           </View>
 
           <View style={styles.form}>
+            <Input
+              label="Studio/Business Name"
+              placeholder="Enter your studio name"
+              value={formData.businessName}
+              onChangeText={(value) => handleInputChange('businessName', value)}
+              error={errors.businessName}
+              required
+            />
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Province *</Text>
               <TouchableOpacity 
@@ -220,6 +235,85 @@ export default function UserRegistrationStep2() {
               </TouchableOpacity>
               {errors.municipality && (
                 <Text style={styles.errorText}>{errors.municipality}</Text>
+              )}
+            </View>
+
+            <Input
+              label="Studio Address"
+              placeholder="Enter your studio address"
+              value={formData.studioAddress}
+              onChangeText={(value) => handleInputChange('studioAddress', value)}
+              error={errors.studioAddress}
+              required
+              multiline
+              numberOfLines={3}
+            />
+
+            <Input
+              label="Website (Optional)"
+              placeholder="https://yourwebsite.com"
+              value={formData.website}
+              onChangeText={(value) => handleInputChange('website', value)}
+              error={errors.website}
+              keyboardType="url"
+            />
+
+            <Input
+              label="Phone Number"
+              placeholder="+39 123 456 7890"
+              value={formData.phone}
+              onChangeText={(value) => handleInputChange('phone', value)}
+              error={errors.phone}
+              keyboardType="phone-pad"
+              required
+            />
+
+            <View style={styles.certificationsSection}>
+              <Text style={styles.sectionTitle}>Certifications</Text>
+              <Text style={styles.sectionSubtitle}>
+                Upload your certificates and ID copy
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={handleCertificationUpload}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <View style={styles.uploadingContainer}>
+                    <Ionicons name="cloud-upload" size={24} color="#3B82F6" />
+                    <Text style={styles.uploadButtonText}>Uploading...</Text>
+                  </View>
+                ) : (
+                  <>
+                    <Ionicons name="cloud-upload" size={24} color="#3B82F6" />
+                    <Text style={styles.uploadButtonText}>Upload Certificates</Text>
+                    <Text style={styles.uploadSubtext}>PDF, JPG, PNG up to 10MB each</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {formData.certificateUrl && (
+                <View style={styles.uploadedFiles}>
+                  <Text style={styles.uploadedFilesTitle}>Uploaded Certificate:</Text>
+                  <View style={styles.fileItem}>
+                    <Ionicons name="document" size={16} color="#666666" />
+                    <Text style={styles.fileName} numberOfLines={1}>
+                      Certificate
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.removeFileButton}
+                      onPress={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          certificateUrl: '',
+                        }));
+                      }}
+                    >
+                      <Ionicons name="close" size={16} color="#EF4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               )}
             </View>
           </View>
@@ -255,7 +349,11 @@ export default function UserRegistrationStep2() {
                 <TouchableOpacity
                   key={province.id}
                   style={styles.modalItem}
-                  onPress={() => handleProvinceSelect(province)}
+                  onPress={() => {
+                    setFormData(prev => ({ ...prev, province: province.id, municipality: '' }));
+                    setShowProvinceModal(false);
+                    setMunicipalities([]);
+                  }}
                 >
                   <Text style={styles.modalItemText}>{province.name}</Text>
                   {formData.province === province.id && (
@@ -291,7 +389,10 @@ export default function UserRegistrationStep2() {
                 <TouchableOpacity
                   key={municipality.id}
                   style={styles.modalItem}
-                  onPress={() => handleMunicipalitySelect(municipality)}
+                  onPress={() => {
+                    setFormData(prev => ({ ...prev, municipality: municipality.id }));
+                    setShowMunicipalityModal(false);
+                  }}
                 >
                   <Text style={styles.modalItemText}>{municipality.name}</Text>
                   {formData.municipality === municipality.id && (
@@ -345,6 +446,76 @@ const styles = StyleSheet.create({
   form: {
     marginBottom: 24,
   },
+  certificationsSection: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 16,
+  },
+  uploadButton: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  uploadButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3B82F6',
+    marginTop: 8,
+  },
+  uploadSubtext: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 4,
+  },
+  uploadedFiles: {
+    marginTop: 16,
+  },
+  uploadedFilesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  fileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    justifyContent: 'space-between',
+  },
+  fileName: {
+    fontSize: 14,
+    color: '#666666',
+    marginLeft: 8,
+    flex: 1,
+  },
+  removeFileButton: {
+    padding: 4,
+  },
+  uploadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueButton: {
+    marginTop: 'auto',
+  },
   inputGroup: {
     marginBottom: 20,
   },
@@ -374,9 +545,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#EF4444',
     marginTop: 4,
-  },
-  continueButton: {
-    marginTop: 'auto',
   },
   dropdownDisabled: {
     backgroundColor: '#F9FAFB',

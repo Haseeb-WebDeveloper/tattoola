@@ -147,61 +147,55 @@ export interface ResetPasswordData {
 }
 
 // Multi-step registration types
+// User registration types (TL - Tattoola Lover)
 export interface UserRegistrationStep1 {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptedTerms: boolean;
-}
-
-export interface UserRegistrationStep2 {
   firstName: string;
   lastName: string;
   phone: string;
 }
 
-export interface UserRegistrationStep3 {
+export interface UserRegistrationStep2 {
   province: string;
   municipality: string;
 }
 
-export interface UserRegistrationStep4 {
+export interface UserRegistrationStep3 {
   avatar?: string;
 }
 
-export interface UserRegistrationStep5 {
+export interface UserRegistrationStep4 {
   instagram?: string;
   tiktok?: string;
 }
 
-export interface UserRegistrationStep6 {
+export interface UserRegistrationStep5 {
   favoriteStyles: string[]; // max 4 for regular users
 }
 
-export interface UserRegistrationStep7 {
+export interface UserRegistrationStep6 {
   isPublic: boolean;
 }
 
-// Artist registration types
-export interface ArtistRegistrationStep1 extends UserRegistrationStep1 {
-  role: UserRole.ARTIST;
+// Artist registration types (AR - Artist)
+export interface ArtistRegistrationStep0 {
+  selectedPlan: 'BASIC' | 'PREMIUM' | 'STUDIO';
+  agreesToTerms: boolean;
 }
 
-export interface ArtistRegistrationStep2 {
+export interface ArtistRegistrationStep1 {
   firstName: string;
   lastName: string;
 }
 
-export interface ArtistRegistrationStep3 {
+export interface ArtistRegistrationStep2 {
   avatar?: string;
 }
 
-export interface ArtistRegistrationStep4 {
+export interface ArtistRegistrationStep3 {
   workArrangement: WorkArrangement;
 }
 
-export interface ArtistRegistrationStep5 {
+export interface ArtistRegistrationStep4 {
   businessName: string;
   province: string;
   municipality: string;
@@ -211,37 +205,51 @@ export interface ArtistRegistrationStep5 {
   certificateUrl: string;
 }
 
-export interface ArtistRegistrationStep6 {
+export interface ArtistRegistrationStep5 {
   bio?: string;
 }
 
-export interface ArtistRegistrationStep7 {
+export interface ArtistRegistrationStep6 {
   favoriteStyles: string[]; // max 2 for basic plan
-}
-
-export interface ArtistRegistrationStep8 {
   mainStyleId: string; // one of the favorite styles
 }
 
-export interface ArtistRegistrationStep9 {
+export interface ArtistRegistrationStep7 {
   services: string[]; // service IDs
 }
 
-export interface ArtistRegistrationStep10 {
+export interface ArtistRegistrationStep8 {
   bodyParts: string[]; // body part IDs
 }
 
-export interface ArtistRegistrationStep11 {
+export interface ArtistRegistrationStep9 {
   minimumPrice?: number;
   hourlyRate?: number;
+}
+
+export interface ArtistRegistrationStep10 {
+  projects: PortfolioProject[]; // first project
+}
+
+export interface ArtistRegistrationStep11 {
+  projects: PortfolioProject[]; // second project
+}
+
+export interface ArtistRegistrationStep12 {
+  projects: PortfolioProject[]; // third project
+}
+
+export interface ArtistRegistrationStep13 {
+  agreesToTerms: boolean;
 }
 
 export interface PortfolioProject {
   id?: string;
   title?: string;
   description?: string;
-  media: PortfolioMedia[];
-  styles: string[]; // style IDs
+  photos: string[]; // photo URLs
+  videos: string[]; // video URLs
+  associatedStyles: string[]; // style IDs
   order: number;
 }
 
@@ -252,14 +260,6 @@ export interface PortfolioMedia {
   order: number;
 }
 
-export interface ArtistRegistrationStep12 {
-  projects: PortfolioProject[]; // exactly 4 projects
-}
-
-export interface ArtistRegistrationStep13 {
-  selectedPlan: 'BASIC' | 'PREMIUM' | 'STUDIO';
-  agreesToTerms: boolean;
-}
 
 // Complete registration data
 export interface CompleteUserRegistration {
@@ -269,10 +269,10 @@ export interface CompleteUserRegistration {
   step4: UserRegistrationStep4;
   step5: UserRegistrationStep5;
   step6: UserRegistrationStep6;
-  step7: UserRegistrationStep7;
 }
 
 export interface CompleteArtistRegistration {
+  step0: ArtistRegistrationStep0;
   step1: ArtistRegistrationStep1;
   step2: ArtistRegistrationStep2;
   step3: ArtistRegistrationStep3;
@@ -283,8 +283,6 @@ export interface CompleteArtistRegistration {
   step8: ArtistRegistrationStep8;
   step9: ArtistRegistrationStep9;
   step10: ArtistRegistrationStep10;
-  step11: ArtistRegistrationStep11;
-  step12: ArtistRegistrationStep12;
   step13: ArtistRegistrationStep13;
 }
 
@@ -352,4 +350,21 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   hasMore: boolean;
+}
+
+// Store-specific types
+export interface RegistrationStepState<T> {
+  data: Partial<T>;
+  errors: FormErrors;
+  isComplete: boolean;
+  isDirty: boolean;
+}
+
+export interface RegistrationFlowState {
+  currentStep: number;
+  totalSteps: number;
+  completedSteps: number[];
+  isSubmitting: boolean;
+  canGoNext: boolean;
+  canGoBack: boolean;
 }
