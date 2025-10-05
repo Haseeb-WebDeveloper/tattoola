@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { useAuth } from '@/providers/AuthProvider';
 import { useArtistRegistrationStore } from '@/stores';
-import type { ArtistRegistrationStep13, FormErrors } from '@/types/auth';
+import type { ArtistRegistrationStep11, FormErrors } from '@/types/auth';
 import { ValidationUtils } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -19,25 +19,25 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function ArtistRegistrationStep13() {
+export default function ArtistRegistrationStep11() {
   const { 
-    step0, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step13,
+    step0, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11,
     updateStep, 
     clearRegistration,
     setCurrentStep 
   } = useArtistRegistrationStore();
   const { completeArtistRegistration, loading } = useAuth();
-  const [formData, setFormData] = useState<ArtistRegistrationStep13>({
+  const [formData, setFormData] = useState<ArtistRegistrationStep11>({
     agreesToTerms: false,
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
 
   // Load existing data if available
   useEffect(() => {
-    if (step13 && Object.keys(step13).length > 0) {
-      setFormData(step13 as ArtistRegistrationStep13);
+    if (step11 && Object.keys(step11).length > 0) {
+      setFormData(step11 as ArtistRegistrationStep11);
     }
-  }, [step13]);
+  }, [step11]);
 
   const handleTermsToggle = () => {
     setFormData(prev => ({ ...prev, agreesToTerms: !prev.agreesToTerms }));
@@ -61,7 +61,7 @@ export default function ArtistRegistrationStep13() {
 
     try {
       // Store final step data
-      updateStep('step13', formData);
+      updateStep('step11', formData);
 
       // Complete registration with all collected data
       // Get all step data from Zustand store
@@ -79,7 +79,7 @@ export default function ArtistRegistrationStep13() {
         step8: step8 as any,
         step9: step9 as any,
         step10: step10 as any,
-        step13: formData,
+        step11: formData,
       };
 
       await completeArtistRegistration(completeData);

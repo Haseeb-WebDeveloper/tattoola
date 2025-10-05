@@ -90,7 +90,7 @@ export default function ArtistRegistrationStep1() {
               <Ionicons name="chevron-back" size={24} color="#000000" />
             </TouchableOpacity>
             
-            <StepIndicator currentStep={1} totalSteps={13} />
+            <StepIndicator currentStep={1} totalSteps={11} />
             
             <Text style={styles.title}>Personal Information</Text>
             <Text style={styles.subtitle}>

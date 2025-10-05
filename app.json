@@ -3,12 +3,23 @@
     "name": "tattoola",
     "slug": "tattoola",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
     "scheme": "tattoola",
     "userInterfaceStyle": "dark",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "newArchEnabled": true,
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/46764065-3a82-4506-92f2-8af0c57c2c22"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.haseebahmedrazakhan.tattoola",
@@ -19,6 +30,7 @@
       }
     },
     "android": {
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./src/assets/images/android-icon-foreground.png",
@@ -27,7 +39,11 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.haseebahmedrazakhan.tattoola"
+      "package": "com.haseebahmedrazakhan.tattoola",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",

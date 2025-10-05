@@ -236,8 +236,8 @@ export default function ArtistRegistrationStep10() {
 
     // Store data in registration context
     updateStep('step10', formData);
-    setCurrentStep(13);
-    router.push('/(auth)/artist-registration/step-13');
+    setCurrentStep(11);
+    router.push('/(auth)/artist-registration/step-11');
   };
 
   const handleBack = () => {

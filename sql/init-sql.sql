@@ -1,23 +1,14 @@
--- CreateEnum
-CREATE TYPE "public"."UserRole" AS ENUM ('ADMIN', 'ARTIST', 'TATTOO_LOVER');
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateEnum
 CREATE TYPE "public"."AdminLevel" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'MODERATOR');
 
 -- CreateEnum
-CREATE TYPE "public"."SubscriptionStatus" AS ENUM ('ACTIVE', 'EXPIRED', 'CANCELLED', 'SUSPENDED');
-
--- CreateEnum
 CREATE TYPE "public"."BillingCycle" AS ENUM ('MONTHLY', 'YEARLY', 'ADMIN_ASSIGNED');
 
 -- CreateEnum
-CREATE TYPE "public"."StudioRole" AS ENUM ('OWNER', 'MANAGER', 'MEMBER');
-
--- CreateEnum
 CREATE TYPE "public"."MediaType" AS ENUM ('IMAGE', 'VIDEO');
-
--- CreateEnum
-CREATE TYPE "public"."RequestStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
 
 -- CreateEnum
 CREATE TYPE "public"."MessageType" AS ENUM ('TEXT', 'IMAGE', 'VIDEO', 'FILE');
@@ -26,32 +17,48 @@ CREATE TYPE "public"."MessageType" AS ENUM ('TEXT', 'IMAGE', 'VIDEO', 'FILE');
 CREATE TYPE "public"."NotificationType" AS ENUM ('FOLLOW', 'LIKE', 'COMMENT', 'MESSAGE', 'CONNECTION_REQUEST', 'SUBSCRIPTION_EXPIRY', 'STUDIO_INVITATION', 'SYSTEM');
 
 -- CreateEnum
+CREATE TYPE "public"."RequestStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "public"."StudioRole" AS ENUM ('OWNER', 'MANAGER', 'MEMBER');
+
+-- CreateEnum
+CREATE TYPE "public"."SubscriptionStatus" AS ENUM ('ACTIVE', 'EXPIRED', 'CANCELLED', 'SUSPENDED');
+
+-- CreateEnum
+CREATE TYPE "public"."UserRole" AS ENUM ('ADMIN', 'ARTIST', 'TATTOO_LOVER');
+
+-- CreateEnum
 CREATE TYPE "public"."WorkArrangement" AS ENUM ('STUDIO_OWNER', 'STUDIO_EMPLOYEE', 'FREELANCE');
 
 -- CreateTable
-CREATE TABLE "public"."users" (
+CREATE TABLE "public"."admin_profiles" (
     "id" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
-    "firstName" TEXT,
-    "lastName" TEXT,
-    "avatar" TEXT,
-    "bio" TEXT,
-    "phone" TEXT,
-    "country" TEXT,
-    "province" TEXT,
-    "municipality" TEXT,
-    "instagram" TEXT,
-    "tiktok" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "isVerified" BOOLEAN NOT NULL DEFAULT false,
-    "isPublic" BOOLEAN NOT NULL DEFAULT true,
-    "role" "public"."UserRole" NOT NULL DEFAULT 'TATTOO_LOVER',
+    "userId" TEXT NOT NULL,
+    "level" "public"."AdminLevel" NOT NULL DEFAULT 'ADMIN',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "lastLoginAt" TIMESTAMP(3),
 
-    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "admin_profiles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."artist_body_parts" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "artistId" TEXT NOT NULL,
+    "bodyPartId" TEXT NOT NULL,
+
+    CONSTRAINT "artist_body_parts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."artist_favorite_styles" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "artistId" TEXT NOT NULL,
+    "styleId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "artist_favorite_styles_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -86,119 +93,141 @@ CREATE TABLE "public"."artist_profiles" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."admin_profiles" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "level" "public"."AdminLevel" NOT NULL DEFAULT 'ADMIN',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "admin_profiles_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."subscription_plans" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "features" JSONB NOT NULL,
-    "monthlyPrice" DOUBLE PRECISION NOT NULL,
-    "yearlyPrice" DOUBLE PRECISION NOT NULL,
-    "maxPosts" INTEGER,
-    "maxCollections" INTEGER,
-    "maxStudioMembers" INTEGER,
-    "canCreateStudio" BOOLEAN NOT NULL DEFAULT false,
-    "canUploadVideos" BOOLEAN NOT NULL DEFAULT false,
-    "priority" INTEGER NOT NULL DEFAULT 0,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "subscription_plans_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."user_subscriptions" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "planId" TEXT NOT NULL,
-    "status" "public"."SubscriptionStatus" NOT NULL DEFAULT 'ACTIVE',
-    "billingCycle" "public"."BillingCycle" NOT NULL DEFAULT 'MONTHLY',
-    "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "endDate" TIMESTAMP(3) NOT NULL,
-    "isAdminAssigned" BOOLEAN NOT NULL DEFAULT false,
-    "autoRenew" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."studios" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
-    "description" TEXT,
-    "logo" TEXT,
-    "banner" TEXT,
-    "address" TEXT NOT NULL,
-    "city" TEXT NOT NULL,
-    "country" TEXT NOT NULL,
-    "phone" TEXT,
-    "email" TEXT,
-    "website" TEXT,
-    "instagram" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "ownerId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "studios_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."studio_members" (
-    "id" TEXT NOT NULL,
-    "studioId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+CREATE TABLE "public"."artist_services" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
     "artistId" TEXT NOT NULL,
-    "role" "public"."StudioRole" NOT NULL DEFAULT 'MEMBER',
-    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "serviceId" TEXT NOT NULL,
+    "price" DOUBLE PRECISION,
+    "duration" INTEGER,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-
-    CONSTRAINT "studio_members_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."studio_photos" (
-    "id" TEXT NOT NULL,
-    "studioId" TEXT NOT NULL,
-    "imageUrl" TEXT NOT NULL,
-    "caption" TEXT,
-    "order" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "studio_photos_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "artist_services_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."posts" (
+CREATE TABLE "public"."body_parts" (
     "id" TEXT NOT NULL,
-    "authorId" TEXT NOT NULL,
-    "caption" TEXT,
-    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
-    "mediaUrl" TEXT NOT NULL,
-    "thumbnailUrl" TEXT,
-    "styleId" TEXT,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "likesCount" INTEGER NOT NULL DEFAULT 0,
-    "commentsCount" INTEGER NOT NULL DEFAULT 0,
-    "showInFeed" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "body_parts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."collection_posts" (
+    "id" TEXT NOT NULL,
+    "collectionId" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "addedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "collection_posts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."collections" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "ownerId" TEXT NOT NULL,
+    "isPrivate" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "posts_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "collections_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."comments" (
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "parentId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "comments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."connection_requests" (
+    "id" TEXT NOT NULL,
+    "senderId" TEXT NOT NULL,
+    "receiverId" TEXT NOT NULL,
+    "message" TEXT,
+    "status" "public"."RequestStatus" NOT NULL DEFAULT 'PENDING',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "connection_requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."conversation_users" (
+    "id" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastReadAt" TIMESTAMP(3),
+
+    CONSTRAINT "conversation_users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."conversations" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "conversations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."follows" (
+    "id" TEXT NOT NULL,
+    "followerId" TEXT NOT NULL,
+    "followingId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "follows_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."magazine_comments" (
+    "id" TEXT NOT NULL,
+    "magazineId" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "parentId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "magazine_comments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."magazine_likes" (
+    "id" TEXT NOT NULL,
+    "magazineId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "magazine_likes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."magazine_views" (
+    "id" TEXT NOT NULL,
+    "magazineId" TEXT NOT NULL,
+    "userId" TEXT,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "magazine_views_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -229,120 +258,6 @@ CREATE TABLE "public"."magazines" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."magazine_likes" (
-    "id" TEXT NOT NULL,
-    "magazineId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "magazine_likes_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."magazine_comments" (
-    "id" TEXT NOT NULL,
-    "magazineId" TEXT NOT NULL,
-    "authorId" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "parentId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "magazine_comments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."magazine_views" (
-    "id" TEXT NOT NULL,
-    "magazineId" TEXT NOT NULL,
-    "userId" TEXT,
-    "ipAddress" TEXT,
-    "userAgent" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "magazine_views_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."post_likes" (
-    "id" TEXT NOT NULL,
-    "postId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "post_likes_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."comments" (
-    "id" TEXT NOT NULL,
-    "postId" TEXT NOT NULL,
-    "authorId" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "parentId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "comments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."collections" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "ownerId" TEXT NOT NULL,
-    "isPrivate" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "collections_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."collection_posts" (
-    "id" TEXT NOT NULL,
-    "collectionId" TEXT NOT NULL,
-    "postId" TEXT NOT NULL,
-    "addedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "collection_posts_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."connection_requests" (
-    "id" TEXT NOT NULL,
-    "senderId" TEXT NOT NULL,
-    "receiverId" TEXT NOT NULL,
-    "message" TEXT,
-    "status" "public"."RequestStatus" NOT NULL DEFAULT 'PENDING',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "connection_requests_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."conversations" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "conversations_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."conversation_users" (
-    "id" TEXT NOT NULL,
-    "conversationId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "lastReadAt" TIMESTAMP(3),
-
-    CONSTRAINT "conversation_users_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "public"."messages" (
     "id" TEXT NOT NULL,
     "conversationId" TEXT NOT NULL,
@@ -359,93 +274,6 @@ CREATE TABLE "public"."messages" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."user_favorite_styles" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "styleId" TEXT NOT NULL,
-    "order" INTEGER NOT NULL DEFAULT 0,
-
-    CONSTRAINT "user_favorite_styles_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."artist_favorite_styles" (
-    "id" TEXT NOT NULL,
-    "artistId" TEXT NOT NULL,
-    "styleId" TEXT NOT NULL,
-    "order" INTEGER NOT NULL DEFAULT 0,
-
-    CONSTRAINT "artist_favorite_styles_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."body_parts" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "body_parts_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."artist_body_parts" (
-    "id" TEXT NOT NULL,
-    "artistId" TEXT NOT NULL,
-    "bodyPartId" TEXT NOT NULL,
-
-    CONSTRAINT "artist_body_parts_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."portfolio_projects" (
-    "id" TEXT NOT NULL,
-    "artistId" TEXT NOT NULL,
-    "title" TEXT,
-    "description" TEXT,
-    "order" INTEGER NOT NULL DEFAULT 0,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "portfolio_projects_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."portfolio_project_media" (
-    "id" TEXT NOT NULL,
-    "projectId" TEXT NOT NULL,
-    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
-    "mediaUrl" TEXT NOT NULL,
-    "order" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "portfolio_project_media_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."portfolio_project_styles" (
-    "id" TEXT NOT NULL,
-    "projectId" TEXT NOT NULL,
-    "styleId" TEXT NOT NULL,
-
-    CONSTRAINT "portfolio_project_styles_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."provinces" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "code" TEXT,
-    "country" TEXT NOT NULL DEFAULT 'Italy',
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "provinces_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "public"."municipalities" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -455,56 +283,6 @@ CREATE TABLE "public"."municipalities" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "municipalities_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."tattoo_styles" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "imageUrl" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "tattoo_styles_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."services" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "category" TEXT NOT NULL,
-    "styleId" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "services_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."artist_services" (
-    "id" TEXT NOT NULL,
-    "artistId" TEXT NOT NULL,
-    "serviceId" TEXT NOT NULL,
-    "price" DOUBLE PRECISION,
-    "duration" INTEGER,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "artist_services_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."follows" (
-    "id" TEXT NOT NULL,
-    "followerId" TEXT NOT NULL,
-    "followingId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "follows_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -522,470 +300,578 @@ CREATE TABLE "public"."notifications" (
     CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
+-- CreateTable
+CREATE TABLE "public"."portfolio_project_media" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "projectId" TEXT NOT NULL,
+    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
+    "mediaUrl" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "portfolio_project_media_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."portfolio_project_styles" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "projectId" TEXT NOT NULL,
+    "styleId" TEXT NOT NULL,
+
+    CONSTRAINT "portfolio_project_styles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."portfolio_projects" (
+    "id" TEXT NOT NULL,
+    "artistId" TEXT NOT NULL,
+    "title" TEXT,
+    "description" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "portfolio_projects_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."post_likes" (
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "post_likes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."posts" (
+    "id" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "caption" TEXT,
+    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
+    "mediaUrl" TEXT NOT NULL,
+    "thumbnailUrl" TEXT,
+    "styleId" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "likesCount" INTEGER NOT NULL DEFAULT 0,
+    "commentsCount" INTEGER NOT NULL DEFAULT 0,
+    "showInFeed" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "posts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."provinces" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "code" TEXT,
+    "country" TEXT NOT NULL DEFAULT 'Italy',
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "provinces_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."services" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT NOT NULL,
+    "styleId" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "services_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studio_members" (
+    "id" TEXT NOT NULL,
+    "studioId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "artistId" TEXT NOT NULL,
+    "role" "public"."StudioRole" NOT NULL DEFAULT 'MEMBER',
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "studio_members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studio_photos" (
+    "id" TEXT NOT NULL,
+    "studioId" TEXT NOT NULL,
+    "imageUrl" TEXT NOT NULL,
+    "caption" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "studio_photos_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studios" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "logo" TEXT,
+    "banner" TEXT,
+    "address" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "phone" TEXT,
+    "email" TEXT,
+    "website" TEXT,
+    "instagram" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "ownerId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "studios_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."subscription_plans" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "features" JSONB NOT NULL,
+    "monthlyPrice" DOUBLE PRECISION NOT NULL,
+    "yearlyPrice" DOUBLE PRECISION NOT NULL,
+    "maxPosts" INTEGER,
+    "maxCollections" INTEGER,
+    "maxStudioMembers" INTEGER,
+    "canCreateStudio" BOOLEAN NOT NULL DEFAULT false,
+    "canUploadVideos" BOOLEAN NOT NULL DEFAULT false,
+    "priority" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "subscription_plans_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."tattoo_styles" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "imageUrl" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
--- CreateIndex
-CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username");
+    CONSTRAINT "tattoo_styles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."user_favorite_styles" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "userId" TEXT NOT NULL,
+    "styleId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "user_favorite_styles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."user_subscriptions" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "planId" TEXT NOT NULL,
+    "status" "public"."SubscriptionStatus" NOT NULL DEFAULT 'ACTIVE',
+    "billingCycle" "public"."BillingCycle" NOT NULL DEFAULT 'MONTHLY',
+    "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "isAdminAssigned" BOOLEAN NOT NULL DEFAULT false,
+    "autoRenew" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
+    CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "firstName" TEXT,
+    "lastName" TEXT,
+    "avatar" TEXT,
+    "bio" TEXT,
+    "phone" TEXT,
+    "country" TEXT,
+    "province" TEXT,
+    "municipality" TEXT,
+    "instagram" TEXT,
+    "tiktok" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isPublic" BOOLEAN NOT NULL DEFAULT true,
+    "role" "public"."UserRole" NOT NULL DEFAULT 'TATTOO_LOVER',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "lastLoginAt" TIMESTAMP(3),
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
-CREATE INDEX "users_email_idx" ON "public"."users"("email");
+CREATE INDEX "admin_profiles_userId_idx" ON "public"."admin_profiles"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "users_username_idx" ON "public"."users"("username");
+CREATE UNIQUE INDEX "admin_profiles_userId_key" ON "public"."admin_profiles"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "users_role_idx" ON "public"."users"("role");
+CREATE UNIQUE INDEX "artist_body_parts_artistId_bodyPartId_key" ON "public"."artist_body_parts"("artistId" ASC, "bodyPartId" ASC);
 
 -- CreateIndex
-CREATE INDEX "users_createdAt_idx" ON "public"."users"("createdAt");
+CREATE INDEX "artist_body_parts_artistId_idx" ON "public"."artist_body_parts"("artistId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "artist_profiles_userId_key" ON "public"."artist_profiles"("userId");
+CREATE INDEX "artist_body_parts_bodyPartId_idx" ON "public"."artist_body_parts"("bodyPartId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_profiles_userId_idx" ON "public"."artist_profiles"("userId");
+CREATE INDEX "artist_favorite_styles_artistId_idx" ON "public"."artist_favorite_styles"("artistId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_profiles_portfolioComplete_idx" ON "public"."artist_profiles"("portfolioComplete");
+CREATE UNIQUE INDEX "artist_favorite_styles_artistId_styleId_key" ON "public"."artist_favorite_styles"("artistId" ASC, "styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_profiles_city_idx" ON "public"."artist_profiles"("city");
+CREATE INDEX "artist_favorite_styles_styleId_idx" ON "public"."artist_favorite_styles"("styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_profiles_province_idx" ON "public"."artist_profiles"("province");
+CREATE INDEX "artist_profiles_city_idx" ON "public"."artist_profiles"("city" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_profiles_workArrangement_idx" ON "public"."artist_profiles"("workArrangement");
+CREATE INDEX "artist_profiles_mainStyleId_idx" ON "public"."artist_profiles"("mainStyleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_profiles_mainStyleId_idx" ON "public"."artist_profiles"("mainStyleId");
+CREATE INDEX "artist_profiles_portfolioComplete_idx" ON "public"."artist_profiles"("portfolioComplete" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "admin_profiles_userId_key" ON "public"."admin_profiles"("userId");
+CREATE INDEX "artist_profiles_province_idx" ON "public"."artist_profiles"("province" ASC);
 
 -- CreateIndex
-CREATE INDEX "admin_profiles_userId_idx" ON "public"."admin_profiles"("userId");
+CREATE INDEX "artist_profiles_userId_idx" ON "public"."artist_profiles"("userId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "subscription_plans_name_key" ON "public"."subscription_plans"("name");
+CREATE UNIQUE INDEX "artist_profiles_userId_key" ON "public"."artist_profiles"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "subscription_plans_name_idx" ON "public"."subscription_plans"("name");
+CREATE INDEX "artist_profiles_workArrangement_idx" ON "public"."artist_profiles"("workArrangement" ASC);
 
 -- CreateIndex
-CREATE INDEX "subscription_plans_isActive_idx" ON "public"."subscription_plans"("isActive");
+CREATE INDEX "artist_services_artistId_idx" ON "public"."artist_services"("artistId" ASC);
 
 -- CreateIndex
-CREATE INDEX "user_subscriptions_userId_idx" ON "public"."user_subscriptions"("userId");
+CREATE UNIQUE INDEX "artist_services_artistId_serviceId_key" ON "public"."artist_services"("artistId" ASC, "serviceId" ASC);
 
 -- CreateIndex
-CREATE INDEX "user_subscriptions_status_idx" ON "public"."user_subscriptions"("status");
+CREATE INDEX "artist_services_serviceId_idx" ON "public"."artist_services"("serviceId" ASC);
 
 -- CreateIndex
-CREATE INDEX "user_subscriptions_endDate_idx" ON "public"."user_subscriptions"("endDate");
+CREATE INDEX "body_parts_isActive_idx" ON "public"."body_parts"("isActive" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "studios_slug_key" ON "public"."studios"("slug");
+CREATE INDEX "body_parts_name_idx" ON "public"."body_parts"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "studios_ownerId_idx" ON "public"."studios"("ownerId");
+CREATE UNIQUE INDEX "body_parts_name_key" ON "public"."body_parts"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "studios_slug_idx" ON "public"."studios"("slug");
+CREATE INDEX "collection_posts_collectionId_idx" ON "public"."collection_posts"("collectionId" ASC);
 
 -- CreateIndex
-CREATE INDEX "studios_city_idx" ON "public"."studios"("city");
+CREATE UNIQUE INDEX "collection_posts_collectionId_postId_key" ON "public"."collection_posts"("collectionId" ASC, "postId" ASC);
 
 -- CreateIndex
-CREATE INDEX "studios_isActive_idx" ON "public"."studios"("isActive");
+CREATE INDEX "collection_posts_postId_idx" ON "public"."collection_posts"("postId" ASC);
 
 -- CreateIndex
-CREATE INDEX "studio_members_studioId_idx" ON "public"."studio_members"("studioId");
+CREATE INDEX "collections_isPrivate_idx" ON "public"."collections"("isPrivate" ASC);
 
 -- CreateIndex
-CREATE INDEX "studio_members_userId_idx" ON "public"."studio_members"("userId");
+CREATE INDEX "collections_ownerId_idx" ON "public"."collections"("ownerId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "studio_members_studioId_userId_key" ON "public"."studio_members"("studioId", "userId");
+CREATE INDEX "comments_authorId_idx" ON "public"."comments"("authorId" ASC);
 
 -- CreateIndex
-CREATE INDEX "studio_photos_studioId_idx" ON "public"."studio_photos"("studioId");
+CREATE INDEX "comments_parentId_idx" ON "public"."comments"("parentId" ASC);
 
 -- CreateIndex
-CREATE INDEX "posts_authorId_idx" ON "public"."posts"("authorId");
+CREATE INDEX "comments_postId_idx" ON "public"."comments"("postId" ASC);
 
 -- CreateIndex
-CREATE INDEX "posts_styleId_idx" ON "public"."posts"("styleId");
+CREATE INDEX "connection_requests_receiverId_idx" ON "public"."connection_requests"("receiverId" ASC);
 
 -- CreateIndex
-CREATE INDEX "posts_createdAt_idx" ON "public"."posts"("createdAt");
+CREATE INDEX "connection_requests_senderId_idx" ON "public"."connection_requests"("senderId" ASC);
 
 -- CreateIndex
-CREATE INDEX "posts_likesCount_idx" ON "public"."posts"("likesCount");
+CREATE UNIQUE INDEX "connection_requests_senderId_receiverId_key" ON "public"."connection_requests"("senderId" ASC, "receiverId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_authorId_idx" ON "public"."magazines"("authorId");
+CREATE INDEX "connection_requests_status_idx" ON "public"."connection_requests"("status" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_styleId_idx" ON "public"."magazines"("styleId");
+CREATE INDEX "conversation_users_conversationId_idx" ON "public"."conversation_users"("conversationId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_isPublished_idx" ON "public"."magazines"("isPublished");
+CREATE UNIQUE INDEX "conversation_users_conversationId_userId_key" ON "public"."conversation_users"("conversationId" ASC, "userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_isFeatured_idx" ON "public"."magazines"("isFeatured");
+CREATE INDEX "conversation_users_userId_idx" ON "public"."conversation_users"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_publishedAt_idx" ON "public"."magazines"("publishedAt");
+CREATE UNIQUE INDEX "follows_followerId_followingId_key" ON "public"."follows"("followerId" ASC, "followingId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_viewsCount_idx" ON "public"."magazines"("viewsCount");
+CREATE INDEX "follows_followerId_idx" ON "public"."follows"("followerId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazines_likesCount_idx" ON "public"."magazines"("likesCount");
+CREATE INDEX "follows_followingId_idx" ON "public"."follows"("followingId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_likes_magazineId_idx" ON "public"."magazine_likes"("magazineId");
+CREATE INDEX "magazine_comments_authorId_idx" ON "public"."magazine_comments"("authorId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_likes_userId_idx" ON "public"."magazine_likes"("userId");
+CREATE INDEX "magazine_comments_magazineId_idx" ON "public"."magazine_comments"("magazineId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "magazine_likes_magazineId_userId_key" ON "public"."magazine_likes"("magazineId", "userId");
+CREATE INDEX "magazine_comments_parentId_idx" ON "public"."magazine_comments"("parentId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_comments_magazineId_idx" ON "public"."magazine_comments"("magazineId");
+CREATE INDEX "magazine_likes_magazineId_idx" ON "public"."magazine_likes"("magazineId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_comments_authorId_idx" ON "public"."magazine_comments"("authorId");
+CREATE UNIQUE INDEX "magazine_likes_magazineId_userId_key" ON "public"."magazine_likes"("magazineId" ASC, "userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_comments_parentId_idx" ON "public"."magazine_comments"("parentId");
+CREATE INDEX "magazine_likes_userId_idx" ON "public"."magazine_likes"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_views_magazineId_idx" ON "public"."magazine_views"("magazineId");
+CREATE INDEX "magazine_views_createdAt_idx" ON "public"."magazine_views"("createdAt" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_views_userId_idx" ON "public"."magazine_views"("userId");
+CREATE INDEX "magazine_views_magazineId_idx" ON "public"."magazine_views"("magazineId" ASC);
 
 -- CreateIndex
-CREATE INDEX "magazine_views_createdAt_idx" ON "public"."magazine_views"("createdAt");
+CREATE INDEX "magazine_views_userId_idx" ON "public"."magazine_views"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "post_likes_postId_idx" ON "public"."post_likes"("postId");
+CREATE INDEX "magazines_authorId_idx" ON "public"."magazines"("authorId" ASC);
 
 -- CreateIndex
-CREATE INDEX "post_likes_userId_idx" ON "public"."post_likes"("userId");
+CREATE INDEX "magazines_isFeatured_idx" ON "public"."magazines"("isFeatured" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "post_likes_postId_userId_key" ON "public"."post_likes"("postId", "userId");
+CREATE INDEX "magazines_isPublished_idx" ON "public"."magazines"("isPublished" ASC);
 
 -- CreateIndex
-CREATE INDEX "comments_postId_idx" ON "public"."comments"("postId");
+CREATE INDEX "magazines_likesCount_idx" ON "public"."magazines"("likesCount" ASC);
 
 -- CreateIndex
-CREATE INDEX "comments_authorId_idx" ON "public"."comments"("authorId");
+CREATE INDEX "magazines_publishedAt_idx" ON "public"."magazines"("publishedAt" ASC);
 
 -- CreateIndex
-CREATE INDEX "comments_parentId_idx" ON "public"."comments"("parentId");
+CREATE INDEX "magazines_styleId_idx" ON "public"."magazines"("styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "collections_ownerId_idx" ON "public"."collections"("ownerId");
+CREATE INDEX "magazines_viewsCount_idx" ON "public"."magazines"("viewsCount" ASC);
 
 -- CreateIndex
-CREATE INDEX "collections_isPrivate_idx" ON "public"."collections"("isPrivate");
+CREATE INDEX "messages_conversationId_idx" ON "public"."messages"("conversationId" ASC);
 
 -- CreateIndex
-CREATE INDEX "collection_posts_collectionId_idx" ON "public"."collection_posts"("collectionId");
+CREATE INDEX "messages_createdAt_idx" ON "public"."messages"("createdAt" ASC);
 
 -- CreateIndex
-CREATE INDEX "collection_posts_postId_idx" ON "public"."collection_posts"("postId");
+CREATE INDEX "messages_receiverId_idx" ON "public"."messages"("receiverId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "collection_posts_collectionId_postId_key" ON "public"."collection_posts"("collectionId", "postId");
+CREATE INDEX "messages_senderId_idx" ON "public"."messages"("senderId" ASC);
 
 -- CreateIndex
-CREATE INDEX "connection_requests_senderId_idx" ON "public"."connection_requests"("senderId");
+CREATE INDEX "municipalities_name_idx" ON "public"."municipalities"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "connection_requests_receiverId_idx" ON "public"."connection_requests"("receiverId");
+CREATE INDEX "municipalities_postalCode_idx" ON "public"."municipalities"("postalCode" ASC);
 
 -- CreateIndex
-CREATE INDEX "connection_requests_status_idx" ON "public"."connection_requests"("status");
+CREATE INDEX "municipalities_provinceId_idx" ON "public"."municipalities"("provinceId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "connection_requests_senderId_receiverId_key" ON "public"."connection_requests"("senderId", "receiverId");
+CREATE INDEX "notifications_createdAt_idx" ON "public"."notifications"("createdAt" ASC);
 
 -- CreateIndex
-CREATE INDEX "conversation_users_conversationId_idx" ON "public"."conversation_users"("conversationId");
+CREATE INDEX "notifications_isRead_idx" ON "public"."notifications"("isRead" ASC);
 
 -- CreateIndex
-CREATE INDEX "conversation_users_userId_idx" ON "public"."conversation_users"("userId");
+CREATE INDEX "notifications_receiverId_idx" ON "public"."notifications"("receiverId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "conversation_users_conversationId_userId_key" ON "public"."conversation_users"("conversationId", "userId");
+CREATE INDEX "portfolio_project_media_order_idx" ON "public"."portfolio_project_media"("order" ASC);
 
 -- CreateIndex
-CREATE INDEX "messages_conversationId_idx" ON "public"."messages"("conversationId");
+CREATE INDEX "portfolio_project_media_projectId_idx" ON "public"."portfolio_project_media"("projectId" ASC);
 
 -- CreateIndex
-CREATE INDEX "messages_senderId_idx" ON "public"."messages"("senderId");
+CREATE INDEX "portfolio_project_styles_projectId_idx" ON "public"."portfolio_project_styles"("projectId" ASC);
 
 -- CreateIndex
-CREATE INDEX "messages_receiverId_idx" ON "public"."messages"("receiverId");
+CREATE UNIQUE INDEX "portfolio_project_styles_projectId_styleId_key" ON "public"."portfolio_project_styles"("projectId" ASC, "styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "messages_createdAt_idx" ON "public"."messages"("createdAt");
+CREATE INDEX "portfolio_project_styles_styleId_idx" ON "public"."portfolio_project_styles"("styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "user_favorite_styles_userId_idx" ON "public"."user_favorite_styles"("userId");
+CREATE INDEX "portfolio_projects_artistId_idx" ON "public"."portfolio_projects"("artistId" ASC);
 
 -- CreateIndex
-CREATE INDEX "user_favorite_styles_styleId_idx" ON "public"."user_favorite_styles"("styleId");
+CREATE INDEX "portfolio_projects_order_idx" ON "public"."portfolio_projects"("order" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_favorite_styles_userId_styleId_key" ON "public"."user_favorite_styles"("userId", "styleId");
+CREATE INDEX "post_likes_postId_idx" ON "public"."post_likes"("postId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_favorite_styles_artistId_idx" ON "public"."artist_favorite_styles"("artistId");
+CREATE UNIQUE INDEX "post_likes_postId_userId_key" ON "public"."post_likes"("postId" ASC, "userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_favorite_styles_styleId_idx" ON "public"."artist_favorite_styles"("styleId");
+CREATE INDEX "post_likes_userId_idx" ON "public"."post_likes"("userId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "artist_favorite_styles_artistId_styleId_key" ON "public"."artist_favorite_styles"("artistId", "styleId");
+CREATE INDEX "posts_authorId_idx" ON "public"."posts"("authorId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "body_parts_name_key" ON "public"."body_parts"("name");
+CREATE INDEX "posts_createdAt_idx" ON "public"."posts"("createdAt" ASC);
 
 -- CreateIndex
-CREATE INDEX "body_parts_name_idx" ON "public"."body_parts"("name");
+CREATE INDEX "posts_likesCount_idx" ON "public"."posts"("likesCount" ASC);
 
 -- CreateIndex
-CREATE INDEX "body_parts_isActive_idx" ON "public"."body_parts"("isActive");
+CREATE INDEX "posts_styleId_idx" ON "public"."posts"("styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_body_parts_artistId_idx" ON "public"."artist_body_parts"("artistId");
+CREATE INDEX "provinces_code_idx" ON "public"."provinces"("code" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_body_parts_bodyPartId_idx" ON "public"."artist_body_parts"("bodyPartId");
+CREATE UNIQUE INDEX "provinces_code_key" ON "public"."provinces"("code" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "artist_body_parts_artistId_bodyPartId_key" ON "public"."artist_body_parts"("artistId", "bodyPartId");
+CREATE INDEX "provinces_name_idx" ON "public"."provinces"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "portfolio_projects_artistId_idx" ON "public"."portfolio_projects"("artistId");
+CREATE UNIQUE INDEX "provinces_name_key" ON "public"."provinces"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "portfolio_projects_order_idx" ON "public"."portfolio_projects"("order");
+CREATE INDEX "services_category_idx" ON "public"."services"("category" ASC);
 
 -- CreateIndex
-CREATE INDEX "portfolio_project_media_projectId_idx" ON "public"."portfolio_project_media"("projectId");
+CREATE INDEX "services_isActive_idx" ON "public"."services"("isActive" ASC);
 
 -- CreateIndex
-CREATE INDEX "portfolio_project_media_order_idx" ON "public"."portfolio_project_media"("order");
+CREATE INDEX "services_name_idx" ON "public"."services"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "portfolio_project_styles_projectId_idx" ON "public"."portfolio_project_styles"("projectId");
+CREATE UNIQUE INDEX "services_name_key" ON "public"."services"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "portfolio_project_styles_styleId_idx" ON "public"."portfolio_project_styles"("styleId");
+CREATE INDEX "services_styleId_idx" ON "public"."services"("styleId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "portfolio_project_styles_projectId_styleId_key" ON "public"."portfolio_project_styles"("projectId", "styleId");
+CREATE INDEX "studio_members_studioId_idx" ON "public"."studio_members"("studioId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "provinces_name_key" ON "public"."provinces"("name");
+CREATE UNIQUE INDEX "studio_members_studioId_userId_key" ON "public"."studio_members"("studioId" ASC, "userId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "provinces_code_key" ON "public"."provinces"("code");
+CREATE INDEX "studio_members_userId_idx" ON "public"."studio_members"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "provinces_name_idx" ON "public"."provinces"("name");
+CREATE INDEX "studio_photos_studioId_idx" ON "public"."studio_photos"("studioId" ASC);
 
 -- CreateIndex
-CREATE INDEX "provinces_code_idx" ON "public"."provinces"("code");
+CREATE INDEX "studios_city_idx" ON "public"."studios"("city" ASC);
 
 -- CreateIndex
-CREATE INDEX "municipalities_name_idx" ON "public"."municipalities"("name");
+CREATE INDEX "studios_isActive_idx" ON "public"."studios"("isActive" ASC);
 
 -- CreateIndex
-CREATE INDEX "municipalities_provinceId_idx" ON "public"."municipalities"("provinceId");
+CREATE INDEX "studios_ownerId_idx" ON "public"."studios"("ownerId" ASC);
 
 -- CreateIndex
-CREATE INDEX "municipalities_postalCode_idx" ON "public"."municipalities"("postalCode");
+CREATE INDEX "studios_slug_idx" ON "public"."studios"("slug" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tattoo_styles_name_key" ON "public"."tattoo_styles"("name");
+CREATE UNIQUE INDEX "studios_slug_key" ON "public"."studios"("slug" ASC);
 
 -- CreateIndex
-CREATE INDEX "tattoo_styles_name_idx" ON "public"."tattoo_styles"("name");
+CREATE INDEX "subscription_plans_isActive_idx" ON "public"."subscription_plans"("isActive" ASC);
 
 -- CreateIndex
-CREATE INDEX "tattoo_styles_isActive_idx" ON "public"."tattoo_styles"("isActive");
+CREATE INDEX "subscription_plans_name_idx" ON "public"."subscription_plans"("name" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "services_name_key" ON "public"."services"("name");
+CREATE UNIQUE INDEX "subscription_plans_name_key" ON "public"."subscription_plans"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "services_name_idx" ON "public"."services"("name");
+CREATE INDEX "tattoo_styles_isActive_idx" ON "public"."tattoo_styles"("isActive" ASC);
 
 -- CreateIndex
-CREATE INDEX "services_category_idx" ON "public"."services"("category");
+CREATE INDEX "tattoo_styles_name_idx" ON "public"."tattoo_styles"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "services_styleId_idx" ON "public"."services"("styleId");
+CREATE UNIQUE INDEX "tattoo_styles_name_key" ON "public"."tattoo_styles"("name" ASC);
 
 -- CreateIndex
-CREATE INDEX "services_isActive_idx" ON "public"."services"("isActive");
+CREATE INDEX "user_favorite_styles_styleId_idx" ON "public"."user_favorite_styles"("styleId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_services_artistId_idx" ON "public"."artist_services"("artistId");
+CREATE INDEX "user_favorite_styles_userId_idx" ON "public"."user_favorite_styles"("userId" ASC);
 
 -- CreateIndex
-CREATE INDEX "artist_services_serviceId_idx" ON "public"."artist_services"("serviceId");
+CREATE UNIQUE INDEX "user_favorite_styles_userId_styleId_key" ON "public"."user_favorite_styles"("userId" ASC, "styleId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "artist_services_artistId_serviceId_key" ON "public"."artist_services"("artistId", "serviceId");
+CREATE INDEX "user_subscriptions_endDate_idx" ON "public"."user_subscriptions"("endDate" ASC);
 
 -- CreateIndex
-CREATE INDEX "follows_followerId_idx" ON "public"."follows"("followerId");
+CREATE INDEX "user_subscriptions_status_idx" ON "public"."user_subscriptions"("status" ASC);
 
 -- CreateIndex
-CREATE INDEX "follows_followingId_idx" ON "public"."follows"("followingId");
+CREATE INDEX "user_subscriptions_userId_idx" ON "public"."user_subscriptions"("userId" ASC);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "follows_followerId_followingId_key" ON "public"."follows"("followerId", "followingId");
+CREATE INDEX "users_createdAt_idx" ON "public"."users"("createdAt" ASC);
 
 -- CreateIndex
-CREATE INDEX "notifications_receiverId_idx" ON "public"."notifications"("receiverId");
+CREATE INDEX "users_email_idx" ON "public"."users"("email" ASC);
 
 -- CreateIndex
-CREATE INDEX "notifications_isRead_idx" ON "public"."notifications"("isRead");
+CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email" ASC);
 
 -- CreateIndex
-CREATE INDEX "notifications_createdAt_idx" ON "public"."notifications"("createdAt");
+CREATE INDEX "users_role_idx" ON "public"."users"("role" ASC);
 
--- AddForeignKey
-ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE INDEX "users_username_idx" ON "public"."users"("username" ASC);
 
--- AddForeignKey
-ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_mainStyleId_fkey" FOREIGN KEY ("mainStyleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username" ASC);
 
 -- AddForeignKey
 ALTER TABLE "public"."admin_profiles" ADD CONSTRAINT "admin_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_subscriptions" ADD CONSTRAINT "user_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_subscriptions" ADD CONSTRAINT "user_subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "public"."subscription_plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."studios" ADD CONSTRAINT "studios_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."studio_photos" ADD CONSTRAINT "studio_photos_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazines" ADD CONSTRAINT "magazines_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazines" ADD CONSTRAINT "magazines_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_likes" ADD CONSTRAINT "magazine_likes_magazineId_fkey" FOREIGN KEY ("magazineId") REFERENCES "public"."magazines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_likes" ADD CONSTRAINT "magazine_likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_comments" ADD CONSTRAINT "magazine_comments_magazineId_fkey" FOREIGN KEY ("magazineId") REFERENCES "public"."magazines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_comments" ADD CONSTRAINT "magazine_comments_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_comments" ADD CONSTRAINT "magazine_comments_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "public"."magazine_comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_views" ADD CONSTRAINT "magazine_views_magazineId_fkey" FOREIGN KEY ("magazineId") REFERENCES "public"."magazines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."magazine_views" ADD CONSTRAINT "magazine_views_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."post_likes" ADD CONSTRAINT "post_likes_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."post_likes" ADD CONSTRAINT "post_likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "public"."comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."collections" ADD CONSTRAINT "collections_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."collection_posts" ADD CONSTRAINT "collection_posts_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "public"."collections"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."collection_posts" ADD CONSTRAINT "collection_posts_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."connection_requests" ADD CONSTRAINT "connection_requests_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."connection_requests" ADD CONSTRAINT "connection_requests_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."conversation_users" ADD CONSTRAINT "conversation_users_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."conversation_users" ADD CONSTRAINT "conversation_users_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_favorite_styles" ADD CONSTRAINT "user_favorite_styles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_favorite_styles" ADD CONSTRAINT "user_favorite_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."artist_favorite_styles" ADD CONSTRAINT "artist_favorite_styles_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."artist_favorite_styles" ADD CONSTRAINT "artist_favorite_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."artist_body_parts" ADD CONSTRAINT "artist_body_parts_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -994,7 +880,103 @@ ALTER TABLE "public"."artist_body_parts" ADD CONSTRAINT "artist_body_parts_artis
 ALTER TABLE "public"."artist_body_parts" ADD CONSTRAINT "artist_body_parts_bodyPartId_fkey" FOREIGN KEY ("bodyPartId") REFERENCES "public"."body_parts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."portfolio_projects" ADD CONSTRAINT "portfolio_projects_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."artist_favorite_styles" ADD CONSTRAINT "artist_favorite_styles_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."artist_favorite_styles" ADD CONSTRAINT "artist_favorite_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_mainStyleId_fkey" FOREIGN KEY ("mainStyleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."artist_services" ADD CONSTRAINT "artist_services_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."artist_services" ADD CONSTRAINT "artist_services_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."services"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."collection_posts" ADD CONSTRAINT "collection_posts_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "public"."collections"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."collection_posts" ADD CONSTRAINT "collection_posts_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."collections" ADD CONSTRAINT "collections_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "public"."comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."connection_requests" ADD CONSTRAINT "connection_requests_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."connection_requests" ADD CONSTRAINT "connection_requests_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversation_users" ADD CONSTRAINT "conversation_users_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversation_users" ADD CONSTRAINT "conversation_users_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."follows" ADD CONSTRAINT "follows_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."follows" ADD CONSTRAINT "follows_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_comments" ADD CONSTRAINT "magazine_comments_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_comments" ADD CONSTRAINT "magazine_comments_magazineId_fkey" FOREIGN KEY ("magazineId") REFERENCES "public"."magazines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_comments" ADD CONSTRAINT "magazine_comments_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "public"."magazine_comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_likes" ADD CONSTRAINT "magazine_likes_magazineId_fkey" FOREIGN KEY ("magazineId") REFERENCES "public"."magazines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_likes" ADD CONSTRAINT "magazine_likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_views" ADD CONSTRAINT "magazine_views_magazineId_fkey" FOREIGN KEY ("magazineId") REFERENCES "public"."magazines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazine_views" ADD CONSTRAINT "magazine_views_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazines" ADD CONSTRAINT "magazines_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."magazines" ADD CONSTRAINT "magazines_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."municipalities" ADD CONSTRAINT "municipalities_provinceId_fkey" FOREIGN KEY ("provinceId") REFERENCES "public"."provinces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."portfolio_project_media" ADD CONSTRAINT "portfolio_project_media_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "public"."portfolio_projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1006,25 +988,47 @@ ALTER TABLE "public"."portfolio_project_styles" ADD CONSTRAINT "portfolio_projec
 ALTER TABLE "public"."portfolio_project_styles" ADD CONSTRAINT "portfolio_project_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."municipalities" ADD CONSTRAINT "municipalities_provinceId_fkey" FOREIGN KEY ("provinceId") REFERENCES "public"."provinces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."portfolio_projects" ADD CONSTRAINT "portfolio_projects_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."post_likes" ADD CONSTRAINT "post_likes_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."post_likes" ADD CONSTRAINT "post_likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."services" ADD CONSTRAINT "services_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."artist_services" ADD CONSTRAINT "artist_services_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."artist_services" ADD CONSTRAINT "artist_services_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."services"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."follows" ADD CONSTRAINT "follows_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."follows" ADD CONSTRAINT "follows_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."studio_photos" ADD CONSTRAINT "studio_photos_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."studios" ADD CONSTRAINT "studios_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."user_favorite_styles" ADD CONSTRAINT "user_favorite_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."user_favorite_styles" ADD CONSTRAINT "user_favorite_styles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."user_subscriptions" ADD CONSTRAINT "user_subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "public"."subscription_plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."user_subscriptions" ADD CONSTRAINT "user_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

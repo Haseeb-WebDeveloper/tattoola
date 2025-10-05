@@ -134,7 +134,7 @@ export default function ArtistRegistrationStep0() {
               <Ionicons name="chevron-back" size={24} color="#000000" />
             </TouchableOpacity>
             
-            <StepIndicator currentStep={0} totalSteps={13} />
+            <StepIndicator currentStep={0} totalSteps={11} />
             
             <Text style={styles.title}>Choose Your Plan</Text>
             <Text style={styles.subtitle}>

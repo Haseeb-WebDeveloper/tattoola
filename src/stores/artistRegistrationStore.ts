@@ -1,20 +1,18 @@
 import type {
-    ArtistRegistrationStep0,
-    ArtistRegistrationStep1,
-    ArtistRegistrationStep10,
-    ArtistRegistrationStep11,
-    ArtistRegistrationStep12,
-    ArtistRegistrationStep13,
-    ArtistRegistrationStep2,
-    ArtistRegistrationStep3,
-    ArtistRegistrationStep4,
-    ArtistRegistrationStep5,
-    ArtistRegistrationStep6,
-    ArtistRegistrationStep7,
-    ArtistRegistrationStep8,
-    ArtistRegistrationStep9,
-    CompleteArtistRegistration,
-    FormErrors,
+  ArtistRegistrationStep0,
+  ArtistRegistrationStep1,
+  ArtistRegistrationStep10,
+  ArtistRegistrationStep11,
+  ArtistRegistrationStep2,
+  ArtistRegistrationStep3,
+  ArtistRegistrationStep4,
+  ArtistRegistrationStep5,
+  ArtistRegistrationStep6,
+  ArtistRegistrationStep7,
+  ArtistRegistrationStep8,
+  ArtistRegistrationStep9,
+  CompleteArtistRegistration,
+  FormErrors
 } from '@/types/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
@@ -34,8 +32,6 @@ interface ArtistRegistrationState {
   step9: Partial<ArtistRegistrationStep9>;
   step10: Partial<ArtistRegistrationStep10>;
   step11: Partial<ArtistRegistrationStep11>;
-  step12: Partial<ArtistRegistrationStep12>;
-  step13: Partial<ArtistRegistrationStep13>;
 
   // UI state
   currentStep: number;
@@ -76,8 +72,6 @@ const initialState = {
   step9: {},
   step10: {},
   step11: {},
-  step12: {},
-  step13: {},
   currentStep: 0,
   errors: {},
   isSubmitting: false,
@@ -90,6 +84,8 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
         ...initialState,
 
         updateStep: (step, data) => {
+          // Log when a step updates
+          console.log(`[ArtistRegistrationStore] Step updated:`, step, data);
           set((state) => ({
             ...state,
             [step]: data,
@@ -98,6 +94,8 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
         },
 
         setCurrentStep: (step) => {
+          // Log when current step changes
+          console.log(`[ArtistRegistrationStore] Current step set to:`, step);
           set({ currentStep: step });
         },
 
@@ -114,10 +112,14 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
         },
 
         clearRegistration: () => {
+          // Log when registration is cleared
+          console.log(`[ArtistRegistrationStore] Registration cleared`);
           set(initialState);
         },
 
         resetToStep: (step) => {
+          // Log when registration is reset to a step
+          console.log(`[ArtistRegistrationStore] Reset to step:`, step);
           const state = get();
           const newState = { ...initialState, currentStep: step };
           
@@ -156,7 +158,7 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
           const state = get();
           const completedSteps: number[] = [];
           
-          for (let i = 0; i <= 13; i++) {
+          for (let i = 0; i <= 11; i++) {
             if (state.isStepComplete(i)) {
               completedSteps.push(i);
             }
@@ -167,7 +169,7 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
 
         isRegistrationComplete: () => {
           const state = get();
-          return state.getCompletedSteps().length === 14; // 0-13 steps
+          return state.getCompletedSteps().length === 14; // 0-11 steps
         },
       }),
       {
@@ -197,8 +199,6 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
           step9: state.step9,
           step10: state.step10,
           step11: state.step11,
-          step12: state.step12,
-          step13: state.step13,
           currentStep: state.currentStep,
         }),
       }
@@ -235,10 +235,6 @@ function getRequiredFieldsForStep(step: number): string[] {
     case 10:
       return ['projects'];
     case 11:
-      return ['projects'];
-    case 12:
-      return ['projects'];
-    case 13:
       return ['agreesToTerms'];
     default:
       return [];

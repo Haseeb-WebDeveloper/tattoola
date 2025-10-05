@@ -11,6 +11,15 @@ import type {
 import { UserRole } from '../types/auth';
 import { supabase } from '../utils/supabase';
 
+// Simple UUID generator for React Native
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export class AuthService {
   /**
    * Sign in with email and password
@@ -306,7 +315,60 @@ export class AuthService {
       throw new Error('No authenticated user found');
     }
 
+    console.log("saving artist profile with this data:", data)
+
     const userId = session.session.user.id;
+
+    console.log("user id:", userId)
+
+    // Ensure a users row exists for this auth user
+    const { data: existingUser, error: existUserError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    console.log("existing user:", existingUser)
+
+    if (existUserError) {
+      throw new Error(existUserError.message);
+    }
+
+    let baseUserRow: any = existingUser;
+    if (!baseUserRow) {
+      const email = session.session.user.email || '';
+      const username = session.session.user.user_metadata?.username || email.split('@')[0] || 'user';
+      const now = new Date().toISOString();
+
+      const { data: insertedUser, error: insertUserError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email,
+          username,
+          firstName: data.step1.firstName,
+          lastName: data.step1.lastName,
+          avatar: data.step2.avatar,
+          bio: data.step5.bio,
+          isActive: true,
+          isVerified: !!session.session.user.email_confirmed_at,
+          isPublic: false,
+          role: UserRole.ARTIST,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .select()
+        .single();
+
+      if (insertUserError) {
+        throw new Error(insertUserError.message);
+      }
+
+      baseUserRow = insertedUser;
+    }
+
+    console.log("base user row:", baseUserRow)
+    console.log("Updating user profile with this data:", data)
 
     // Update user profile
     const { data: updatedUser, error: userError } = await supabase
@@ -326,12 +388,15 @@ export class AuthService {
       throw new Error(userError.message);
     }
 
+    console.log("updated user:", updatedUser)
+
     // Create artist profile
     const adminOrUserClient = supabase;
     const now2 = new Date().toISOString();
     const { data: artistProfile, error: artistError } = await adminOrUserClient
       .from('artist_profiles')
       .insert({
+        id: generateUUID(), // Generate UUID for the artist profile
         userId: userId,
         workArrangement: data.step3.workArrangement,
         businessName: data.step4.businessName,
@@ -354,6 +419,9 @@ export class AuthService {
     if (artistError) {
       throw new Error(artistError.message);
     }
+
+    console.log("artist profile creatd")
+    console.log("creating favourite style")
 
     // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
     if (data.step6.favoriteStyles.length > 0) {
@@ -393,9 +461,12 @@ export class AuthService {
       }
     }
 
+    console.log("adding services")
+
+
     // Add services - let Supabase generate UUIDs
-    if (data.step7.services.length > 0) {
-      const servicesData = data.step7.services.map((serviceId) => ({
+    if (data.step7.servicesOffered && data.step7.servicesOffered.length > 0) {
+      const servicesData = data.step7.servicesOffered.map((serviceId) => ({
         artistId: artistProfile.id,
         serviceId: serviceId,
       }));
@@ -409,8 +480,11 @@ export class AuthService {
       }
     }
 
+    console.log("adding services")
+
+
     // Add body parts - let Supabase generate UUIDs
-    if (data.step8.bodyParts.length > 0) {
+    if (data.step8.bodyParts && data.step8.bodyParts.length > 0) {
       const bodyPartsData = data.step8.bodyParts.map((bodyPartId) => ({
         artistId: artistProfile.id,
         bodyPartId: bodyPartId,
@@ -425,12 +499,19 @@ export class AuthService {
       }
     }
 
+    console.log("adding body parts")
+
     // Add portfolio projects
+    console.log("step10 projects:", data.step10?.projects);
+    console.log("step11 projects:", (data as any).step11?.projects);
+    
     const projects = [
       data.step10?.projects,
       (data as any).step11?.projects,
       (data as any).step12?.projects,
-    ].filter((project: any) => project && project.length > 0);
+    ].filter((project: any) => project && Array.isArray(project) && project.length > 0);
+    
+    console.log("filtered projects:", projects);
 
     if (projects.length > 0) {
       let projectOrder = 1;
@@ -439,13 +520,24 @@ export class AuthService {
         if (!stepProjects || stepProjects.length === 0) continue;
 
         for (const project of stepProjects) {
-          if (!project.title) continue;
+          console.log("Processing project:", { title: project.title, description: project.description });
+          
+          // Skip if no title and no description
+          if (!project.title && !project.description) {
+            console.log("Skipping project - no title or description");
+            continue;
+          }
+
+          // Use title if available, otherwise use description or a default
+          const projectTitle = project.title || project.description || `Portfolio Project ${projectOrder}`;
+          console.log("Using project title:", projectTitle);
 
           const { data: portfolioProject, error: projectError } = await adminOrUserClient
             .from('portfolio_projects')
             .insert({
+              id: generateUUID(), // Generate UUID for the portfolio project
               artistId: artistProfile.id,
-              title: project.title,
+              title: projectTitle,
               description: project.description,
               order: projectOrder,
               createdAt: new Date().toISOString(),
@@ -457,6 +549,8 @@ export class AuthService {
           if (projectError) {
             throw new Error(projectError.message);
           }
+
+          console.log("Portfolio project created successfully:", portfolioProject.id);
 
           // Add project media - let Supabase generate UUIDs
           const allMedia = [
@@ -509,6 +603,8 @@ export class AuthService {
           .eq('id', artistProfile.id);
       }
     }
+
+    console.log("portfolio projects added")
 
     return this.transformDatabaseUser(updatedUser);
   }

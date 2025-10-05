@@ -215,7 +215,7 @@ export interface ArtistRegistrationStep6 {
 }
 
 export interface ArtistRegistrationStep7 {
-  services: string[]; // service IDs
+  servicesOffered: string[]; // service IDs
 }
 
 export interface ArtistRegistrationStep8 {
@@ -232,14 +232,6 @@ export interface ArtistRegistrationStep10 {
 }
 
 export interface ArtistRegistrationStep11 {
-  projects: PortfolioProject[]; // second project
-}
-
-export interface ArtistRegistrationStep12 {
-  projects: PortfolioProject[]; // third project
-}
-
-export interface ArtistRegistrationStep13 {
   agreesToTerms: boolean;
 }
 
@@ -283,7 +275,7 @@ export interface CompleteArtistRegistration {
   step8: ArtistRegistrationStep8;
   step9: ArtistRegistrationStep9;
   step10: ArtistRegistrationStep10;
-  step13: ArtistRegistrationStep13;
+  step11: ArtistRegistrationStep11;
 }
 
 // Auth error types

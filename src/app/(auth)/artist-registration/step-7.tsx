@@ -156,7 +156,7 @@ export default function ArtistRegistrationStep7() {
               <Ionicons name="chevron-back" size={24} color="#000000" />
             </TouchableOpacity>
             
-            <StepIndicator currentStep={7} totalSteps={13} />
+            <StepIndicator currentStep={7} totalSteps={11} />
             
             <Text style={styles.title}>Services Offered</Text>
             <Text style={styles.subtitle}>

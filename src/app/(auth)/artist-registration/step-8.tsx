@@ -160,7 +160,7 @@ export default function ArtistRegistrationStep8() {
               <Ionicons name="chevron-back" size={24} color="#000000" />
             </TouchableOpacity>
             
-            <StepIndicator currentStep={8} totalSteps={13} />
+            <StepIndicator currentStep={8} totalSteps={11} />
             
             <Text style={styles.title}>Body Parts Worked On</Text>
             <Text style={styles.subtitle}>
