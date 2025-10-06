@@ -8,16 +8,21 @@ export default function IndexScreen() {
   const { user, initialized, loading } = useAuth();
 
   useEffect(() => {
+    console.log('IndexScreen useEffect - user:', user, 'initialized:', initialized, 'loading:', loading);
+    
     if (!initialized || loading) {
+      console.log('Still initializing or loading, not redirecting yet');
       return; // Still initializing
     }
 
     if (user) {
+      console.log('User is authenticated, redirecting to main app');
       // User is authenticated, redirect to main app
       router.replace('/(tabs)');
     } else {
-      // User is not authenticated, redirect to login
-      router.replace('/(auth)/login');
+      console.log('User is not authenticated, redirecting to welcome');
+      // User is not authenticated, redirect to welcome
+      router.replace('/(auth)/welcome');
     }
   }, [user, initialized, loading]);
 

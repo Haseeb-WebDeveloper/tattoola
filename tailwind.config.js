@@ -23,7 +23,7 @@ module.exports = {
         background: "#000000",
         foreground: "#FFFFFF",
         primary: {
-          DEFAULT: "##AE0E0E", // Black background from SVG
+          DEFAULT: "#AE0E0E", // Black background from SVG
           foreground: "#FFFFFF", // White text
           50: "#F8F9FA",
           100: "#E9ECEF",
@@ -149,36 +149,24 @@ module.exports = {
         },
       },
       fontFamily: {
-        // Clean, modern font stack
-        sans: [
-          "Inter",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "Helvetica Neue",
-          "Arial",
-          "sans-serif",
-        ],
-        mono: [
-          "JetBrains Mono",
-          "Menlo",
-          "Monaco",
-          "Consolas",
-          "Liberation Mono",
-          "Courier New",
-          "monospace",
-        ],
-        heading: [
-          "Inter",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "sans-serif",
-        ],
+        // Base families
+        montserrat: ["Montserrat-Regular", "Montserrat", "system-ui", "sans-serif"],
+        neue: ["NeueHaasDisplayPro", "Montserrat", "system-ui", "sans-serif"],
+
+        // Explicit weight-specific families for convenience utilities
+        montserratLight: ["Montserrat-Light", "Montserrat", "system-ui", "sans-serif"],
+        montserratMedium: ["Montserrat-Medium", "Montserrat", "system-ui", "sans-serif"],
+        montserratSemibold: ["Montserrat-SemiBold", "Montserrat", "system-ui", "sans-serif"],
+        montserratBold: ["Montserrat-Bold", "Montserrat", "system-ui", "sans-serif"],
+        montserratBlack: ["Montserrat-Black", "Montserrat", "system-ui", "sans-serif"],
+
+        neueUltraThin: ["NeueHaasDisplayPro-UltraThin", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueThin: ["NeueHaasDisplayPro-Thin", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueExtraLight: ["NeueHaasDisplayPro-ExtraLight", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueLight: ["NeueHaasDisplayPro-Light", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueMedium: ["NeueHaasDisplayPro-Medium", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueBold: ["NeueHaasDisplayPro-Bold", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueBlack: ["NeueHaasDisplayPro-Black", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Typography scale inspired by the SVG text hierarchy

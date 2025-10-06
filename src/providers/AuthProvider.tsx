@@ -60,8 +60,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
               expiresAt: session.expires_at || 0,
             });
 
-            // Do NOT run checkProfileCompletion here, only after login
-            // Only redirect to registration step if verified and just signed up (handled in signIn)
           } catch (error) {
             console.error('Error initializing minimal auth user:', error);
             setUser(null);
@@ -107,8 +105,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const initializeAuth = async () => {
     try {
+      console.log('AuthProvider: Starting initializeAuth');
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('AuthProvider: Got session:', session?.user?.id || 'no session');
 
       if (session?.user) {
         const authUser: any = session.user;
@@ -135,10 +135,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         // Do NOT run checkProfileCompletion here, only after login
+        console.log('AuthProvider: Set user from session');
+      } else {
+        // No session, ensure user is null
+        console.log('AuthProvider: No session, setting user to null');
+        setUser(null);
+        setSession(null);
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
+      // On error, ensure user is null
+      console.log('AuthProvider: Error occurred, setting user to null');
+      setUser(null);
+      setSession(null);
     } finally {
+      console.log('AuthProvider: Setting loading to false and initialized to true');
       setLoading(false);
       setInitialized(true);
     }

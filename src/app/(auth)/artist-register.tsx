@@ -1,42 +1,58 @@
-import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { Input } from '@/components/ui/Input';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useAuth } from '@/providers/AuthProvider';
-import type { FormErrors, RegisterCredentials } from '@/types/auth';
-import { UserRole } from '@/types/auth';
-import { RegisterValidationSchema, ValidationUtils } from '@/utils/validation';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useAuth } from "@/providers/AuthProvider";
+import { useSignupStore } from "@/stores/signupStore";
+import type { FormErrors, RegisterCredentials } from "@/types/auth";
+import { UserRole } from "@/types/auth";
+import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
+import { router } from "expo-router";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
+  Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ArtistRegisterScreen() {
   const { signUp, loading } = useAuth();
+  const { setInProgress, setSuccess, setError, reset } = useSignupStore();
   const [formData, setFormData] = useState<RegisterCredentials>({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     role: UserRole.ARTIST,
   });
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [focusedField, setFocusedField] = useState<
+    keyof RegisterCredentials | null
+  >(null);
 
-  const handleInputChange = (field: keyof RegisterCredentials, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+  const totalSteps = 13;
+  const currentStep = 1;
+  const steps = useMemo(
+    () => Array.from({ length: totalSteps }, (_, i) => i + 1),
+    []
+  );
+
+  const handleInputChange = (
+    field: keyof RegisterCredentials,
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Clear error for this field
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -47,7 +63,7 @@ export default function ArtistRegisterScreen() {
         required: true,
         custom: (value: string) => {
           if (value !== formData.password) {
-            return 'Passwords do not match';
+            return "Passwords do not match";
           }
           return true;
         },
@@ -55,11 +71,7 @@ export default function ArtistRegisterScreen() {
     };
 
     const formErrors = ValidationUtils.validateForm(formData, validationRules);
-    
-    if (!acceptedTerms) {
-      formErrors.terms = 'You must accept the Terms of Use and Privacy Policy';
-    }
-    
+
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
   };
@@ -69,39 +81,40 @@ export default function ArtistRegisterScreen() {
       return;
     }
 
+    // Navigate immediately to email confirmation and start background signup
+    setInProgress();
+    router.push("/(auth)/email-confirmation");
+
     try {
       const result = await signUp(formData);
-      
-      if (result.needsVerification) {
-        Alert.alert(
-          'Registration Successful',
-          'Please check your email to verify your account before continuing.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.push('/(auth)/email-confirmation'),
-            },
-          ]
-        );
-      } else {
-        // Navigate to artist registration flow
-        router.push('/(auth)/artist-registration/step-2');
+      // If sign up succeeds, mark success and remain on email-confirmation
+      setSuccess();
+      if (!result.needsVerification) {
+        // If for some reason verification isn't required, continue flow
+        router.push("/(auth)/artist-registration/step-2");
       }
     } catch (error) {
-      Alert.alert(
-        'Registration Failed',
-        error instanceof Error ? error.message : 'An error occurred during registration',
-        [{ text: 'OK' }]
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during registration";
+      setError(message);
+      // Go back to the form and show the error
+      router.replace("/(auth)/artist-register");
+      Alert.alert("Registration Failed", message, [{ text: "OK" }]);
     }
   };
 
   const handleLogin = () => {
-    router.push('/(auth)/login');
+    router.push("/(auth)/login");
   };
 
-  const handleUserRegister = () => {
-    router.push('/(auth)/register');
+  const goToReg = () => {
+    router.push("/(auth)/email-confirmation");
+  };
+
+  const handleClose = () => {
+    router.replace("/(auth)/welcome");
   };
 
   if (loading) {
@@ -113,132 +126,224 @@ export default function ArtistRegisterScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 10}
+      className="flex-1"
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          className="px-6 py-8"
+          className="flex-1 bg-black"
+          contentContainerClassName="flex-grow"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center mb-8">
-            <Text className="text-3xl font-bold text-foreground text-center mb-2">
-              Join as an Artist
-            </Text>
-            <Text className="text-base text-muted-foreground text-center">
-              Create your professional tattoo artist account
-            </Text>
+          {/* Header: close + logo */}
+          <View className="px-4 my-8">
+            <View className="flex-row items-center justify-between">
+              <TouchableOpacity
+                onPress={handleClose}
+                className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
+              >
+                <Image
+                  source={require("@/assets/images/icons/close.png")}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <Image
+                source={require("@/assets/logo/logo-light.png")}
+                className="h-10"
+                resizeMode="contain"
+              />
+              <View className="w-10" />
+            </View>
+            <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
           </View>
 
-          <View className="bg-muted/20 rounded-xl p-5 mb-8">
-            <Text className="text-lg font-semibold text-foreground mb-4 text-center">
-              Artist Benefits:
+          {/* Test */}
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={goToReg}
+            className="bg-primary rounded-full py-4 px-8 items-center w-full"
+          >
+            <Text className="text-foreground tat-body-1 font-neueBold">
+              Go to conformtion
             </Text>
-            <View className="space-y-3">
-              <View className="flex-row items-center">
-                <Text className="text-base mr-3 w-5">✨</Text>
-                <Text className="text-sm text-foreground flex-1">Showcase your portfolio</Text>
-              </View>
-              <View className="flex-row items-center">
-                <Text className="text-base mr-3 w-5">🎯</Text>
-                <Text className="text-sm text-foreground flex-1">Connect with tattoo lovers</Text>
-              </View>
-              <View className="flex-row items-center">
-                <Text className="text-base mr-3 w-5">💼</Text>
-                <Text className="text-sm text-foreground flex-1">Manage your studio</Text>
-              </View>
-              <View className="flex-row items-center">
-                <Text className="text-base mr-3 w-5">📈</Text>
-                <Text className="text-sm text-foreground flex-1">Grow your business</Text>
-              </View>
+          </TouchableOpacity>
+
+          {/* Steps indicator */}
+          <View className="items-center mb-8">
+            <View className="flex-row items-center relative gap-1">
+              {/* Horizontal line behind the steps */}
+              <View
+                className="absolute left-0 right-0 top-1/2"
+                style={{
+                  height: 1,
+                  backgroundColor: "#A49A99",
+                  zIndex: 0,
+                  marginLeft: 0,
+                  marginRight: 0,
+                }}
+              />
+              {steps.map((step, idx) => (
+                <View
+                  key={step}
+                  className={`${step === currentStep ? "w-4 h-4" : " w-[9px] h-[9px] opacity-70"} rounded-full bg-foreground `}
+                  style={{
+                    zIndex: 100,
+                  }}
+                />
+              ))}
             </View>
           </View>
 
-          <View className="mb-8">
-            <Input
-              label="Username"
-              placeholder="Choose a unique username"
-              value={formData.username}
-              onChangeText={(value) => handleInputChange('username', value)}
-              error={errors.username}
-              required
-              autoCapitalize="none"
+          {/* Title */}
+          <View className="px-6 mb-6 flex-row gap-2 items-center justify-center">
+            <Image
+              source={require("@/assets/images/icons/pen.png")}
+              resizeMode="contain"
+              className="w-7 h-7"
             />
+            <Text className="text-foreground section-title font-neueBold">
+              Registrati come Artista
+            </Text>
+          </View>
 
-            <Input
-              label="Email"
-              type="email"
-              placeholder="Enter your professional email"
-              value={formData.email}
-              onChangeText={(value) => handleInputChange('email', value)}
-              error={errors.email}
-              required
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Create a secure password (min 8 characters, 1 number)"
-              value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
-              error={errors.password}
-              required
-            />
-
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              error={errors.confirmPassword}
-              required
-            />
-
-            <View className="mb-6">
-              <Checkbox
-                checked={acceptedTerms}
-                onPress={() => setAcceptedTerms(!acceptedTerms)}
-                label="I have read the Terms of Use and Privacy Policy, and I confirm that I am a licensed tattoo artist"
+          {/* Inputs */}
+          <View className="px-6">
+            {/* Username */}
+            <Text className="text-foreground textcenter mb-2 ta-body-3-button-text">
+              Username (inserisci un nome univoco)
+            </Text>
+            <View
+              className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
+            >
+              <TextInput
+                className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+                placeholder="TattooKing_97"
+                placeholderTextColor="#A49A99"
+                autoCapitalize="none"
+                value={formData.username}
+                onChangeText={(value) => handleInputChange("username", value)}
+                onFocus={() => setFocusedField("username")}
+                onBlur={() => setFocusedField(null)}
               />
-              {errors.terms && (
-                <Text className="text-xs text-error mt-1">{errors.terms}</Text>
+            </View>
+            {!!errors.username && (
+              <Text className="text-xs text-error mt-1">{errors.username}</Text>
+            )}
+
+            {/* Email */}
+            <View className="mt-6">
+              <Text className="text-foreground mb-2 ta-body-3-button-text">
+                Email
+              </Text>
+              <View
+                className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+              >
+                <TextInput
+                  className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+                  placeholder="abc@gmail.com"
+                  placeholderTextColor="#A49A99"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={formData.email}
+                  onChangeText={(value) => handleInputChange("email", value)}
+                  onFocus={() => setFocusedField("email")}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
+              {!!errors.email && (
+                <Text className="text-xs text-error mt-1">{errors.email}</Text>
               )}
             </View>
 
-            <Button
-              title="Register as Artist"
-              onPress={handleRegister}
-              loading={loading}
-              className="mt-2"
-            />
-          </View>
+            {/* Password */}
+            <View className="mt-6">
+              <Text className="text-foreground mb-2 ta-body-3-button-text">
+                Password (min. 8 caratteri, di cui almeno un numero)
+              </Text>
+              <View
+                className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+              >
+                <TextInput
+                  className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+                  placeholder="*************"
+                  placeholderTextColor="#A49A99"
+                  secureTextEntry
+                  value={formData.password}
+                  onChangeText={(value) => handleInputChange("password", value)}
+                  onFocus={() => setFocusedField("password")}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
+              {!!errors.password && (
+                <Text className="text-xs text-error mt-1">
+                  {errors.password}
+                </Text>
+              )}
+            </View>
 
-          <View className="items-center gap-4">
-            <TouchableOpacity
-              className="p-2"
-              onPress={handleLogin}
-            >
-              <Text className="text-base text-muted-foreground text-center">
+            {/* Confirm Password */}
+            <View className="mt-6">
+              <Text className="text-foreground mb-2 ta-body-3-button-text">
+                Conferma Password
+              </Text>
+              <View
+                className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
+              >
+                <TextInput
+                  className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+                  placeholder="*************"
+                  placeholderTextColor="#A49A99"
+                  secureTextEntry
+                  value={formData.confirmPassword}
+                  onChangeText={(value) =>
+                    handleInputChange("confirmPassword", value)
+                  }
+                  onFocus={() => setFocusedField("confirmPassword")}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
+              {!!errors.confirmPassword && (
+                <Text className="text-xs text-error mt-1">
+                  {errors.confirmPassword}
+                </Text>
+              )}
+            </View>
+
+            {/* Register Button */}
+            <View className="items-center mt-8">
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleRegister}
+                disabled={loading}
+                className="bg-primary rounded-full py-4 px-8 items-center w-full"
+              >
+                <Text className="text-foreground tat-body-1 font-neueBold">
+                  Register
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Footer link */}
+            <View className="items-center mt-8 mb-8">
+              <Text className="text-[#A49A99]">
                 Already have an account?{" "}
-                <Text className="text-foreground font-semibold">Log in</Text>
+                <Text
+                  className="text-foreground font-semibold"
+                  onPress={handleLogin}
+                >
+                  Sign in
+                </Text>
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="p-2"
-              onPress={handleUserRegister}
-            >
-              <Text className="text-base text-muted-foreground text-center">
-                Not an artist?{" "}
-                <Text className="text-foreground font-semibold">Join as tattoo lover</Text>
-              </Text>
-            </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

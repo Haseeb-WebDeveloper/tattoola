@@ -10,7 +10,7 @@ interface AuthGuardProps {
   requireAuth?: boolean;
   requireRoles?: UserRole[];
   requireVerified?: boolean;
-  redirectTo?: string;
+  redirectTo?: any;
 }
 
 export function AuthGuard({
@@ -18,23 +18,26 @@ export function AuthGuard({
   requireAuth = true,
   requireRoles = [],
   requireVerified = false,
-  redirectTo = '/(auth)/login',
+  redirectTo = '/(auth)/welcome',
 }: AuthGuardProps) {
   const { user, loading, initialized } = useAuth();
 
   useEffect(() => {
     if (!initialized || loading) {
+      console.log('AuthGuard: waiting - initialized:', initialized, 'loading:', loading);
       return; // Still loading, don't redirect yet
     }
 
     // Check authentication requirement
     if (requireAuth && !user) {
+      console.log('AuthGuard: requireAuth & no user → redirect', redirectTo);
       router.replace(redirectTo);
       return;
     }
 
     // Check if user shouldn't be here (already authenticated)
     if (!requireAuth && user) {
+      console.log('AuthGuard: guest route but user exists → /(tabs)');
       router.replace('/(tabs)');
       return;
     }
@@ -42,6 +45,7 @@ export function AuthGuard({
     // Check role requirements
     if (requireAuth && user && requireRoles.length > 0) {
       if (!requireRoles.includes(user.role)) {
+        console.log('AuthGuard: role mismatch → /(tabs)');
         router.replace('/(tabs)'); // Redirect to default authenticated route
         return;
       }
@@ -49,6 +53,7 @@ export function AuthGuard({
 
     // Check verification requirement
     if (requireAuth && user && requireVerified && !user.isVerified) {
+      console.log('AuthGuard: unverified → email-confirmation');
       router.replace('/(auth)/email-confirmation');
       return;
     }

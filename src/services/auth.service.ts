@@ -82,6 +82,8 @@ export class AuthService {
    * Sign up with email and password
    */
   static async signUp(credentials: RegisterCredentials): Promise<{ user: User; needsVerification: boolean }> {
+      console.log("signup started", credentials)
+    
     // Create Supabase auth user only, tagging metadata for onboarding flow (TL/AR)
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
@@ -102,6 +104,8 @@ export class AuthService {
     if (!data.user) {
       throw new Error('User creation failed');
     }
+
+    console.log("signup done", data)
     
     // Build a minimal user object for the UI; full DB profile will be created after setup
     const minimalUser: User = {
