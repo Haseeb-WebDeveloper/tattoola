@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo start",
+    "dev:setup": "node scripts/dev-setup.js",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo run:android",
     "ios": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo run:ios",
@@ -14,7 +15,9 @@
     "build:preview:android": "eas build --platform android --profile preview",
     "build:preview:ios": "eas build --platform ios --profile preview",
     "build:prod:android": "eas build --platform android --profile production",
-    "build:prod:ios": "eas build --platform ios --profile production"
+    "build:prod:ios": "eas build --platform ios --profile production",
+    "update:preview": "eas update --channel preview",
+    "update:production": "eas update --channel production"
   },
   "dependencies": {
     "@cloudinary/url-gen": "^1.22.0",

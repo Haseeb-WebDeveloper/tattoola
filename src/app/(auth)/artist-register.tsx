@@ -81,17 +81,19 @@ export default function ArtistRegisterScreen() {
       return;
     }
 
+    console.log("formData starting registration", formData);
+
     // Navigate immediately to email confirmation and start background signup
     setInProgress();
     router.push("/(auth)/email-confirmation");
 
     try {
       const result = await signUp(formData);
+      console.log("result from signUp", result);
       // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
       if (!result.needsVerification) {
-        // If for some reason verification isn't required, continue flow
-        router.push("/(auth)/artist-registration/step-2");
+        router.push("/(auth)/welcome");
       }
     } catch (error) {
       const message =
@@ -161,17 +163,6 @@ export default function ArtistRegisterScreen() {
             </View>
             <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
           </View>
-
-          {/* Test */}
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={goToReg}
-            className="bg-primary rounded-full py-4 px-8 items-center w-full"
-          >
-            <Text className="text-foreground tat-body-1 font-neueBold">
-              Go to conformtion
-            </Text>
-          </TouchableOpacity>
 
           {/* Steps indicator */}
           <View className="items-center mb-8">

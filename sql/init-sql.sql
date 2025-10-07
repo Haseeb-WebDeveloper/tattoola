@@ -279,6 +279,7 @@ CREATE TABLE "public"."municipalities" (
     "name" TEXT NOT NULL,
     "provinceId" TEXT NOT NULL,
     "postalCode" TEXT,
+    "imageUrl" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -370,6 +371,7 @@ CREATE TABLE "public"."provinces" (
     "name" TEXT NOT NULL,
     "code" TEXT,
     "country" TEXT NOT NULL DEFAULT 'Italy',
+    "imageUrl" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

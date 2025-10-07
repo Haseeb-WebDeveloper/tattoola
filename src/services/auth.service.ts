@@ -82,61 +82,91 @@ export class AuthService {
    * Sign up with email and password
    */
   static async signUp(credentials: RegisterCredentials): Promise<{ user: User; needsVerification: boolean }> {
-      console.log("signup started", credentials)
-    
-    // Create Supabase auth user only, tagging metadata for onboarding flow (TL/AR)
-    const { data, error } = await supabase.auth.signUp({
-      email: credentials.email,
-      password: credentials.password,
-      options: {
-        data: {
-          displayName: credentials.role === UserRole.ARTIST ? 'AR' : 'TL',
-          username: credentials.username,
-        },
-        emailRedirectTo: 'tattoola://', // Use app scheme for deep linking
-      },
+    console.log("🚀 AuthService.signUp: Starting signup process", { 
+      email: credentials.email, 
+      username: credentials.username, 
+      role: credentials.role 
     });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data.user) {
-      throw new Error('User creation failed');
-    }
-
-    console.log("signup done", data)
     
-    // Build a minimal user object for the UI; full DB profile will be created after setup
-    const minimalUser: User = {
-      id: data.user.id,
-      email: credentials.email,
-      username: credentials.username,
-      firstName: undefined,
-      lastName: undefined,
-      avatar: undefined,
-      bio: undefined,
-      phone: undefined,
-      country: undefined,
-      province: undefined,
-      municipality: undefined,
-      instagram: undefined,
-      tiktok: undefined,
-      isActive: true,
-      isVerified: false,
-      isPublic: credentials.role === UserRole.TATTOO_LOVER,
-      role: credentials.role,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      lastLoginAt: undefined,
-      artistProfile: undefined,
-      adminProfile: undefined,
-    };
+    try {
+      // Create Supabase auth user only, tagging metadata for onboarding flow (TL/AR)
+      console.log("📧 AuthService.signUp: Calling supabase.auth.signUp");
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          data: {
+            displayName: credentials.role === UserRole.ARTIST ? 'AR' : 'TL',
+            username: credentials.username,
+          },
+          emailRedirectTo: 'tattoola://', // Use app scheme for deep linking
+        },
+      });
 
-    return {
-      user: minimalUser,
-      needsVerification: !data.session,
-    };
+      console.log("📧 AuthService.signUp: Supabase response", { 
+        hasData: !!data, 
+        hasError: !!error, 
+        hasUser: !!data?.user,
+        hasSession: !!data?.session,
+        errorMessage: error?.message 
+      });
+
+      if (error) {
+        console.error("❌ AuthService.signUp: Supabase error", error);
+        throw new Error(error.message);
+      }
+
+      if (!data.user) {
+        console.error("❌ AuthService.signUp: No user returned from Supabase");
+        throw new Error('User creation failed');
+      }
+
+      console.log("✅ AuthService.signUp: User created successfully", { 
+        userId: data.user.id, 
+        email: data.user.email,
+        needsVerification: !data.session 
+      });
+    
+      // Build a minimal user object for the UI; full DB profile will be created after setup
+      console.log("👤 AuthService.signUp: Building minimal user object");
+      const minimalUser: User = {
+        id: data.user.id,
+        email: credentials.email,
+        username: credentials.username,
+        firstName: undefined,
+        lastName: undefined,
+        avatar: undefined,
+        bio: undefined,
+        phone: undefined,
+        country: undefined,
+        province: undefined,
+        municipality: undefined,
+        instagram: undefined,
+        tiktok: undefined,
+        isActive: true,
+        isVerified: false,
+        isPublic: credentials.role === UserRole.TATTOO_LOVER,
+        role: credentials.role,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastLoginAt: undefined,
+        artistProfile: undefined,
+        adminProfile: undefined,
+      };
+
+      console.log("✅ AuthService.signUp: Signup completed successfully", { 
+        userId: minimalUser.id,
+        needsVerification: !data.session 
+      });
+
+      return {
+        user: minimalUser,
+        needsVerification: !data.session,
+      };
+    } catch (error) {
+      console.error("❌ AuthService.signUp: Signup failed", error);
+      throw error;
+    }
   }
 
   /**
@@ -677,22 +707,51 @@ export class AuthService {
    * Verify email with token
    */
   static async verifyEmail(token: string): Promise<void> {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: token,
-      type: 'email',
+    console.log("🔐 AuthService.verifyEmail: Starting email verification", { 
+      tokenLength: token?.length,
+      tokenPrefix: token?.substring(0, 10) + '...'
     });
+    
+    try {
+      // For email verification, we need to use the token directly
+      // The token from Supabase email contains all necessary information
+      console.log("🔐 AuthService.verifyEmail: Calling supabase.auth.verifyOtp");
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'email',
+      });
 
-    if (error) {
-      throw new Error(error.message);
-    }
+      console.log("🔐 AuthService.verifyEmail: Supabase verifyOtp response", { 
+        hasError: !!error,
+        errorMessage: error?.message 
+      });
 
-    // Update user verification status
-    const { data: session } = await supabase.auth.getSession();
-    if (session?.session?.user) {
-      await supabase
-        .from('users')
-        .update({ isVerified: true })
-        .eq('id', session.session.user.id);
+      if (error) {
+        console.error("❌ AuthService.verifyEmail: Verification failed", error);
+        throw new Error(error.message);
+      }
+
+      console.log("✅ AuthService.verifyEmail: Email verified successfully");
+
+      // Update user verification status
+      console.log("👤 AuthService.verifyEmail: Getting current session");
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (session?.session?.user) {
+        console.log("👤 AuthService.verifyEmail: Updating user verification status", { 
+          userId: session.session.user.id 
+        });
+        await supabase
+          .from('users')
+          .update({ isVerified: true })
+          .eq('id', session.session.user.id);
+        console.log("✅ AuthService.verifyEmail: User verification status updated");
+      } else {
+        console.warn("⚠️ AuthService.verifyEmail: No session found after verification");
+      }
+    } catch (error) {
+      console.error("❌ AuthService.verifyEmail: Email verification failed", error);
+      throw error;
     }
   }
 

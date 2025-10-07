@@ -179,7 +179,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               console.log('Sign in result user role is artist, redirecting to artist management/registration steps');
               // Redirect to artist management/registration steps
               setTimeout(() => {
-                router.replace('/(auth)/artist-registration/step-0');
+                router.replace('/(auth)/artist-registration/step-3');
               }, 100);
             } else if (result.user.role === 'TATTOO_LOVER') {
               console.log('Sign in result user role is tattoo lover, redirecting to user management/registration steps');
@@ -217,20 +217,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signUp = async (credentials: RegisterCredentials) => {
+    console.log("🚀 AuthProvider.signUp: Starting signup process", { 
+      email: credentials.email, 
+      role: credentials.role 
+    });
     setLoading(true);
     try {
+      console.log("📞 AuthProvider.signUp: Calling AuthService.signUp");
       const result = await AuthService.signUp(credentials);
+      console.log("📞 AuthProvider.signUp: AuthService.signUp completed", { 
+        needsVerification: result.needsVerification,
+        hasUser: !!result.user 
+      });
 
       // Don't set user/session here if email verification is required
       if (!result.needsVerification) {
+        console.log("👤 AuthProvider.signUp: Setting user (no verification needed)");
         setUser(result.user);
+      } else {
+        console.log("📧 AuthProvider.signUp: Email verification required, not setting user");
       }
 
+      console.log("✅ AuthProvider.signUp: Signup completed successfully");
       return result;
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error('❌ AuthProvider.signUp: Signup failed', error);
       throw error;
     } finally {
+      console.log("🏁 AuthProvider.signUp: Setting loading to false");
       setLoading(false);
     }
   };
@@ -344,19 +358,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const verifyEmail = async (token: string) => {
+    console.log("🔐 AuthProvider.verifyEmail: Starting email verification", { 
+      tokenLength: token?.length,
+      hasUser: !!user 
+    });
     setLoading(true);
     try {
+      console.log("📞 AuthProvider.verifyEmail: Calling AuthService.verifyEmail");
       await AuthService.verifyEmail(token);
+      console.log("✅ AuthProvider.verifyEmail: Email verification successful");
 
       // Refresh user to get updated verification status
       if (user) {
+        console.log("👤 AuthProvider.verifyEmail: Refreshing user profile", { userId: user.id });
         const refreshedUser = await AuthService.getUserProfile(user.id);
         setUser(refreshedUser);
+        console.log("✅ AuthProvider.verifyEmail: User profile refreshed");
+      } else {
+        console.warn("⚠️ AuthProvider.verifyEmail: No user to refresh");
       }
     } catch (error) {
-      console.error('Verify email error:', error);
+      console.error('❌ AuthProvider.verifyEmail: Email verification failed', error);
       throw error;
     } finally {
+      console.log("🏁 AuthProvider.verifyEmail: Setting loading to false");
       setLoading(false);
     }
   };

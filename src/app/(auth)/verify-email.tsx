@@ -12,10 +12,13 @@ export default function VerifyEmailScreen() {
   const searchParams = useLocalSearchParams();
 
   useEffect(() => {
+    console.log("VerifyEmailScreen useEffect");
     handleEmailVerification();
   }, []);
 
   const handleEmailVerification = useCallback(async () => {
+    console.log("🚀 VerifyEmailScreen.handleEmailVerification: Starting email verification");
+    
     try {
       setLoading(true);
       setError(null);
@@ -24,14 +27,29 @@ export default function VerifyEmailScreen() {
       const token = searchParams.token as string;
       const type = searchParams.type as string;
 
+      console.log("🔐 VerifyEmailScreen.handleEmailVerification: URL parameters", { 
+        hasToken: !!token, 
+        tokenLength: token?.length,
+        type: type 
+      });
+
       if (!token || type !== 'signup') {
+        console.error("❌ VerifyEmailScreen.handleEmailVerification: Invalid verification link", { 
+          hasToken: !!token, 
+          type: type 
+        });
         throw new Error('Invalid verification link');
       }
 
+      console.log("✅ VerifyEmailScreen.handleEmailVerification: Token validation passed");
+
       // Verify the email with the token
+      console.log("📞 VerifyEmailScreen.handleEmailVerification: Calling verifyEmail");
       await verifyEmail(token);
+      console.log("✅ VerifyEmailScreen.handleEmailVerification: Email verification successful");
 
       // If we get here, verification was successful
+      console.log("🎉 VerifyEmailScreen.handleEmailVerification: Showing success alert");
       Alert.alert(
         'Email Verified!',
         'Your email has been successfully verified. You can now complete your profile.',
@@ -39,6 +57,7 @@ export default function VerifyEmailScreen() {
           {
             text: 'Continue',
             onPress: () => {
+              console.log("📧 VerifyEmailScreen.handleEmailVerification: Navigating to email confirmation");
               // The AuthProvider will handle the redirect based on user role
               router.replace('/(auth)/email-confirmation');
             },
@@ -46,6 +65,7 @@ export default function VerifyEmailScreen() {
         ]
       );
     } catch (err) {
+      console.error("❌ VerifyEmailScreen.handleEmailVerification: Verification failed", err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to verify email';
       setError(errorMessage);
       Alert.alert(
@@ -54,11 +74,15 @@ export default function VerifyEmailScreen() {
         [
           {
             text: 'Try Again',
-            onPress: () => router.replace('/(auth)/login'),
+            onPress: () => {
+              console.log("🔄 VerifyEmailScreen.handleEmailVerification: Navigating to login");
+              router.replace('/(auth)/login');
+            },
           },
         ]
       );
     } finally {
+      console.log("🏁 VerifyEmailScreen.handleEmailVerification: Setting loading to false");
       setLoading(false);
     }
   }, [verifyEmail, searchParams]);

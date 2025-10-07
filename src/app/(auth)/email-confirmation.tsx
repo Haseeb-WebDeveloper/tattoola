@@ -14,6 +14,8 @@ export default function EmailConfirmationScreen() {
     router.replace("/(auth)/welcome");
   };
 
+  console.log("status", status);
+
   return (
     <ScrollView
       className="flex-1 bg-background"

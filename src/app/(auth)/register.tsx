@@ -9,13 +9,13 @@ import { RegisterValidationSchema, ValidationUtils } from '@/utils/validation';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -65,29 +65,49 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
+    console.log("🚀 RegisterScreen.handleRegister: Starting registration", { 
+      email: formData.email, 
+      username: formData.username,
+      role: formData.role 
+    });
+    
     if (!validateForm()) {
+      console.log("❌ RegisterScreen.handleRegister: Form validation failed");
       return;
     }
 
+    console.log("✅ RegisterScreen.handleRegister: Form validation passed");
+
     try {
+      console.log("📞 RegisterScreen.handleRegister: Calling signUp");
       const result = await signUp(formData);
+      console.log("📞 RegisterScreen.handleRegister: signUp completed", { 
+        needsVerification: result.needsVerification,
+        hasUser: !!result.user 
+      });
       
       if (result.needsVerification) {
+        console.log("📧 RegisterScreen.handleRegister: Email verification required, showing alert");
         Alert.alert(
           'Registration Successful',
           'Please check your email to verify your account before continuing.',
           [
             {
               text: 'OK',
-              onPress: () => router.push('/(auth)/email-confirmation'),
+              onPress: () => {
+                console.log("📧 RegisterScreen.handleRegister: Navigating to email confirmation");
+                router.push('/(auth)/email-confirmation');
+              },
             },
           ]
         );
       } else {
+        console.log("👤 RegisterScreen.handleRegister: No verification needed, navigating to user registration");
         // Navigate to user registration flow
         router.push('/(auth)/user-registration/step-2');
       }
     } catch (error) {
+      console.error("❌ RegisterScreen.handleRegister: Registration failed", error);
       Alert.alert(
         'Registration Failed',
         error instanceof Error ? error.message : 'An error occurred during registration',

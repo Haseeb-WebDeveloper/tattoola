@@ -13,7 +13,15 @@ import { Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthProvider } from "../providers/AuthProvider";
+import "../utils/debugLogger"; // Import debug logger
 import { initializeDeepLinking } from "../utils/deepLinking";
+
+// Enable debug logging
+if (__DEV__) {
+  console.log("🔧 Debug mode enabled - Console logs should be visible");
+  // Ensure all console methods are available
+  global.console = console;
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -39,9 +47,12 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Initialize deep linking
+    console.log('🔗 RootLayout: Initializing deep linking...');
     const subscription = initializeDeepLinking();
+    console.log('🔗 RootLayout: Deep linking initialized');
     
     return () => {
+      console.log('🔗 RootLayout: Cleaning up deep linking subscription');
       subscription?.remove();
     };
   }, []);
