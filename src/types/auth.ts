@@ -176,7 +176,7 @@ export interface UserRegistrationStep6 {
   isPublic: boolean;
 }
 
-// Artist registration types (AR - Artist)
+// Artist registration types (AR - Artist) - Updated to match artistRegistrationV2Store
 export interface ArtistRegistrationStep0 {
   selectedPlan: 'BASIC' | 'PREMIUM' | 'STUDIO';
   agreesToTerms: boolean;
@@ -210,7 +210,7 @@ export interface ArtistRegistrationStep5 {
 }
 
 export interface ArtistRegistrationStep6 {
-  favoriteStyles: string[]; // max 2 for basic plan
+  favoriteStyles: string[]; // up to AR_MAX_FAVORITE_STYLES
   mainStyleId: string; // one of the favorite styles
 }
 
@@ -228,11 +228,15 @@ export interface ArtistRegistrationStep9 {
 }
 
 export interface ArtistRegistrationStep10 {
-  projects: PortfolioProject[]; // first project
+  projects: PortfolioProject[]; // portfolio projects
 }
 
 export interface ArtistRegistrationStep11 {
   agreesToTerms: boolean;
+}
+
+export interface ArtistRegistrationStep12 {
+  projects: PortfolioProject[]; // portfolio projects (same as step10 for compatibility)
 }
 
 export interface PortfolioProject {
@@ -276,6 +280,7 @@ export interface CompleteArtistRegistration {
   step9: ArtistRegistrationStep9;
   step10: ArtistRegistrationStep10;
   step11: ArtistRegistrationStep11;
+  step12: ArtistRegistrationStep12; // Portfolio projects
 }
 
 // Auth error types

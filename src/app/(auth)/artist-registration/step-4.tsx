@@ -1,4 +1,4 @@
-import { useArtistRegistrationV2Store } from '@/stores/v2/artistRegistrationV2Store';
+import { useArtistRegistrationV2Store } from '@/stores/artistRegistrationV2Store';
 import { WorkArrangement } from '@/types/auth';
 import { router } from 'expo-router';
 import React from 'react';
@@ -22,7 +22,7 @@ export default function ArtistStep4V2() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-black" contentContainerClassName="flex-grow">
+    <ScrollView className="flex-1 bg-black relative" contentContainerClassName="flex-grow">
       {/* Header */}
       <View className="px-4 my-8">
         <View className="flex-row items-center justify-between">
@@ -75,7 +75,7 @@ export default function ArtistStep4V2() {
       </View>
 
       {/* Footer actions */}
-      <View className="flex-row justify-between px-6 mt-10 mb-10">
+      <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
         <TouchableOpacity onPress={() => router.back()} className="rounded-full border border-foreground px-6 py-4">
           <Text className="text-foreground">Back</Text>
         </TouchableOpacity>

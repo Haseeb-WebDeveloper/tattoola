@@ -1,5 +1,6 @@
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { useArtistRegistrationV2Store } from "@/stores/v2/artistRegistrationV2Store";
+import { cloudinaryService } from "@/services/cloudinary.service";
+import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -25,7 +26,7 @@ export default function ArtistStep3V2() {
     totalStepsDisplay,
   } = useArtistRegistrationV2Store();
   const [focused, setFocused] = useState<"firstName" | "lastName" | null>(null);
-  const { pickFiles } = useFileUpload();
+  const { pickFiles, uploadToCloudinary } = useFileUpload();
 
   const handlePickAvatar = async () => {
     const files = await pickFiles({
@@ -33,9 +34,27 @@ export default function ArtistStep3V2() {
       allowsMultipleSelection: false,
       quality: 0.8,
       maxFiles: 1,
+      cloudinaryOptions: cloudinaryService.getAvatarUploadOptions(),
     });
     if (files.length > 0) {
-      setAvatar(files[0].uri);
+      // 1) Show local URI instantly for fast feedback
+      const localUri = files[0].uri;
+      setAvatar(localUri);
+
+      // 2) Upload in background and then replace with Cloudinary URL
+      (async () => {
+        const uploadedFiles = await uploadToCloudinary(
+          files,
+          cloudinaryService.getAvatarUploadOptions()
+        );
+        const first = uploadedFiles[0];
+        if (first?.cloudinaryResult?.publicId) {
+          const transformedUrl = cloudinaryService.getAvatarUrl(
+            first.cloudinaryResult.publicId
+          );
+          setAvatar(transformedUrl);
+        }
+      })();
     }
   };
 
@@ -51,7 +70,7 @@ export default function ArtistStep3V2() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          className="flex-1"
+          className="flex-1 relative"
           contentContainerClassName="flex-grow"
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
@@ -178,7 +197,7 @@ export default function ArtistStep3V2() {
           </View>
 
           {/* Next button */}
-          <View className="px-6 mt-10 mb-10 items-end">
+          <View className="px-6 mt-10 mb-10 items-end absolute top-[80vh] left-0 right-0">
             <TouchableOpacity
               accessibilityRole="button"
               onPress={handleNext}

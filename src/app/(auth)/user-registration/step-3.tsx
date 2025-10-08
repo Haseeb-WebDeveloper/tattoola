@@ -67,15 +67,24 @@ export default function UserRegistrationStep3() {
       });
 
       if (files.length > 0) {
-        const uploadedFiles = await uploadToCloudinary(files, cloudinaryService.getAvatarUploadOptions());
-        if (uploadedFiles[0]?.cloudinaryResult) {
-          // Use the transformed URL for display
-          const transformedUrl = cloudinaryService.getAvatarUrl(uploadedFiles[0].cloudinaryResult.publicId);
-          setFormData(prev => ({
-            ...prev,
-            avatar: transformedUrl,
-          }));
-        }
+        // 1) Show local URI instantly for fast feedback
+        const localUri = files[0].uri;
+        setFormData(prev => ({ ...prev, avatar: localUri }));
+        updateStep('step3', { avatar: localUri } as any);
+
+        console.log('localUri', localUri);
+
+        // 2) Upload in background and then replace with Cloudinary URL
+        (async () => {
+          const uploadedFiles = await uploadToCloudinary(files, cloudinaryService.getAvatarUploadOptions());
+          const first = uploadedFiles[0];
+          if (first?.cloudinaryResult?.publicId) {
+            const transformedUrl = cloudinaryService.getAvatarUrl(first.cloudinaryResult.publicId);
+            setFormData(prev => ({ ...prev, avatar: transformedUrl }));
+            updateStep('step3', { avatar: transformedUrl } as any);
+            console.log('transformedUrl', transformedUrl);
+          }
+        })();
       }
     } catch (error) {
       console.error('Camera error:', error);
@@ -92,15 +101,25 @@ export default function UserRegistrationStep3() {
       });
 
       if (files.length > 0) {
-        const uploadedFiles = await uploadToCloudinary(files, cloudinaryService.getAvatarUploadOptions());
-        if (uploadedFiles[0]?.cloudinaryResult) {
-          // Use the transformed URL for display
-          const transformedUrl = cloudinaryService.getAvatarUrl(uploadedFiles[0].cloudinaryResult.publicId);
-          setFormData(prev => ({
-            ...prev,
-            avatar: transformedUrl,
-          }));
-        }
+        console.log('files', files);
+        // 1) Show local URI instantly for fast feedback
+        const localUri = files[0].uri;
+        setFormData(prev => ({ ...prev, avatar: localUri }));
+        updateStep('step3', { avatar: localUri } as any);
+
+        console.log('localUri', localUri);
+
+        // 2) Upload in background and then replace with Cloudinary URL
+        (async () => {
+          const uploadedFiles = await uploadToCloudinary(files, cloudinaryService.getAvatarUploadOptions());
+          const first = uploadedFiles[0];
+          if (first?.cloudinaryResult?.publicId) {
+            const transformedUrl = cloudinaryService.getAvatarUrl(first.cloudinaryResult.publicId);
+            setFormData(prev => ({ ...prev, avatar: transformedUrl }));
+            updateStep('step3', { avatar: transformedUrl } as any);
+            console.log('transformedUrl', transformedUrl);
+          }
+        })();
       }
     } catch (error) {
       console.error('Gallery picker error:', error);

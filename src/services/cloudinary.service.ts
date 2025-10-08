@@ -149,58 +149,50 @@ class CloudinaryService {
     publicId: string,
     transformations: any = {}
   ): string {
-    const image = cloudinary.image(publicId);
-    
-    // Apply transformations
-    if (transformations.width) {
-      image.resize({ width: transformations.width });
-    }
-    if (transformations.height) {
-      image.resize({ height: transformations.height });
-    }
-    if (transformations.quality) {
-      image.quality(transformations.quality);
-    }
-    if (transformations.format) {
-      image.format(transformations.format);
-    }
-    if (transformations.crop) {
-      image.resize({ crop: transformations.crop });
-    }
-
-    return image.toURL();
+    const cloudName = this.cloudName;
+    const base = `https://res.cloudinary.com/${cloudName}/image/upload`;
+    const parts: string[] = [];
+    if (transformations.crop) parts.push(`c_${transformations.crop}`);
+    if (transformations.gravity) parts.push(`g_${transformations.gravity}`);
+    if (transformations.width) parts.push(`w_${transformations.width}`);
+    if (transformations.height) parts.push(`h_${transformations.height}`);
+    if (transformations.quality) parts.push(`q_${transformations.quality}`);
+    if (transformations.format) parts.push(`f_${transformations.format}`);
+    const transformation = parts.length ? `${parts.join(',')}` : 'q_auto,f_auto';
+    return `${base}/${transformation}/${publicId}`;
   }
 
   /**
    * Get video thumbnail URL
    */
   getVideoThumbnailUrl(publicId: string, time: number = 1): string {
-    const video = cloudinary.video(publicId);
-    video.videoEdit({ startOffset: time });
-    video.resize({ width: 300, height: 200, crop: 'fill' });
-    return video.toURL();
+    const cloudName = this.cloudName;
+    const base = `https://res.cloudinary.com/${cloudName}/video/upload`;
+    // Use so_ (start offset) and generate a JPG thumbnail at that frame
+    const transformation = `so_${time},c_fill,w_300,h_200`;
+    return `${base}/${transformation}/${publicId}.jpg`;
   }
 
   /**
    * Get transformed avatar URL with optimizations
    */
   getAvatarUrl(publicId: string): string {
-    const image = cloudinary.image(publicId);
-    image.resize({ width: 300, height: 300, crop: 'fill', gravity: 'face' });
-    image.quality('auto');
-    image.format('auto');
-    return image.toURL();
+    // Build URL manually to avoid SDK object placeholders in the path
+    // Example: https://res.cloudinary.com/<cloud>/image/upload/c_fill,g_face,w_300,h_300,q_auto,f_auto/<publicId>
+    const cloudName = this.cloudName;
+    const base = `https://res.cloudinary.com/${cloudName}/image/upload`;
+    const transformation = `c_fill,g_face,w_300,h_300,q_auto,f_auto`;
+    return `${base}/${transformation}/${publicId}`;
   }
 
   /**
    * Get transformed portfolio image URL
    */
   getPortfolioImageUrl(publicId: string, width: number = 800, height: number = 600): string {
-    const image = cloudinary.image(publicId);
-    image.resize({ width, height, crop: 'limit' });
-    image.quality('auto');
-    image.format('auto');
-    return image.toURL();
+    const cloudName = this.cloudName;
+    const base = `https://res.cloudinary.com/${cloudName}/image/upload`;
+    const transformation = `c_limit,w_${width},h_${height},q_auto,f_auto`;
+    return `${base}/${transformation}/${publicId}`;
   }
 
   /**

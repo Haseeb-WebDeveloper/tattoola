@@ -412,6 +412,11 @@ export class AuthService {
         lastName: data.step1.lastName,
         avatar: data.step2.avatar,
         bio: data.step5.bio,
+        instagram: data.step5.instagram,
+        tiktok: data.step5.tiktok,
+        province: data.step4.province,
+        municipality: data.step4.municipality,
+        phone: data.step4.phone,
         updatedAt: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -440,10 +445,11 @@ export class AuthService {
         website: data.step4.website,
         phone: data.step4.phone,
         certificateUrl: data.step4.certificateUrl,
-        mainStyleId: data.step6.mainStyleId,
+        instagram: data.step5.instagram,
         minimumPrice: data.step9.minimumPrice,
         hourlyRate: data.step9.hourlyRate,
         isStudioOwner: data.step3.workArrangement === 'STUDIO_OWNER',
+        portfolioComplete: false, // Will be set to true after portfolio projects are added
         createdAt: now2,
         updatedAt: now2,
       })
@@ -457,20 +463,51 @@ export class AuthService {
     console.log("artist profile creatd")
     console.log("creating favourite style")
 
+    // Validate mainStyleId exists before using it
+    let validMainStyleId = null;
+    console.log('Validating mainStyleId:', data.step6.mainStyleId);
+    if (data.step6.mainStyleId) {
+      const { data: mainStyle, error: mainStyleError } = await supabase
+        .from('tattoo_styles')
+        .select('id')
+        .eq('id', data.step6.mainStyleId)
+        .single();
+
+      console.log('Main style validation result:', { mainStyle, mainStyleError });
+      if (mainStyleError || !mainStyle) {
+        console.warn('Main style ID not found, skipping mainStyleId:', data.step6.mainStyleId);
+      } else {
+        validMainStyleId = data.step6.mainStyleId;
+        console.log('Valid mainStyleId found:', validMainStyleId);
+      }
+    }
+
+    // Update artist profile with valid mainStyleId
+    if (validMainStyleId) {
+      await supabase
+        .from('artist_profiles')
+        .update({ mainStyleId: validMainStyleId })
+        .eq('id', artistProfile.id);
+    }
+
     // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
+    console.log('Processing favorite styles:', data.step6.favoriteStyles);
     if (data.step6.favoriteStyles.length > 0) {
       const uniqueRequestedStyleIds = Array.from(new Set(data.step6.favoriteStyles.filter(Boolean)));
+      console.log('Unique requested style IDs:', uniqueRequestedStyleIds);
 
       const { data: validStyles, error: validStylesError } = await supabase
         .from('tattoo_styles')
         .select('id')
         .in('id', uniqueRequestedStyleIds);
 
+      console.log('Valid styles query result:', { validStyles, validStylesError });
       if (validStylesError) {
         throw new Error(validStylesError.message);
       }
 
       const validStyleIds = (validStyles || []).map(s => s.id);
+      console.log('Valid style IDs to insert:', validStyleIds);
 
       if (validStyleIds.length > 0) {
         // Optional: clear existing to avoid unique violations on re-run
@@ -535,25 +572,16 @@ export class AuthService {
 
     console.log("adding body parts")
 
-    // Add portfolio projects
-    console.log("step10 projects:", data.step10?.projects);
-    console.log("step11 projects:", (data as any).step11?.projects);
+    // Add portfolio projects from step12
+    console.log("step12 projects:", data.step12?.projects);
     
-    const projects = [
-      data.step10?.projects,
-      (data as any).step11?.projects,
-      (data as any).step12?.projects,
-    ].filter((project: any) => project && Array.isArray(project) && project.length > 0);
+    const projects = data.step12?.projects || [];
     
     console.log("filtered projects:", projects);
 
     if (projects.length > 0) {
       let projectOrder = 1;
-      for (let stepIndex = 0; stepIndex < projects.length; stepIndex++) {
-        const stepProjects = projects[stepIndex];
-        if (!stepProjects || stepProjects.length === 0) continue;
-
-        for (const project of stepProjects) {
+      for (const project of projects) {
           console.log("Processing project:", { title: project.title, description: project.description });
           
           // Skip if no title and no description
@@ -627,7 +655,6 @@ export class AuthService {
 
           projectOrder++;
         }
-      }
 
       // Mark portfolio as complete if we have projects
       if (projectOrder > 1) {
