@@ -1,6 +1,8 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { SubscriptionPlan, SubscriptionService } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
+import type { CompleteArtistRegistration } from "@/types/auth";
+import { WorkArrangement } from "@/types/auth";
 import { supabase } from "@/utils/supabase";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -70,57 +72,63 @@ export default function ArtistStep13V2() {
         step3, step4, step5, step7, step8, step9, step10, step11, step12
       });
       
-      const registrationData = {
-        step0: { selectedPlan: 'PREMIUM' as const, agreesToTerms: true },
-        step1: { 
-          firstName: step3.firstName || '', 
-          lastName: step3.lastName || '' 
+      const registrationData: CompleteArtistRegistration = {
+        step3: {
+          firstName: step3.firstName || '',
+          lastName: step3.lastName || '',
+          avatar: step3.avatar || ''
         },
-        step2: { 
-          avatar: step3.avatar || '' 
+        step4: {
+          workArrangement: step4.workArrangement || WorkArrangement.FREELANCE
         },
-        step3: { 
-          workArrangement: step4.workArrangement || 'FREELANCE' as const 
+        step5: {
+          studioName: step5.studioName || '',
+          province: step5.province || '',
+          municipality: step5.municipality || '',
+          studioAddress: step5.studioAddress || '',
+          website: step5.website || '',
+          phone: step5.phone || ''
         },
-        step4: { 
-          businessName: step5.studioName || '', 
-          province: step5.province || '', 
-          municipality: step5.municipality || '', 
-          studioAddress: step5.studioAddress || '', 
-          website: step5.website || '', 
-          phone: step5.phone || '', 
-          certificateUrl: step4.certificateUrl || '' 
+        step6: {
+          certificateUrl: step4.certificateUrl || ''
         },
-        step5: { 
-          bio: step7.bio || '' 
+        step7: {
+          bio: step7.bio || '',
+          instagram: step7.instagram || '',
+          tiktok: step7.tiktok || ''
         },
-        step6: { 
-          favoriteStyles: step8.favoriteStyles || [], 
-          mainStyleId: step8.mainStyleId || '' 
+        step8: {
+          favoriteStyles: step8.favoriteStyles || [],
+          mainStyleId: step8.mainStyleId || ''
         },
-        step7: { 
-          servicesOffered: step9.servicesOffered || [] 
+        step9: {
+          servicesOffered: step9.servicesOffered || []
         },
-        step8: { 
-          bodyParts: step10.bodyParts || [] 
+        step10: {
+          bodyParts: step10.bodyParts || []
         },
-        step9: { 
-          minimumPrice: step11.minimumPrice || 0, 
-          hourlyRate: step11.hourlyRate || 0 
+        step11: {
+          minimumPrice: step11.minimumPrice || 0,
+          hourlyRate: step11.hourlyRate || 0
         },
-        step10: { 
-          projects: step12.projects || [] 
+        step12: {
+          projects: (step12.projects || []).map((project, index) => ({
+            title: project.title,
+            description: project.description,
+            photos: project.photos,
+            videos: project.videos,
+            associatedStyles: [],
+            order: index + 1
+          }))
         },
-        step11: { 
-          agreesToTerms: true 
-        },
-        step12: { 
-          projects: step12.projects || [] 
+        step13: {
+          selectedPlanId: step13.selectedPlanId,
+          billingCycle: step13.billingCycle
         }
       };
 
       // Complete registration
-      await completeArtistRegistration(registrationData as any);
+      await completeArtistRegistration(registrationData);
       
       // Get current user ID
       const { data: { session } } = await supabase.auth.getSession();

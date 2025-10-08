@@ -176,67 +176,73 @@ export interface UserRegistrationStep6 {
   isPublic: boolean;
 }
 
-// Artist registration types (AR - Artist) - Updated to match artistRegistrationV2Store
-export interface ArtistRegistrationStep0 {
-  selectedPlan: 'BASIC' | 'PREMIUM' | 'STUDIO';
-  agreesToTerms: boolean;
-}
+// Artist registration (V2) steps aligned with screens step-3 .. step-13
 
-export interface ArtistRegistrationStep1 {
+// step-3: name + avatar
+export interface ArtistRegistrationStep3 {
   firstName: string;
   lastName: string;
-}
-
-export interface ArtistRegistrationStep2 {
   avatar?: string;
 }
 
-export interface ArtistRegistrationStep3 {
+// step-4: work arrangement (FREELANCE | STUDIO_EMPLOYEE | STUDIO_OWNER)
+export interface ArtistRegistrationStep4 {
   workArrangement: WorkArrangement;
 }
 
-export interface ArtistRegistrationStep4 {
-  businessName: string;
+// step-5: studio details
+export interface ArtistRegistrationStep5 {
+  studioName: string;
   province: string;
   municipality: string;
   studioAddress: string;
   website?: string;
   phone: string;
-  certificateUrl: string;
 }
 
-export interface ArtistRegistrationStep5 {
-  bio?: string;
-}
-
+// step-6: certifications upload
 export interface ArtistRegistrationStep6 {
-  favoriteStyles: string[]; // up to AR_MAX_FAVORITE_STYLES
-  mainStyleId: string; // one of the favorite styles
+  certificateUrl?: string;
 }
 
+// step-7: bio + socials
 export interface ArtistRegistrationStep7 {
-  servicesOffered: string[]; // service IDs
+  bio?: string;
+  instagram?: string;
+  tiktok?: string;
 }
 
+// step-8: favorite styles
 export interface ArtistRegistrationStep8 {
-  bodyParts: string[]; // body part IDs
+  favoriteStyles: string[];
+  mainStyleId?: string;
 }
 
+// step-9: services offered
 export interface ArtistRegistrationStep9 {
+  servicesOffered: string[];
+}
+
+// step-10: body parts
+export interface ArtistRegistrationStep10 {
+  bodyParts: string[];
+}
+
+// step-11: pricing
+export interface ArtistRegistrationStep11 {
   minimumPrice?: number;
   hourlyRate?: number;
 }
 
-export interface ArtistRegistrationStep10 {
-  projects: PortfolioProject[]; // portfolio projects
-}
-
-export interface ArtistRegistrationStep11 {
-  agreesToTerms: boolean;
-}
-
+// step-12: portfolio projects (inputs)
 export interface ArtistRegistrationStep12 {
-  projects: PortfolioProject[]; // portfolio projects (same as step10 for compatibility)
+  projects: PortfolioProject[];
+}
+
+// step-13: subscription selection
+export interface ArtistRegistrationStep13 {
+  selectedPlanId: string;
+  billingCycle: 'MONTHLY' | 'YEARLY';
 }
 
 export interface PortfolioProject {
@@ -268,9 +274,6 @@ export interface CompleteUserRegistration {
 }
 
 export interface CompleteArtistRegistration {
-  step0: ArtistRegistrationStep0;
-  step1: ArtistRegistrationStep1;
-  step2: ArtistRegistrationStep2;
   step3: ArtistRegistrationStep3;
   step4: ArtistRegistrationStep4;
   step5: ArtistRegistrationStep5;
@@ -280,7 +283,8 @@ export interface CompleteArtistRegistration {
   step9: ArtistRegistrationStep9;
   step10: ArtistRegistrationStep10;
   step11: ArtistRegistrationStep11;
-  step12: ArtistRegistrationStep12; // Portfolio projects
+  step12: ArtistRegistrationStep12;
+  step13: ArtistRegistrationStep13;
 }
 
 // Auth error types

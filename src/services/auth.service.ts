@@ -380,10 +380,10 @@ export class AuthService {
           id: userId,
           email,
           username,
-          firstName: data.step1.firstName,
-          lastName: data.step1.lastName,
-          avatar: data.step2.avatar,
-          bio: data.step5.bio,
+          firstName: data.step3.firstName,
+          lastName: data.step3.lastName,
+          avatar: data.step3.avatar,
+          bio: data.step7.bio,
           isActive: true,
           isVerified: !!session.session.user.email_confirmed_at,
           isPublic: false,
@@ -408,15 +408,15 @@ export class AuthService {
     const { data: updatedUser, error: userError } = await supabase
       .from('users')
       .update({
-        firstName: data.step1.firstName,
-        lastName: data.step1.lastName,
-        avatar: data.step2.avatar,
-        bio: data.step5.bio,
-        instagram: data.step5.instagram,
-        tiktok: data.step5.tiktok,
-        province: data.step4.province,
-        municipality: data.step4.municipality,
-        phone: data.step4.phone,
+        firstName: data.step3.firstName,
+        lastName: data.step3.lastName,
+        avatar: data.step3.avatar,
+        bio: data.step7.bio,
+        instagram: data.step7.instagram,
+        tiktok: data.step7.tiktok,
+        province: data.step5.province,
+        municipality: data.step5.municipality,
+        phone: data.step5.phone,
         updatedAt: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -437,18 +437,19 @@ export class AuthService {
       .insert({
         id: generateUUID(), // Generate UUID for the artist profile
         userId: userId,
-        workArrangement: data.step3.workArrangement,
-        businessName: data.step4.businessName,
-        province: data.step4.province,
-        municipality: data.step4.municipality,
-        studioAddress: data.step4.studioAddress,
-        website: data.step4.website,
-        phone: data.step4.phone,
-        certificateUrl: data.step4.certificateUrl,
-        instagram: data.step5.instagram,
-        minimumPrice: data.step9.minimumPrice,
-        hourlyRate: data.step9.hourlyRate,
-        isStudioOwner: data.step3.workArrangement === 'STUDIO_OWNER',
+        workArrangement: data.step4.workArrangement,
+        artistType: data.step4.workArrangement === 'STUDIO_OWNER' ? 'STUDIO_OWNER' : (data.step4.workArrangement === 'STUDIO_EMPLOYEE' ? 'STUDIO_EMPLOYEE' : 'FREELANCE'),
+        businessName: data.step5.studioName,
+        province: data.step5.province,
+        municipality: data.step5.municipality,
+        studioAddress: data.step5.studioAddress,
+        website: data.step5.website,
+        phone: data.step5.phone,
+        certificateUrl: data.step6.certificateUrl,
+        instagram: data.step7.instagram,
+        minimumPrice: data.step11.minimumPrice,
+        hourlyRate: data.step11.hourlyRate,
+        isStudioOwner: data.step4.workArrangement === 'STUDIO_OWNER',
         portfolioComplete: false, // Will be set to true after portfolio projects are added
         createdAt: now2,
         updatedAt: now2,
@@ -461,23 +462,67 @@ export class AuthService {
     }
 
     console.log("artist profile creatd")
+
+    // Create studio + membership if studio owner
+    if (data.step4.workArrangement === 'STUDIO_OWNER') {
+      const slugBase = (data.step5.studioName || 'studio')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      let slug = slugBase;
+      let createdStudio: any = null;
+      for (let i = 0; i < 3; i++) {
+        const { data: studio, error: studioError } = await adminOrUserClient
+          .from('studios')
+          .insert({
+            id: generateUUID(),
+            name: data.step5.studioName,
+            slug,
+            address: data.step5.studioAddress,
+            city: data.step5.municipality,
+            country: 'Italy',
+            phone: data.step5.phone,
+            website: data.step5.website,
+            ownerId: artistProfile.id,
+            createdAt: now2,
+            updatedAt: now2,
+          })
+          .select()
+          .single();
+        if (!studioError) { createdStudio = studio; break; }
+        if ((studioError.message || '').toLowerCase().includes('duplicate')) slug = `${slugBase}-${Math.random().toString(36).slice(2,6)}`; else throw new Error(studioError.message);
+      }
+      if (createdStudio) {
+        await adminOrUserClient
+          .from('studio_members')
+          .insert({
+            id: generateUUID(),
+            studioId: createdStudio.id,
+            userId: userId,
+            artistId: artistProfile.id,
+            role: 'OWNER',
+            isActive: true,
+          });
+      }
+    }
+
     console.log("creating favourite style")
 
     // Validate mainStyleId exists before using it
     let validMainStyleId = null;
-    console.log('Validating mainStyleId:', data.step6.mainStyleId);
-    if (data.step6.mainStyleId) {
+    console.log('Validating mainStyleId:', data.step8.mainStyleId);
+    if (data.step8.mainStyleId) {
       const { data: mainStyle, error: mainStyleError } = await supabase
         .from('tattoo_styles')
         .select('id')
-        .eq('id', data.step6.mainStyleId)
+        .eq('id', data.step8.mainStyleId)
         .single();
 
       console.log('Main style validation result:', { mainStyle, mainStyleError });
       if (mainStyleError || !mainStyle) {
-        console.warn('Main style ID not found, skipping mainStyleId:', data.step6.mainStyleId);
+        console.warn('Main style ID not found, skipping mainStyleId:', data.step8.mainStyleId);
       } else {
-        validMainStyleId = data.step6.mainStyleId;
+        validMainStyleId = data.step8.mainStyleId;
         console.log('Valid mainStyleId found:', validMainStyleId);
       }
     }
@@ -491,9 +536,9 @@ export class AuthService {
     }
 
     // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
-    console.log('Processing favorite styles:', data.step6.favoriteStyles);
-    if (data.step6.favoriteStyles.length > 0) {
-      const uniqueRequestedStyleIds = Array.from(new Set(data.step6.favoriteStyles.filter(Boolean)));
+    console.log('Processing favorite styles:', data.step8.favoriteStyles);
+    if (data.step8.favoriteStyles.length > 0) {
+      const uniqueRequestedStyleIds = Array.from(new Set(data.step8.favoriteStyles.filter(Boolean)));
       console.log('Unique requested style IDs:', uniqueRequestedStyleIds);
 
       const { data: validStyles, error: validStylesError } = await supabase
@@ -536,8 +581,8 @@ export class AuthService {
 
 
     // Add services - let Supabase generate UUIDs
-    if (data.step7.servicesOffered && data.step7.servicesOffered.length > 0) {
-      const servicesData = data.step7.servicesOffered.map((serviceId) => ({
+    if (data.step9.servicesOffered && data.step9.servicesOffered.length > 0) {
+      const servicesData = data.step9.servicesOffered.map((serviceId) => ({
         artistId: artistProfile.id,
         serviceId: serviceId,
       }));
@@ -555,8 +600,8 @@ export class AuthService {
 
 
     // Add body parts - let Supabase generate UUIDs
-    if (data.step8.bodyParts && data.step8.bodyParts.length > 0) {
-      const bodyPartsData = data.step8.bodyParts.map((bodyPartId) => ({
+    if (data.step10.bodyParts && data.step10.bodyParts.length > 0) {
+      const bodyPartsData = data.step10.bodyParts.map((bodyPartId) => ({
         artistId: artistProfile.id,
         bodyPartId: bodyPartId,
       }));

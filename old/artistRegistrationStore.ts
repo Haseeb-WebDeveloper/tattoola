@@ -1,9 +1,8 @@
 import type {
-  ArtistRegistrationStep0,
-  ArtistRegistrationStep1,
   ArtistRegistrationStep10,
   ArtistRegistrationStep11,
-  ArtistRegistrationStep2,
+  ArtistRegistrationStep12,
+  ArtistRegistrationStep13,
   ArtistRegistrationStep3,
   ArtistRegistrationStep4,
   ArtistRegistrationStep5,
@@ -20,9 +19,6 @@ import { devtools, persist } from 'zustand/middleware';
 
 interface ArtistRegistrationState {
   // Registration data
-  step0: Partial<ArtistRegistrationStep0>;
-  step1: Partial<ArtistRegistrationStep1>;
-  step2: Partial<ArtistRegistrationStep2>;
   step3: Partial<ArtistRegistrationStep3>;
   step4: Partial<ArtistRegistrationStep4>;
   step5: Partial<ArtistRegistrationStep5>;
@@ -32,6 +28,8 @@ interface ArtistRegistrationState {
   step9: Partial<ArtistRegistrationStep9>;
   step10: Partial<ArtistRegistrationStep10>;
   step11: Partial<ArtistRegistrationStep11>;
+  step12: Partial<ArtistRegistrationStep12>;
+  step13: Partial<ArtistRegistrationStep13>;
 
   // UI state
   currentStep: number;
@@ -60,9 +58,6 @@ interface ArtistRegistrationState {
 }
 
 const initialState = {
-  step0: {},
-  step1: {},
-  step2: {},
   step3: {},
   step4: {},
   step5: {},
@@ -72,7 +67,9 @@ const initialState = {
   step9: {},
   step10: {},
   step11: {},
-  currentStep: 0,
+  step12: {},
+  step13: {},
+  currentStep: 3,
   errors: {},
   isSubmitting: false,
 };
@@ -124,7 +121,7 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
           const newState = { ...initialState, currentStep: step };
           
           // Keep data from steps before the reset step
-          for (let i = 0; i < step; i++) {
+          for (let i = 3; i <= step; i++) {
             const stepKey = `step${i}` as keyof CompleteArtistRegistration;
             if (state[stepKey]) {
               (newState as any)[stepKey] = state[stepKey];
@@ -158,7 +155,7 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
           const state = get();
           const completedSteps: number[] = [];
           
-          for (let i = 0; i <= 11; i++) {
+          for (let i = 3; i <= 13; i++) {
             if (state.isStepComplete(i)) {
               completedSteps.push(i);
             }
@@ -169,7 +166,8 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
 
         isRegistrationComplete: () => {
           const state = get();
-          return state.getCompletedSteps().length === 14; // 0-11 steps
+          // steps 3..13 → 11 steps total
+          return state.getCompletedSteps().length === 11;
         },
       }),
       {
@@ -187,9 +185,6 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
           },
         },
         partialize: (state) => ({
-          step0: state.step0,
-          step1: state.step1,
-          step2: state.step2,
           step3: state.step3,
           step4: state.step4,
           step5: state.step5,
@@ -199,6 +194,8 @@ export const useArtistRegistrationStore = create<ArtistRegistrationState>()(
           step9: state.step9,
           step10: state.step10,
           step11: state.step11,
+          step12: state.step12,
+          step13: state.step13,
           currentStep: state.currentStep,
         }),
       }
