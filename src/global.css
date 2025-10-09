@@ -127,3 +127,25 @@
   letter-spacing: 0px;
   vertical-align: middle;
 }
+
+
+.label {
+  font-size: 14px;
+  line-height: 23px;
+  font-family: Montserrat-Medium, Montserrat;
+  font-weight: 600;
+  color: #A49A99;
+  font-style: normal;
+}
+
+
+
+
+
+
+
+
+/* color */
+.tat-foreground-gray {
+  background-color: #100C0C;
+}

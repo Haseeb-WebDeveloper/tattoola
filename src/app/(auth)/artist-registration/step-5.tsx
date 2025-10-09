@@ -1,22 +1,21 @@
+import AuthStepHeader from "@/components/ui/auth-step-header";
+import { SVGIcons } from "@/constants/svg";
 import { getMunicipalities, getProvinces } from "@/services/location.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
+import { isValid, step5Schema } from "@/utils/artistRegistrationValidation";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  Keyboard,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function ArtistStep5V2() {
   const {
@@ -27,194 +26,229 @@ export default function ArtistStep5V2() {
     setCurrentStepDisplay,
   } = useArtistRegistrationV2Store();
   const [focused, setFocused] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{
+    studioName?: string;
+    province?: string;
+    municipality?: string;
+    studioAddress?: string;
+    phone?: string;
+  }>({});
 
   // Ensure progress shows step 5 without setting state during render
   useEffect(() => {
     if (currentStepDisplay !== 5) setCurrentStepDisplay(5);
   }, [currentStepDisplay, setCurrentStepDisplay]);
 
+  const canProceed = isValid(step5Schema, {
+    studioName: step5.studioName || "",
+    province: step5.province || "",
+    municipality: step5.municipality || "",
+    studioAddress: step5.studioAddress || "",
+    website: step5.website || "",
+    phone: (step5.phone || "").replace(/\s+/g, ""),
+  });
+
+  const validateAll = () => {
+    const result = step5Schema.safeParse({
+      studioName: step5.studioName || "",
+      province: step5.province || "",
+      municipality: step5.municipality || "",
+      studioAddress: step5.studioAddress || "",
+      website: step5.website || "",
+      phone: (step5.phone || "").replace(/\s+/g, ""),
+    });
+    if (!result.success) {
+      const errs: any = {};
+      for (const issue of result.error.issues) {
+        const key = String(issue.path[0]);
+        errs[key] = issue.message;
+      }
+      setErrors(errs);
+    } else {
+      setErrors({});
+    }
+  };
+
   const onNext = () => {
+    if (!canProceed) return;
     router.push("/(auth)/artist-registration/step-6");
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 10}
+    <KeyboardAwareScrollView
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={150}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
       className="flex-1 bg-black"
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView className="flex-1 relative" contentContainerClassName="flex-grow">
-          {/* Header */}
-          <View className="px-4 my-8">
-            <View className="flex-row items-center justify-between">
-              <TouchableOpacity
-                onPress={() => router.replace("/(auth)/welcome")}
-                className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
-              >
-                <Image
-                  source={require("@/assets/images/icons/close.png")}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-              <Image
-                source={require("@/assets/logo/logo-light.png")}
-                className="h-10"
-                resizeMode="contain"
-              />
-              <View className="w-10" />
-            </View>
-            <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
-          </View>
+      {/* Header */}
+      <AuthStepHeader />
 
-          {/* Progress */}
-          <View className="items-center mb-8">
-            <View className="flex-row items-center gap-1">
-              {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-                <View
-                  key={idx}
-                  className={`${idx < 5 ? (idx === 4 ? "bg-foreground w-3 h-3" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Title */}
-          <View className="px-6 mb-6 flex-row gap-2 items-center">
-            <Image
-              source={require("@/assets/images/icons/store.png")}
-              className="w-6 h-6"
-              resizeMode="contain"
+      {/* Progress */}
+      <View className="items-center  mb-4 mt-8">
+        <View className="flex-row items-center gap-1">
+          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
+            <View
+              key={idx}
+              className={`${idx < 5 ? (idx === 4 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
             />
-            <Text className="text-foreground section-title font-neueBold">
-              Studio Details
+          ))}
+        </View>
+      </View>
+
+      {/* Title */}
+      <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
+        <SVGIcons.Studio width={22} height={22} />
+        <Text className="text-foreground section-title font-neueBold">
+          Studio Details
+        </Text>
+      </View>
+
+      {/* Form */}
+      <View className="px-6 gap-6">
+        {/* Studio Name */}
+        <View>
+          <Text className="mb-2 label">
+            Name of the Studio<Text className="text-error">*</Text>
+          </Text>
+          <View
+            className={`rounded-xl bg-black/40 ${focused === "studioName" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
+            <TextInput
+              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="Tattoo Paradise"
+              placeholderTextColor="#A49A99"
+              value={step5.studioName || ""}
+              onChangeText={(v) => updateStep5({ studioName: v })}
+              onFocus={() => setFocused("studioName")}
+              onBlur={() => {
+                setFocused(null);
+                validateAll();
+              }}
+            />
+          </View>
+          {!!errors.studioName && (
+            <Text className="text-xs text-error mt-1">{errors.studioName}</Text>
+          )}
+        </View>
+
+        {/* Province & Municipality */}
+        <ProvinceMunicipalityInput
+          valueProvince={step5.province || ""}
+          valueMunicipality={step5.municipality || ""}
+          onChange={(provinceLabel, municipalityLabel) =>
+            updateStep5({
+              province: provinceLabel,
+              municipality: municipalityLabel,
+            })
+          }
+        />
+
+        {/* Address */}
+        <View>
+          <Text className="mb-2 label">
+            Inserisci l’indirizzo dello Studio dove lavori
+            <Text className="text-error">*</Text>
+          </Text>
+          <View
+            className={`rounded-xl bg-black/40 ${focused === "studioAddress" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
+            <TextInput
+              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="Via A.G. Alaimo 139, Ancona, 60044"
+              placeholderTextColor="#A49A99"
+              value={step5.studioAddress || ""}
+              onChangeText={(v) => updateStep5({ studioAddress: v })}
+              onFocus={() => setFocused("studioAddress")}
+              onBlur={() => {
+                setFocused(null);
+                validateAll();
+              }}
+            />
+          </View>
+          {!!errors.studioAddress && (
+            <Text className="text-xs text-error mt-1">
+              {errors.studioAddress}
             </Text>
-          </View>
+          )}
+        </View>
 
-          {/* Form */}
-          <View className="px-6 gap-6">
-            {/* Studio Name */}
-            <View>
-              <Text className="text-foreground mb-2 tat-body-2-med">
-                Name of the Studio<Text className="text-error">*</Text>
-              </Text>
-              <View
-                className={`rounded-xl bg-black/40 ${focused === "studioName" ? "border-2 border-foreground" : "border border-gray"}`}
-              >
-                <TextInput
-                  className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-                  placeholder="Tattoo Paradise"
-                  placeholderTextColor="#A49A99"
-                  value={step5.studioName || ""}
-                  onChangeText={(v) => updateStep5({ studioName: v })}
-                  onFocus={() => setFocused("studioName")}
-                  onBlur={() => setFocused(null)}
-                />
-              </View>
-            </View>
-
-            {/* Province & Municipality */}
-            <ProvinceMunicipalityInput
-              valueProvince={step5.province || ""}
-              valueMunicipality={step5.municipality || ""}
-              onChange={(provinceLabel, municipalityLabel) =>
-                updateStep5({
-                  province: provinceLabel,
-                  municipality: municipalityLabel,
-                })
-              }
+        {/* Website */}
+        <View>
+          <Text className="mb-2 label">
+            Studio website
+          </Text>
+          <View
+            className={`rounded-xl bg-black/40 ${focused === "website" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
+            <TextInput
+              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="https://..."
+              placeholderTextColor="#A49A99"
+              value={step5.website || ""}
+              onChangeText={(v) => updateStep5({ website: v })}
+              onFocus={() => setFocused("website")}
+              onBlur={() => setFocused(null)}
+              autoCapitalize="none"
             />
-
-            {/* Address */}
-            <View>
-              <Text className="text-foreground mb-2 tat-body-2-med">
-                Inserisci l’indirizzo dello Studio dove lavori
-                <Text className="text-error">*</Text>
-              </Text>
-              <View
-                className={`rounded-xl bg-black/40 ${focused === "studioAddress" ? "border-2 border-foreground" : "border border-gray"}`}
-              >
-                <TextInput
-                  className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-                  placeholder="Via A.G. Alaimo 139, Ancona, 60044"
-                  placeholderTextColor="#A49A99"
-                  value={step5.studioAddress || ""}
-                  onChangeText={(v) => updateStep5({ studioAddress: v })}
-                  onFocus={() => setFocused("studioAddress")}
-                  onBlur={() => setFocused(null)}
-                />
-              </View>
-            </View>
-
-            {/* Website */}
-            <View>
-              <Text className="text-foreground mb-2 tat-body-2-med">
-                Studio website
-              </Text>
-              <View
-                className={`rounded-xl bg-black/40 ${focused === "website" ? "border-2 border-foreground" : "border border-gray"}`}
-              >
-                <TextInput
-                  className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-                  placeholder="https://..."
-                  placeholderTextColor="#A49A99"
-                  value={step5.website || ""}
-                  onChangeText={(v) => updateStep5({ website: v })}
-                  onFocus={() => setFocused("website")}
-                  onBlur={() => setFocused(null)}
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            {/* Phone */}
-            <View>
-              <Text className="text-foreground mb-2 tat-body-2-med">
-                Enter phone number<Text className="text-error">*</Text>
-              </Text>
-              <View
-                className={`flex-row items-center rounded-xl bg-black/40 ${focused === "phone" ? "border-2 border-foreground" : "border border-gray"}`}
-              >
-                <View className="pl-4 pr-2 py-3 flex-row items-center">
-                  <Text className="text-foreground font-neueBold">+39</Text>
-                </View>
-                <TextInput
-                  className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-                  placeholder="3XXXXXXXXX"
-                  placeholderTextColor="#A49A99"
-                  value={(step5.phone || "").replace(/^\+?39\s?/, "")}
-                  onChangeText={(v) => {
-                    const digits = v.replace(/[^0-9]/g, "");
-                    updateStep5({ phone: `+39 ${digits}` });
-                  }}
-                  onFocus={() => setFocused("phone")}
-                  onBlur={() => setFocused(null)}
-                  keyboardType="number-pad"
-                  textContentType="telephoneNumber"
-                  maxLength={15}
-                />
-              </View>
-            </View>
           </View>
+        </View>
 
-          {/* Footer actions */}
-          <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="rounded-full border border-foreground px-6 py-4"
-            >
-              <Text className="text-foreground">Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onNext}
-              className="rounded-full px-8 py-4 bg-primary"
-            >
-              <Text className="text-foreground">Next</Text>
-            </TouchableOpacity>
+        {/* Phone */}
+        <View>
+          <Text className="mb-2 label">
+            Enter phone number<Text className="text-error">*</Text>
+          </Text>
+          <View
+            className={`flex-row items-center rounded-xl bg-black/40 ${focused === "phone" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
+            <View className="pl-4 pr-2 py-3 flex-row items-center">
+              <Text className="text-foreground font-neueBold">+39</Text>
+            </View>
+            <TextInput
+              className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="3XXXXXXXXX"
+              placeholderTextColor="#A49A99"
+              value={(step5.phone || "").replace(/^\+?39\s?/, "")}
+              onChangeText={(v) => {
+                const digits = v.replace(/[^0-9]/g, "");
+                updateStep5({ phone: `+39 ${digits}` });
+              }}
+              onFocus={() => setFocused("phone")}
+              onBlur={() => {
+                setFocused(null);
+                validateAll();
+              }}
+              keyboardType="number-pad"
+              textContentType="telephoneNumber"
+              maxLength={15}
+            />
           </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          {!!errors.phone && (
+            <Text className="text-xs text-error mt-1">{errors.phone}</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Footer actions */}
+      <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="rounded-full border border-foreground px-6 py-4"
+        >
+          <Text className="text-foreground">Back</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onNext}
+          disabled={!canProceed}
+          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
+        >
+          <Text className="text-foreground">Next</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -274,7 +308,7 @@ function ProvinceMunicipalityInput({
 
   return (
     <View className="">
-      <Text className="text-foreground mb-2 tat-body-2-med">
+      <Text className="mb-2 label">
         Enter province and municipality<Text className="text-error">*</Text>
       </Text>
       <TouchableOpacity
@@ -283,7 +317,7 @@ function ProvinceMunicipalityInput({
           setModalStep("province");
           setSearch("");
         }}
-        className="rounded-xl border border-gray bg-black/40 px-4 py-3"
+        className="rounded-xl border border-gray bg-[#100C0C] px-4 py-3"
       >
         <Text className={valueProvince ? "text-foreground" : "text-[#A49A99]"}>
           {displayValue}
@@ -308,10 +342,7 @@ function ProvinceMunicipalityInput({
                 }}
                 className="absolute left-6 top-20 w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
               >
-                <Image
-                  source={require("@/assets/images/icons/close.png")}
-                  resizeMode="contain"
-                />
+                <SVGIcons.Close className="w-8 h-8" />
               </TouchableOpacity>
               <View className="flex-row items-center  justify-center w-full">
                 <Text className="text-foreground text-lg font-neueBold tat-body-1">
@@ -355,22 +386,14 @@ function ProvinceMunicipalityInput({
                     }}
                     accessibilityRole="button"
                   >
-                    <Image
-                      source={require("@/assets/images/icons/pen.png")}
-                      className="w-5 h-5"
-                      resizeMode="contain"
-                    />
+                    <SVGIcons.Pen2 className="w-5 h-5" />
                   </TouchableOpacity>
                 </View>
               )}
 
               {/* Search */}
               <View className="mx-6 border border-gray py-0.5 px-4 mb-8 rounded-full flex-row items-center">
-                <Image
-                  source={require("@/assets/images/icons/search.png")}
-                  className="w-5 h-5 mr-2"
-                  resizeMode="contain"
-                />
+                <SVGIcons.Search className="w-5 h-5 mr-2" />
                 <TextInput
                   className="text-foreground flex-1"
                   placeholder={

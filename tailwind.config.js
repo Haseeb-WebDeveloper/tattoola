@@ -121,6 +121,9 @@ module.exports = {
           800: "#1F2937",
           900: "#111827",
         },
+        tat: {
+          DEFAULT: "#A49A99",
+        },
         // Base colors
         background: "#000000",
         foreground: "#FFFFFF",

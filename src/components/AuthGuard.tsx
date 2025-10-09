@@ -62,7 +62,7 @@ export function AuthGuard({
   // Show loading while checking authentication
   if (!initialized || loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <View className='bg-background w-full h-full'>
         <LoadingSpinner message="Loading..." overlay />
       </View>
     );

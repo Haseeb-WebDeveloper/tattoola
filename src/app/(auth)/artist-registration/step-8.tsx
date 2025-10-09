@@ -1,14 +1,17 @@
+import AuthStepHeader from "@/components/ui/auth-step-header";
+import FixedFooter from "@/components/ui/FixedFooter";
 import { AR_MAX_FAVORITE_STYLES } from "@/constants/limits";
+import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
+import { isValid, step8Schema } from "@/utils/artistRegistrationValidation";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Dimensions,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -18,11 +21,11 @@ import {
 
 function StyleSkeleton() {
   return (
-    <View className="flex-row items-center justify-between py-4 border-b border-gray/20">
-      <View className="w-32 h-24 bg-gray/30 rounded-md" />
+    <View className="flex-row items-center justify-between border-b border-gray/20 px-4">
+      <View className="w-6 h-6 rounded-md bg-gray/30 mr-3" />
+      <View className="w-36 h-28 bg-gray/30" />
       <View className="flex-1 px-4">
-        <View className="w-40 h-4 bg-gray/30 rounded mb-2" />
-        <View className="w-24 h-4 bg-gray/20 rounded" />
+        <View className="w-32 h-4 bg-gray/30 rounded" />
       </View>
       <View className="w-6 h-6 rounded-full bg-gray/30" />
     </View>
@@ -63,7 +66,13 @@ export default function ArtistStep8V2() {
   const selected = step8.favoriteStyles || [];
   const canSelectMore = selected.length < AR_MAX_FAVORITE_STYLES;
 
+  const canProceed = isValid(step8Schema, {
+    favoriteStyles: selected,
+    mainStyleId: step8.mainStyleId || "",
+  });
+
   const onNext = () => {
+    if (!canProceed) return;
     router.push("/(auth)/artist-registration/step-9");
   };
 
@@ -88,16 +97,16 @@ export default function ArtistStep8V2() {
     const isPrimary = step8.mainStyleId === item.id;
     const img = resolveImageUrl(item.imageUrl);
     return (
-      <Pressable
-        onPress={() => toggleFavoriteStyle(item.id, AR_MAX_FAVORITE_STYLES)}
-        className="flex-row items-center py-2 border-b border-gray/20"
-      >
+      <View className="flex-row items-center px-4 border-b border-gray/20">
         {/* Left select box */}
-        <View className="w-10 items-center">
+        <Pressable
+          className="w-10 items-center"
+          onPress={() => toggleFavoriteStyle(item.id, AR_MAX_FAVORITE_STYLES)}
+        >
           <View
             className={`w-5 h-5 rounded-[4px] border ${isSelected ? "bg-error border-error" : "bg-transparent border-foreground/50"}`}
           />
-        </View>
+        </Pressable>
 
         {/* Image */}
         {img ? (
@@ -123,118 +132,90 @@ export default function ArtistStep8V2() {
           className="pr-4"
           disabled={!isSelected}
         >
-          <Image
-            source={
-              isPrimary
-                ? require("@/assets/images/icons/yellow-heart-circle.png")
-                : require("@/assets/images/icons/heart-circle.png")
-            }
-            className="w-5 h-5"
-            resizeMode="contain"
-          />
+          {isPrimary ? (
+            <SVGIcons.StartCircleFilled className="w-5 h-5" />
+          ) : (
+            <SVGIcons.StartCircle className="w-5 h-5" />
+          )}
         </TouchableOpacity>
-      </Pressable>
+      </View>
     );
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 10}
-      className="flex-1 bg-black"
-    >
-      <ScrollView
-        className="flex-1 relative"
-        contentContainerClassName="flex-grow"
-      >
-        {/* Header */}
-        <View className="px-4 my-8">
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity
-              onPress={() => router.replace("/(auth)/welcome")}
-              className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
-            >
-              <Image
-                source={require("@/assets/images/icons/close.png")}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            <Image
-              source={require("@/assets/logo/logo-light.png")}
-              className="h-10"
-              resizeMode="contain"
-            />
-            <View className="w-10" />
-          </View>
-          <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
-        </View>
+  // Constrain list height and let it scroll, mirroring step 9 behavior
+  const windowHeight = Dimensions.get("window").height;
+  const HEADER_HEIGHT = 60; // AuthStepHeader
+  const PROGRESS_HEIGHT = 40; // Progress dots
+  const TITLE_HEIGHT = 100; // Title + helper
+  const FOOTER_HEIGHT = 80; // FixedFooter
+  const PADDING = 32; // extra padding
+  const LIST_HEIGHT =
+    windowHeight -
+    HEADER_HEIGHT -
+    PROGRESS_HEIGHT -
+    TITLE_HEIGHT -
+    FOOTER_HEIGHT -
+    PADDING;
 
-        {/* Progress */}
-        <View className="items-center mb-6">
-          <View className="flex-row items-center gap-1">
-            {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-              <View
-                key={idx}
-                className={`${idx < 8 ? (idx === 7 ? "bg-foreground w-3 h-3" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-              />
+  return (
+    <View className="flex-1 bg-black">
+      {/* Header */}
+      <AuthStepHeader />
+
+      {/* Progress */}
+      <View className="items-center  mb-4 mt-8">
+        <View className="flex-row items-center gap-1">
+          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
+            <View
+              key={idx}
+              className={`${idx < 8 ? (idx === 7 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Title + helper text */}
+      <View className="px-6 mb-4 flex-row gap-2 items-center justify-center">
+        <SVGIcons.Style width={22} height={22} />
+        <Text className="text-foreground section-title font-neueBold">
+          Your preferred styles
+        </Text>
+      </View>
+      <TouchableOpacity
+        onPress={() => setInfoVisible(true)}
+        className="px-6 mb-4"
+      >
+        <Text className="text-foreground/80">
+          Choose at least 2 styles. Then mark one as your primary style (★)
+        </Text>
+      </TouchableOpacity>
+
+      {/* List */}
+      <View className="flex-1 mb-24" style={{ maxHeight: LIST_HEIGHT }}>
+        {loading ? (
+          <View>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <StyleSkeleton key={i} />
             ))}
           </View>
-        </View>
-
-        {/* Title + helper text */}
-        <View className="px-6 mb-2 flex-row gap-2 items-center">
-          <Image
-            source={require("@/assets/images/icons/style.png")}
-            className="w-6 h-6"
-            resizeMode="contain"
+        ) : (
+          <FlatList
+            data={styles}
+            keyExtractor={(i) => i.id}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={true}
+            style={{ flexGrow: 0 }}
+            contentContainerStyle={{ paddingBottom: 8 }}
           />
-          <Text className="text-foreground section-title font-neueBold">
-            Your preferred styles
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => setInfoVisible(true)}
-          className="px-6 mb-4"
-        >
-          <Text className="text-foreground/80">
-            Choose at least 2 styles. Then mark one as your primary style (★)
-          </Text>
-        </TouchableOpacity>
+        )}
+      </View>
 
-        {/* List */}
-        <View className="px-6">
-          {loading ? (
-            <View>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <StyleSkeleton key={i} />
-              ))}
-            </View>
-          ) : (
-            <FlatList
-              data={styles}
-              keyExtractor={(i) => i.id}
-              renderItem={renderItem}
-              scrollEnabled={false}
-            />
-          )}
-        </View>
-
-        {/* Footer */}
-        <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="rounded-full border border-foreground px-6 py-4"
-          >
-            <Text className="text-foreground">Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onNext}
-            className="rounded-full px-8 py-4 bg-primary"
-          >
-            <Text className="text-foreground">Next</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      {/* Fixed Footer */}
+      <FixedFooter
+        onBack={() => router.back()}
+        onNext={onNext}
+        nextDisabled={!canProceed}
+      />
 
       {/* Info Modal */}
       <Modal
@@ -284,14 +265,14 @@ export default function ArtistStep8V2() {
               <Text className="text-foreground/90 text-[16px] font-light mb-4">
                 Vuoi restringere la ricerca? Usa il filtro per stile, che ti
                 consente di selezionare tatuaggi in base a stili specifici come
-                blackwork, old school, geometrico, tradizionale e molti
-                altri. Così potrai trovare più facilmente design che
-                rispecchiano davvero la tua visione e il tuo gusto estetico.
+                blackwork, old school, geometrico, tradizionale e molti altri.
+                Così potrai trovare più facilmente design che rispecchiano
+                davvero la tua visione e il tuo gusto estetico.
               </Text>
             </ScrollView>
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
