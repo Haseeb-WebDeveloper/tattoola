@@ -2,15 +2,36 @@ import { RequireAuth } from "@/components/AuthGuard";
 import CustomTabBar from "@/components/CustomTabBar";
 import { Tabs } from "expo-router";
 import React from "react";
+import { View, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
 // import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   return (
     <RequireAuth>
+      <View className="flex-1">
         <Tabs
           tabBar={(props) => <CustomTabBar {...props} />}
           screenOptions={{
             headerShown: false,
+            tabBarStyle: {
+              position: 'absolute',
+              bottom: 20,
+              left: 20,
+              right: 20,
+              borderRadius: 30,
+              backgroundColor: 'rgba(0,0,0,0.1)',
+              borderTopWidth: 0,
+              elevation: 0,
+              height: 70,
+            },
+            tabBarBackground: () => (
+              <BlurView
+                tint="dark"
+                intensity={80}
+                style={StyleSheet.absoluteFill}
+              />
+            ),
           }}
         >
           <Tabs.Screen
@@ -44,6 +65,7 @@ export default function TabLayout() {
             }}
           />
         </Tabs>
+      </View>
     </RequireAuth>
   );
 }

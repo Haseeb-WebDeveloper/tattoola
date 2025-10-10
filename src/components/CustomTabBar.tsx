@@ -1,7 +1,7 @@
+import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import Feather from '@expo/vector-icons/Feather';
 
 interface TabBarProps {
   state: any;
@@ -36,69 +36,83 @@ export default function CustomTabBar({
   };
 
   return (
-    <View className="bg-background p-4 relative">
-      <View className="rounded-full overflow-hidden">
-        <LinearGradient
-          colors={["#3a0000", "#000000"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          className="flex-row items-center justify-around px-4 py-4"
-          style={{ borderRadius: 9999 }}
-        >
-          {state.routes.map((route: any, index: number) => {
-            const { options } = descriptors[route.key];
-            const label =
-              options.tabBarLabel !== undefined
-                ? options.tabBarLabel
-                : options.title !== undefined
+    <LinearGradient
+      colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,3)"]}
+      locations={[0, 0.3, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 100,
+      }}
+    >
+      <View className="px-4 pb-1 pt-6">
+        <View className="rounded-full overflow-hidden">
+          <LinearGradient
+            colors={["#3a0000", "#000000"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="flex-row items-center justify-around px-4 py-4"
+            style={{ borderRadius: 9999 }}
+          >
+            {state.routes.map((route: any, index: number) => {
+              const { options } = descriptors[route.key];
+              const label =
+                options.tabBarLabel !== undefined
+                  ? options.tabBarLabel
+                  : options.title !== undefined
                   ? options.title
                   : route.name;
 
-            const isFocused = state.index === index;
+              const isFocused = state.index === index;
 
-            const onPress = () => {
-              const event = navigation.emit({
-                type: "tabPress",
-                target: route.key,
-                canPreventDefault: true,
-              });
+              const onPress = () => {
+                const event = navigation.emit({
+                  type: "tabPress",
+                  target: route.key,
+                  canPreventDefault: true,
+                });
 
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name, route.params);
-              }
-            };
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name, route.params);
+                }
+              };
 
-            const onLongPress = () => {
-              navigation.emit({
-                type: "tabLongPress",
-                target: route.key,
-              });
-            };
+              const onLongPress = () => {
+                navigation.emit({
+                  type: "tabLongPress",
+                  target: route.key,
+                });
+              };
 
-            return (
-              <TouchableOpacity
-                key={route.key}
-                accessibilityRole="button"
-                accessibilityState={isFocused ? { selected: true } : {}}
-                accessibilityLabel={options.tabBarAccessibilityLabel}
-                testID={options.tabBarTestID}
-                onPress={onPress}
-                onLongPress={onLongPress}
-                className="items-center justify-center flex-1"
-              >
-                {getIcon(route.name, isFocused)}
-                <Text
-                  className={`ta-body-4 mt-1 ${
-                    isFocused ? "text-foreground" : "text-gray"
-                  }`}
+              return (
+                <TouchableOpacity
+                  key={route.key}
+                  accessibilityRole="button"
+                  accessibilityState={isFocused ? { selected: true } : {}}
+                  accessibilityLabel={options.tabBarAccessibilityLabel}
+                  testID={options.tabBarTestID}
+                  onPress={onPress}
+                  onLongPress={onLongPress}
+                  className="items-center justify-center flex-1"
                 >
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </LinearGradient>
+                  {getIcon(route.name, isFocused)}
+                  <Text
+                    className={`ta-body-4 mt-1 ${
+                      isFocused ? "text-foreground" : "text-gray"
+                    }`}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </LinearGradient>
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }

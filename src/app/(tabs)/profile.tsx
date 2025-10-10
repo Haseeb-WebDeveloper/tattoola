@@ -117,6 +117,7 @@ export default function ProfileScreen() {
 
         {/* Body Parts Section */}
         <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
+        <View style={{ height: 60 }} />
       </ScrollView>
     </View>
   );

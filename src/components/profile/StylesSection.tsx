@@ -27,16 +27,25 @@ export const StylesSection: React.FC<StylesSectionProps> = ({ styles }) => {
         {styles.map((style) => (
           <View
             key={style.id}
-            className={`relative px-4 py-2 rounded-full border border-foreground  ${
-              style.isMain ? "" : ""
-            } flex-row items-center`}
+            className={`px-4 py-2 rounded-full border border-foreground flex-row items-center`}
+            style={{ position: "relative" }}
           >
             {style.isMain && (
-              <SVGIcons.King className="w-4 h-4 absolute top-0 right-0" />
+              <View
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -3,
+                  zIndex: 2,
+                  width: 20,
+                  backgroundColor: "transparent",
+                }}
+                pointerEvents="none"
+              >
+                <SVGIcons.King style={{ width: 20, height: 20 }} />
+              </View>
             )}
-            <Text className={`text-foreground ${style.isMain ? "" : ""}`}>
-              {style.name}
-            </Text>
+            <Text className="text-foreground">{style.name}</Text>
           </View>
         ))}
       </View>
