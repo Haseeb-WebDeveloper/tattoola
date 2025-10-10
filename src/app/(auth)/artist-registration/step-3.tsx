@@ -140,7 +140,7 @@ export default function ArtistStep3V2() {
                 resizeMode="cover"
               />
             ) : (
-              <View className="items-center border-2 border-dashed border-error/70 w-52 h-52 rounded-full justify-center gap-4 bg-primary/10">
+              <View className="items-center border-2 border-dashed border-error/70 w-52 h-52 rounded-full justify-center gap-4 bg-primary/20">
                 <SVGIcons.User className="w-10 h-10 mb-3" />
                 <View className="bg-primary rounded-full py-2 px-4">
                   <Text className="text-foreground tat-body-1 font-neueBold">

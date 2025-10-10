@@ -5,9 +5,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
@@ -16,5 +14,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-, "old/userRegistrationStore.ts", "old/artistRegistrationStore.ts"  ]
+  ]
 }

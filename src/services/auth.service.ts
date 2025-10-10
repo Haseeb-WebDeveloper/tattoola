@@ -621,6 +621,7 @@ export class AuthService {
     console.log("step12 projects:", data.step12?.projects);
     
     const projects = data.step12?.projects || [];
+    const createdProjectRefs: { id: string; project: any }[] = [];
     
     console.log("filtered projects:", projects);
 
@@ -658,6 +659,9 @@ export class AuthService {
           }
 
           console.log("Portfolio project created successfully:", portfolioProject.id);
+
+          // Track created project id alongside original payload for later post creation
+          createdProjectRefs.push({ id: portfolioProject.id, project });
 
           // Add project media - let Supabase generate UUIDs
           const allMedia = [
@@ -712,6 +716,152 @@ export class AuthService {
 
     console.log("portfolio projects added")
 
+    // Create artist banner from first images of each portfolio project
+    console.log("Creating artist banner from portfolio projects");
+    const bannerMediaUrls: string[] = [];
+    
+    if (projects.length > 0) {
+      for (const project of projects) {
+        // Get the first image from each project
+        const firstImage = project.photos?.[0];
+        if (firstImage) {
+          bannerMediaUrls.push(firstImage);
+        }
+      }
+      
+      // Insert banner media if we have any
+      if (bannerMediaUrls.length > 0) {
+        const bannerMediaData = bannerMediaUrls.map((url, index) => ({
+          artistId: artistProfile.id,
+          mediaType: 'IMAGE' as const,
+          mediaUrl: url,
+          order: index,
+        }));
+
+        const { error: bannerError } = await adminOrUserClient
+          .from('artist_banner_media')
+          .insert(bannerMediaData);
+
+        if (bannerError) {
+          console.error('Error creating banner media:', bannerError);
+          // Don't throw error, just log it as banner is not critical
+        } else {
+          console.log('Artist banner media created successfully');
+        }
+      }
+    }
+
+    // Create portfolio collection
+    console.log("Creating portfolio collection");
+    const { data: portfolioCollection, error: collectionError } = await adminOrUserClient
+      .from('collections')
+      .insert({
+        id: generateUUID(),
+        name: `${data.step3.firstName} ${data.step3.lastName}'s Portfolio`,
+        description: 'Portfolio works',
+        ownerId: userId,
+        isPrivate: false,
+        isPortfolioCollection: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (collectionError) {
+      console.error('Error creating portfolio collection:', collectionError);
+      // Don't throw error, just log it as collection is not critical
+    } else {
+      console.log('Portfolio collection created successfully');
+    }
+
+    // Create posts for each portfolio project
+    console.log("Creating portfolio posts");
+    if (projects.length > 0 && portfolioCollection) {
+      let postOrder = 1;
+      // Use createdProjectRefs so we have the DB projectId for each post
+      for (const ref of createdProjectRefs) {
+        const project = ref.project;
+        // Skip if no media
+        const hasMedia = (project.photos && project.photos.length > 0) || (project.videos && project.videos.length > 0);
+        if (!hasMedia) {
+          console.log("Skipping project - no media");
+          continue;
+        }
+
+        const projectTitle = project.title || project.description || `Portfolio Work ${postOrder}`;
+        const thumbnailUrl = project.photos?.[0] || project.videos?.[0];
+
+        // Create post
+        const { data: post, error: postError } = await adminOrUserClient
+          .from('posts')
+          .insert({
+            id: generateUUID(),
+            authorId: userId,
+            caption: project.description || project.title,
+            thumbnailUrl: thumbnailUrl,
+            styleId: data.step8.mainStyleId || null,
+            projectId: ref.id,
+            isActive: true,
+            likesCount: 0,
+            commentsCount: 0,
+            showInFeed: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (postError) {
+          console.error('Error creating post:', postError);
+          continue; // Skip this post but continue with others
+        }
+
+        console.log("Post created successfully:", post.id);
+
+        // Add post media
+        const allMedia = [
+          ...(project.photos || []).map((url: string) => ({ url, type: 'IMAGE' as const })),
+          ...(project.videos || []).map((url: string) => ({ url, type: 'VIDEO' as const }))
+        ];
+
+        if (allMedia.length > 0) {
+          const postMediaData = allMedia.map((media, mediaIndex) => ({
+            postId: post.id,
+            mediaType: media.type,
+            mediaUrl: media.url,
+            order: mediaIndex + 1,
+          }));
+
+          const { error: postMediaError } = await adminOrUserClient
+            .from('post_media')
+            .insert(postMediaData);
+
+          if (postMediaError) {
+            console.error('Error creating post media:', postMediaError);
+          }
+        }
+
+        // Add post to portfolio collection
+        const { error: collectionPostError } = await adminOrUserClient
+          .from('collection_posts')
+          .insert({
+            id: generateUUID(),
+            collectionId: portfolioCollection.id,
+            postId: post.id,
+            addedAt: new Date().toISOString(),
+          });
+
+        if (collectionPostError) {
+          console.error('Error adding post to collection:', collectionPostError);
+        }
+
+        postOrder++;
+      }
+    }
+
+    console.log("Portfolio posts and collection created");
+
     return this.transformDatabaseUser(updatedUser);
   }
 
@@ -723,7 +873,10 @@ export class AuthService {
       .from('users')
       .select(`
         *,
-        artist_profiles(*),
+        artist_profiles(
+          *,
+          artist_banner_media(*)
+        ),
         user_favorite_styles(
           styleId,
           order,
@@ -876,6 +1029,7 @@ export class AuthService {
         coverPhoto: dbUser.artist_profiles.coverPhoto,
         coverVideo: dbUser.artist_profiles.coverVideo,
         mainStyleId: dbUser.artist_profiles.mainStyleId,
+        bannerMedia: dbUser.artist_profiles.artist_banner_media || [],
         createdAt: dbUser.artist_profiles.createdAt,
         updatedAt: dbUser.artist_profiles.updatedAt,
       } : undefined,

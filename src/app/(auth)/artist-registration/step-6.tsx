@@ -70,7 +70,7 @@ export default function ArtistStep6V2() {
     <View className="flex-1 bg-black">
       {/* Header */}
       <AuthStepHeader />
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 180 }}>
+      <ScrollView className="flex-1" >
         {/* Progress */}
         <View className="items-center  mb-4 mt-8">
           <View className="flex-row items-center gap-1">
@@ -103,7 +103,7 @@ export default function ArtistStep6V2() {
 
         {/* Upload area */}
         <View className="px-6">
-          <View className="border-2 border-dashed border-error/70 rounded-2xl items-center py-10 px-6 bg-primary/20">
+          <View className="rounded-2xl items-center py-10 px-6 bg-primary/20 border-2 border-dashed border-error/70">
             <SVGIcons.Upload className="w-16 h-16" />
             <TouchableOpacity
               onPress={handlePickCertificate}
@@ -123,10 +123,10 @@ export default function ArtistStep6V2() {
 
         {/* Preview (first file) */}
         {localPreview && (
-          <View className="px-6 mt-6 pb-32 h-32 w-full">
+          <View className="px-6 mt-6 pb-32">
             <Image
               source={{ uri: localPreview }}
-              className="w-full rounded-lg aspect-square h-full"
+              className="w-full rounded-lg h-fit aspect-square"
               resizeMode="contain"
             />
           </View>

@@ -1,11 +1,3 @@
-// Export all stores from a single location for easier imports
-export {
-  useArtistCurrentStep,
-  useArtistErrors,
-  useArtistIsSubmitting, useArtistRegistrationStore,
-  useArtistStep
-} from '../../old/artistRegistrationStore';
-
 export {
   useUserCurrentStep,
   useUserErrors,

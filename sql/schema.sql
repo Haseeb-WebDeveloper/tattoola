@@ -204,10 +204,9 @@ CREATE TABLE "public"."posts" (
     "id" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
     "caption" TEXT,
-    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
-    "mediaUrl" TEXT NOT NULL,
     "thumbnailUrl" TEXT,
     "styleId" TEXT,
+    "projectId" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "likesCount" INTEGER NOT NULL DEFAULT 0,
     "commentsCount" INTEGER NOT NULL DEFAULT 0,
@@ -310,6 +309,7 @@ CREATE TABLE "public"."collections" (
     "description" TEXT,
     "ownerId" TEXT NOT NULL,
     "isPrivate" BOOLEAN NOT NULL DEFAULT false,
+    "isPortfolioCollection" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -514,6 +514,30 @@ CREATE TABLE "public"."artist_services" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "artist_services_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."artist_banner_media" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "artistId" TEXT NOT NULL,
+    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
+    "mediaUrl" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "artist_banner_media_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."post_media" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "postId" TEXT NOT NULL,
+    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
+    "mediaUrl" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "post_media_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -731,6 +755,9 @@ CREATE INDEX "collections_ownerId_idx" ON "public"."collections"("ownerId");
 CREATE INDEX "collections_isPrivate_idx" ON "public"."collections"("isPrivate");
 
 -- CreateIndex
+CREATE INDEX "collections_isPortfolioCollection_idx" ON "public"."collections"("isPortfolioCollection");
+
+-- CreateIndex
 CREATE INDEX "collection_posts_collectionId_idx" ON "public"."collection_posts"("collectionId");
 
 -- CreateIndex
@@ -884,6 +911,18 @@ CREATE INDEX "artist_services_serviceId_idx" ON "public"."artist_services"("serv
 CREATE UNIQUE INDEX "artist_services_artistId_serviceId_key" ON "public"."artist_services"("artistId", "serviceId");
 
 -- CreateIndex
+CREATE INDEX "artist_banner_media_artistId_idx" ON "public"."artist_banner_media"("artistId");
+
+-- CreateIndex
+CREATE INDEX "artist_banner_media_order_idx" ON "public"."artist_banner_media"("order");
+
+-- CreateIndex
+CREATE INDEX "post_media_postId_idx" ON "public"."post_media"("postId");
+
+-- CreateIndex
+CREATE INDEX "post_media_order_idx" ON "public"."post_media"("order");
+
+-- CreateIndex
 CREATE INDEX "follows_followerId_idx" ON "public"."follows"("followerId");
 
 -- CreateIndex
@@ -939,6 +978,9 @@ ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_authorId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "public"."portfolio_projects"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."magazines" ADD CONSTRAINT "magazines_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1053,6 +1095,12 @@ ALTER TABLE "public"."artist_services" ADD CONSTRAINT "artist_services_artistId_
 
 -- AddForeignKey
 ALTER TABLE "public"."artist_services" ADD CONSTRAINT "artist_services_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."services"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."artist_banner_media" ADD CONSTRAINT "artist_banner_media_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."artist_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."post_media" ADD CONSTRAINT "post_media_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."follows" ADD CONSTRAINT "follows_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

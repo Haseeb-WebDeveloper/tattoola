@@ -47,8 +47,18 @@ export interface ArtistProfile {
   coverPhoto?: string;
   coverVideo?: string;
   mainStyleId?: string;
+  bannerMedia?: ArtistBannerMedia[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ArtistBannerMedia {
+  id: string;
+  artistId: string;
+  mediaType: 'IMAGE' | 'VIDEO';
+  mediaUrl: string;
+  order: number;
+  createdAt: string;
 }
 
 export interface AdminProfile {
@@ -260,6 +270,42 @@ export interface PortfolioMedia {
   mediaType: 'IMAGE' | 'VIDEO';
   mediaUrl: string;
   order: number;
+}
+
+export interface Post {
+  id: string;
+  authorId: string;
+  caption?: string;
+  thumbnailUrl?: string;
+  styleId?: string;
+  projectId?: string;
+  isActive: boolean;
+  likesCount: number;
+  commentsCount: number;
+  showInFeed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  media?: PostMedia[];
+}
+
+export interface PostMedia {
+  id: string;
+  postId: string;
+  mediaType: 'IMAGE' | 'VIDEO';
+  mediaUrl: string;
+  order: number;
+  createdAt: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  isPrivate: boolean;
+  isPortfolioCollection: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 

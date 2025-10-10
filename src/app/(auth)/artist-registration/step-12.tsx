@@ -209,16 +209,22 @@ export default function ArtistStep12V2() {
             <Pressable
               key={i}
               onPress={() => openProjectModal(i)}
-              className="flex-1 h-40 bg-black/40 border border-gray rounded-xl items-center justify-center overflow-hidden"
+              className="flex-1 h-full aspect-square bg-primary/20 border-2 border-dashed border-error/70 rounded-xl items-center justify-center overflow-hidden"
             >
               {firstAsset(grid[i]) ? (
-                <Image
+                 <View className="w-full h-full items-center justify-between gap-2 pb-2">
+                 <Image
                   source={{ uri: firstAsset(grid[i])! }}
-                  className="w-full h-full"
+                  className="w-full h-32"
                   resizeMode="cover"
                 />
+                <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
+               </View>
               ) : (
-                <Text className="text-foreground/60">Add work</Text>
+                <View className="items-center justify-center gap-2">
+                  <SVGIcons.AddRed className="w-6 h-6" />
+                  <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
+                </View>
               )}
             </Pressable>
           ))}
@@ -228,16 +234,22 @@ export default function ArtistStep12V2() {
             <Pressable
               key={i}
               onPress={() => openProjectModal(i)}
-              className="flex-1 h-40 bg-black/40 border border-gray rounded-xl items-center justify-center overflow-hidden"
+              className="flex-1 h-full aspect-square bg-primary/20 border-2 border-dashed border-error/70 rounded-xl items-center justify-center overflow-hidden"
             >
               {firstAsset(grid[i]) ? (
-                <Image
+               <View className="w-full h-full items-center justify-between gap-2 pb-2">
+                 <Image
                   source={{ uri: firstAsset(grid[i])! }}
-                  className="w-full h-full"
+                  className="w-full h-32"
                   resizeMode="cover"
                 />
+                <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
+               </View>
               ) : (
-                <Text className="text-foreground/60">Add work</Text>
+                <View className="items-center justify-center gap-2">
+                  <SVGIcons.AddRed className="w-6 h-6" />
+                  <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
+                </View>
               )}
             </Pressable>
           ))}
@@ -268,7 +280,7 @@ export default function ArtistStep12V2() {
         animationType="slide"
         onRequestClose={() => setActiveIndex(null)}
       >
-        <View className="flex-1 justify-end">
+        <View className="flex-1 justify-end ">
           <View className="w-full bg-black rounded-t-3xl h-[100vh]">
             <View className="px-6 pb-6 pt-20 border-b border-gray flex-row items-center justify-between relative bg-primary/30">
               <TouchableOpacity
@@ -285,20 +297,20 @@ export default function ArtistStep12V2() {
             </View>
 
             {/* Step 1: media upload & re-order */}
-            <ScrollView className="px-6 pt-6">
+            <ScrollView className="px-6 pt-6 ">
               {/* Upload area - matching step-6 design */}
-              <View className="border-2 border-dashed border-error/70 rounded-2xl bg-black/40 items-center py-10 mb-6">
-                <SVGIcons.Upload className="w-16 h-16 mb-4" />
+              <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
+                <SVGIcons.Upload className="w-16 h-16" />
                 <TouchableOpacity
                   onPress={handlePickMedia}
                   disabled={uploading}
-                  className="bg-primary rounded-full py-3 px-6"
+                  className="bg-primary rounded-full py-3 px-6 mt-4"
                 >
                   <Text className="text-foreground tat-body-1 font-neueBold">
                     {uploading ? "Uploading..." : "Upload files"}
                   </Text>
                 </TouchableOpacity>
-                <Text className="text-foreground/80 mt-6 text-center">
+                <Text className="text-foreground/80 mt-6 text-center px-4">
                   Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
                   Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
                 </Text>
@@ -321,13 +333,14 @@ export default function ArtistStep12V2() {
               )}
 
               {/* Step 2: description */}
-              <View className="mt-6">
+              <View className="mt-6 mb-10">
                 <Text className="mb-2 label">Descrizione</Text>
                 <View className="rounded-2xl bg-black/40 border border-gray">
                   <TextInput
                     multiline
                     numberOfLines={4}
-                    className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-2xl min-h-[120px]"
+                    textAlignVertical="top"
+                    className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-2xl min-h-[120px] text-start"
                     placeholder="Tell us about this project..."
                     placeholderTextColor="#A49A99"
                     value={draft.description || ""}
