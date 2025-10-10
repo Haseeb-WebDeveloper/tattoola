@@ -50,6 +50,23 @@ import UncheckedCheckbox from "@/assets/icons/unchecked-checkbox.svg";
 import CircleCheckedCheckbox from "@/assets/icons/circle-checked-checkbox.svg";
 // @ts-ignore
 import CircleUncheckedCheckbox from "@/assets/icons/circle-unchecked-checkbox.svg";
+// @ts-ignore
+import Settings from "@/assets/icons/settings.svg";
+// @ts-ignore
+import VarifiedGreen from "@/assets/icons/varified.svg";
+// @ts-ignore
+import Location from "@/assets/icons/location.svg";
+// @ts-ignore
+import Instagram from "@/assets/icons/instagram.svg";
+// @ts-ignore
+import Tiktok from "@/assets/icons/tiktok.svg";
+// @ts-ignore
+import Website from "@/assets/icons/website.svg";
+// @ts-ignore
+import King from "@/assets/icons/king.svg";
+// @ts-ignore
+import Stop from "@/assets/icons/stop.svg";
+
 
 export const SVGIcons = {
   Close,
@@ -78,6 +95,14 @@ export const SVGIcons = {
   UncheckedCheckbox,
   CircleCheckedCheckbox,
   CircleUncheckedCheckbox,
+  Settings,
+  VarifiedGreen,
+  Location,
+  Instagram,
+  Tiktok,
+  Website,
+  King,
+  Stop
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

@@ -73,7 +73,7 @@
   /* font-weight: 400; */
   font-size: 14px;
   line-height: 23px;
-  color: #a49a99;
+  /* color: #a49a99; */
   font-family: NeueHaasDisplay, Montserrat;
   /* letter-spacing: 0%; */
 }
@@ -149,3 +149,8 @@
 .tat-foreground-gray {
   background-color: #100C0C;
 }
+
+.tat-error {
+  background-color: #FF4C4C;
+}
+

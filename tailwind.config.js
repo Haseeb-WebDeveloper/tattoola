@@ -142,6 +142,7 @@ module.exports = {
         border: "#E5E7EB",
         input: "#F3F4F6",
         ring: "#3B82F6",
+        error: "#FF4C4C",
         destructive: {
           DEFAULT: "#AE0E0E",
           foreground: "#FFFFFF",
