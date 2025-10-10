@@ -14,7 +14,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthProvider } from "../providers/AuthProvider";
-import "../utils/debugLogger"; // Import debug logger
+// import "../utils/debugLogger"; // Import debug logger
 import { initializeDeepLinking } from "../utils/deepLinking";
 
 // Enable debug logging
@@ -73,6 +73,8 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="collection" />
+            <Stack.Screen name="settings" />
             <Stack.Screen name="modal" />
           </Stack>
         </SafeAreaView>

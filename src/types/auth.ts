@@ -351,6 +351,7 @@ export interface AuthContextType {
   signIn: (credentials: LoginCredentials) => Promise<{ user: User; session: AuthSession }>;
   signUp: (credentials: RegisterCredentials) => Promise<{ user: User; needsVerification: boolean }>;
   signOut: () => Promise<void>;
+  logout: () => Promise<void>;
   forgotPassword: (data: ForgotPasswordData) => Promise<void>;
   resetPassword: (data: ResetPasswordData) => Promise<void>;
   

@@ -2,15 +2,15 @@ import { router } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
 import type {
-  AuthContextType,
-  AuthSession,
-  CompleteArtistRegistration,
-  CompleteUserRegistration,
-  ForgotPasswordData,
-  LoginCredentials,
-  RegisterCredentials,
-  ResetPasswordData,
-  User,
+    AuthContextType,
+    AuthSession,
+    CompleteArtistRegistration,
+    CompleteUserRegistration,
+    ForgotPasswordData,
+    LoginCredentials,
+    RegisterCredentials,
+    ResetPasswordData,
+    User,
 } from '../types/auth';
 import { supabase } from '../utils/supabase';
 
@@ -386,6 +386,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const logout = async () => {
+    await signOut();
+    router.replace('/(auth)/login');
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -394,6 +399,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signUp,
     signOut,
+    logout,
     forgotPassword,
     resetPassword,
     completeUserRegistration,

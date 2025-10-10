@@ -11,11 +11,13 @@ import {
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchArtistSelfProfile } from "@/services/profile.service";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
@@ -43,8 +45,7 @@ export default function ProfileScreen() {
   };
 
   const handleCreateNewCollection = () => {
-    // TODO: Navigate to create collection screen
-    console.log('Create new collection');
+    router.push("/collection/new" as any);
   };
 
   if (loading) {
@@ -62,11 +63,11 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-background">
       <ScrollView className="relative" showsVerticalScrollIndicator={false}>
-        {/* Edit button */}
+        {/* settings button */}
         <View className="px-4 absolute top-2 right-0 z-10">
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => {}}
+            onPress={() => router.push('/settings' as any)}
             className="w-9 h-9 rounded-full bg-primary items-center justify-center"
           >
             <SVGIcons.Settings className="w-5 h-5" />
@@ -117,7 +118,7 @@ export default function ProfileScreen() {
 
         {/* Body Parts Section */}
         <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
-        <View style={{ height: 60 }} />
+        <View style={{ height: 90 }} />
       </ScrollView>
     </View>
   );

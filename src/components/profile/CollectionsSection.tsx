@@ -1,4 +1,5 @@
 import { SVGIcons } from "@/constants/svg";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
@@ -18,6 +19,12 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   collections,
   onCreateNewCollection,
 }) => {
+  const router = useRouter();
+
+  const handleCollectionPress = (collectionId: string) => {
+    router.push(`/collection/${collectionId}` as any);
+  };
+
   if (!collections || collections.length === 0) {
     return null;
   }
@@ -51,7 +58,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                       resizeMode="cover"
                     />
                   ) : (
-                    <View className="bg-gray-100 w-full h-full" />
+                    <View className="bg-[#100c0c77] w-full h-full" />
                   )}
                 </View>
               );
@@ -69,12 +76,12 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
       </Text>
       <View className="flex-row gap-3">
         {collections.map((collection) => (
-          <View className="flex-1 min-w-[140px] max-w-[180px]" key={collection.id}>
-            <View
-              key={collection.id}
-              className="rounded-xl bg-background/50 blur-sm backdrop-blur-sm border border-foreground p-2 flex-1 w-full h-full"
-              style={{ maxWidth: 180, minWidth: 140 }}
-            >
+          <TouchableOpacity
+            key={collection.id}
+            onPress={() => handleCollectionPress(collection.id)}
+            className="flex-1 min-w-[140px] max-w-[180px] h-full"
+          >
+            <View className="rounded-xl bg-background/50 blur-sm backdrop-blur-sm border border-foreground p-2 flex-1 w-full h-full">
               {renderThumbnailGrid(collection.thumbnails)}
             </View>
             <Text
@@ -83,7 +90,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
             >
               {collection.name}
             </Text>
-          </View>
+          </TouchableOpacity>
         ))}
         {/* Create new collection card */}
         <TouchableOpacity

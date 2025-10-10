@@ -93,7 +93,7 @@ export default function ArtistStep6V2() {
 
         {/* Description */}
         <View className="px-6 mb-6">
-          <Text className="tat-body-2-light text-center">
+          <Text className="tat-body-2-light text-center text-foreground">
             Carica un certificato o attestato che dimostri la tua autorizzazione a
             esercitare come tatuatore in Italia, insieme a un documento
             d’identità. Questo ci aiuta a verificare la tua identità e a mantenere

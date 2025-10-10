@@ -66,7 +66,24 @@ import Website from "@/assets/icons/website.svg";
 import King from "@/assets/icons/king.svg";
 // @ts-ignore
 import Stop from "@/assets/icons/stop.svg";
-
+// @ts-ignore
+import ChevronLeft from "@/assets/icons/chevron-left.svg";
+// @ts-ignore
+import ChevronRight from "@/assets/icons/chevron-right.svg";
+// @ts-ignore
+import HeartFilled from "@/assets/icons/heart-filled.svg";
+// @ts-ignore
+import Trash from "@/assets/icons/close.svg";
+// @ts-ignore
+import EditUser from "@/assets/icons/edit-user.svg";
+// @ts-ignore
+import Subscription from "@/assets/icons/subscription.svg";
+// @ts-ignore
+import DimondYellow from "@/assets/icons/dimond-yellow.svg";
+// @ts-ignore
+import DimondRed from "@/assets/icons/dimond-red.svg";
+// @ts-ignore
+import Logout from "@/assets/icons/logout.svg";
 
 export const SVGIcons = {
   Close,
@@ -102,7 +119,16 @@ export const SVGIcons = {
   Tiktok,
   Website,
   King,
-  Stop
+  Stop,
+  ChevronLeft,
+  ChevronRight,
+  HeartFilled,
+  Trash,
+  EditUser,
+  Subscription,
+  DimondYellow,
+  DimondRed,
+  Logout,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

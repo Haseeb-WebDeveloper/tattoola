@@ -27,6 +27,8 @@ type DraftProject = {
   description?: string;
 };
 
+type ModalStep = "upload" | "description";
+
 export default function ArtistStep12V2() {
   const {
     step12,
@@ -37,6 +39,7 @@ export default function ArtistStep12V2() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<DraftProject>({ media: [] });
+  const [modalStep, setModalStep] = useState<ModalStep>("upload");
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -49,6 +52,7 @@ export default function ArtistStep12V2() {
 
   const openProjectModal = (idx: number) => {
     setActiveIndex(idx);
+    setModalStep("upload");
     const existing = step12.projects?.[idx];
     if (existing) {
       const media = [
@@ -110,6 +114,13 @@ export default function ArtistStep12V2() {
     setDraft((d) => ({ ...d, media: data }));
   };
 
+  const removeMedia = (index: number) => {
+    setDraft((d) => ({
+      ...d,
+      media: d.media.filter((_, i) => i !== index),
+    }));
+  };
+
   const renderMediaItem = ({
     item,
     drag,
@@ -118,30 +129,36 @@ export default function ArtistStep12V2() {
     uri: string;
     type: "image" | "video";
     cloud?: string;
-  }>) => (
-    <Pressable
-      onLongPress={drag}
-      disabled={isActive}
-      className={`flex-row items-center mb-3 p-3 rounded-xl ${isActive ? "bg-primary/20" : "bg-black/40"}`}
-    >
-      <View className="w-20 h-16 bg-gray/30 mr-3 overflow-hidden rounded-lg">
-        <Image
-          source={{ uri: item.cloud || item.uri }}
-          className="w-full h-full"
-          resizeMode="cover"
-        />
-      </View>
-      <View className="flex-1">
-        <Text className="text-foreground/80 text-sm">
-          {item.type.toUpperCase()}
-        </Text>
-        <Text className="text-foreground/60 text-xs">Hold to reorder</Text>
-      </View>
-      <View className="w-6 h-6 items-center justify-center">
-        <View className="w-4 h-4 border border-foreground/30 rounded" />
-      </View>
-    </Pressable>
-  );
+  }>) => {
+    const index = draft.media.findIndex((m) => m.uri === item.uri);
+    return (
+      <Pressable
+        onLongPress={drag}
+        disabled={isActive}
+        className={`flex-row items-center mb-3 p-3 rounded-xl ${isActive ? "bg-primary/20" : "bg-black/40"}`}
+      >
+        <View className="w-20 h-16 bg-gray/30 mr-3 overflow-hidden rounded-lg">
+          <Image
+            source={{ uri: item.cloud || item.uri }}
+            className="w-full h-full"
+            resizeMode="cover"
+          />
+        </View>
+        <View className="flex-1">
+          <Text className="text-foreground/80 text-sm">
+            {item.type.toUpperCase()}
+          </Text>
+          <Text className="text-foreground/60 text-xs">Hold to reorder</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => removeMedia(index)}
+          className="w-6 h-6 items-center justify-center"
+        >
+          <SVGIcons.Close className="w-4 h-4 text-error" />
+        </TouchableOpacity>
+      </Pressable>
+    );
+  };
 
   const saveDraftToProject = () => {
     if (activeIndex === null) return;
@@ -212,18 +229,22 @@ export default function ArtistStep12V2() {
               className="flex-1 h-full aspect-square bg-primary/20 border-2 border-dashed border-error/70 rounded-xl items-center justify-center overflow-hidden"
             >
               {firstAsset(grid[i]) ? (
-                 <View className="w-full h-full items-center justify-between gap-2 pb-2">
-                 <Image
-                  source={{ uri: firstAsset(grid[i])! }}
-                  className="w-full h-32"
-                  resizeMode="cover"
-                />
-                <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
-               </View>
+                <View className="w-full h-full items-center justify-between gap-2 pb-2">
+                  <Image
+                    source={{ uri: firstAsset(grid[i])! }}
+                    className="w-full h-32"
+                    resizeMode="cover"
+                  />
+                  <Text className="text-gray tat-body-2-para">
+                    Work {i + 1}
+                  </Text>
+                </View>
               ) : (
                 <View className="items-center justify-center gap-2">
                   <SVGIcons.AddRed className="w-6 h-6" />
-                  <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
+                  <Text className="text-gray tat-body-2-para">
+                    Work {i + 1}
+                  </Text>
                 </View>
               )}
             </Pressable>
@@ -237,18 +258,22 @@ export default function ArtistStep12V2() {
               className="flex-1 h-full aspect-square bg-primary/20 border-2 border-dashed border-error/70 rounded-xl items-center justify-center overflow-hidden"
             >
               {firstAsset(grid[i]) ? (
-               <View className="w-full h-full items-center justify-between gap-2 pb-2">
-                 <Image
-                  source={{ uri: firstAsset(grid[i])! }}
-                  className="w-full h-32"
-                  resizeMode="cover"
-                />
-                <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
-               </View>
+                <View className="w-full h-full items-center justify-between gap-2 pb-2">
+                  <Image
+                    source={{ uri: firstAsset(grid[i])! }}
+                    className="w-full h-32"
+                    resizeMode="cover"
+                  />
+                  <Text className="text-gray tat-body-2-para">
+                    Work {i + 1}
+                  </Text>
+                </View>
               ) : (
                 <View className="items-center justify-center gap-2">
                   <SVGIcons.AddRed className="w-6 h-6" />
-                  <Text className="text-gray tat-body-2-para">Work {i + 1}</Text>
+                  <Text className="text-gray tat-body-2-para">
+                    Work {i + 1}
+                  </Text>
                 </View>
               )}
             </Pressable>
@@ -291,57 +316,92 @@ export default function ArtistStep12V2() {
               </TouchableOpacity>
               <View className="flex-row items-center justify-center w-full">
                 <Text className="text-foreground text-lg font-neueBold tat-body-1">
-                  Project
+                  Add Design
                 </Text>
               </View>
             </View>
 
             {/* Step 1: media upload & re-order */}
-            <ScrollView className="px-6 pt-6 ">
-              {/* Upload area - matching step-6 design */}
-              <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
-                <SVGIcons.Upload className="w-16 h-16" />
-                <TouchableOpacity
-                  onPress={handlePickMedia}
-                  disabled={uploading}
-                  className="bg-primary rounded-full py-3 px-6 mt-4"
-                >
-                  <Text className="text-foreground tat-body-1 font-neueBold">
-                    {uploading ? "Uploading..." : "Upload files"}
-                  </Text>
-                </TouchableOpacity>
-                <Text className="text-foreground/80 mt-6 text-center px-4">
-                  Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
-                  Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
-                </Text>
-              </View>
-
-              {/* Draggable media list */}
-              {draft.media.length > 0 && (
+            {modalStep === "upload" && (
+              <ScrollView className="px-6 pt-6">
                 <View className="mb-6">
-                  <Text className="text-foreground mb-3 tat-body-2-med">
-                    Uploaded files (drag to reorder)
-                  </Text>
-                  <DraggableFlatList
-                    data={draft.media}
-                    onDragEnd={onDragEnd}
-                    keyExtractor={(item, index) => `${item.uri}-${index}`}
-                    renderItem={renderMediaItem}
-                    scrollEnabled={false}
-                  />
+                  <Text className="text-foreground text-xl font-neueBold">Carica foto e video</Text>
+                  <Text className="text-foreground/80">You need to select atleast one photo and 3 photos/videos</Text>
                 </View>
-              )}
+                {/* Upload area - matching step-6 design */}
+                <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
+                  <SVGIcons.Upload className="w-16 h-16" />
+                  <TouchableOpacity
+                    onPress={handlePickMedia}
+                    disabled={uploading}
+                    className="bg-primary rounded-full py-3 px-6 mt-4"
+                  >
+                    <Text className="text-foreground tat-body-1 font-neueBold">
+                      {uploading ? "Uploading..." : "Upload files"}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text className="text-foreground/80 mt-6 text-center px-4">
+                    Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
+                    Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
+                  </Text>
+                </View>
 
-              {/* Step 2: description */}
-              <View className="mt-6 mb-10">
-                <Text className="mb-2 label">Descrizione</Text>
+                {/* Draggable media list */}
+                {draft.media.length > 0 && (
+                  <View className="mb-6">
+                    <Text className="text-foreground mb-3 tat-body-2-med">
+                      Uploaded files (drag to reorder)
+                    </Text>
+                    <DraggableFlatList
+                      data={draft.media}
+                      onDragEnd={onDragEnd}
+                      keyExtractor={(item, index) => `${item.uri}-${index}`}
+                      renderItem={renderMediaItem}
+                      scrollEnabled={false}
+                    />
+                  </View>
+                )}
+              </ScrollView>
+            )}
+
+            {/* Step 2: description */}
+            {modalStep === "description" && (
+              <ScrollView className="px-6 pt-6">
+                <Text className="text-foreground text-xl font-neueBold">
+                  Descrizione
+                </Text>
+                <Text className="text-foreground/80 mb-6">
+                  Describe your post in a few words.
+                </Text>
+
+                {/* Display uploaded images */}
+                {draft.media.length > 0 && (
+                  <View className="mb-6">
+                    <View className="flex-row flex-wrap gap-2">
+                      {draft.media.map((item, index) => (
+                        <View
+                          key={`${item.uri}-${index}`}
+                          className="w-20 h-32  rounded-lg overflow-hidden"
+                        >
+                          <Image
+                            source={{ uri: item.cloud || item.uri }}
+                            className="w-full h-full "
+                            resizeMode="cover"
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Description input */}
                 <View className="rounded-2xl bg-black/40 border border-gray">
                   <TextInput
                     multiline
                     numberOfLines={4}
                     textAlignVertical="top"
                     className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-2xl min-h-[120px] text-start"
-                    placeholder="Tell us about this project..."
+                    placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus blandit augue et rhoncus consectetur. In ut metus lacinia, rutrum purus ac, malesuada magna. Ut euismod erat."
                     placeholderTextColor="#A49A99"
                     value={draft.description || ""}
                     onChangeText={(v) =>
@@ -349,23 +409,45 @@ export default function ArtistStep12V2() {
                     }
                   />
                 </View>
-              </View>
-            </ScrollView>
+              </ScrollView>
+            )}
 
             {/* Modal footer */}
             <View className="flex-row justify-between px-6 py-6">
-              <TouchableOpacity
-                onPress={() => setActiveIndex(null)}
-                className="rounded-full border border-foreground px-6 py-3"
-              >
-                <Text className="text-foreground">Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={saveDraftToProject}
-                className="rounded-full px-8 py-3 bg-primary"
-              >
-                <Text className="text-foreground">Next</Text>
-              </TouchableOpacity>
+              {modalStep === "upload" ? (
+                <>
+                  <TouchableOpacity
+                    onPress={() => setActiveIndex(null)}
+                    className="rounded-full border border-foreground px-6 py-3"
+                  >
+                    <Text className="text-foreground">Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setModalStep("description")}
+                    disabled={draft.media.length === 0}
+                    className={`rounded-full px-8 py-3 ${
+                      draft.media.length > 0 ? "bg-primary" : "bg-gray/40"
+                    }`}
+                  >
+                    <Text className="text-foreground">Next</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    onPress={() => setModalStep("upload")}
+                    className="rounded-full border border-foreground px-6 py-3"
+                  >
+                    <Text className="text-foreground">Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={saveDraftToProject}
+                    className="rounded-full px-8 py-3 bg-primary"
+                  >
+                    <Text className="text-foreground">Next</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </View>
