@@ -100,6 +100,8 @@ import PostPreview from "@/assets/icons/post-preview.svg";
 import UploadCollectionSelection from "@/assets/icons/upload-collection-selection.svg";
 // @ts-ignore
 import UploadCollectionSelected from "@/assets/icons/upload-collection-selected.svg";
+// @ts-ignore
+import Flash from "@/assets/icons/flash.svg";
 
 export const SVGIcons = {
   Close,
@@ -153,6 +155,7 @@ export const SVGIcons = {
   LikeFilled,
   UploadCollectionSelection,
   UploadCollectionSelected,
+  Flash,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

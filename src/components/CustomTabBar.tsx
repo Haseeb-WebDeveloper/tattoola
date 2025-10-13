@@ -38,7 +38,7 @@ export default function CustomTabBar({
 
   return (
     <LinearGradient
-      colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,3)"]}
+      colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
       locations={[0, 0.3, 1]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
@@ -50,7 +50,7 @@ export default function CustomTabBar({
         zIndex: 100,
       }}
     >
-      <View className="px-4 pb-1 pt-6">
+      <View className="px-4 pb-2 pt-6">
         <View className="rounded-full overflow-hidden">
           <LinearGradient
             colors={["#3a0000", "#000000"]}

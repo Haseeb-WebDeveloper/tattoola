@@ -37,6 +37,106 @@ export type PostDetail = {
   }[];
 };
 
+export type FeedPost = {
+  id: string;
+  caption?: string;
+  createdAt: string;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  style?: { id: string; name: string };
+  author: { id: string; username: string; firstName?: string; lastName?: string; avatar?: string };
+  media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+};
+
+export type FeedPage = {
+  items: FeedPost[];
+  nextCursor?: { createdAt: string; id: string } | null;
+};
+
+/**
+ * Fetch a page of feed posts using cursor-based pagination (createdAt DESC, id DESC)
+ */
+export async function fetchFeedPage(args: {
+  userId: string;
+  limit?: number;
+  cursor?: { createdAt: string; id: string } | null;
+}): Promise<FeedPage> {
+  const { userId, limit = 6, cursor } = args;
+
+  // Base query
+  let query = supabase
+    .from("posts")
+    .select(
+      `
+      id,caption,thumbnailUrl,likesCount,commentsCount,createdAt,authorId,styleId,
+      tattoo_styles(id,name),
+      users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
+      post_media(id,mediaType,mediaUrl,order)
+    `
+    )
+    .order("createdAt", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit + 1); // over-fetch by 1 to compute next cursor
+
+  if (cursor) {
+    // createdAt < cursor.createdAt OR (createdAt = cursor.createdAt AND id < cursor.id)
+    // PostgREST: or('and(createdAt.eq.XXXX,id.lt.YYYY),createdAt.lt.XXXX')
+    const createdAt = cursor.createdAt;
+    const id = cursor.id;
+    // @ts-ignore - PostgREST filter string
+    query = query.or(`and(createdAt.eq.${createdAt},id.lt.${id}),createdAt.lt.${createdAt}`);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const rows = (data || []) as any[];
+
+  // Determine next cursor
+  let nextCursor: FeedPage["nextCursor"] = null;
+  let itemsRows = rows;
+  if (rows.length > limit) {
+    const last = rows[limit - 1];
+    nextCursor = { createdAt: last.createdAt, id: last.id };
+    itemsRows = rows.slice(0, limit);
+  }
+
+  // Get likes for current user for these posts in one query
+  const postIds = itemsRows.map((r) => r.id);
+  let likedMap: Record<string, boolean> = {};
+  if (postIds.length > 0) {
+    const { data: likesRows } = await supabase
+      .from("post_likes")
+      .select("postId")
+      .eq("userId", userId)
+      .in("postId", postIds);
+    (likesRows || []).forEach((lr: any) => {
+      likedMap[lr.postId] = true;
+    });
+  }
+
+  const items: FeedPost[] = itemsRows.map((r: any) => ({
+    id: r.id,
+    caption: r.caption,
+    createdAt: r.createdAt,
+    likesCount: r.likesCount,
+    commentsCount: r.commentsCount,
+    isLiked: !!likedMap[r.id],
+    style: r.tattoo_styles ? { id: r.tattoo_styles.id, name: r.tattoo_styles.name } : undefined,
+    author: {
+      id: r.users.id,
+      username: r.users.username,
+      firstName: r.users.firstName,
+      lastName: r.users.lastName,
+      avatar: r.users.avatar,
+    },
+    media: (r.post_media || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)),
+  }));
+
+  return { items, nextCursor };
+}
+
 /**
  * Fetch detailed post information
  */
