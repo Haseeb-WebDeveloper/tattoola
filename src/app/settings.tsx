@@ -235,8 +235,6 @@ export default function SettingsScreen() {
           />
         </SettingsSection>
 
-        {/* Bottom spacing */}
-        <View className="h-20" />
       </ScrollView>
     </View>
   );

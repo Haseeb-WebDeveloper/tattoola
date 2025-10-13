@@ -1,4 +1,45 @@
 import { supabase } from "@/utils/supabase";
+import { v4 as uuidv4 } from "uuid";
+
+// Follow helpers co-located for now to avoid a new file import churn
+export async function isFollowing(userId: string, targetUserId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("follows")
+    .select("id")
+    .eq("followerId", userId)
+    .eq("followingId", targetUserId)
+    .maybeSingle();
+  return !!data;
+}
+
+export async function toggleFollow(
+  userId: string,
+  targetUserId: string
+): Promise<{ isFollowing: boolean }> {
+  // Check existing relation
+  const { data: existing } = await supabase
+    .from("follows")
+    .select("id")
+    .eq("followerId", userId)
+    .eq("followingId", targetUserId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("follows")
+      .delete()
+      .eq("followerId", userId)
+      .eq("followingId", targetUserId);
+    if (error) throw new Error(error.message);
+    return { isFollowing: false };
+  }
+
+  const { error } = await supabase
+    .from("follows")
+    .insert({ id: uuidv4(), followerId: userId, followingId: targetUserId });
+  if (error) throw new Error(error.message);
+  return { isFollowing: true };
+}
 
 export type ArtistSelfProfile = {
   user: {

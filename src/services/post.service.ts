@@ -29,6 +29,7 @@ export type PostDetail = {
     province?: string;
   };
   isLiked: boolean;
+  isFollowingAuthor: boolean;
   likes: {
     id: string;
     username: string;
@@ -86,29 +87,42 @@ export async function fetchPostDetails(postId: string, userId: string): Promise<
     avatar: like.users.avatar,
   }));
 
+  // Check follow state (does viewer follow author?)
+  const { data: followData } = await supabase
+    .from("follows")
+    .select("id")
+    .eq("followerId", userId)
+    .eq("followingId", (post as any).users.id)
+    .maybeSingle();
+
+  const style = (post as any).tattoo_styles;
+  const author = (post as any).users;
   return {
-    id: post.id,
-    caption: post.caption,
-    thumbnailUrl: post.thumbnailUrl,
-    likesCount: post.likesCount,
-    commentsCount: post.commentsCount,
-    createdAt: post.createdAt,
-    media: (post.post_media || []).sort((a: any, b: any) => a.order - b.order),
-    style: post.tattoo_styles ? {
-      id: post.tattoo_styles.id,
-      name: post.tattoo_styles.name,
-      imageUrl: post.tattoo_styles.imageUrl,
-    } : undefined,
+    id: (post as any).id,
+    caption: (post as any).caption,
+    thumbnailUrl: (post as any).thumbnailUrl,
+    likesCount: (post as any).likesCount,
+    commentsCount: (post as any).commentsCount,
+    createdAt: (post as any).createdAt,
+    media: ((post as any).post_media || []).sort((a: any, b: any) => a.order - b.order),
+    style: style
+      ? {
+          id: style.id,
+          name: style.name,
+          imageUrl: style.imageUrl,
+        }
+      : undefined,
     author: {
-      id: post.users.id,
-      username: post.users.username,
-      firstName: post.users.firstName,
-      lastName: post.users.lastName,
-      avatar: post.users.avatar,
-      municipality: post.users.municipality,
-      province: post.users.province,
+      id: author.id,
+      username: author.username,
+      firstName: author.firstName,
+      lastName: author.lastName,
+      avatar: author.avatar,
+      municipality: author.municipality,
+      province: author.province,
     },
     isLiked: !!likeData,
+    isFollowingAuthor: !!followData,
     likes,
   };
 }
@@ -174,4 +188,60 @@ export async function togglePostLike(
   if (updateError) throw new Error(updateError.message);
 
   return { isLiked: true, likesCount: newLikesCount };
+}
+
+export async function createPost(args: { caption?: string; styleId?: string; authorId: string }): Promise<{ id: string }> {
+  const newId = uuidv4();
+  const nowIso = new Date().toISOString();
+  const { error } = await supabase
+    .from('posts')
+    .insert({ id: newId, authorId: args.authorId, caption: args.caption, styleId: args.styleId, updatedAt: nowIso })
+    .select('id')
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: newId };
+}
+
+export async function addPostMedia(
+  postId: string,
+  media: Array<{ mediaUrl: string; mediaType: 'IMAGE' | 'VIDEO'; order: number }>
+): Promise<void> {
+  if (!media.length) return;
+  const rows = media.map((m) => ({ id: uuidv4(), postId, mediaUrl: m.mediaUrl, mediaType: m.mediaType, order: m.order }));
+  const { error } = await supabase.from('post_media').insert(rows);
+  if (error) throw new Error(error.message);
+}
+
+export async function addPostToCollection(postId: string, collectionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('collection_posts')
+    .insert({ id: uuidv4(), collectionId, postId, addedAt: new Date().toISOString() });
+  if (error) throw new Error(error.message);
+}
+
+export async function createPostWithMediaAndCollection(args: {
+  caption?: string;
+  styleId?: string;
+  media: Array<{ mediaUrl: string; mediaType: 'IMAGE' | 'VIDEO'; order: number }>;
+  collectionId?: string;
+}): Promise<{ postId: string }> {
+  try {
+    const { data: session } = await supabase.auth.getUser();
+    const authorId = session.user?.id;
+    if (!authorId) throw new Error('Not authenticated');
+
+    console.log('[createPostWithMediaAndCollection] args', args);
+    const { id: postId } = await createPost({ caption: args.caption, styleId: args.styleId, authorId });
+    console.log('[createPostWithMediaAndCollection] postId', postId);
+    await addPostMedia(postId, args.media);
+    console.log('[createPostWithMediaAndCollection] mediaCount', args.media.length);
+    if (args.collectionId) {
+      await addPostToCollection(postId, args.collectionId);
+      console.log('[createPostWithMediaAndCollection] addedToCollection', args.collectionId);
+    }
+    return { postId };
+  } catch (e) {
+    console.error('[createPostWithMediaAndCollection] error', e);
+    throw e;
+  }
 }

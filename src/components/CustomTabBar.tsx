@@ -1,5 +1,6 @@
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from 'expo-router';
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -70,6 +71,12 @@ export default function CustomTabBar({
               const isFocused = state.index === index;
 
               const onPress = () => {
+                // Intercept Upload tab to open the upload wizard directly, without showing the tab screen
+                if (route.name === 'upload') {
+                  router.push('/upload/media');
+                  return;
+                }
+
                 const event = navigation.emit({
                   type: "tabPress",
                   target: route.key,
