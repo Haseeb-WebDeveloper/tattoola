@@ -19,6 +19,10 @@ import Star from "@/assets/icons/star.svg";
 // @ts-ignore
 import FilledHeart from "@/assets/icons/heart-filled.svg";
 // @ts-ignore
+import Like from "@/assets/icons/like.svg";
+// @ts-ignore
+import LikeFilled from "@/assets/icons/like-filled.svg";
+// @ts-ignore
 import StartCircle from "@/assets/icons/star-circle.svg";
 // @ts-ignore
 import StartCircleFilled from "@/assets/icons/star-circle-filled.svg";
@@ -30,6 +34,8 @@ import Pricing from "@/assets/icons/pricing.svg";
 import Work from "@/assets/icons/work.svg";
 // @ts-ignore
 import AddRed from "@/assets/icons/add-red.svg";
+// @ts-ignore
+import Add from "@/assets/icons/add.svg";
 // @ts-ignore
 import Drag from "@/assets/icons/drag.svg";
 // @ts-ignore
@@ -73,7 +79,7 @@ import ChevronRight from "@/assets/icons/chevron-right.svg";
 // @ts-ignore
 import HeartFilled from "@/assets/icons/heart-filled.svg";
 // @ts-ignore
-import Trash from "@/assets/icons/close.svg";
+import Trash from "@/assets/icons/trash.svg";
 // @ts-ignore
 import EditUser from "@/assets/icons/edit-user.svg";
 // @ts-ignore
@@ -84,6 +90,8 @@ import DimondYellow from "@/assets/icons/dimond-yellow.svg";
 import DimondRed from "@/assets/icons/dimond-red.svg";
 // @ts-ignore
 import Logout from "@/assets/icons/logout.svg";
+// @ts-ignore
+import Edit from "@/assets/icons/edit.svg";
 
 export const SVGIcons = {
   Close,
@@ -101,6 +109,7 @@ export const SVGIcons = {
   Magic,
   Pricing,
   Work,
+  Add,
   AddRed,
   Drag,
   Wallet,
@@ -129,6 +138,10 @@ export const SVGIcons = {
   DimondYellow,
   DimondRed,
   Logout,
+  Edit,
+  Like,
+  LikeFilled,
+  
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

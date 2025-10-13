@@ -81,10 +81,10 @@ export const ProfileSkeleton: React.FC = () => {
             <View className="w-20 h-3 bg-gray/20 rounded mt-2" />
           </View>
           {/* Collection 2 */}
-          <View className="flex-1 min-w-[140px] max-w-[180px]">
+          {/* <View className="flex-1 min-w-[140px] max-w-[180px]">
             <View className="rounded-xl bg-gray/20 p-2 flex-1 w-full h-32" />
             <View className="w-24 h-3 bg-gray/20 rounded mt-2" />
-          </View>
+          </View> */}
           {/* Create new collection skeleton */}
           <View className="rounded-xl border-2 border-dashed border-gray/40 p-3 flex-1 min-w-[140px] max-w-[180px] items-center justify-center gap-2">
             <View className="w-8 h-8 bg-gray/20 rounded" />

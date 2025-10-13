@@ -1,16 +1,18 @@
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchPostDetails, togglePostLike } from "@/services/post.service";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import PagerView from 'react-native-pager-view';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -53,15 +55,17 @@ export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<PostDetail | null>(null);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const pagerRef = useRef<PagerView>(null);
+  const autoSlideTimer = useRef<NodeJS.Timeout | null>(null);
 
   const loadPost = useCallback(async () => {
     if (!id || !user) return;
-    
+
     try {
       setLoading(true);
       const data = await fetchPostDetails(id, user.id);
@@ -83,15 +87,24 @@ export default function PostDetailScreen() {
 
   const handleLike = async () => {
     if (!post || !user) return;
-    
+
+    const previous = post;
+    const optimistic: PostDetail = {
+      ...previous,
+      isLiked: !previous.isLiked,
+      likesCount: previous.isLiked
+        ? Math.max(previous.likesCount - 1, 0)
+        : previous.likesCount + 1,
+    };
+    setPost(optimistic);
+
     try {
-      const result = await togglePostLike(post.id, user.id);
-      setPost(prev => prev ? {
-        ...prev,
-        isLiked: result.isLiked,
-        likesCount: result.likesCount,
-      } : null);
+      const result = await togglePostLike(previous.id, user.id);
+      setPost((curr) =>
+        curr ? { ...curr, isLiked: result.isLiked, likesCount: result.likesCount } : curr
+      );
     } catch (err: any) {
+      setPost(previous);
       console.error("Failed to toggle like:", err);
     }
   };
@@ -101,19 +114,31 @@ export default function PostDetailScreen() {
     console.log("Follow user:", post?.author.id);
   };
 
-  const handleMediaSwipe = (direction: 'left' | 'right') => {
+  // Auto slide like Instagram
+  useEffect(() => {
     if (!post || post.media.length <= 1) return;
-    
-    if (direction === 'left') {
-      setCurrentMediaIndex(prev => 
-        prev < post.media.length - 1 ? prev + 1 : 0
-      );
-    } else {
-      setCurrentMediaIndex(prev => 
-        prev > 0 ? prev - 1 : post.media.length - 1
-      );
+    if (autoSlideTimer.current) {
+      clearInterval(autoSlideTimer.current);
+      autoSlideTimer.current = null;
     }
-  };
+    autoSlideTimer.current = setInterval(() => {
+      setCurrentMediaIndex((prev) => {
+        const next = post.media.length > 0 ? (prev + 1) % post.media.length : 0;
+        if (pagerRef.current) {
+          try {
+            pagerRef.current.setPage(next);
+          } catch {}
+        }
+        return next;
+      });
+    }, 3500);
+    return () => {
+      if (autoSlideTimer.current) {
+        clearInterval(autoSlideTimer.current);
+        autoSlideTimer.current = null;
+      }
+    };
+  }, [post?.id, post?.media?.length]);
 
   const getLocationString = () => {
     if (!post?.author) return "";
@@ -124,9 +149,54 @@ export default function PostDetailScreen() {
   };
 
   if (loading) {
+    // Skeleton matching post detail layout
     return (
-      <View className="flex-1 bg-background items-center justify-center">
-        <Text className="text-foreground">Loading...</Text>
+      <View className="flex-1 bg-background relative">
+        {/* Header back btn */}
+        <View className="absolute top-4 left-4 z-10">
+          <View className="w-10 h-10 rounded-full bg-foreground/20" />
+        </View>
+        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
+          {/* Media skeleton */}
+          <View className="aspect-[9/16] w-full bg-foreground/10" />
+
+          <View className="px-4 py-4">
+            {/* Caption row */}
+            <View className="flex-row items-start justify-between mb-4">
+              <View className="flex-1 mr-4">
+                <View className="h-5 bg-foreground/10 rounded w-3/4 mb-2" />
+                <View className="h-6 bg-foreground/10 rounded w-24" />
+              </View>
+              <View className="w-8 h-8 rounded-full bg-foreground/10" />
+            </View>
+
+            {/* Author info */}
+            <View className="flex-row items-center justify-between mb-4">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 rounded-full mr-3 bg-foreground/10" />
+                <View className="flex-1">
+                  <View className="h-4 bg-foreground/10 rounded w-1/2 mb-1" />
+                  <View className="h-4 bg-foreground/10 rounded w-1/3 mb-1" />
+                  <View className="h-4 bg-foreground/10 rounded w-1/4" />
+                </View>
+              </View>
+              <View className="rounded-lg px-4 py-2 w-20 h-9 bg-foreground/10" />
+            </View>
+
+            {/* Likes info */}
+            <View className="mb-6">
+              <View className="h-4 bg-foreground/10 rounded w-1/3 mb-3" />
+              <View className="flex-row flex-wrap gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <View key={i} className="flex-row items-center">
+                    <View className="w-6 h-6 rounded-full mr-2 bg-foreground/10" />
+                    <View className="h-4 bg-foreground/10 rounded w-16" />
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -134,7 +204,9 @@ export default function PostDetailScreen() {
   if (error || !post) {
     return (
       <View className="flex-1 bg-background items-center justify-center px-6">
-        <Text className="text-foreground text-center mb-4">{error || "Post not found"}</Text>
+        <Text className="text-foreground text-center mb-4">
+          {error || "Post not found"}
+        </Text>
         <TouchableOpacity
           onPress={handleBack}
           className="bg-primary px-6 py-3 rounded-lg"
@@ -148,132 +220,159 @@ export default function PostDetailScreen() {
   const currentMedia = post.media[currentMediaIndex];
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-background relative">
       {/* Header with back button */}
-      <View className="absolute top-12 left-4 z-10">
+      <View className="absolute top-4 left-4 z-10">
         <TouchableOpacity
           onPress={handleBack}
-          className="w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+          className="w-10 h-10 rounded-full bg-foreground/20 items-center justify-center"
         >
           <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
         </TouchableOpacity>
       </View>
-
-      {/* Media Carousel */}
-      <View className="relative" style={{ height: screenHeight * 0.6 }}>
-        <Image
-          source={{ uri: currentMedia?.mediaUrl }}
-          className="w-full h-full"
-          resizeMode="cover"
-        />
-        
-        {/* Navigation arrows */}
-        {post.media.length > 1 && (
-          <>
-            <TouchableOpacity
-              onPress={() => handleMediaSwipe('right')}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
-            >
-              <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              onPress={() => handleMediaSwipe('left')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
-            >
-              <SVGIcons.ChevronRight className="w-5 h-5 text-white" />
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* Carousel indicators */}
-        {post.media.length > 1 && (
-          <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2">
-            {post.media.map((_, index) => (
-              <View
-                key={index}
-                className={`w-2 h-2 rounded-full ${
-                  index === currentMediaIndex ? 'bg-white' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Content */}
-      <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-        {/* Caption and like button */}
-        <View className="flex-row items-start justify-between mb-4">
-          <View className="flex-1 mr-4">
-            <Text className="text-foreground text-lg font-medium mb-2">
-              {post.caption || "Dragon x Sunflower sketch with abc.."}
-            </Text>
-            
-            {/* Style tag */}
-            {post.style && (
-              <View className="flex-row items-center bg-gray-100 rounded-full px-3 py-1 self-start">
-                <SVGIcons.Pen2 className="w-3 h-3 text-gray-600 mr-1" />
-                <Text className="text-gray-700 text-sm font-medium">{post.style.name}</Text>
+      {/* --- Everything scrolls together now --- */}
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        {/* Media Carousel */}
+        <View className="relative aspect-[9/16] w-full bg-black">
+          <PagerView
+            ref={pagerRef}
+            style={{ flex: 1 }}
+            initialPage={0}
+            onPageSelected={(e) => setCurrentMediaIndex(e.nativeEvent.position)}
+          >
+            {post.media.map((m) => (
+              <View key={m.id}>
+                <Image
+                  source={{ uri: m.mediaUrl }}
+                  className="w-full h-full aspect-[9/16]"
+                  resizeMode="cover"
+                />
               </View>
-            )}
-          </View>
-          
-          <TouchableOpacity
-            onPress={handleLike}
-            className="items-center"
-          >
-            <SVGIcons.HeartFilled 
-              className={`w-8 h-8 ${post.isLiked ? 'text-red-500' : 'text-gray-400'}`} 
-            />
-          </TouchableOpacity>
-        </View>
+            ))}
+          </PagerView>
 
-        {/* Author info */}
-        <View className="flex-row items-center justify-between mb-4">
-          <View className="flex-row items-center flex-1">
-            <Image
-              source={{ uri: post.author.avatar || "https://via.placeholder.com/40" }}
-              className="w-10 h-10 rounded-full mr-3"
-            />
-            <View className="flex-1">
-              <Text className="text-foreground font-semibold text-base">
-                {post.author.firstName} {post.author.lastName}
-              </Text>
-              <Text className="text-gray-500 text-sm">@{post.author.username}</Text>
-              <Text className="text-gray-500 text-sm">{getLocationString()}</Text>
-            </View>
-          </View>
-          
-          <TouchableOpacity
-            onPress={handleFollow}
-            className="bg-white border border-gray-300 rounded-lg px-4 py-2 flex-row items-center"
-          >
-            <SVGIcons.Person className="w-4 h-4 text-gray-700 mr-1" />
-            <Text className="text-gray-700 font-medium">Segui</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Fade gradient at bottom */}
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.1)"]}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 80,
+            }}
+            pointerEvents="none"
+            className=" z-10"
+          />
 
-        {/* Likes info */}
-        <View className="mb-6">
-          <Text className="text-foreground font-medium mb-3">
-            Piace a {post.likesCount} persone
-          </Text>
-          
-          {/* Recent likers */}
-          {post.likes.length > 0 && (
-            <View className="flex-row flex-wrap gap-3">
-              {post.likes.slice(0, 6).map((like) => (
-                <View key={like.id} className="flex-row items-center">
-                  <Image
-                    source={{ uri: like.avatar || "https://via.placeholder.com/24" }}
-                    className="w-6 h-6 rounded-full mr-2"
-                  />
-                  <Text className="text-gray-600 text-sm">@{like.username}</Text>
-                </View>
+          {/* Swipeable; arrows removed for Instagram-like feel */}
+
+          {/* Carousel indicators */}
+          {post.media.length > 1 && (
+            <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2">
+              {post.media.map((_, index) => (
+                <View
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    index === currentMediaIndex ? "bg-white" : "bg-white/50"
+                  }`}
+                />
               ))}
             </View>
           )}
+        </View>
+        {/* Content below media */}
+        <View className="px-4 py-4">
+          {/* Caption and like button */}
+          <View className="flex-row items-start justify-between mb-4">
+            <View className="flex-1 mr-4">
+              <Text className="text-foreground text-lg font-medium mb-2">
+                {post.caption || "Dragon x Sunflower sketch with abc.."}
+              </Text>
+
+              {/* Style tag */}
+              {post.style && (
+                <View className="inline-flex self-start rounded-full px-3 py-1 border border-foreground max-w-fit">
+                  <Text className="text-foreground text-sm font-medium">
+                    {post.style.name}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity onPress={handleLike} className="items-center">
+              {post.isLiked ? (
+                <SVGIcons.LikeFilled className="w-8 h-8 text-red-500" />
+              ) : (
+                <SVGIcons.Like className="w-8 h-8 text-gray-400" />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Author info */}
+          <View className="flex-row items-center justify-between mb-8">
+            <View className="flex-row items-center flex-1">
+              <Image
+                source={{
+                  uri: post.author.avatar || "https://via.placeholder.com/40",
+                }}
+                className="w-[60px] h-[60px] rounded-full mr-3"
+                defaultSource={{ uri: "https://via.placeholder.com/40" }}
+              />
+              <View className="flex-1">
+                <Text className="text-foreground font-semibold text-[12px] font-neueMedium">
+                  {post.author.firstName} {post.author.lastName}
+                </Text>
+                <Text className="text-tat text-sm">
+                  @{post.author.username}
+                </Text>
+                <Text className="text-tat text-sm">
+                  {getLocationString()}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleFollow}
+              className="border border-gray  rounded-full px-4 py-2 flex-row items-center gap-2"
+            >
+              <SVGIcons.Person className="w-4 h-4" />
+              <Text className="text-foreground font-medium">Segui</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Divider */}
+          <View className="h-[0.2px] w-full bg-[#A49A99] mb-6" />
+
+          {/* Likes info */}
+          <View className="mb-6">
+            <Text className="text-foreground font-medium mb-3">
+              Piace a {post.likesCount} persone
+            </Text>
+
+            {/* Recent likers */}
+            {post.likes.length > 0 && (
+              <View className="flex-row flex-wrap gap-3">
+                {post.likes.slice(0, 6).map((like) => (
+                  <View key={like.id} className="flex-row items-center">
+                    <Image
+                      source={{
+                        uri: like.avatar || "https://via.placeholder.com/24",
+                      }}
+                      className="w-10 h-10 border-2 border-primary rounded-full mr-2"
+                    />
+                    <Text className="text-tat text-[12px] font-neueMedium">
+                      @{like.username}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
     </View>

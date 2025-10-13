@@ -95,6 +95,7 @@ model ArtistProfile {
   portfolioProjects PortfolioProject[]
   studioMemberships StudioMember[]
   ownedStudios      Studio[]              @relation("StudioOwner")
+  bannerMedia       ArtistBannerMedia[]
 
   @@index([userId])
   @@index([portfolioComplete])
@@ -237,21 +238,22 @@ model Post {
   id            String           @id @default(uuid())
   authorId      String
   caption       String?
-  mediaType     MediaType        @default(IMAGE)
-  mediaUrl      String
   thumbnailUrl  String?
   styleId       String?
+  projectId     String?
   isActive      Boolean          @default(true)
   likesCount    Int              @default(0)
   commentsCount Int              @default(0)
   showInFeed    Boolean          @default(false)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+  media         PostMedia[]
   collections   CollectionPost[]
   comments      Comment[]
   likes         PostLike[]
   author        User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
   style         TattooStyle?     @relation(fields: [styleId], references: [id])
+  project       PortfolioProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([authorId])
   @@index([styleId])
@@ -381,18 +383,20 @@ model Comment {
 }
 
 model Collection {
-  id          String           @id @default(uuid())
-  name        String
-  description String?
-  ownerId     String
-  isPrivate   Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  posts       CollectionPost[]
-  owner       User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id                   String           @id @default(uuid())
+  name                 String
+  description          String?
+  ownerId              String
+  isPrivate            Boolean          @default(false)
+  isPortfolioCollection Boolean         @default(false)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  posts                CollectionPost[]
+  owner                User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
   @@index([isPrivate])
+  @@index([isPortfolioCollection])
   @@map("collections")
 }
 
@@ -541,6 +545,7 @@ model PortfolioProject {
   media       PortfolioProjectMedia[]
   styles      PortfolioProjectStyle[]
   artist      ArtistProfile           @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  posts       Post[]
 
   @@index([artistId])
   @@index([order])
@@ -660,6 +665,34 @@ model ArtistService {
   @@index([artistId])
   @@index([serviceId])
   @@map("artist_services")
+}
+
+model ArtistBannerMedia {
+  id        String         @id @default(dbgenerated("uuid_generate_v4()"))
+  artistId  String
+  mediaType MediaType      @default(IMAGE)
+  mediaUrl  String
+  order     Int            @default(0)
+  createdAt DateTime       @default(now())
+  artist    ArtistProfile  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId])
+  @@index([order])
+  @@map("artist_banner_media")
+}
+
+model PostMedia {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()"))
+  postId    String
+  mediaType MediaType @default(IMAGE)
+  mediaUrl  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([order])
+  @@map("post_media")
 }
 
 model Follow {

@@ -1,7 +1,7 @@
 import { SVGIcons } from "@/constants/svg";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Image, Text, TouchableOpacity, View, ScrollView } from "react-native";
 
 interface Collection {
   id: string;
@@ -14,6 +14,9 @@ interface CollectionsSectionProps {
   collections: Collection[];
   onCreateNewCollection?: () => void;
 }
+
+const COLLECTION_GAP = 12;
+const NUM_COLUMNS = 2;
 
 export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   collections,
@@ -69,41 +72,139 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     );
   }
 
+  // Calculate width for each item to fit 2 columns, similar to grid-cols-2 with gap
+  const screenWidth = Dimensions.get("window").width;
+  const horizontalPadding = 32; // px-4 left/right = 16*2
+  const itemGap = COLLECTION_GAP;
+  const itemWidth = Math.floor((screenWidth - horizontalPadding - itemGap) / NUM_COLUMNS);
+
+  // Create the row-major order grid layout
+  const renderGridItems = () => {
+    // We want to alternate left/right, row by row, per instructions
+    // So we chunk the collections into rows of 2
+    const items = [...collections];
+    // Insert the "create new" as the last one
+    items.push({ id: "__new__", name: "", isPortfolioCollection: false, thumbnails: [] });
+
+    const rows = [];
+    for (let i = 0; i < items.length; i += NUM_COLUMNS) {
+      const row = items.slice(i, i + NUM_COLUMNS);
+      rows.push(row);
+    }
+    // Make sure last row has 2 columns for consistent layout (fill empty if needed)
+    if (rows.length && rows[rows.length - 1].length < NUM_COLUMNS) {
+      while (rows[rows.length - 1].length < NUM_COLUMNS) {
+        rows[rows.length - 1].push(null as any);
+      }
+    }
+    return (
+      <View>
+        {rows.map((row, rowIdx) => (
+          <View key={rowIdx} style={{ flexDirection: "row", marginBottom: rowIdx !== rows.length - 1 ? itemGap : 0 }}>
+            {row.map((collection, colIdx) => {
+              if (!collection) {
+                // Empty spot, render transparent view for grid consistency
+                return <View key={colIdx} style={{ width: itemWidth, marginRight: colIdx === 0 ? itemGap : 0 }} />;
+              }
+              if (collection.id === "__new__") {
+                return (
+                  <TouchableOpacity
+                    key="new"
+                    onPress={onCreateNewCollection}
+                    activeOpacity={0.8}
+                    style={{
+                      width: itemWidth,
+                      minWidth: 140,
+                      maxWidth: 180,
+                      aspectRatio: 1,
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: "#FF4646",
+                      borderStyle: "dashed",
+                      backgroundColor: "rgba(255, 70, 70, 0.12)", // bg-primary/20
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: colIdx === 0 ? itemGap : 0,
+                      padding: 10,
+                    }}
+                  >
+                    <SVGIcons.AddRed className="w-8 h-8" />
+                    <Text style={{ color: "#fff", textAlign: "center", fontSize: 15, marginTop: 8 }}>
+                      Create new collection
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }
+              return (
+                <TouchableOpacity
+                  key={collection.id}
+                  onPress={() => handleCollectionPress(collection.id)}
+                  activeOpacity={0.9}
+                  style={{
+                    width: itemWidth,
+                    minWidth: 140,
+                    maxWidth: 180,
+                    marginRight: colIdx === 0 ? itemGap : 0,
+                  }}
+                >
+                  <View
+                    style={{
+                      borderRadius: 16,
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      borderWidth: 1,
+                      borderColor: "#fff",
+                      padding: 8,
+                      flex: 1,
+                      width: "100%",
+                      height: "100%",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {renderThumbnailGrid(collection.thumbnails)}
+                  </View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 13,
+                      marginTop: 8,
+                      fontFamily: "Montserrat-SemiBold",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {collection.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
-    <View className="px-4 mt-8">
-      <Text className="text-foreground font-bold font-montserratSemibold mb-3 text-[16px] leading-[23px]">
+    <View style={{ paddingHorizontal: 16, marginTop: 32 }}>
+      <Text
+        style={{
+          color: "#fff",
+          fontWeight: "bold",
+          fontFamily: "Montserrat-SemiBold",
+          marginBottom: 12,
+          fontSize: 16,
+          lineHeight: 23,
+        }}
+      >
         Collections
       </Text>
-      <View className="flex-row gap-3">
-        {collections.map((collection) => (
-          <TouchableOpacity
-            key={collection.id}
-            onPress={() => handleCollectionPress(collection.id)}
-            className="flex-1 min-w-[140px] max-w-[180px] h-full"
-          >
-            <View className="rounded-xl bg-background/50 blur-sm backdrop-blur-sm border border-foreground p-2 flex-1 w-full h-full">
-              {renderThumbnailGrid(collection.thumbnails)}
-            </View>
-            <Text
-              className="text-foreground text-xs mt-2 font-montserratSemibold"
-              numberOfLines={2}
-            >
-              {collection.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-        {/* Create new collection card */}
-        <TouchableOpacity
-          onPress={onCreateNewCollection}
-          className="rounded-xl border-2 border-dashed border-primary bg-primary/20 p-3 flex-1 aspect-square items-center justify-center gap-2"
-          style={{ maxWidth: 180, minWidth: 140 }}
-        >
-          <SVGIcons.AddRed className="w-8 h-8" />
-          <Text className="text-foreground text-center text-sm">
-            Create new collection
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView
+        horizontal={false}
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{}}
+      >
+        {renderGridItems()}
+      </ScrollView>
     </View>
   );
 };

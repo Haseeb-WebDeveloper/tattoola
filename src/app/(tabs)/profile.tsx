@@ -1,18 +1,18 @@
 import {
-  Banner,
-  BodyPartsSection,
-  CollectionsSection,
-  ProfileHeader,
-  ProfileSkeleton,
-  ServicesSection,
-  SocialMediaIcons,
-  StylesSection,
+    Banner,
+    BodyPartsSection,
+    CollectionsSection,
+    ProfileHeader,
+    ProfileSkeleton,
+    ServicesSection,
+    SocialMediaIcons,
+    StylesSection,
 } from "@/components/profile";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchArtistSelfProfile } from "@/services/profile.service";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
@@ -39,6 +39,28 @@ export default function ProfileScreen() {
       mounted = false;
     };
   }, [user?.id]);
+
+  // Refresh profile data whenever this screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          if (!user) return;
+          const profile = await fetchArtistSelfProfile(user.id);
+          if (active) {
+            setData(profile);
+            setError(null);
+          }
+        } catch (e: any) {
+          if (active) setError(e?.message || "Failed to load profile");
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, [user?.id])
+  );
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) => console.error('Failed to open URL:', err));

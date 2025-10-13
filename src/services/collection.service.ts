@@ -1,4 +1,5 @@
 import { supabase } from "@/utils/supabase";
+import { v4 as uuidv4 } from 'uuid';
 
 export type CollectionPost = {
   id: string;
@@ -41,6 +42,15 @@ export type CollectionDetails = {
   createdAt: string;
   updatedAt: string;
   posts: CollectionPost[];
+  author: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    municipality?: string;
+    province?: string;
+  };
 };
 
 /**
@@ -50,11 +60,37 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
   // Fetch collection basic info
   const { data: collection, error: collectionError } = await supabase
     .from("collections")
-    .select("id,name,description,isPrivate,isPortfolioCollection,ownerId,createdAt,updatedAt")
+    .select(`
+      id,
+      name,
+      description,
+      isPrivate,
+      isPortfolioCollection,
+      ownerId,
+      createdAt,
+      updatedAt
+    `)
     .eq("id", collectionId)
     .single();
 
   if (collectionError) throw new Error(collectionError.message);
+
+  // Fetch collection owner data
+  const { data: owner, error: ownerError } = await supabase
+    .from("users")
+    .select(`
+      id,
+      username,
+      firstName,
+      lastName,
+      avatar,
+      municipality,
+      province
+    `)
+    .eq("id", collection.ownerId)
+    .single();
+
+  if (ownerError) throw new Error(ownerError.message);
 
   // Fetch posts in collection with all related data
   const { data: collectionPosts, error: postsError } = await supabase
@@ -116,6 +152,15 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
     createdAt: collection.createdAt,
     updatedAt: collection.updatedAt,
     posts,
+    author: {
+      id: owner.id,
+      username: owner.username,
+      firstName: owner.firstName,
+      lastName: owner.lastName,
+      avatar: owner.avatar,
+      municipality: owner.municipality,
+      province: owner.province,
+    },
   };
 }
 
@@ -165,6 +210,7 @@ export async function reorderCollectionPosts(
       .from("collection_posts")
       .insert(
         postIds.map((postId, index) => ({
+          id: uuidv4(), // Generate UUID for the id field
           collectionId,
           postId,
           addedAt: new Date(Date.now() + index * 1000).toISOString(), // Add small delay to maintain order
@@ -173,4 +219,58 @@ export async function reorderCollectionPosts(
 
     if (insertError) throw new Error(insertError.message);
   }
+}
+
+/**
+ * Create a new collection
+ */
+export async function createCollection(ownerId: string, name: string): Promise<{ id: string }> {
+  const { data, error } = await supabase
+    .from("collections")
+    .insert({
+      id: uuidv4(), // Generate UUID for the id field
+      ownerId,
+      name,
+      isPrivate: false,
+      isPortfolioCollection: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * Fetch user's posts
+ */
+export async function fetchUserPosts(userId: string): Promise<Array<{ id: string; caption?: string; thumbnailUrl?: string }>> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id,caption,thumbnailUrl")
+    .eq("authorId", userId)
+    .order("createdAt", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+/**
+ * Add posts to collection
+ */
+export async function addPostsToCollection(collectionId: string, postIds: string[]): Promise<void> {
+  const { error } = await supabase
+    .from("collection_posts")
+    .insert(
+      postIds.map((postId) => ({
+        id: uuidv4(), // Generate UUID for the id field
+        collectionId,
+        postId,
+        addedAt: new Date().toISOString(),
+      }))
+    );
+
+  if (error) throw new Error(error.message);
 }

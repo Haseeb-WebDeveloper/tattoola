@@ -1,4 +1,5 @@
 import { supabase } from "@/utils/supabase";
+import { v4 as uuidv4 } from "uuid";
 
 export type PostDetail = {
   id: string;
@@ -115,14 +116,17 @@ export async function fetchPostDetails(postId: string, userId: string): Promise<
 /**
  * Toggle like on a post
  */
-export async function togglePostLike(postId: string, userId: string): Promise<{ isLiked: boolean; likesCount: number }> {
+export async function togglePostLike(
+  postId: string,
+  userId: string
+): Promise<{ isLiked: boolean; likesCount: number }> {
   // Check if already liked
   const { data: existingLike } = await supabase
     .from("post_likes")
     .select("id")
     .eq("postId", postId)
     .eq("userId", userId)
-    .single();
+    .maybeSingle();
 
   if (existingLike) {
     // Unlike the post
@@ -131,56 +135,43 @@ export async function togglePostLike(postId: string, userId: string): Promise<{ 
       .delete()
       .eq("postId", postId)
       .eq("userId", userId);
-
     if (deleteError) throw new Error(deleteError.message);
 
-    // Get current likes count and decrement
+    // Decrement likesCount
     const { data: currentPost } = await supabase
       .from("posts")
       .select("likesCount")
       .eq("id", postId)
       .single();
-
     const newLikesCount = Math.max((currentPost?.likesCount || 0) - 1, 0);
-
     const { error: updateError } = await supabase
       .from("posts")
       .update({ likesCount: newLikesCount })
       .eq("id", postId);
-
     if (updateError) throw new Error(updateError.message);
 
-    return {
-      isLiked: false,
-      likesCount: newLikesCount,
-    };
-  } else {
-    // Like the post
-    const { error: insertError } = await supabase
-      .from("post_likes")
-      .insert({ postId, userId });
-
-    if (insertError) throw new Error(insertError.message);
-
-    // Get current likes count and increment
-    const { data: currentPost } = await supabase
-      .from("posts")
-      .select("likesCount")
-      .eq("id", postId)
-      .single();
-
-    const newLikesCount = (currentPost?.likesCount || 0) + 1;
-
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ likesCount: newLikesCount })
-      .eq("id", postId);
-
-    if (updateError) throw new Error(updateError.message);
-
-    return {
-      isLiked: true,
-      likesCount: newLikesCount,
-    };
+    return { isLiked: false, likesCount: newLikesCount };
   }
+
+  // Like the post (client-generated id to satisfy NOT NULL)
+  const newId = uuidv4();
+  const { error: insertError } = await supabase
+    .from("post_likes")
+    .insert({ id: newId, postId, userId });
+  if (insertError) throw new Error(insertError.message);
+
+  // Increment likesCount
+  const { data: currentPost } = await supabase
+    .from("posts")
+    .select("likesCount")
+    .eq("id", postId)
+    .single();
+  const newLikesCount = (currentPost?.likesCount || 0) + 1;
+  const { error: updateError } = await supabase
+    .from("posts")
+    .update({ likesCount: newLikesCount })
+    .eq("id", postId);
+  if (updateError) throw new Error(updateError.message);
+
+  return { isLiked: true, likesCount: newLikesCount };
 }

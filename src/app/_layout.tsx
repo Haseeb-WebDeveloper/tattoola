@@ -1,12 +1,13 @@
 import "@/global.css";
+import "react-native-get-random-values"; // Import polyfill for crypto functions
 
 import {
-  Montserrat_300Light,
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  Montserrat_600SemiBold,
-  Montserrat_700Bold,
-  Montserrat_900Black,
+    Montserrat_300Light,
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    Montserrat_900Black,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";

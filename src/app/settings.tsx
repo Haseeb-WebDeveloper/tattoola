@@ -135,10 +135,11 @@ export default function SettingsScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="px-4 py-4 flex-row items-center justify-center mb-8">
+      <View className="px-4 py-4 flex-row items-center justify-center mb-8 relative">
         <TouchableOpacity
           onPress={handleBack}
-          className="w-10 h-10 absolute top-6 left-6 rounded-full bg-foreground/20 items-center justify-center mr-4 p-2"
+          className="w-10 h-10 absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-foreground/20 items-center justify-center mr-4 p-2"
+          style={{ transform: [{ translateY: 0 }] }} // w-10 == 40px, so -h/2
         >
           <SVGIcons.ChevronLeft className="w-4 h-4" />
         </TouchableOpacity>
