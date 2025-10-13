@@ -86,7 +86,9 @@ export default function PostDetailScreen() {
   };
 
   const handleLike = async () => {
+    console.log("handleLike tiggerd");
     if (!post || !user) return;
+
 
     const previous = post;
     const optimistic: PostDetail = {
@@ -316,7 +318,7 @@ export default function PostDetailScreen() {
         <LinearGradient
           colors={["rgba(35,8,8,1)", "transparent"]}
           locations={[0, 1]}
-          pointerEvents="none"
+          pointerEvents="box-none"
         >
           {/* Content below media */}
           <View className="px-4 py-4">
@@ -337,7 +339,7 @@ export default function PostDetailScreen() {
                 )}
               </View>
 
-              <TouchableOpacity onPress={handleLike} className="items-center">
+              <TouchableOpacity onPress={handleLike} className="items-center z-10">
                 {post.isLiked ? (
                   <SVGIcons.LikeFilled className="w-7 h-7 text-red-500" />
                 ) : (
@@ -347,7 +349,7 @@ export default function PostDetailScreen() {
             </View>
 
             {/* Author info */}
-            <View className="flex-row items-center justify-between mb-8">
+            <View className="flex-row items-center justify-between mb-8 z-10">
               <View className="flex-row items-center flex-1">
                 <Image
                   source={{

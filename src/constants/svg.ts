@@ -45,6 +45,8 @@ import Checkout from "@/assets/icons/checkout.svg";
 // @ts-ignore
 import Pen2 from "@/assets/icons/pen-2.svg";
 // @ts-ignore
+import Pen1 from "@/assets/icons/pen.svg";
+// @ts-ignore
 import Search from "@/assets/icons/search.svg";
 // @ts-ignore
 import Style from "@/assets/icons/style.svg";
@@ -92,6 +94,12 @@ import DimondRed from "@/assets/icons/dimond-red.svg";
 import Logout from "@/assets/icons/logout.svg";
 // @ts-ignore
 import Edit from "@/assets/icons/edit.svg";
+// @ts-ignore
+import PostPreview from "@/assets/icons/post-preview.svg";
+// @ts-ignore
+import UploadCollectionSelection from "@/assets/icons/upload-collection-selection.svg";
+// @ts-ignore
+import UploadCollectionSelected from "@/assets/icons/upload-collection-selected.svg";
 
 export const SVGIcons = {
   Close,
@@ -115,6 +123,7 @@ export const SVGIcons = {
   Wallet,
   Checkout,
   Pen2,
+  Pen1,
   Search,
   Style,
   CheckedCheckbox,
@@ -139,9 +148,11 @@ export const SVGIcons = {
   DimondRed,
   Logout,
   Edit,
+  PostPreview,
   Like,
   LikeFilled,
-  
+  UploadCollectionSelection,
+  UploadCollectionSelected,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;
