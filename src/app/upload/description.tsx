@@ -1,6 +1,7 @@
 import { SVGIcons } from "@/constants/svg";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Image,
   ScrollView,
@@ -8,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  StyleSheet,
 } from "react-native";
 
 export default function UploadDescriptionStep() {
@@ -16,7 +18,15 @@ export default function UploadDescriptionStep() {
   const media = usePostUploadStore((s) => s.media);
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-background">
+       <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
       <ScrollView className="px-6 pt-6">
         {/* Title + helper */}
         <Text className="text-foreground tat-body-1 font-neueBold mb-0.5">

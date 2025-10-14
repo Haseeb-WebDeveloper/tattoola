@@ -1,11 +1,11 @@
-import UploadHeader from '@/components/ui/upload-header';
-import { Stack } from 'expo-router';
-import { View } from 'react-native';
+import UploadHeader from "@/components/ui/upload-header";
+import { Stack } from "expo-router";
+import { View } from "react-native";
 
 export default function UploadLayout() {
   return (
-    <View className="flex-1 bg-black">
-    <UploadHeader />
+    <View className="flex-1">
+      <UploadHeader />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="media" />
         <Stack.Screen name="description" />
@@ -16,5 +16,3 @@ export default function UploadLayout() {
     </View>
   );
 }
-
-

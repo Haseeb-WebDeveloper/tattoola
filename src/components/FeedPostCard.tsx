@@ -16,7 +16,7 @@ function FeedPostCardComponent({ post, onPress, onLikePress }: Props) {
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} className="w-full">
       <View
         className="relative w-full overflow-hidden"
-        style={{ aspectRatio: 9 / 16 }}
+        style={{ aspectRatio: 9 / 19 }}
       >
         {!!cover && (
           <Image
@@ -68,7 +68,9 @@ function FeedPostCardComponent({ post, onPress, onLikePress }: Props) {
         </View>
 
         {/* Bottom content */}
-        <View className="absolute left-0 right-0 bottom-0 p-5">
+        <View className="absolute left-0 right-0 p-5"
+        style={{ bottom: 90 }}
+        >
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-4">
               <Text

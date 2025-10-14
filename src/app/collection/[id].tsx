@@ -8,7 +8,7 @@ import {
   reorderCollectionPosts,
   updateCollectionName,
 } from "@/services/collection.service";
-import { trimText } from "@/utils/text-trim";
+import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -395,7 +395,7 @@ export default function CollectionDetailsScreen() {
           <View className="flex-1 items-center">
             <View className="flex-row items-center">
               <Text className="text-foreground font-bold mr-2 underline underline-offset-2 section-title">
-                {trimText(collection.name, 15)}
+                {TrimText(collection.name, 15)}
               </Text>
               <TouchableOpacity onPress={handleEditName}>
                 {editMode && <SVGIcons.Edit width={16} height={16} />}

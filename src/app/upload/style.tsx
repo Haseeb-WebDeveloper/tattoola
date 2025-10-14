@@ -2,11 +2,13 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
   Pressable,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -47,9 +49,11 @@ export default function UploadStyleStep() {
           className="w-10 items-center"
           onPress={() => setStyleId(item.id)}
         >
-          <View
-            className={`w-5 h-5 rounded-[4px] border ${isSelected ? "bg-error border-error" : "bg-transparent border-foreground/50"}`}
-          />
+          {isSelected ? (
+            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+          ) : (
+            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+          )}
         </Pressable>
         {item.imageUrl ? (
           <Image
@@ -70,7 +74,15 @@ export default function UploadStyleStep() {
   };
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-background">
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
       {/* Summary card with media + caption */}
       <View className="px-6 mb-6 pt-6">
         <View className="rounded-2xl bg-black/40 border border-gray px-3 py-3 relative">

@@ -6,6 +6,7 @@ import {
   PortfolioProjectInput,
   useArtistRegistrationV2Store,
 } from "@/stores/artistRegistrationV2Store";
+import { TrimText } from "@/utils/text-trim";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -21,6 +22,7 @@ import {
 import DraggableFlatList, {
   RenderItemParams,
 } from "react-native-draggable-flatlist";
+import { getFileNameFromUri } from "@/utils/get-file-name";
 
 type DraftProject = {
   media: { uri: string; type: "image" | "video"; cloud?: string }[];
@@ -132,31 +134,91 @@ export default function ArtistStep12V2() {
   }>) => {
     const index = draft.media.findIndex((m) => m.uri === item.uri);
     return (
-      <Pressable
-        onLongPress={drag}
-        disabled={isActive}
-        className={`flex-row items-center mb-3 p-3 rounded-xl ${isActive ? "bg-primary/20" : "bg-black/40"}`}
-      >
-        <View className="w-20 h-16 bg-gray/30 mr-3 overflow-hidden rounded-lg">
-          <Image
-            source={{ uri: item.cloud || item.uri }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-        </View>
-        <View className="flex-1">
-          <Text className="text-foreground/80 text-sm">
-            {item.type.toUpperCase()}
-          </Text>
-          <Text className="text-foreground/60 text-xs">Hold to reorder</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => removeMedia(index)}
-          className="w-6 h-6 items-center justify-center"
+      <View className="mb-6" style={{ position: "relative" }}>
+        <View
+          className="bg-gray-foreground border border-gray rounded-xl flex-row items-center py-1"
+          style={{
+            paddingLeft: 0,
+            minHeight: 70,
+            paddingRight: 0,
+            overflow: "visible",
+            position: "relative",
+          }}
         >
-          <SVGIcons.Close className="w-4 h-4 text-error" />
-        </TouchableOpacity>
-      </Pressable>
+          {/* Drag Handle */}
+          <Pressable
+            onLongPress={drag}
+            disabled={isActive}
+            style={{
+              width: 40,
+              height: 68,
+              justifyContent: "center",
+              alignItems: "center",
+              marginLeft: 8,
+              marginRight: 8,
+            }}
+            accessibilityLabel="Reorder"
+          >
+            <SVGIcons.Drag className="w-6 h-6" />
+          </Pressable>
+          {/* Thumb */}
+          <View
+            className="overflow-hidden rounded-lg h-fit aspect-square"
+            style={{ width: 65, marginRight: 16 }}
+          >
+            {item.type === "image" ? (
+              <Image
+                source={{ uri: item.cloud || item.uri }}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View
+                className="items-center justify-center bg-black/40 border border-foreground/60"
+                style={{ width: "100%", height: "100%" }}
+              >
+                <SVGIcons.Video width={30} height={30} />
+              </View>
+            )}
+          </View>
+          {/* Filename */}
+          <View style={{ flex: 1 }}>
+            <Text
+              className="text-foreground"
+              style={{ fontSize: 16, fontWeight: "400" }}
+            >
+              {(() => {
+                const fullName = getFileNameFromUri(item.uri);
+                const lastDot = fullName.lastIndexOf(".");
+                let base = fullName;
+                let ext = "";
+                if (lastDot !== -1 && lastDot < fullName.length - 1) {
+                  base = fullName.slice(0, lastDot);
+                  ext = fullName.slice(lastDot);
+                }
+                return `${TrimText(base, 15)}${ext}`;
+              })()}
+            </Text>
+          </View>
+          {/* Trash/Delete */}
+          <TouchableOpacity
+            onPress={() => removeMedia(index)}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              position: "absolute",
+              top: -12,
+              right: 0,
+              elevation: 4,
+              zIndex: 100,
+            }}
+            className="bg-foreground rounded-full border border-foreground p-2 items-center justify-center  elevation-2 w-8 h-8"
+            accessibilityLabel="Remove"
+          >
+            <SVGIcons.Trash className="w-5 h-5" style={{ color: "#ff4c4c" }} />
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
@@ -325,8 +387,12 @@ export default function ArtistStep12V2() {
             {modalStep === "upload" && (
               <ScrollView className="px-6 pt-6">
                 <View className="mb-6">
-                  <Text className="text-foreground text-xl font-neueBold">Carica foto e video</Text>
-                  <Text className="text-foreground/80">You need to select atleast one photo and 3 photos/videos</Text>
+                  <Text className="text-foreground text-xl font-neueBold">
+                    Carica foto e video
+                  </Text>
+                  <Text className="text-foreground/80">
+                    You need to select atleast one photo and 3 photos/videos
+                  </Text>
                 </View>
                 {/* Upload area - matching step-6 design */}
                 <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
@@ -352,13 +418,22 @@ export default function ArtistStep12V2() {
                     <Text className="text-foreground mb-3 tat-body-2-med">
                       Uploaded files (drag to reorder)
                     </Text>
-                    <DraggableFlatList
-                      data={draft.media}
-                      onDragEnd={onDragEnd}
-                      keyExtractor={(item, index) => `${item.uri}-${index}`}
-                      renderItem={renderMediaItem}
-                      scrollEnabled={false}
-                    />
+                    <View style={{ maxHeight: 350 }}>
+                      <DraggableFlatList
+                        data={draft.media}
+                        onDragEnd={onDragEnd}
+                        keyExtractor={(item, index) => `${item.uri}-${index}`}
+                        renderItem={renderMediaItem}
+                        scrollEnabled
+                        removeClippedSubviews={false}
+                        style={{ maxHeight: 350 }}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{
+                          paddingBottom: 90,
+                          paddingTop: 14,
+                        }}
+                      />
+                    </View>
                   </View>
                 )}
               </ScrollView>

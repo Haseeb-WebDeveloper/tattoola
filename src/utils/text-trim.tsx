@@ -4,7 +4,7 @@
  * @param {number} maxLength - The maximum allowed length for the string.
  * @returns {string} - The trimmed string, with '..' appended if truncation occurred.
  */
-export function trimText(text: string, maxLength: number): string {
+export function TrimText(text: string, maxLength: number): string {
   if (typeof text !== "string" || typeof maxLength !== "number" || maxLength < 0) {
     return "";
   }

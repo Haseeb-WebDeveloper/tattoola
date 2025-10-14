@@ -3,6 +3,7 @@ import { createCollection } from "@/services/collection.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { supabase } from "@/utils/supabase";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -10,6 +11,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -160,7 +162,15 @@ export default function UploadCollectionStep() {
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-background">
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
       <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false}>
         {/* Summary card */}
         <View className="rounded-2xl bg-black/40 border border-gray px-3 py-3 relative mb-6">
@@ -330,21 +340,13 @@ export default function UploadCollectionStep() {
               <TouchableOpacity
                 onPress={() => setShowCreateModal(true)}
                 activeOpacity={0.8}
-                className="aspect-square items-center justify-center border-2 border-primary bg-primary/20 rounded-xl mt-4 mb-20"
+                className="aspect-square items-center justify-center gap-2 border-2 border-dashed border-primary bg-primary/20 rounded-xl mt-4 mb-20"
                 style={{
                   width: itemWidth,
                 }}
               >
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 28,
-                    lineHeight: 28,
-                    marginBottom: 8,
-                  }}
-                >
-                  +
-                </Text>
+                <SVGIcons.AddRed className="w-8 h-8" />
+
                 <Text
                   style={{ color: "#fff", textAlign: "center", fontSize: 15 }}
                 >

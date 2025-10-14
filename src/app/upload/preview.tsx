@@ -1,27 +1,42 @@
-import { SVGIcons } from '@/constants/svg';
-import { useAuth } from '@/providers/AuthProvider';
-import { createPostWithMediaAndCollection } from '@/services/post.service';
-import { usePostUploadStore } from '@/stores/postUploadStore';
-import { router } from 'expo-router';
-import { Image, ScrollView, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
+import { createPostWithMediaAndCollection } from "@/services/post.service";
+import { usePostUploadStore } from "@/stores/postUploadStore";
+import { router } from "expo-router";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function UploadPreviewStep() {
-  const { media, caption, styleId, collectionId, reset, setSubmitting } = usePostUploadStore();
+  const { media, caption, styleId, collectionId, reset, setSubmitting } =
+    usePostUploadStore();
   const { user } = useAuth();
   const mainImage = media[0]?.cloud || media[0]?.uri;
   const { width: windowWidth } = useWindowDimensions();
 
   const onSubmit = async () => {
-    console.log('onSubmit tiggerd');
+    console.log("onSubmit tiggerd");
     try {
       setSubmitting(true);
-      console.log('onSubmit', { caption, styleId, mediaCount: media.length, collectionId });
+      console.log("onSubmit", {
+        caption,
+        styleId,
+        mediaCount: media.length,
+        collectionId,
+      });
       const { postId } = await createPostWithMediaAndCollection({
         caption,
         styleId,
         media: media.map((m, index) => ({
           mediaUrl: m.cloud || m.uri,
-          mediaType: m.type === 'video' ? 'VIDEO' : 'IMAGE',
+          mediaType: m.type === "video" ? "VIDEO" : "IMAGE",
           order: index,
         })),
         collectionId,
@@ -29,15 +44,15 @@ export default function UploadPreviewStep() {
       reset();
       router.replace(`/post/${postId}`);
     } catch (e) {
-      console.error('onSubmit failed', e);
+      console.error("onSubmit failed", e);
       setSubmitting(false);
     }
   };
 
   const DisplayName =
     user?.firstName || user?.lastName
-      ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
-      : user?.username || 'User';
+      ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
+      : user?.username || "User";
 
   const PreviewCard = () => (
     <View className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40">
@@ -50,17 +65,27 @@ export default function UploadPreviewStep() {
       ) : (
         <View className="absolute left-0 top-0 w-full h-full bg-black/20" />
       )}
-      <SVGIcons.PostPreview width="100%" height="100%" className="bg-red-500 border-2 border-blue-500" />
+      <SVGIcons.PostPreview
+        width="100%"
+        height="100%"
+        className="bg-red-500 border-2 border-blue-500"
+      />
       {/* Caption and user info near bottom like mockup */}
       <View className="absolute left-2 bottom-[60px]">
         {!!caption && (
-          <Text className="text-foreground text-[10px] font-neueBold" numberOfLines={1}>
+          <Text
+            className="text-foreground text-[10px] font-neueBold"
+            numberOfLines={1}
+          >
             {caption}
           </Text>
         )}
         <View className="flex-row items-center gap-2 mt-1">
           {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} className="w-5 h-5 rounded-full" />
+            <Image
+              source={{ uri: user.avatar }}
+              className="w-5 h-5 rounded-full"
+            />
           ) : (
             <View className="w-4 h-4 rounded-full bg-background/80 border-[0.51px] border-error" />
           )}
@@ -78,7 +103,15 @@ export default function UploadPreviewStep() {
   const cardWidth = (windowWidth - containerPadding * 2 - betweenGap) / 2;
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-background">
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
       <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false}>
         <View className="items-center mb-4">
           <Text className="text-foreground section-title">Preview</Text>
@@ -101,11 +134,13 @@ export default function UploadPreviewStep() {
         >
           <Text className="text-foreground">Back</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onSubmit} className="rounded-full px-8 py-4 bg-primary">
+        <TouchableOpacity
+          onPress={onSubmit}
+          className="rounded-full px-8 py-4 bg-primary"
+        >
           <Text className="text-foreground">Publish</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-

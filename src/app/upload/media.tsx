@@ -5,20 +5,22 @@ import {
   canProceedFromMedia,
   usePostUploadStore,
 } from "@/stores/postUploadStore";
+import { TrimText } from "@/utils/text-trim";
 import { router } from "expo-router";
 import React, { useMemo } from "react";
 import {
   Image,
   Pressable,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import DraggableFlatList, {
   RenderItemParams,
 } from "react-native-draggable-flatlist";
+import { getFileNameFromUri } from "@/utils/get-file-name";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function UploadMediaStep() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
@@ -74,40 +76,112 @@ export default function UploadMediaStep() {
     cloud?: string;
   }>) => {
     const index = media.findIndex((m) => m.uri === item.uri);
+    // precise to screenshot: show box with border, dark background, round corners, trash at top right, drag handle at left.
     return (
-      <Pressable
-        onLongPress={drag}
-        disabled={isActive}
-        className={`flex-row items-center mb-3 p-3 rounded-xl ${isActive ? "bg-primary/20" : "bg-black/40"}`}
+      <View
+        className="mb-4"
+        style={{
+          position: "relative",
+        }}
       >
-        <View className="w-20 h-16 bg-gray/30 mr-3 overflow-hidden rounded-lg">
-          <Image
-            source={{ uri: item.cloud || item.uri }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-        </View>
-        <View className="flex-1">
-          <Text className="text-foreground/80 text-sm">
-            {item.type.toUpperCase()}
-          </Text>
-          <Text className="text-foreground/60 text-xs">Hold to reorder</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => removeMediaAt(index)}
-          className="w-6 h-6 items-center justify-center"
+        <View
+          className="bg-gray-foreground border border-gray rounded-xl flex-row items-center py-1"
+          style={{
+            paddingLeft: 0,
+            minHeight: 70,
+            paddingRight: 0,
+            overflow: "visible",
+            position: "relative",
+          }}
         >
-          <SVGIcons.Close className="w-4 h-4 text-error" />
-        </TouchableOpacity>
-      </Pressable>
+          {/* Drag Handle */}
+          <Pressable
+            onLongPress={drag}
+            disabled={isActive}
+            style={{
+              width: 40,
+              height: 68,
+              justifyContent: "center",
+              alignItems: "center",
+              marginLeft: 8,
+              marginRight: 8,
+            }}
+            accessibilityLabel="Reorder"
+          >
+            {/* Drag icon */}
+            <SVGIcons.Drag className="w-6 h-6" />
+          </Pressable>
+          {/* Thumb */}
+          <View
+            className="overflow-hidden rounded-lg h-fit aspect-square"
+            style={{ width: 65, marginRight: 16 }}
+          >
+            {item.type === "image" ? (
+              <Image
+                source={{ uri: item.cloud || item.uri }}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View
+                className="items-center justify-center bg-tat-darkMaroon border border-gray rounded-lg"
+                style={{ width: "100%", height: "100%" }}
+              >
+                <SVGIcons.Video width={30} height={30} />
+              </View>
+            )}
+          </View>
+          {/* Filename */}
+          <View style={{ flex: 1 }}>
+            <Text
+              className="text-foreground"
+              style={{ fontSize: 16, fontWeight: "400" }}
+            >
+              {(() => {
+                const fullName = getFileNameFromUri(item.uri);
+                const lastDot = fullName.lastIndexOf(".");
+                let base = fullName;
+                let ext = "";
+                if (lastDot !== -1 && lastDot < fullName.length - 1) {
+                  base = fullName.slice(0, lastDot);
+                  ext = fullName.slice(lastDot);
+                }
+                return `${TrimText(base, 15)}${ext}`;
+              })()}
+            </Text>
+          </View>
+          {/* Trash/Delete */}
+          <TouchableOpacity
+            onPress={() => removeMediaAt(index)}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              position: "absolute",
+              top: -12, // give a bit of overlap without being clipped
+              right: 0,
+              elevation: 4,
+              zIndex: 100,
+            }}
+            className="bg-foreground rounded-full border border-foreground p-2 items-center justify-center  elevation-2 w-8 h-8"
+            accessibilityLabel="Remove"
+          >
+            <SVGIcons.Trash className="w-5 h-5" style={{ color: "#ff4c4c" }} />
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
-  // Ensure the media section is scrollable if the list is too long.
-  // Give the media list area maxHeight and enable scrolling.
-
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-background">
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
       <View className="flex-1" style={{ flex: 1 }}>
         <View style={{ flex: 1 }}>
           <View className="px-6 pt-6">
@@ -116,7 +190,9 @@ export default function UploadMediaStep() {
                 Carica foto e video
               </Text>
               <Text className="tat-body-4 text-gray mb-6">
-                You need to select atleast <Text className="text-[#FF7F56]">one photo</Text> and 3 photos/videos
+                You need to select atleast{" "}
+                <Text className="text-[#FF7F56]">one photo</Text> and 3
+                photos/videos
               </Text>
             </View>
 
@@ -137,8 +213,8 @@ export default function UploadMediaStep() {
             </View>
 
             {media.length > 0 && (
-              <View className="mb-6">
-                <Text className="text-foreground mb-3 tat-body-2-med">
+              <View className="">
+                <Text className="text-foreground tat-body-2-med pb-2">
                   Uploaded files
                 </Text>
                 <View style={{ maxHeight: 350 }}>
@@ -148,8 +224,13 @@ export default function UploadMediaStep() {
                     keyExtractor={(item, index) => `${item.uri}-${index}`}
                     renderItem={renderMediaItem}
                     scrollEnabled={true}
+                    removeClippedSubviews={false}
+                    style={{ maxHeight: 350 }}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 10 }}
+                    contentContainerStyle={{
+                      paddingBottom: 90,
+                      paddingTop: 14,
+                    }}
                   />
                 </View>
               </View>
@@ -157,7 +238,7 @@ export default function UploadMediaStep() {
           </View>
         </View>
 
-        <View className="flex-row justify-between px-6 py-4 bg-background ">
+        <View className="flex-row justify-between px-6 py-4 bg-background">
           <TouchableOpacity
             onPress={() => router.back()}
             className="rounded-full border border-foreground px-6 py-4"

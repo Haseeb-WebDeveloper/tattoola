@@ -109,7 +109,7 @@ module.exports = {
         },
         gray: {
           DEFAULT: "#A49A99", // Gray circle
-          foreground: "#FFFFFF",
+          foreground: "#100C0C",
           50: "#F9FAFB",
           100: "#F3F4F6",
           200: "#E5E7EB",
@@ -123,6 +123,7 @@ module.exports = {
         },
         tat: {
           DEFAULT: "#A49A99",
+          darkMaroon: "#140404",
         },
         // Base colors
         background: "#000000",
