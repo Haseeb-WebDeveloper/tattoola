@@ -104,6 +104,10 @@ import UploadCollectionSelected from "@/assets/icons/upload-collection-selected.
 import Flash from "@/assets/icons/flash.svg";
 // @ts-ignore
 import Video from "@/assets/icons/video.svg";
+// @ts-ignore
+import Attachment from "@/assets/icons/attachment.svg";
+// @ts-ignore
+import Send from "@/assets/icons/send.svg";
 
 export const SVGIcons = {
   Close,
@@ -159,6 +163,8 @@ export const SVGIcons = {
   UploadCollectionSelected,
   Flash,
   Video,
+  Attachment,
+  Send
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

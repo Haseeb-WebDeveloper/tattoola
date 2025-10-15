@@ -1,8 +1,10 @@
+import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
+import { createPrivateRequestConversation } from "@/services/chat.service";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { Text, View, Pressable } from "react-native";
-import { SVGIcons } from "@/constants/svg";
+import { Pressable, Text, View } from "react-native";
 
 const options = [
   { key: true, label: "Ho più di 18 anni" },
@@ -12,8 +14,10 @@ const options = [
 export default function AgeStep() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const isAdult = usePrivateRequestStore((s) => s.answers.isAdult);
   const setIsAdult = usePrivateRequestStore((s) => s.setIsAdult);
+  const answers = usePrivateRequestStore((s) => s.answers);
 
   return (
     <View className="flex-1 bg-background">
@@ -59,7 +63,29 @@ export default function AgeStep() {
         </Pressable>
         <Pressable
           disabled={isAdult === undefined}
-          onPress={() => router.push(`/user/${id}/request/success` as any)}
+          onPress={async () => {
+            console.log("isAdult", isAdult);
+            if (!user?.id || !id) return;
+            try {
+              const { size, color, description, referenceMedia, isAdult } =
+                answers as any;
+              console.log("answers", answers);
+              await createPrivateRequestConversation(user.id, String(id), {
+                size,
+                color,
+                desc: description,
+                isAdult,
+                references: (referenceMedia || []).map(
+                  (m: any) => m.cloud || m.uri
+                ),
+              });
+              console.log("conversation created");
+              router.replace("/(tabs)/inbox" as any);
+            } catch (e) {
+              console.log("error", e);
+              router.push(`/user/${id}/request/success` as any);
+            }
+          }}
           className={`rounded-full px-8 py-4 ${isAdult !== undefined ? "bg-primary" : "bg-gray/40"}`}
         >
           <Text className="text-foreground">Submit</Text>

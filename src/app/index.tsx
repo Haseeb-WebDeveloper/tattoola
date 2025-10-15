@@ -8,7 +8,7 @@ export default function IndexScreen() {
   const { user, initialized, loading } = useAuth();
 
   useEffect(() => {
-    console.log('IndexScreen useEffect - user:', user, 'initialized:', initialized, 'loading:', loading);
+    // console.log('IndexScreen useEffect - user:', user, 'initialized:', initialized, 'loading:', loading);
     
     if (!initialized || loading) {
       console.log('Still initializing or loading, not redirecting yet');
