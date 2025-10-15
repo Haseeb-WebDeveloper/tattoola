@@ -19,7 +19,7 @@
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/46764065-3a82-4506-92f2-8af0c57c2c22"
+      "url": "https://u.expo.dev/624fc895-19a3-4765-9329-1f3ecb47aa61"
     },
     "ios": {
       "supportsTablet": true,
@@ -79,9 +79,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "46764065-3a82-4506-92f2-8af0c57c2c22"
+        "projectId": "624fc895-19a3-4765-9329-1f3ecb47aa61"
       }
     },
-    "owner": "haseebfigmenta"
+    "owner": "figmentadev"
   }
 }

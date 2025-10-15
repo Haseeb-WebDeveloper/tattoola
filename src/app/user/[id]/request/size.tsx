@@ -1,8 +1,8 @@
-import RequestHeader from "@/components/ui/RequestHeader";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View, Pressable } from "react-native";
+import { SVGIcons } from "@/constants/svg";
 
 const options = [
   { key: "credit_card", label: "Le dimensioni di una carta di credito  💳" },
@@ -22,42 +22,60 @@ export default function SizeStep() {
     if (id) setArtist(String(id));
   }, [id]);
 
+  // User can only select one size. When a Pressable is pressed, only that one will be selected.
   return (
     <View className="flex-1 bg-background">
-      <RequestHeader title="Inviare una richiesta privata a" stepIndex={0} totalSteps={5} />
       <View className="px-4">
-        <Text className="text-foreground tat-body-1 text-center mt-2 mb-6">
+        <Text className="text-foreground tat-body-2-med text-center mt-2 mb-6 px-4">
           Approximately what size would you like the tattoo to be?
         </Text>
 
         <View className="gap-4">
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt.key}
-              onPress={() => setSize(opt.key as any)}
-              className={`rounded-xl px-4 py-5 ${size === opt.key ? "border-2 border-primary bg-foreground/10" : "border border-foreground/30"}`}
-              activeOpacity={0.9}
-            >
-              <Text className="text-foreground tat-body-1">{opt.label}</Text>
-            </TouchableOpacity>
-          ))}
+          {options.map((opt) => {
+            const isSelected = size === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                className={`flex-row items-center px-2 py-4 border-gray/20 bg-gray-foreground border rounded-xl`}
+                onPress={() => setSize(opt.key as any)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
+              >
+                <View className="w-10 items-center">
+                  {isSelected ? (
+                    <SVGIcons.CircleCheckedCheckbox className="w-5 h-5" />
+                  ) : (
+                    <SVGIcons.CircleUncheckedCheckbox className="w-5 h-5" />
+                  )}
+                </View>
+                <View className="flex-1">
+                  <Text className="text-foreground tat-body-1 font-neueBold">
+                    {opt.label}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
-      <View className="flex-row justify-between px-4 py-4 mt-auto">
-        <TouchableOpacity onPress={() => router.back()} className="rounded-full border px-6 py-3">
+      <View className="flex-row items-center justify-between px-4 py-4 mt-auto">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="rounded-full border border-foreground px-6 py-4"
+        >
           <Text className="text-foreground">Back</Text>
         </TouchableOpacity>
         <TouchableOpacity
           disabled={!size}
-          onPress={() => router.push("/user/" + id + "/request/references" as any)}
-          className={`rounded-full px-8 py-3 ${size ? "bg-primary" : "bg-gray/40"}`}
+          onPress={() =>
+            router.push(("/user/" + id + "/request/references") as any)
+          }
+          className={`rounded-full px-8 py-4 ${size ? "bg-primary" : "bg-gray/40"}`}
         >
-          <Text className="text-white">Next</Text>
+          <Text className="text-foreground">Next</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-
