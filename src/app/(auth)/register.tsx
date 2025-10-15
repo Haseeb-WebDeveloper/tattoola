@@ -1,26 +1,25 @@
-import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { Input } from '@/components/ui/Input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useAuth } from '@/providers/AuthProvider';
+import { useSignupStore } from '@/stores/signupStore';
 import type { FormErrors, RegisterCredentials } from '@/types/auth';
 import { UserRole } from '@/types/auth';
 import { RegisterValidationSchema, ValidationUtils } from '@/utils/validation';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  Image,
   Text,
+  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const { signUp, loading } = useAuth();
+  const { setInProgress, setSuccess, setError } = useSignupStore();
   const [formData, setFormData] = useState<RegisterCredentials>({
     username: '',
     email: '',
@@ -28,8 +27,13 @@ export default function RegisterScreen() {
     confirmPassword: '',
     role: UserRole.TATTOO_LOVER,
   });
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [focusedField, setFocusedField] = useState<keyof RegisterCredentials | null>(null);
+
+  const totalSteps = 8; // TL flow ends at step-8 (completion)
+  const currentStep = 1;
+  const steps = useMemo(() => Array.from({ length: totalSteps }, (_, i) => i + 1), []);
 
   const handleInputChange = (field: keyof RegisterCredentials, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -65,54 +69,25 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
-    console.log("🚀 RegisterScreen.handleRegister: Starting registration", { 
-      email: formData.email, 
-      username: formData.username,
-      role: formData.role 
-    });
-    
     if (!validateForm()) {
-      console.log("❌ RegisterScreen.handleRegister: Form validation failed");
       return;
     }
 
-    console.log("✅ RegisterScreen.handleRegister: Form validation passed");
+    // Navigate immediately to email confirmation and start background signup
+    setInProgress();
+    router.push('/(auth)/email-confirmation');
 
     try {
-      console.log("📞 RegisterScreen.handleRegister: Calling signUp");
       const result = await signUp(formData);
-      console.log("📞 RegisterScreen.handleRegister: signUp completed", { 
-        needsVerification: result.needsVerification,
-        hasUser: !!result.user 
-      });
-      
-      if (result.needsVerification) {
-        console.log("📧 RegisterScreen.handleRegister: Email verification required, showing alert");
-        Alert.alert(
-          'Registration Successful',
-          'Please check your email to verify your account before continuing.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                console.log("📧 RegisterScreen.handleRegister: Navigating to email confirmation");
-                router.push('/(auth)/email-confirmation');
-              },
-            },
-          ]
-        );
-      } else {
-        console.log("👤 RegisterScreen.handleRegister: No verification needed, navigating to user registration");
-        // Navigate to user registration flow
-        router.push('/(auth)/user-registration/step-2');
+      setSuccess();
+      if (!result.needsVerification) {
+        router.push('/(auth)/welcome');
       }
-    } catch (error) {
-      console.error("❌ RegisterScreen.handleRegister: Registration failed", error);
-      Alert.alert(
-        'Registration Failed',
-        error instanceof Error ? error.message : 'An error occurred during registration',
-        [{ text: 'OK' }]
-      );
+    } catch (error: any) {
+      const message = error?.message || 'An error occurred during registration';
+      setError(message);
+      router.replace('/(auth)/register');
+      Alert.alert('Registration Failed', message, [{ text: 'OK' }]);
     }
   };
 
@@ -133,107 +108,155 @@ export default function RegisterScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          className="px-6 py-8"
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="items-center mb-12">
-            <Text className="text-3xl font-bold text-foreground text-center mb-2">
-              Join Tattoola
-            </Text>
-            <Text className="text-base text-muted-foreground text-center">
-              Create your account
-            </Text>
-          </View>
-
-          <View className="flex-1 mb-8">
-            <Input
-              label="Username"
-              placeholder="Choose a unique username"
-              value={formData.username}
-              onChangeText={(value) => handleInputChange('username', value)}
-              error={errors.username}
-              required
-              autoCapitalize="none"
+    <KeyboardAwareScrollView
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={150}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      className="flex-1 bg-background"
+    >
+      {/* Header: close + logo */}
+      <View className="px-4 my-8">
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={handleLogin}
+            className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
+          >
+            <Image
+              source={require('@/assets/images/icons/close.png')}
+              resizeMode="contain"
             />
+          </TouchableOpacity>
+          <Image
+            source={require('@/assets/logo/logo-light.png')}
+            className="h-10"
+            resizeMode="contain"
+          />
+          <View className="w-10" />
+        </View>
+        <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
+      </View>
 
-            <Input
-              label="Email"
-              type="email"
-              placeholder="Enter your email"
+      {/* Steps indicator */}
+      <View className="items-center mb-8">
+        <View className="flex-row items-center relative gap-1">
+          <View
+            className="absolute left-0 right-0 top-1/2"
+            style={{ height: 1, backgroundColor: '#A49A99', zIndex: 0, marginLeft: 0, marginRight: 0 }}
+          />
+          {steps.map((step) => (
+            <View
+              key={step}
+              className={`${step === currentStep ? 'w-4 h-4' : ' w-[9px] h-[9px] opacity-70'} rounded-full bg-foreground `}
+              style={{ zIndex: 100 }}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Title */}
+      <View className="px-6 mb-6 flex-row gap-2 items-center justify-center">
+        <Image
+          source={require('@/assets/images/icons/pen.png')}
+          resizeMode="contain"
+          className="w-7 h-7"
+        />
+        <Text className="text-foreground section-title font-neueBold">Registrati</Text>
+      </View>
+
+      {/* Inputs */}
+      <View className="px-6">
+        <Text className="text-foreground textcenter mb-2 ta-body-3-button-text">Username (inserisci un nome univoco)</Text>
+        <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'username' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+          <TextInput
+            className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+            placeholder="TattooLover_97"
+            placeholderTextColor="#A49A99"
+            autoCapitalize="none"
+            value={formData.username}
+            onChangeText={(value) => handleInputChange('username', value)}
+            onFocus={() => setFocusedField('username')}
+            onBlur={() => setFocusedField(null)}
+          />
+        </View>
+        {!!errors.username && <Text className="text-xs text-error mt-1">{errors.username}</Text>}
+
+        <View className="mt-6">
+          <Text className="text-foreground mb-2 ta-body-3-button-text">Email</Text>
+          <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'email' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+            <TextInput
+              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="abc@gmail.com"
+              placeholderTextColor="#A49A99"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
               value={formData.email}
               onChangeText={(value) => handleInputChange('email', value)}
-              error={errors.email}
-              required
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
             />
+          </View>
+          {!!errors.email && <Text className="text-xs text-error mt-1">{errors.email}</Text>}
+        </View>
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Password (min 8 characters, 1 number)"
+        <View className="mt-6">
+          <Text className="text-foreground mb-2 ta-body-3-button-text">Password (min. 8 caratteri, di cui almeno un numero)</Text>
+          <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'password' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+            <TextInput
+              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="*************"
+              placeholderTextColor="#A49A99"
+              secureTextEntry
               value={formData.password}
               onChangeText={(value) => handleInputChange('password', value)}
-              error={errors.password}
-              required
+              onFocus={() => setFocusedField('password')}
+              onBlur={() => setFocusedField(null)}
             />
+          </View>
+          {!!errors.password && <Text className="text-xs text-error mt-1">{errors.password}</Text>}
+        </View>
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm your password"
+        <View className="mt-6">
+          <Text className="text-foreground mb-2 ta-body-3-button-text">Conferma Password</Text>
+          <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'confirmPassword' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+            <TextInput
+              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              placeholder="*************"
+              placeholderTextColor="#A49A99"
+              secureTextEntry
               value={formData.confirmPassword}
               onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              error={errors.confirmPassword}
-              required
-            />
-
-            <View className="mb-6">
-              <Checkbox
-                checked={acceptedTerms}
-                onPress={() => setAcceptedTerms(!acceptedTerms)}
-                label="I have read the Terms of Use and Privacy Policy"
-              />
-              {errors.terms && (
-                <Text className="text-xs text-error mt-1">{errors.terms}</Text>
-              )}
-            </View>
-
-            <Button
-              title="Register"
-              onPress={handleRegister}
-              loading={loading}
-              className="mt-2"
+              onFocus={() => setFocusedField('confirmPassword')}
+              onBlur={() => setFocusedField(null)}
             />
           </View>
+          {!!errors.confirmPassword && <Text className="text-xs text-error mt-1">{errors.confirmPassword}</Text>}
+        </View>
 
-          <View className="items-center gap-4">
-            <TouchableOpacity
-              className="p-2"
-              onPress={handleLogin}
-            >
-              <Text className="text-base text-muted-foreground text-center">
-                Already have an account?{" "}
-                <Text className="text-foreground font-semibold">Log in</Text>
-              </Text>
-            </TouchableOpacity>
+        {/* Register Button */}
+        <View className="items-center mt-8">
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={handleRegister}
+            disabled={loading}
+            className="bg-primary rounded-full py-4 px-8 items-center w-full"
+          >
+            <Text className="text-foreground tat-body-1 font-neueBold">Register</Text>
+          </TouchableOpacity>
+        </View>
 
-            <TouchableOpacity
-              className="p-2"
-              onPress={handleArtistRegister}
-            >
-              <Text className="text-base text-foreground font-medium text-center">
-                Or are you an Artist?
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {/* Footer link */}
+        <View className="items-center mt-8 mb-8">
+          <Text className="text-[#A49A99]">
+            Already have an account?{' '}
+            <Text className="text-foreground font-semibold" onPress={handleLogin}>Sign in</Text>
+          </Text>
+          <View className="mt-2" />
+          <Text className="text-foreground font-semibold" onPress={handleArtistRegister}>Are you an Artist?</Text>
+        </View>
+      </View>
+    </KeyboardAwareScrollView>
   );
 }

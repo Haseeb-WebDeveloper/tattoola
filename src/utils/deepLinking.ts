@@ -72,7 +72,7 @@ export function initializeDeepLinking() {
         if (role === 'ARTIST') {
           router.replace('/(auth)/artist-registration/step-3');
         } else {
-          router.replace('/(auth)/user-registration/step-1');
+          router.replace('/(auth)/user-registration/step-3');
         }
         return;
       }

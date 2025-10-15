@@ -17,7 +17,7 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({ bodyParts })
   }
 
   return (
-    <View className="px-4 mt-8 mb-4">
+    <View className="px-4 mt-8 mb-12">
       <View className="flex-row items-center mb-3 gap-2">
         <SVGIcons.Stop className="w-4 h-4" />
         <Text className="text-foreground font-bold font-montserratSemibold text-[16px] leading-[23px]">
@@ -28,7 +28,7 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({ bodyParts })
         {bodyParts.map((bodyPart) => (
           <View
             key={bodyPart.id}
-            className="px-3 py-1 rounded-full bg-black/40 border border-error"
+            className="px-3 py-1 rounded-xl bg-black/40 border border-error"
           >
             <Text className="text-foreground">{bodyPart.name}</Text>
           </View>

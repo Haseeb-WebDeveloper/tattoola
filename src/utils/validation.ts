@@ -169,13 +169,13 @@ export const RegisterValidationSchema = {
   password: ValidationRules.password,
 };
 
-export const UserStep2ValidationSchema = {
+export const UserStep3ValidationSchema = {
   firstName: ValidationRules.firstName,
   lastName: ValidationRules.lastName,
   phone: ValidationRules.phone,
 };
 
-export const UserStep3ValidationSchema = {
+export const UserStep4ValidationSchema = {
   province: { required: true },
   municipality: { required: true },
 };

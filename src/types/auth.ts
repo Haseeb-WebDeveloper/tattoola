@@ -55,7 +55,7 @@ export interface ArtistProfile {
 export interface ArtistBannerMedia {
   id: string;
   artistId: string;
-  mediaType: 'IMAGE' | 'VIDEO';
+  mediaType: "IMAGE" | "VIDEO";
   mediaUrl: string;
   order: number;
   createdAt: string;
@@ -108,21 +108,21 @@ export interface BodyPart {
 
 // Enums
 export enum UserRole {
-  ADMIN = 'ADMIN',
-  ARTIST = 'ARTIST',
-  TATTOO_LOVER = 'TATTOO_LOVER',
+  ADMIN = "ADMIN",
+  ARTIST = "ARTIST",
+  TATTOO_LOVER = "TATTOO_LOVER",
 }
 
 export enum AdminLevel {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  ADMIN = 'ADMIN',
-  MODERATOR = 'MODERATOR',
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  MODERATOR = "MODERATOR",
 }
 
 export enum WorkArrangement {
-  STUDIO_OWNER = 'STUDIO_OWNER',
-  STUDIO_EMPLOYEE = 'STUDIO_EMPLOYEE',
-  FREELANCE = 'FREELANCE',
+  STUDIO_OWNER = "STUDIO_OWNER",
+  STUDIO_EMPLOYEE = "STUDIO_EMPLOYEE",
+  FREELANCE = "FREELANCE",
 }
 
 // Auth-specific types
@@ -158,32 +158,29 @@ export interface ResetPasswordData {
 
 // Multi-step registration types
 // User registration types (TL - Tattoola Lover)
-export interface UserRegistrationStep1 {
+// Legacy TL steps (kept for reference) moved to V2 starting at step-3
+export interface UserV2Step3 {
   firstName: string;
   lastName: string;
   phone: string;
+  avatar?: string;
 }
-
-export interface UserRegistrationStep2 {
+export interface UserV2Step4 {
   province: string;
   municipality: string;
 }
-
-export interface UserRegistrationStep3 {
-  avatar?: string;
-}
-
-export interface UserRegistrationStep4 {
+export interface UserV2Step5 {
   instagram?: string;
   tiktok?: string;
 }
-
-export interface UserRegistrationStep5 {
-  favoriteStyles: string[]; // max 4 for regular users
+export interface UserV2Step6 {
+  favoriteStyles: string[];
 }
-
-export interface UserRegistrationStep6 {
+export interface UserV2Step7 {
   isPublic: boolean;
+}
+export interface UserV2Step8 {
+  /* reserved for future TL step, currently completion */
 }
 
 // Artist registration (V2) steps aligned with screens step-3 .. step-13
@@ -252,7 +249,7 @@ export interface ArtistRegistrationStep12 {
 // step-13: subscription selection
 export interface ArtistRegistrationStep13 {
   selectedPlanId: string;
-  billingCycle: 'MONTHLY' | 'YEARLY';
+  billingCycle: "MONTHLY" | "YEARLY";
 }
 
 export interface PortfolioProject {
@@ -267,7 +264,7 @@ export interface PortfolioProject {
 
 export interface PortfolioMedia {
   id?: string;
-  mediaType: 'IMAGE' | 'VIDEO';
+  mediaType: "IMAGE" | "VIDEO";
   mediaUrl: string;
   order: number;
 }
@@ -291,7 +288,7 @@ export interface Post {
 export interface PostMedia {
   id: string;
   postId: string;
-  mediaType: 'IMAGE' | 'VIDEO';
+  mediaType: "IMAGE" | "VIDEO";
   mediaUrl: string;
   order: number;
   createdAt: string;
@@ -308,15 +305,14 @@ export interface Collection {
   updatedAt: string;
 }
 
-
 // Complete registration data
 export interface CompleteUserRegistration {
-  step1: UserRegistrationStep1;
-  step2: UserRegistrationStep2;
-  step3: UserRegistrationStep3;
-  step4: UserRegistrationStep4;
-  step5: UserRegistrationStep5;
-  step6: UserRegistrationStep6;
+  step3: UserV2Step3; // name, phone, avatar (optional)
+  step4: UserV2Step4; // province, municipality
+  step5: UserV2Step5; // socials
+  step6: UserV2Step6; // favorite styles
+  step7: UserV2Step7; // visibility
+  step8?: UserV2Step8; // optional future data
 }
 
 export interface CompleteArtistRegistration {
@@ -346,23 +342,29 @@ export interface AuthContextType {
   session: AuthSession | null;
   loading: boolean;
   initialized: boolean;
-  
+
   // Auth methods
-  signIn: (credentials: LoginCredentials) => Promise<{ user: User; session: AuthSession }>;
-  signUp: (credentials: RegisterCredentials) => Promise<{ user: User; needsVerification: boolean }>;
+  signIn: (
+    credentials: LoginCredentials
+  ) => Promise<{ user: User; session: AuthSession }>;
+  signUp: (
+    credentials: RegisterCredentials
+  ) => Promise<{ user: User; needsVerification: boolean }>;
   signOut: () => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (data: ForgotPasswordData) => Promise<void>;
   resetPassword: (data: ResetPasswordData) => Promise<void>;
-  
+
   // Registration methods
   completeUserRegistration: (data: CompleteUserRegistration) => Promise<User>;
-  completeArtistRegistration: (data: CompleteArtistRegistration) => Promise<User>;
-  
+  completeArtistRegistration: (
+    data: CompleteArtistRegistration
+  ) => Promise<User>;
+
   // Profile methods
   updateProfile: (updates: Partial<User>) => Promise<User>;
   refreshUser: () => Promise<User | null>;
-  
+
   // Verification methods
   resendVerificationEmail: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;

@@ -3,7 +3,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useFeedStore } from '@/stores/feedStore';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { FlatList, RefreshControl, View, useWindowDimensions } from 'react-native';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -16,6 +16,7 @@ export default function HomeScreen() {
   const loadMore = useFeedStore((s) => s.loadMore);
   const refresh = useFeedStore((s) => s.refresh);
   const toggleLikeOptimistic = useFeedStore((s) => s.toggleLikeOptimistic);
+  const { height: screenHeight } = useWindowDimensions();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -39,8 +40,14 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         onEndReachedThreshold={0.5}
         onEndReached={handleEndReached}
+        pagingEnabled
+        decelerationRate={0.97}
+        snapToAlignment="start"
+        snapToInterval={screenHeight}
+        disableIntervalMomentum
+        getItemLayout={(_, index) => ({ length: screenHeight, offset: screenHeight * index, index })}
         renderItem={({ item }) => (
-          <View className="">
+          <View className="" style={{ height: screenHeight }}>
             <FeedPostCard
               post={item}
               onPress={() => router.push(`/post/${item.id}` as any)}

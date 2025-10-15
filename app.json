@@ -16,6 +16,7 @@
     ],
     "newArchEnabled": true,
     "updates": {
+      "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/46764065-3a82-4506-92f2-8af0c57c2c22"

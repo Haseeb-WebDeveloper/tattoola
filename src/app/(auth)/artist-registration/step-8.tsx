@@ -103,9 +103,11 @@ export default function ArtistStep8V2() {
           className="w-10 items-center"
           onPress={() => toggleFavoriteStyle(item.id, AR_MAX_FAVORITE_STYLES)}
         >
-          <View
-            className={`w-5 h-5 rounded-[4px] border ${isSelected ? "bg-error border-error" : "bg-transparent border-foreground/50"}`}
-          />
+          {isSelected ? (
+            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+          ) : (
+            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+          )}
         </Pressable>
 
         {/* Image */}

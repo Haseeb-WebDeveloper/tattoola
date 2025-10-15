@@ -23,7 +23,16 @@ CREATE TYPE "public"."MediaType" AS ENUM ('IMAGE', 'VIDEO');
 CREATE TYPE "public"."RequestStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
 
 -- CreateEnum
-CREATE TYPE "public"."MessageType" AS ENUM ('TEXT', 'IMAGE', 'VIDEO', 'FILE');
+CREATE TYPE "public"."MessageType" AS ENUM ('TEXT', 'IMAGE', 'VIDEO', 'FILE', 'SYSTEM', 'INTAKE_QUESTION', 'INTAKE_ANSWER');
+
+-- CreateEnum
+CREATE TYPE "public"."ConversationStatus" AS ENUM ('REQUESTED', 'ACTIVE', 'REJECTED', 'BLOCKED', 'CLOSED');
+
+-- CreateEnum
+CREATE TYPE "public"."ConversationRole" AS ENUM ('ARTIST', 'LOVER');
+
+-- CreateEnum
+CREATE TYPE "public"."ReceiptStatus" AS ENUM ('DELIVERED', 'READ');
 
 -- CreateEnum
 CREATE TYPE "public"."NotificationType" AS ENUM ('FOLLOW', 'LIKE', 'COMMENT', 'MESSAGE', 'CONNECTION_REQUEST', 'SUBSCRIPTION_EXPIRY', 'STUDIO_INVITATION', 'SYSTEM');
@@ -327,7 +336,7 @@ CREATE TABLE "public"."collection_posts" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."connection_requests" (
+CREATE TABLE "public"."private_requests" (
     "id" TEXT NOT NULL,
     "senderId" TEXT NOT NULL,
     "receiverId" TEXT NOT NULL,
@@ -336,12 +345,22 @@ CREATE TABLE "public"."connection_requests" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "connection_requests_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "private_requests_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "public"."conversations" (
     "id" TEXT NOT NULL,
+    "artistId" TEXT,
+    "loverId" TEXT,
+    "status" "public"."ConversationStatus" NOT NULL DEFAULT 'REQUESTED',
+    "requestedBy" TEXT,
+    "requestedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "acceptedAt" TIMESTAMP(3),
+    "rejectedAt" TIMESTAMP(3),
+    "closedAt" TIMESTAMP(3),
+    "lastMessageAt" TIMESTAMP(3),
+    "lastMessageId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -355,6 +374,10 @@ CREATE TABLE "public"."conversation_users" (
     "userId" TEXT NOT NULL,
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastReadAt" TIMESTAMP(3),
+    "role" "public"."ConversationRole" NOT NULL,
+    "unreadCount" INTEGER NOT NULL DEFAULT 0,
+    "canSend" BOOLEAN NOT NULL DEFAULT false,
+    "isMuted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "conversation_users_pkey" PRIMARY KEY ("id")
 );
@@ -369,10 +392,39 @@ CREATE TABLE "public"."messages" (
     "messageType" "public"."MessageType" NOT NULL DEFAULT 'TEXT',
     "mediaUrl" TEXT,
     "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "replyToMessageId" TEXT,
+    "editedAt" TIMESTAMP(3),
+    "deletedAt" TIMESTAMP(3),
+    "intakeFieldKey" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "messages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."message_receipts" (
+    "id" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "status" "public"."ReceiptStatus" NOT NULL DEFAULT 'DELIVERED',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "readAt" TIMESTAMP(3),
+
+    CONSTRAINT "message_receipts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."conversation_intakes" (
+    "id" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "schemaVersion" TEXT,
+    "questions" JSONB,
+    "answers" JSONB NOT NULL,
+    "createdByUserId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "conversation_intakes_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -767,16 +819,25 @@ CREATE INDEX "collection_posts_postId_idx" ON "public"."collection_posts"("postI
 CREATE UNIQUE INDEX "collection_posts_collectionId_postId_key" ON "public"."collection_posts"("collectionId", "postId");
 
 -- CreateIndex
-CREATE INDEX "connection_requests_senderId_idx" ON "public"."connection_requests"("senderId");
+CREATE INDEX "private_requests_senderId_idx" ON "public"."private_requests"("senderId");
 
 -- CreateIndex
-CREATE INDEX "connection_requests_receiverId_idx" ON "public"."connection_requests"("receiverId");
+CREATE INDEX "private_requests_receiverId_idx" ON "public"."private_requests"("receiverId");
 
 -- CreateIndex
-CREATE INDEX "connection_requests_status_idx" ON "public"."connection_requests"("status");
+CREATE INDEX "private_requests_status_idx" ON "public"."private_requests"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "connection_requests_senderId_receiverId_key" ON "public"."connection_requests"("senderId", "receiverId");
+CREATE UNIQUE INDEX "private_requests_senderId_receiverId_key" ON "public"."private_requests"("senderId", "receiverId");
+
+-- CreateIndex
+CREATE INDEX "conversations_status_idx" ON "public"."conversations"("status");
+
+-- CreateIndex
+CREATE INDEX "conversations_lastMessageAt_idx" ON "public"."conversations"("lastMessageAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "conversations_artistId_loverId_key" ON "public"."conversations"("artistId", "loverId");
 
 -- CreateIndex
 CREATE INDEX "conversation_users_conversationId_idx" ON "public"."conversation_users"("conversationId");
@@ -798,6 +859,18 @@ CREATE INDEX "messages_receiverId_idx" ON "public"."messages"("receiverId");
 
 -- CreateIndex
 CREATE INDEX "messages_createdAt_idx" ON "public"."messages"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "message_receipts_userId_idx" ON "public"."message_receipts"("userId");
+
+-- CreateIndex
+CREATE INDEX "message_receipts_status_idx" ON "public"."message_receipts"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "message_receipts_messageId_userId_key" ON "public"."message_receipts"("messageId", "userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "conversation_intakes_conversationId_key" ON "public"."conversation_intakes"("conversationId");
 
 -- CreateIndex
 CREATE INDEX "user_favorite_styles_userId_idx" ON "public"."user_favorite_styles"("userId");
@@ -1034,10 +1107,19 @@ ALTER TABLE "public"."collection_posts" ADD CONSTRAINT "collection_posts_collect
 ALTER TABLE "public"."collection_posts" ADD CONSTRAINT "collection_posts_postId_fkey" FOREIGN KEY ("postId") REFERENCES "public"."posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."connection_requests" ADD CONSTRAINT "connection_requests_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."private_requests" ADD CONSTRAINT "private_requests_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."connection_requests" ADD CONSTRAINT "connection_requests_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."private_requests" ADD CONSTRAINT "private_requests_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversations" ADD CONSTRAINT "conversations_lastMessageId_fkey" FOREIGN KEY ("lastMessageId") REFERENCES "public"."messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversations" ADD CONSTRAINT "conversations_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversations" ADD CONSTRAINT "conversations_loverId_fkey" FOREIGN KEY ("loverId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."conversation_users" ADD CONSTRAINT "conversation_users_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1053,6 +1135,21 @@ ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_receiverId_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_replyToMessageId_fkey" FOREIGN KEY ("replyToMessageId") REFERENCES "public"."messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."message_receipts" ADD CONSTRAINT "message_receipts_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "public"."messages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."message_receipts" ADD CONSTRAINT "message_receipts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversation_intakes" ADD CONSTRAINT "conversation_intakes_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."conversation_intakes" ADD CONSTRAINT "conversation_intakes_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."user_favorite_styles" ADD CONSTRAINT "user_favorite_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -23,7 +23,10 @@ export default function FixedFooter({
   return (
     <View className="flex-row justify-between px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
       {showBack ? (
-        <TouchableOpacity onPress={onBack} className="rounded-full px-6 py-4">
+        <TouchableOpacity
+          onPress={onBack}
+          className="rounded-full border border-foreground px-6 py-4"
+        >
           <Text className="text-foreground">{backLabel}</Text>
         </TouchableOpacity>
       ) : (

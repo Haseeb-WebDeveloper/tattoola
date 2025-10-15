@@ -190,7 +190,7 @@ export default function ArtistStep13V2() {
       );
 
       // Reset store and redirect to home
-      // reset();
+      reset();
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Registration error:", error);

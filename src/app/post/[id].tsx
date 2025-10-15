@@ -348,9 +348,13 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Author info */}
+            {/* Author info (clickable -> navigate to user profile) */}
             <View className="flex-row items-center justify-between mb-8 z-10">
-              <View className="flex-row items-center flex-1">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push(`/user/${post.author.id}` as any)}
+                className="flex-row items-center flex-1"
+              >
                 <Image
                   source={{
                     uri: post.author.avatar || "https://via.placeholder.com/40",
@@ -368,7 +372,7 @@ export default function PostDetailScreen() {
                     {getLocationString()}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleFollow}

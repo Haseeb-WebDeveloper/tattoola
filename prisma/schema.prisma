@@ -33,8 +33,8 @@ model User {
   artistProfile         ArtistProfile?
   collections           Collection[]
   comments              Comment[]
-  receivedRequests      ConnectionRequest[] @relation("RequestReceiver")
-  sentRequests          ConnectionRequest[] @relation("RequestSender")
+  receivedPrivateRequests PrivateRequest[]  @relation("PrivateRequestReceiver")
+  sentPrivateRequests     PrivateRequest[]  @relation("PrivateRequestSender")
   conversations         ConversationUser[]
   followers             Follow[]            @relation("UserFollowers")
   following             Follow[]            @relation("UserFollowing")
@@ -52,6 +52,10 @@ model User {
   favoriteStyles        UserFavoriteStyle[]
   assignedSubscriptions UserSubscription[]  @relation("AdminAssignedSubscriptions")
   subscriptions         UserSubscription[]
+  conversationsAsArtist Conversation[]      @relation("ConversationArtist")
+  conversationsAsLover  Conversation[]      @relation("ConversationLover")
+  messageReceipts       MessageReceipt[]
+  createdIntakes        ConversationIntake[]
 
   @@index([email])
   @@index([username])
@@ -414,7 +418,7 @@ model CollectionPost {
   @@map("collection_posts")
 }
 
-model ConnectionRequest {
+model PrivateRequest {
   id         String        @id @default(uuid())
   senderId   String
   receiverId String
@@ -422,23 +426,40 @@ model ConnectionRequest {
   status     RequestStatus @default(PENDING)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
-  receiver   User          @relation("RequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  sender     User          @relation("RequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User          @relation("PrivateRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User          @relation("PrivateRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
   @@index([status])
-  @@map("connection_requests")
+  @@map("private_requests")
 }
 
 model Conversation {
   id           String             @id @default(uuid())
+  artistId     String?
+  loverId      String?
+  status       ConversationStatus @default(REQUESTED)
+  requestedBy  String?
+  requestedAt  DateTime           @default(now())
+  acceptedAt   DateTime?
+  rejectedAt   DateTime?
+  closedAt     DateTime?
+  lastMessageAt DateTime?
+  lastMessageId String?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   participants ConversationUser[]
   messages     Message[]
+  lastMessage  Message?           @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
+  artist       User?              @relation("ConversationArtist", fields: [artistId], references: [id])
+  lover        User?              @relation("ConversationLover", fields: [loverId], references: [id])
+  intake       ConversationIntake?
 
+  @@unique([artistId, loverId])
+  @@index([status])
+  @@index([lastMessageAt])
   @@map("conversations")
 }
 
@@ -448,6 +469,10 @@ model ConversationUser {
   userId         String
   joinedAt       DateTime     @default(now())
   lastReadAt     DateTime?
+  role           ConversationRole
+  unreadCount    Int          @default(0)
+  canSend        Boolean      @default(false)
+  isMuted        Boolean      @default(false)
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -466,17 +491,55 @@ model Message {
   messageType    MessageType  @default(TEXT)
   mediaUrl       String?
   isRead         Boolean      @default(false)
+  replyToMessageId String?
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  intakeFieldKey String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   receiver       User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo        Message?     @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replies        Message[]    @relation("MessageReplies")
+  receipts       MessageReceipt[]
+  usedAsLastFor  Conversation[] @relation("ConversationLastMessage")
 
   @@index([conversationId])
   @@index([senderId])
   @@index([receiverId])
   @@index([createdAt])
   @@map("messages")
+}
+
+model MessageReceipt {
+  id         String         @id @default(uuid())
+  messageId  String
+  userId     String
+  status     ReceiptStatus  @default(DELIVERED)
+  createdAt  DateTime       @default(now())
+  readAt     DateTime?
+  message    Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([status])
+  @@map("message_receipts")
+}
+
+model ConversationIntake {
+  id              String       @id @default(uuid())
+  conversationId  String       @unique
+  schemaVersion   String?
+  questions       Json?
+  answers         Json
+  createdByUserId String
+  createdAt       DateTime     @default(now())
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdBy       User         @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@map("conversation_intakes")
 }
 
 model UserFavoriteStyle {
@@ -775,6 +838,27 @@ enum MessageType {
   IMAGE
   VIDEO
   FILE
+  SYSTEM
+  INTAKE_QUESTION
+  INTAKE_ANSWER
+}
+
+enum ConversationStatus {
+  REQUESTED
+  ACTIVE
+  REJECTED
+  BLOCKED
+  CLOSED
+}
+
+enum ConversationRole {
+  ARTIST
+  LOVER
+}
+
+enum ReceiptStatus {
+  DELIVERED
+  READ
 }
 
 enum NotificationType {

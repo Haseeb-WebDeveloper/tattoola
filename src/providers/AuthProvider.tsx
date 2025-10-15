@@ -2,15 +2,15 @@ import { router } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
 import type {
-    AuthContextType,
-    AuthSession,
-    CompleteArtistRegistration,
-    CompleteUserRegistration,
-    ForgotPasswordData,
-    LoginCredentials,
-    RegisterCredentials,
-    ResetPasswordData,
-    User,
+  AuthContextType,
+  AuthSession,
+  CompleteArtistRegistration,
+  CompleteUserRegistration,
+  ForgotPasswordData,
+  LoginCredentials,
+  RegisterCredentials,
+  ResetPasswordData,
+  User,
 } from '../types/auth';
 import { supabase } from '../utils/supabase';
 
@@ -182,10 +182,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 router.replace('/(auth)/artist-registration/step-3');
               }, 100);
             } else if (result.user.role === 'TATTOO_LOVER') {
-              console.log('Sign in result user role is tattoo lover, redirecting to user management/registration steps');
-              // Redirect to user management/registration steps
+              console.log('Sign in result user role is tattoo lover, redirecting to user management/registration steps starting at step-3');
+              // Redirect to user management/registration steps (V2 starts at step-3)
               setTimeout(() => {
-                router.replace('/(auth)/user-registration/step-1');
+                router.replace('/(auth)/user-registration/step-3');
               }, 100);
             } else {
               // fallback: go to home
