@@ -170,8 +170,10 @@ module.exports = {
         neueExtraLight: ["NeueHaasDisplayPro-ExtraLight", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
         neueLight: ["NeueHaasDisplayPro-Light", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
         neueMedium: ["NeueHaasDisplayPro-Medium", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueSemibold: ["NeueHaasDisplayPro-SemiBold", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
         neueBold: ["NeueHaasDisplayPro-Bold", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
         neueBlack: ["NeueHaasDisplayPro-Black", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neue: ["NeueHaasDisplayPro", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Typography scale inspired by the SVG text hierarchy

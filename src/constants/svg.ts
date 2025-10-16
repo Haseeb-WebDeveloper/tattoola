@@ -112,6 +112,14 @@ import Video from "@/assets/icons/video.svg";
 import Attachment from "@/assets/icons/attachment.svg";
 // @ts-ignore
 import Send from "@/assets/icons/send.svg";
+// @ts-ignore
+import MailSent from "@/assets/icons/mail-sent.svg";
+// @ts-ignore
+import Reload from "@/assets/icons/reload.svg";
+// @ts-ignore
+import EyeClose from "@/assets/icons/eye-close.svg";
+// @ts-ignore
+import EyeOpen from "@/assets/icons/eye-open.svg";
 
 export const SVGIcons = {
   Close,
@@ -170,7 +178,11 @@ export const SVGIcons = {
   Video,
   Attachment,
   Send,
-  Pen3
+  Pen3,
+  MailSent,
+  Reload,
+  EyeClose,
+  EyeOpen
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

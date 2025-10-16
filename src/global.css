@@ -47,6 +47,10 @@
   font-weight: 900;
 }
 
+.font-neue {
+  font-family: NeueHaasDisplay, Montserrat;
+}
+
 .sheet-title {
   @apply text-[38px] font-bold leading-[36px] tracking-[-0.5px] text-foreground;
 }

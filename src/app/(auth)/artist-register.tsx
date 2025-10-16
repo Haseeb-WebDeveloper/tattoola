@@ -1,19 +1,16 @@
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
 import { UserRole } from "@/types/auth";
+import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import {
-  Alert,
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,6 +29,8 @@ export default function ArtistRegisterScreen() {
   const [focusedField, setFocusedField] = useState<
     keyof RegisterCredentials | null
   >(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const totalSteps = 13;
   const currentStep = 1;
@@ -127,35 +126,31 @@ export default function ArtistRegisterScreen() {
     <KeyboardAwareScrollView
       enableOnAndroid={true}
       enableAutomaticScroll={true}
-       extraScrollHeight={150}
+      extraScrollHeight={150}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       className="flex-1 bg-background"
     >
       {/* Header: close + logo */}
-      <View className="px-4 my-8">
+      <View
+        className="px-4"
+        style={{ marginTop: mvs(15), marginBottom: mvs(20) }}
+      >
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             onPress={handleClose}
             className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
           >
-            <Image
-              source={require("@/assets/images/icons/close.png")}
-              resizeMode="contain"
-            />
+            <SVGIcons.Close className="w-8 h-8" />
           </TouchableOpacity>
-          <Image
-            source={require("@/assets/logo/logo-light.png")}
-            className="h-10"
-            resizeMode="contain"
-          />
+          <SVGIcons.LogoLight className="h-10" />
           <View className="w-10" />
         </View>
         <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
       </View>
 
       {/* Steps indicator */}
-      <View className="items-center mb-8">
+      <View className="items-center" style={{ marginBottom: mvs(24) }}>
         <View className="flex-row items-center relative gap-1">
           {/* Horizontal line behind the steps */}
           <View
@@ -181,112 +176,133 @@ export default function ArtistRegisterScreen() {
       </View>
 
       {/* Title */}
-      <View className="px-6 mb-6 flex-row gap-2 items-center justify-center">
-        <Image
-          source={require("@/assets/images/icons/pen.png")}
-          resizeMode="contain"
-          className="w-7 h-7"
-        />
-        <Text className="text-foreground section-title font-neueBold">
+      <View
+        className="px-6 flex-row gap-2 items-center justify-center"
+        style={{ marginBottom: mvs(24) }}
+      >
+        <SVGIcons.Pen3 className="w-7 h-7" />
+        <ScaledText
+          variant="sectionTitle"
+          className="text-foreground font-neueBold"
+        >
           Registrati come Artista
-        </Text>
+        </ScaledText>
       </View>
 
       {/* Inputs */}
       <View className="px-6">
         {/* Username */}
-        <Text className="text-foreground textcenter mb-2 ta-body-3-button-text">
-          Username (inserisci un nome univoco)
-        </Text>
-        <View
-          className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
+        <ScaledText
+          variant="sm"
+          className="text-tat font-montserratSemibold mb-2"
         >
-          <TextInput
-            className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-            placeholder="TattooKing_97"
-            placeholderTextColor="#A49A99"
-            autoCapitalize="none"
-            value={formData.username}
-            onChangeText={(value) => handleInputChange("username", value)}
-            onFocus={() => setFocusedField("username")}
-            onBlur={() => setFocusedField(null)}
-          />
-        </View>
+          Username (inserisci un nome univoco)
+        </ScaledText>
+        <ScaledTextInput
+          containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
+          className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+          placeholder="TattooKing_97"
+          placeholderTextColor="#A49A99"
+          autoCapitalize="none"
+          value={formData.username}
+          onChangeText={(value) => handleInputChange("username", value)}
+          onFocus={() => setFocusedField("username")}
+          onBlur={() => setFocusedField(null)}
+        />
         {!!errors.username && (
           <Text className="text-xs text-error mt-1">{errors.username}</Text>
         )}
 
         {/* Email */}
-        <View className="mt-6">
-          <Text className="text-foreground mb-2 ta-body-3-button-text">
+        <View style={{ marginTop: mvs(15) }}>
+          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
             Email
-          </Text>
-          <View
-            className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
-          >
-            <TextInput
-              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="abc@gmail.com"
-              placeholderTextColor="#A49A99"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={formData.email}
-              onChangeText={(value) => handleInputChange("email", value)}
-              onFocus={() => setFocusedField("email")}
-              onBlur={() => setFocusedField(null)}
-            />
-          </View>
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            placeholder="abc@gmail.com"
+            placeholderTextColor="#A49A99"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={formData.email}
+            onChangeText={(value) => handleInputChange("email", value)}
+            onFocus={() => setFocusedField("email")}
+            onBlur={() => setFocusedField(null)}
+          />
           {!!errors.email && (
             <Text className="text-xs text-error mt-1">{errors.email}</Text>
           )}
         </View>
 
         {/* Password */}
-        <View className="mt-6">
-          <Text className="text-foreground mb-2 ta-body-3-button-text">
+        <View style={{ marginTop: mvs(15) }}>
+          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
             Password (min. 8 caratteri, di cui almeno un numero)
-          </Text>
-          <View
-            className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
-          >
-            <TextInput
-              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="*************"
-              placeholderTextColor="#A49A99"
-              secureTextEntry
-              value={formData.password}
-              onChangeText={(value) => handleInputChange("password", value)}
-              onFocus={() => setFocusedField("password")}
-              onBlur={() => setFocusedField(null)}
-            />
-          </View>
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            placeholder="*************"
+            placeholderTextColor="#A49A99"
+            secureTextEntry={!showPassword}
+            value={formData.password}
+            onChangeText={(value) => handleInputChange("password", value)}
+            onFocus={() => setFocusedField("password")}
+            onBlur={() => setFocusedField(null)}
+            rightAccessory={
+              <TouchableOpacity
+                accessibilityRole="button"
+                className="px-3 py-2 bg-[#100C0C] rounded-xl"
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                {showPassword ? (
+                  <SVGIcons.EyeOpen className="w-6 h-6" />
+                ) : (
+                  <SVGIcons.EyeClose className="w-6 h-6" />
+                )}
+              </TouchableOpacity>
+            }
+          />
           {!!errors.password && (
             <Text className="text-xs text-error mt-1">{errors.password}</Text>
           )}
         </View>
 
         {/* Confirm Password */}
-        <View className="mt-6">
-          <Text className="text-foreground mb-2 ta-body-3-button-text">
+        <View style={{ marginTop: mvs(15) }}>
+          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
             Conferma Password
-          </Text>
-          <View
-            className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
-          >
-            <TextInput
-              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="*************"
-              placeholderTextColor="#A49A99"
-              secureTextEntry
-              value={formData.confirmPassword}
-              onChangeText={(value) =>
-                handleInputChange("confirmPassword", value)
-              }
-              onFocus={() => setFocusedField("confirmPassword")}
-              onBlur={() => setFocusedField(null)}
-            />
-          </View>
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            placeholder="*************"
+            placeholderTextColor="#A49A99"
+            secureTextEntry={!showConfirmPassword}
+            value={formData.confirmPassword}
+            onChangeText={(value) =>
+              handleInputChange("confirmPassword", value)
+            }
+            onFocus={() => setFocusedField("confirmPassword")}
+            onBlur={() => setFocusedField(null)}
+            rightAccessory={
+              <TouchableOpacity
+                accessibilityRole="button"
+                className="px-3 py-2 bg-[#100C0C] rounded-xl"
+                onPress={() => setShowConfirmPassword((v) => !v)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                {showConfirmPassword ? (
+                  <SVGIcons.EyeOpen className="w-6 h-6" />
+                ) : (
+                  <SVGIcons.EyeClose className="w-6 h-6" />
+                )}
+              </TouchableOpacity>
+            }
+          />
           {!!errors.confirmPassword && (
             <Text className="text-xs text-error mt-1">
               {errors.confirmPassword}
@@ -295,30 +311,35 @@ export default function ArtistRegisterScreen() {
         </View>
 
         {/* Register Button */}
-        <View className="items-center mt-8">
+        <View className="items-center" style={{ marginTop: mvs(32) }}>
           <TouchableOpacity
             accessibilityRole="button"
             onPress={handleRegister}
             disabled={loading}
-            className="bg-primary rounded-full py-4 px-8 items-center w-full"
+            className="bg-primary rounded-full items-center w-full"
+            style={{ paddingVertical: mvs(12), paddingHorizontal: s(32) }}
           >
-            <Text className="text-foreground tat-body-1 font-neueBold">
+            <ScaledText
+              variant="body1"
+              className="text-foreground font-neueBold"
+            >
               Register
-            </Text>
+            </ScaledText>
           </TouchableOpacity>
         </View>
 
         {/* Footer link */}
         <View className="items-center mt-8 mb-8">
-          <Text className="text-[#A49A99]">
+          <ScaledText variant="md" className="text-[#A49A99]">
             Already have an account?{" "}
-            <Text
-              className="text-foreground font-semibold"
+            <ScaledText
+              variant="md"
+              className="text-foreground font-montserratSemibold"
               onPress={handleLogin}
             >
               Sign in
-            </Text>
-          </Text>
+            </ScaledText>
+          </ScaledText>
         </View>
       </View>
     </KeyboardAwareScrollView>

@@ -1,10 +1,11 @@
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { SVGIcons } from "@/constants/svg";
 import { useAuth } from '@/providers/AuthProvider';
 import type { FormErrors, ResetPasswordData } from '@/types/auth';
+import { mvs, s } from "@/utils/scale";
 import { ResetPasswordValidationSchema, ValidationUtils } from '@/utils/validation';
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -13,7 +14,6 @@ import {
     Platform,
     ScrollView,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -30,6 +30,8 @@ export default function ResetPasswordScreen() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [passwordReset, setPasswordReset] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (field: keyof ResetPasswordData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -99,27 +101,30 @@ export default function ResetPasswordScreen() {
 
   if (passwordReset) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="checkmark-circle" size={64} color="#22C55E" />
+              <SVGIcons.VarifiedGreen className="w-16 h-16" />
             </View>
-            <Text style={styles.title}>Password Reset Successful</Text>
-            <Text style={styles.subtitle}>
+            <ScaledText variant="2xl" className="text-foreground font-neueBold">Password Reset Successful</ScaledText>
+            <ScaledText variant="body2" className="text-gray text-center">
               Your password has been successfully reset. You can now log in with your new password.
-            </Text>
+            </ScaledText>
           </View>
 
           <View style={styles.actions}>
-            <Button
-              title="Continue to Login"
+            <TouchableOpacity
+              accessibilityRole="button"
               onPress={handleBackToLogin}
-              style={styles.continueButton}
-            />
+              className="bg-primary rounded-full"
+              style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
+            >
+              <ScaledText variant="body1" className="text-foreground font-neueBold">Continue to Login</ScaledText>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -127,7 +132,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
@@ -140,52 +145,83 @@ export default function ResetPasswordScreen() {
             style={styles.backButton}
             onPress={handleBackToLogin}
           >
-            <Ionicons name="chevron-back" size={24} color="#000000" />
+            <SVGIcons.ChevronLeft className="w-6 h-6" />
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Reset Your Password</Text>
-            <Text style={styles.subtitle}>
-              Enter your new password below
-            </Text>
+            <ScaledText variant="2xl" className="text-foreground font-neueBold">Reset Your Password</ScaledText>
+            <ScaledText variant="body2" className="text-gray text-center">Enter your new password below</ScaledText>
           </View>
 
           <View style={styles.form}>
-            <Input
-              label="New Password"
-              type="password"
+            <ScaledText variant="sm" className="text-foreground mb-2">New Password</ScaledText>
+            <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
+              className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
               placeholder="Enter your new password"
+              secureTextEntry={!showPassword}
               value={formData.password}
               onChangeText={(value) => handleInputChange('password', value)}
-              error={errors.password}
-              required
+              rightAccessory={
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  className="px-3 py-2"
+                  onPress={() => setShowPassword((v) => !v)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  {showPassword ? (
+                    <SVGIcons.EyeOpen className="w-6 h-6" />
+                  ) : (
+                    <SVGIcons.EyeClose className="w-6 h-6" />
+                  )}
+                </TouchableOpacity>
+              }
             />
 
-            <Input
-              label="Confirm New Password"
-              type="password"
+            <View style={{ height: mvs(12) }} />
+
+            <ScaledText variant="sm" className="text-foreground mb-2">Confirm New Password</ScaledText>
+            <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
+              className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
               placeholder="Confirm your new password"
+              secureTextEntry={!showConfirmPassword}
               value={formData.confirmPassword}
               onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              error={errors.confirmPassword}
-              required
+              rightAccessory={
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  className="px-3 py-2"
+                  onPress={() => setShowConfirmPassword((v) => !v)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  {showConfirmPassword ? (
+                    <SVGIcons.EyeOpen className="w-6 h-6" />
+                  ) : (
+                    <SVGIcons.EyeClose className="w-6 h-6" />
+                  )}
+                </TouchableOpacity>
+              }
             />
 
             <View style={styles.passwordRequirements}>
-              <Text style={styles.requirementsTitle}>Password requirements:</Text>
-              <Text style={styles.requirementsText}>
-                • At least 8 characters long{'\n'}
-                • Contains at least one number{'\n'}
+              <ScaledText variant="body2" className="text-foreground font-montserratSemibold">Password requirements:</ScaledText>
+              <ScaledText variant="body2" className="text-gray">
+                • At least 8 characters long{"\n"}
+                • Contains at least one number{"\n"}
                 • Mix of letters and numbers recommended
-              </Text>
+              </ScaledText>
             </View>
 
-            <Button
-              title="Reset Password"
+            <TouchableOpacity
+              accessibilityRole="button"
               onPress={handleResetPassword}
-              loading={loading}
-              style={styles.resetButton}
-            />
+              disabled={loading}
+              className="bg-primary rounded-full"
+              style={[styles.resetButton, { paddingVertical: mvs(10), paddingHorizontal: s(32) }]}
+            >
+              <ScaledText variant="body1" className="text-foreground font-neueBold">Reset Password</ScaledText>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
@@ -193,9 +229,9 @@ export default function ResetPasswordScreen() {
               style={styles.loginLink}
               onPress={handleBackToLogin}
             >
-              <Text style={styles.loginText}>
-                Remember your password? <Text style={styles.loginHighlight}>Sign in</Text>
-              </Text>
+              <ScaledText variant="body2" className="text-gray text-center">
+                Remember your password? <ScaledText variant="body2" className="text-foreground font-montserratSemibold">Sign in</ScaledText>
+              </ScaledText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -207,7 +243,7 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   keyboardAvoid: {
     flex: 1,
@@ -229,39 +265,15 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginBottom: 24,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
   form: {
     flex: 1,
     marginBottom: 32,
   },
   passwordRequirements: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 8,
     padding: 16,
     marginBottom: 24,
-  },
-  requirementsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  requirementsText: {
-    fontSize: 12,
-    color: '#666666',
-    lineHeight: 18,
   },
   resetButton: {
     marginTop: 8,
@@ -277,14 +289,5 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     padding: 8,
-  },
-  loginText: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-  },
-  loginHighlight: {
-    color: '#000000',
-    fontWeight: '600',
   },
 });

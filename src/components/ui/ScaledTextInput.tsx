@@ -5,12 +5,14 @@ import { TextInput, TextInputProps, View, ViewStyle } from "react-native";
 type Props = TextInputProps & {
   containerClassName?: string;
   containerStyle?: ViewStyle | ViewStyle[];
+  rightAccessory?: React.ReactNode;
 };
 
 export const ScaledTextInput: React.FC<Props> = ({
   containerClassName,
   containerStyle,
   style,
+  rightAccessory,
   ...rest
 }) => {
   return (
@@ -28,6 +30,7 @@ export const ScaledTextInput: React.FC<Props> = ({
         ]}
         {...rest}
       />
+      {rightAccessory}
     </View>
   );
 };

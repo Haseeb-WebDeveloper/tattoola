@@ -5,14 +5,23 @@ import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import type { FormErrors, LoginCredentials } from "@/types/auth";
-import { s, mvs, scaledVSize } from "@/utils/scale";
+import { mvs, s, scaledVSize } from "@/utils/scale";
 import { LoginValidationSchema, ValidationUtils } from "@/utils/validation";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+  ScrollView,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet } from "react-native";
 
 function LoginScreenContent() {
   const { signIn, loading } = useAuth();
@@ -24,6 +33,7 @@ function LoginScreenContent() {
   const [focusedField, setFocusedField] = useState<
     keyof LoginCredentials | null
   >(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (field: keyof LoginCredentials, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -82,20 +92,39 @@ function LoginScreenContent() {
     );
   }
 
+  // Full screen dimensions for absolute gradient overlay
+  const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } =
+    Dimensions.get("window");
+
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[
+          StyleSheet.absoluteFillObject,
+          { height: SCREEN_HEIGHT, width: SCREEN_WIDTH, zIndex: 0 },
+        ]}
+        pointerEvents="none"
+      />
       <KeyboardAwareScrollView
-        // enableOnAndroid={true}
-        // enableAutomaticScroll={true}
-        // extraScrollHeight={100}
-        // keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="handled"
+        extraKeyboardSpace={100}
         bottomOffset={62}
+        ScrollViewComponent={ScrollView}
         showsVerticalScrollIndicator={false}
-        className="flex-1 bg-black"
+        className="flex-1 bg-transparent"
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={{ zIndex: 1 }}
       >
         {/* Hero Section with logo + image + gradient like welcome.tsx */}
         <View className="relative">
-          <View className="w-full flex justify-center items-center">
+          <View
+            className="w-full flex justify-center items-center"
+            style={{ marginTop: mvs(20) }}
+          >
             <SVGIcons.LogoLight className="h-12" />
           </View>
 
@@ -120,7 +149,7 @@ function LoginScreenContent() {
               <ScaledText
                 allowScaling={false}
                 variant="sectionTitle"
-                className="text-foreground text-center font-neue font-[600]"
+                className="text-foreground text-center font-neueSemibold"
               >
                 Welcome back!!
               </ScaledText>
@@ -129,15 +158,8 @@ function LoginScreenContent() {
         </View>
 
         {/* Inputs */}
-        <View className="px-6 pt-6">
-          <View className="mb-4">
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="mb-2 label"
-            >
-              Email
-            </ScaledText>
+        <View className="px-6 mt-10">
+          <View style={{ marginBottom: mvs(15) }}>
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-base text-foreground"
@@ -156,27 +178,40 @@ function LoginScreenContent() {
             )}
           </View>
 
-          <View className="mb-2">
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="mb-2 label"
-            >
-              Password
-            </ScaledText>
+          <View style={{ marginBottom: mvs(8) }}>
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-base text-foreground"
               placeholder="Password"
               placeholderTextColor="#A49A99"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={formData.password}
               onChangeText={(value) => handleInputChange("password", value)}
               onFocus={() => setFocusedField("password")}
               onBlur={() => setFocusedField(null)}
+              rightAccessory={
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  className="px-3 py-2 bg-[#100C0C] rounded-xl m-1"
+                  onPress={() => setShowPassword((v) => !v)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  {showPassword ? (
+                    <SVGIcons.EyeOpen className="w-6 h-6" />
+                  ) : (
+                    <SVGIcons.EyeClose className="w-6 h-6" />
+                  )}
+                </TouchableOpacity>
+              }
             />
             {!!errors.password && (
-              <Text className="text-xs text-error mt-1">{errors.password}</Text>
+              <ScaledText
+                variant="body2"
+                allowScaling={false}
+                className="text-error font-montserratLight"
+              >
+                {errors.password}
+              </ScaledText>
             )}
           </View>
 
@@ -184,7 +219,11 @@ function LoginScreenContent() {
             className="self-end mb-6"
             onPress={handleForgotPassword}
           >
-            <ScaledText allowScaling={false} variant="md" className="text-gray">
+            <ScaledText
+              allowScaling={false}
+              variant="body4"
+              className="text-gray font-neneSemibold"
+            >
               Forgot password?
             </ScaledText>
           </TouchableOpacity>
@@ -228,7 +267,7 @@ function LoginScreenContent() {
           </ScaledText>
         </View>
       </KeyboardAwareScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,8 +1,10 @@
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import { router } from "expo-router";
 import React from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, TouchableOpacity, View } from "react-native";
 
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
@@ -18,7 +20,7 @@ export default function EmailConfirmationScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-background"
+      className="flex-1"
       contentContainerStyle={{ flexGrow: 1 }}
       showsVerticalScrollIndicator={false}
     >
@@ -29,16 +31,9 @@ export default function EmailConfirmationScreen() {
             onPress={handleClose}
             className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
           >
-            <Image
-              source={require("@/assets/images/icons/close.png")}
-              resizeMode="contain"
-            />
+            <SVGIcons.Close className="w-8 h-8" />
           </TouchableOpacity>
-          <Image
-            source={require("@/assets/logo/logo-light.png")}
-            className="h-10"
-            resizeMode="contain"
-          />
+          <SVGIcons.LogoLight className="h-10" />
           <View className="w-10" />
         </View>
         <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
@@ -59,18 +54,20 @@ export default function EmailConfirmationScreen() {
       {/* Title and instructions */}
       <View className="px-6">
         <View className="px-6 mb-2 flex-row gap-2 items-center justify-center">
-          <Image
-            source={require("@/assets/images/icons/mail-sent.png")}
-            resizeMode="contain"
-            className="w-7 h-7"
-          />
-          <Text className="text-foreground section-title font-neueBold">
+          <SVGIcons.MailSent className="w-7 h-7" />
+          <ScaledText
+            variant="sectionTitle"
+            className="text-foreground font-neueBold"
+          >
             Verification email sent
-          </Text>
+          </ScaledText>
         </View>
-        <Text className="tat-body-2-light">
+        <ScaledText
+          variant="body2"
+          className="text-foreground font-montserratLight"
+        >
           Check your inbox → Tap Confirm email → You’re all set!
-        </Text>
+        </ScaledText>
       </View>
 
       {/* Loading ring or image preview */}
@@ -88,26 +85,36 @@ export default function EmailConfirmationScreen() {
 
       {/* Resend */}
       <View className="items-center">
-        <Text className="tat-gray mb-3">Haven’t received the email?</Text>
+        <ScaledText
+          variant="body2"
+          className="text-foreground font-montserratLight"
+        >
+          Haven’t received the email?
+        </ScaledText>
         <TouchableOpacity
           className="px-6 py-3 rounded-full border border-foreground/60 flex-row gap-2 items-center"
           onPress={resendVerificationEmail}
         >
-          <Image
-            source={require("@/assets/images/icons/reload.png")}
-            resizeMode="contain"
-            className="w-5 h-5"
-          />
-          <Text className="text-foreground">Resend email</Text>
+          <SVGIcons.Reload className="w-5 h-5" />
+          <ScaledText
+            variant="body2"
+            className="text-foreground font-montserratLight"
+          >
+            Resend email
+          </ScaledText>
         </TouchableOpacity>
         <View className="h-px bg-[#A49A99] opacity-40 w-4/5 my-8" />
       </View>
 
       {/* Edit email note */}
       <View className="px-12 mb-12 max-w-sm">
-        <Text className="tat-body-2-med text-center text-[#A49A99]">
+        <ScaledText
+          variant="body2"
+          className="text-foreground font-montserratLight text-center"
+        >
           If you entered an incorrect email address,{" "}
-          <Text
+          <ScaledText
+            variant="body2"
             className="text-foreground font-bold underline underline-offset-auto decoration-solid font-montserratRegular text-[14px] leading-[23px]"
             style={{
               textDecorationLine: "underline",
@@ -115,8 +122,8 @@ export default function EmailConfirmationScreen() {
             onPress={() => router.replace("/(auth)/artist-register")}
           >
             edit email.
-          </Text>
-        </Text>
+          </ScaledText>
+        </ScaledText>
       </View>
     </ScrollView>
   );

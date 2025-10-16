@@ -1,43 +1,52 @@
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useAuth } from '@/providers/AuthProvider';
-import type { ForgotPasswordData, FormErrors } from '@/types/auth';
-import { ForgotPasswordValidationSchema, ValidationUtils } from '@/utils/validation';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
+import type { ForgotPasswordData, FormErrors } from "@/types/auth";
+import { mvs, s } from "@/utils/scale";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  ForgotPasswordValidationSchema,
+  ValidationUtils,
+} from "@/utils/validation";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ForgotPasswordScreen() {
   const { forgotPassword, loading } = useAuth();
   const [formData, setFormData] = useState<ForgotPasswordData>({
-    email: '',
+    email: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [emailSent, setEmailSent] = useState(false);
 
-  const handleInputChange = (field: keyof ForgotPasswordData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+  const handleInputChange = (
+    field: keyof ForgotPasswordData,
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Clear error for this field
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const validateForm = (): boolean => {
-    const formErrors = ValidationUtils.validateForm(formData, ForgotPasswordValidationSchema);
+    const formErrors = ValidationUtils.validateForm(
+      formData,
+      ForgotPasswordValidationSchema
+    );
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
   };
@@ -52,15 +61,15 @@ export default function ForgotPasswordScreen() {
       setEmailSent(true);
     } catch (error) {
       Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to send reset email',
-        [{ text: 'OK' }]
+        "Error",
+        error instanceof Error ? error.message : "Failed to send reset email",
+        [{ text: "OK" }]
       );
     }
   };
 
   const handleBackToLogin = () => {
-    router.push('/(auth)/login');
+    router.push("/(auth)/login");
   };
 
   const handleResendEmail = () => {
@@ -70,7 +79,9 @@ export default function ForgotPasswordScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: "transparent" }]}
+      >
         <LoadingSpinner message="Sending reset email..." overlay />
       </SafeAreaView>
     );
@@ -78,42 +89,63 @@ export default function ForgotPasswordScreen() {
 
   if (emailSent) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: "transparent" }]}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="mail" size={64} color="#000000" />
+              <SVGIcons.MailSent width={s(40)} height={s(40)} />
             </View>
-            <Text style={styles.title}>Check Your Email</Text>
-            <Text style={styles.subtitle}>
-              We&apos;ve sent a password reset link to{'\n'}
-              <Text style={styles.email}>{formData.email}</Text>
-            </Text>
+            <ScaledText variant="2xl" className="text-foreground font-neueBold">
+              Check Your Email
+            </ScaledText>
+            <ScaledText variant="body2" className="text-gray text-center">
+              We&apos;ve sent a password reset link to{"\n"}
+              <ScaledText
+                variant="body2"
+                className="text-foreground font-montserratSemibold"
+              >
+                {formData.email}
+              </ScaledText>
+            </ScaledText>
           </View>
 
           <View style={styles.instructions}>
-            <Text style={styles.instructionText}>
-              Click the link in the email to reset your password. If you don&apos;t see the email, check your spam folder.
-            </Text>
+            <ScaledText variant="body2" className="text-gray text-center">
+              Click the link in the email to reset your password. If you
+              don&apos;t see the email, check your spam folder.
+            </ScaledText>
           </View>
 
           <View style={styles.actions}>
-            <Button
-              title="Back to Login"
-              onPress={handleBackToLogin}
-              style={styles.backButton}
-            />
-            
             <TouchableOpacity
-              style={styles.resendLink}
+              accessibilityRole="button"
+              onPress={handleBackToLogin}
+              className="bg-primary rounded-full"
+              style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
+            >
+              <ScaledText
+                variant="body1"
+                className="text-foreground font-neueBold"
+              >
+                Back to Login
+              </ScaledText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.resendLink]}
               onPress={handleResendEmail}
             >
-              <Text style={styles.resendText}>
+              <ScaledText
+                variant="body2"
+                className="text-foreground font-montserratSemibold"
+              >
                 Didn&apos;t receive the email? Resend
-              </Text>
+              </ScaledText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -122,68 +154,92 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.keyboardAvoid}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackToLogin}>
+          <SVGIcons.ChevronLeft className="w-6 h-6" />
+        </TouchableOpacity>
+
+        <View style={styles.header}>
+          <ScaledText variant="2xl" className="text-foreground font-neueBold">
+            Forgot Password?
+          </ScaledText>
+          <ScaledText variant="body2" className="text-gray text-center">
+            Enter your email address and we&apos;ll send you a link to reset
+            your password
+          </ScaledText>
+        </View>
+
+        <View style={styles.form}>
+          <ScaledText variant="sm" className="text-foreground mb-2">
+            Email
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl bg-black/40 border ${errors.email ? "border-error" : "border-gray"}`}
+            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            placeholder="Enter your email"
+            value={formData.email}
+            onChangeText={(value) => handleInputChange("email", value)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {!!errors.email && (
+            <ScaledText variant="body4" className="text-error mt-1">
+              {errors.email}
+            </ScaledText>
+          )}
+
           <TouchableOpacity
-            style={styles.backButton}
+            accessibilityRole="button"
+            onPress={handleSendResetEmail}
+            disabled={loading}
+            className="bg-primary rounded-full"
+            style={[
+              styles.sendButton,
+              { paddingVertical: mvs(10), paddingHorizontal: s(32) },
+            ]}
+          >
+            <ScaledText
+              variant="body1"
+              className="text-foreground font-neueBold text-center"
+            >
+              Send Reset Link
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.loginLink}
             onPress={handleBackToLogin}
           >
-            <Ionicons name="chevron-back" size={24} color="#000000" />
+            <ScaledText variant="body2" className="text-gray text-center">
+              Remember your password?{" "}
+              <ScaledText
+                variant="body2"
+                className="text-foreground font-montserratSemibold"
+              >
+                Sign in
+              </ScaledText>
+            </ScaledText>
           </TouchableOpacity>
-
-          <View style={styles.header}>
-            <Text style={styles.title}>Forgot Password?</Text>
-            <Text style={styles.subtitle}>
-              Enter your email address and we&apos;ll send you a link to reset your password
-            </Text>
-          </View>
-
-          <View style={styles.form}>
-            <Input
-              label="Email"
-              type="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChangeText={(value) => handleInputChange('email', value)}
-              error={errors.email}
-              required
-            />
-
-            <Button
-              title="Send Reset Link"
-              onPress={handleSendResetEmail}
-              loading={loading}
-              style={styles.sendButton}
-            />
-          </View>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.loginLink}
-              onPress={handleBackToLogin}
-            >
-              <Text style={styles.loginText}>
-                Remember your password? <Text style={styles.loginHighlight}>Sign in</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "transparent",
   },
   keyboardAvoid: {
     flex: 1,
@@ -194,43 +250,20 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   backButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     padding: 8,
     marginBottom: 16,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 48,
   },
   iconContainer: {
     marginBottom: 24,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  email: {
-    fontWeight: '600',
-    color: '#000000',
-  },
   instructions: {
     marginBottom: 32,
     paddingHorizontal: 16,
-  },
-  instructionText: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 20,
   },
   form: {
     flex: 1,
@@ -240,31 +273,16 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   actions: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 24,
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   loginLink: {
     padding: 8,
   },
-  loginText: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-  },
-  loginHighlight: {
-    color: '#000000',
-    fontWeight: '600',
-  },
   resendLink: {
     padding: 8,
-  },
-  resendText: {
-    fontSize: 16,
-    color: '#000000',
-    fontWeight: '500',
-    textAlign: 'center',
   },
 });

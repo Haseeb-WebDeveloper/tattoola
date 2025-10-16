@@ -43,6 +43,7 @@ export default function RootLayout() {
     "NeueHaasDisplayPro-ExtraLight": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_35_Extra_Light.otf"),
     "NeueHaasDisplayPro-Light": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_45_Light.otf"),
     "NeueHaasDisplayPro-Medium": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_65_Medium.otf"),
+    "NeueHaasDisplayPro-SemiBold": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_65_Medium.otf"),
     "NeueHaasDisplayPro-Bold": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_75_Bold.otf"),
     "NeueHaasDisplayPro-Black": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_95_Black.otf"),
   });
