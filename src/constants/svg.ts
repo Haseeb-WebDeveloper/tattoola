@@ -7,6 +7,8 @@ import Person from "@/assets/icons/person.svg";
 // @ts-ignore
 import User from "@/assets/icons/user.svg";
 // @ts-ignore
+import UserFilled from "@/assets/icons/user-filled.svg";
+// @ts-ignore
 import Studio from "@/assets/icons/studio.svg";
 // @ts-ignore
 import Certificate from "@/assets/icons/certificate.svg";
@@ -46,6 +48,8 @@ import Checkout from "@/assets/icons/checkout.svg";
 import Pen2 from "@/assets/icons/pen-2.svg";
 // @ts-ignore
 import Pen1 from "@/assets/icons/pen.svg";
+// @ts-ignore
+import Pen3 from "@/assets/icons/pen-3.svg";
 // @ts-ignore
 import Search from "@/assets/icons/search.svg";
 // @ts-ignore
@@ -113,6 +117,7 @@ export const SVGIcons = {
   Close,
   LogoLight,
   Person,
+  UserFilled,
   User,
   Studio,
   Certificate,
@@ -164,7 +169,8 @@ export const SVGIcons = {
   Flash,
   Video,
   Attachment,
-  Send
+  Send,
+  Pen3
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

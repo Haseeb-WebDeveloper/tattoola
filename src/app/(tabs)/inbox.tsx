@@ -22,6 +22,7 @@ export default function InboxScreen() {
   const loadMore = useChatInboxStore((s) => s.loadMore);
   const startRealtime = useChatInboxStore((s) => s.startRealtime);
   const stopRealtime = useChatInboxStore((s) => s.stopRealtime);
+  const onlineUserIds = useChatInboxStore((s) => s.onlineUserIds);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -77,12 +78,18 @@ export default function InboxScreen() {
             className="px-4 py-4 border-b border-foreground/10"
           >
             <View className="flex-row items-center">
-              <Image
-                source={{
-                  uri: item.peerAvatar || "https://via.placeholder.com/56",
-                }}
-                className="w-14 h-14 rounded-full mr-3"
-              />
+              <View className="mr-3 relative">
+                <Image
+                  source={{
+                    uri: item.peerAvatar || "https://via.placeholder.com/56",
+                  }}
+                  className="w-14 h-14 rounded-full"
+                />
+                <View
+                  className={`w-3 h-3 rounded-full absolute right-0 top-0 ${onlineUserIds?.[item.peerId] ? 'bg-error' : 'bg-gray'}`}
+                  style={{ borderWidth: 2, borderColor: '#0F0202' }}
+                />
+              </View>
               <View className="flex-1">
                 <View className="flex-row items-center justify-between">
                   <Text className="text-foreground tat-body-1 font-neueBold">

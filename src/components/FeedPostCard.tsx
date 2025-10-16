@@ -13,10 +13,14 @@ type Props = {
 function FeedPostCardComponent({ post, onPress, onLikePress }: Props) {
   const cover = post.media[0]?.mediaUrl;
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={onPress} className="w-full">
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={onPress}
+      className="w-full h-[100svh]"
+    >
       <View
-        className="relative w-full overflow-hidden"
-        style={{ aspectRatio: 9 / 19 }}
+        className="relative w-full overflow-hidden h-full"
+        // style={{ aspectRatio: 9 / 19 }}
       >
         {!!cover && (
           <Image
@@ -54,23 +58,9 @@ function FeedPostCardComponent({ post, onPress, onLikePress }: Props) {
           pointerEvents="none"
         />
 
-        {/* Header brand (centered logo) */}
-        <View className="absolute top-6 left-0 right-0 px-5 flex-row items-center justify-between">
-          <View className="rounded-full items-center justify-center">
-            <SVGIcons.Flash className="w-5 h-5" />
-          </View>
-          <Image
-            source={require("../assets/logo/logo-light.png")}
-            style={{ width: 110, height: 28 }}
-            resizeMode="contain"
-          />
-          <View style={{ width: 36 }} />
-        </View>
 
         {/* Bottom content */}
-        <View className="absolute left-0 right-0 p-5"
-        style={{ bottom: 90 }}
-        >
+        <View className="absolute left-0 right-0 bottom-[13vh] p-5">
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-4">
               <Text

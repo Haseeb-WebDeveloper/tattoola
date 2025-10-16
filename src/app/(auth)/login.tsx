@@ -1,20 +1,17 @@
 import { RequireGuest } from "@/components/AuthGuard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import type { FormErrors, LoginCredentials } from "@/types/auth";
+import { s, mvs, scaledVSize } from "@/utils/scale";
 import { LoginValidationSchema, ValidationUtils } from "@/utils/validation";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Alert,
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function LoginScreenContent() {
@@ -88,42 +85,45 @@ function LoginScreenContent() {
   return (
     <SafeAreaView className="flex-1 bg-black">
       <KeyboardAwareScrollView
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        extraScrollHeight={100}
-        keyboardShouldPersistTaps="handled"
+        // enableOnAndroid={true}
+        // enableAutomaticScroll={true}
+        // extraScrollHeight={100}
+        // keyboardShouldPersistTaps="handled"
+        bottomOffset={62}
         showsVerticalScrollIndicator={false}
         className="flex-1 bg-black"
       >
         {/* Hero Section with logo + image + gradient like welcome.tsx */}
         <View className="relative">
-          <View className="mt-4 w-full flex justify-center items-center">
-            <Image
-              source={require("@/assets/logo/logo-light.png")}
-              className="h-12"
-              resizeMode="contain"
-            />
+          <View className="w-full flex justify-center items-center">
+            <SVGIcons.LogoLight className="h-12" />
           </View>
 
           <View className="w-full relative">
             <Image
               source={require("@/assets/auth/login.jpg")}
-              className="w-full h-[320px]"
+              className="w-full"
               resizeMode="cover"
+              style={{ height: scaledVSize(230) }}
             />
             <LinearGradient
               colors={["#000000", "transparent", "transparent", "#000000"]}
               locations={[0, 0.25, 0.75, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
-              className="absolute w-full h-[320px] top-0 left-0 right-0 bottom-0 z-10"
+              className="absolute w-full top-0 left-0 right-0 bottom-0 z-10"
+              style={{ height: scaledVSize(230) }}
             />
 
             {/* Headline */}
             <View className="absolute bottom-6 left-0 right-0 px-6 z-20">
-              <Text className="text-foreground text-center  section-title font-semibold">
+              <ScaledText
+                allowScaling={false}
+                variant="sectionTitle"
+                className="text-foreground text-center font-neue font-[600]"
+              >
                 Welcome back!!
-              </Text>
+              </ScaledText>
             </View>
           </View>
         </View>
@@ -131,46 +131,50 @@ function LoginScreenContent() {
         {/* Inputs */}
         <View className="px-6 pt-6">
           <View className="mb-4">
-            <Text className="mb-2 label">Email</Text>
-            <View
-              className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="mb-2 label"
             >
-              <TextInput
-                className="flex-1 px-4 py-3 text-base text-foreground"
-                placeholder="Email"
-                placeholderTextColor="#A49A99"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={formData.email}
-                onChangeText={(value) => handleInputChange("email", value)}
-                onFocus={() => setFocusedField("email")}
-                onBlur={() => setFocusedField(null)}
-              />
-            </View>
+              Email
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+              className="flex-1 text-base text-foreground"
+              placeholder="Email"
+              placeholderTextColor="#A49A99"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={formData.email}
+              onChangeText={(value) => handleInputChange("email", value)}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+            />
             {!!errors.email && (
               <Text className="text-xs text-error mt-1">{errors.email}</Text>
             )}
           </View>
 
           <View className="mb-2">
-            <Text className="mb-2 label">
-              Password
-            </Text>
-            <View
-              className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="mb-2 label"
             >
-              <TextInput
-                className="flex-1 px-4 py-3 text-base text-foreground"
-                placeholder="Password"
-                placeholderTextColor="#A49A99"
-                secureTextEntry
-                value={formData.password}
-                onChangeText={(value) => handleInputChange("password", value)}
-                onFocus={() => setFocusedField("password")}
-                onBlur={() => setFocusedField(null)}
-              />
-            </View>
+              Password
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+              className="flex-1 text-base text-foreground"
+              placeholder="Password"
+              placeholderTextColor="#A49A99"
+              secureTextEntry
+              value={formData.password}
+              onChangeText={(value) => handleInputChange("password", value)}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+            />
             {!!errors.password && (
               <Text className="text-xs text-error mt-1">{errors.password}</Text>
             )}
@@ -180,7 +184,9 @@ function LoginScreenContent() {
             className="self-end mb-6"
             onPress={handleForgotPassword}
           >
-            <Text className="text-sm text-gray">Forgot password?</Text>
+            <ScaledText allowScaling={false} variant="md" className="text-gray">
+              Forgot password?
+            </ScaledText>
           </TouchableOpacity>
         </View>
 
@@ -190,25 +196,36 @@ function LoginScreenContent() {
             accessibilityRole="button"
             onPress={handleLogin}
             disabled={loading}
-            className="bg-primary rounded-full py-4 px-8 items-center w-full"
+            className="bg-primary rounded-full items-center w-full"
+            style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
           >
-            <Text className="text-foreground tat-body-1 font-neueBold">
+            <ScaledText
+              allowScaling={false}
+              variant="body1"
+              className="text-foreground font-neueBold"
+            >
               Sign in
-            </Text>
+            </ScaledText>
           </TouchableOpacity>
         </View>
 
         {/* Bottom link */}
         <View className="items-center mt-10 px-6 pb-8">
-          <Text className="text-[#A49A99]">
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-gray font-montserratMedium"
+          >
             Don’t have an account?{" "}
-            <Text
-              className="text-foreground font-semibold"
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground font-montserratSemibold"
               onPress={handleRegister}
             >
               Sign up
-            </Text>
-          </Text>
+            </ScaledText>
+          </ScaledText>
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>

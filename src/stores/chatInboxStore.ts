@@ -1,4 +1,4 @@
-import { fetchConversationsPage, subscribeConversations } from "@/services/chat.service";
+import { fetchConversationsPage, getPresenceChannel, subscribeConversations } from "@/services/chat.service";
 import { create } from "zustand";
 import { loadJSON, saveJSON } from "./mmkv";
 
@@ -11,6 +11,8 @@ type InboxState = {
   loading: boolean;
   error?: string | null;
   unsubscribe?: () => void;
+  presenceUnsub?: () => void;
+  onlineUserIds: Record<string, boolean>;
   loadFirstPage(userId: string): Promise<void>;
   loadMore(userId: string): Promise<void>;
   upsertConversation(c: Conversation): void;
@@ -27,6 +29,8 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
   loading: false,
   error: null,
   unsubscribe: undefined,
+  presenceUnsub: undefined,
+  onlineUserIds: {},
   async loadFirstPage(userId) {
     set({ loading: true, error: null });
     try {
@@ -70,12 +74,41 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
       onInsert: (row) => get().upsertConversation(row),
       onUpdate: (row) => get().upsertConversation(row),
     });
-    set({ unsubscribe: unsub });
+    // presence
+    const channel = getPresenceChannel();
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState() as Record<string, any[]>;
+        const online: Record<string, boolean> = {};
+        Object.values(state).forEach((arr: any[]) => {
+          for (const entry of arr) {
+            if (entry?.userId) online[entry.userId] = true;
+          }
+        });
+        set({ onlineUserIds: online });
+      })
+      .subscribe(async (status: any) => {
+        if (status === "SUBSCRIBED") {
+          // Track current user as online with timestamp
+          try {
+            await channel.track({ online_at: new Date().toISOString(), userId });
+          } catch {}
+        }
+      });
+    const presenceUnsub = () => {
+      try { (channel as any)?.untrack?.(); } catch {}
+      try { (channel as any) && (window as any)?.supabase?.removeChannel?.(channel); } catch {}
+    };
+    set({ unsubscribe: unsub, presenceUnsub });
   },
   stopRealtime() {
     const u = get().unsubscribe;
     if (u) {
       try { u(); } catch {}
+    }
+    const p = get().presenceUnsub;
+    if (p) {
+      try { p(); } catch {}
     }
     set({ unsubscribe: undefined });
   },

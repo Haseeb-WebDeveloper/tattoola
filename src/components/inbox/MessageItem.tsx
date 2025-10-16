@@ -34,7 +34,7 @@ export default function MessageItem({
   // Intake messages should use same UI as normal messages; we'll only center text if truly system-only without bubble
   const renderBubble = () => {
     if (item.mediaUrl) {
-      {console.log("item.mediaUrl", item.mediaUrl)}
+      {console.log("item.mediaUrl", item)}
       return (
         <View
           className="rounded-2xl overflow-hidden border border-foreground/10 "
@@ -43,7 +43,7 @@ export default function MessageItem({
           <Image
             source={{ uri: item.mediaUrl }}
             resizeMode="cover"
-            className="w-full h-full"
+            className="w-full h-fit aspect-square"
           />
         </View>
       );

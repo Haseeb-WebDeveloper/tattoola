@@ -1,46 +1,58 @@
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useAuth } from '@/providers/AuthProvider';
-import { useSignupStore } from '@/stores/signupStore';
-import type { FormErrors, RegisterCredentials } from '@/types/auth';
-import { UserRole } from '@/types/auth';
-import { RegisterValidationSchema, ValidationUtils } from '@/utils/validation';
-import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import ScaledText from "@/components/ui/ScaledText";
+import { mvs, s, scaledVSize } from "@/utils/scale";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useAuth } from "@/providers/AuthProvider";
+import { useSignupStore } from "@/stores/signupStore";
+import type { FormErrors, RegisterCredentials } from "@/types/auth";
+import { UserRole } from "@/types/auth";
+import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
+import { router } from "expo-router";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Image,
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  View,
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SVGIcons } from "@/constants/svg";
+
 
 export default function RegisterScreen() {
   const { signUp, loading } = useAuth();
   const { setInProgress, setSuccess, setError } = useSignupStore();
   const [formData, setFormData] = useState<RegisterCredentials>({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     role: UserRole.TATTOO_LOVER,
   });
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [focusedField, setFocusedField] = useState<keyof RegisterCredentials | null>(null);
+  const [focusedField, setFocusedField] = useState<
+    keyof RegisterCredentials | null
+  >(null);
 
   const totalSteps = 8; // TL flow ends at step-8 (completion)
   const currentStep = 1;
-  const steps = useMemo(() => Array.from({ length: totalSteps }, (_, i) => i + 1), []);
+  const steps = useMemo(
+    () => Array.from({ length: totalSteps }, (_, i) => i + 1),
+    []
+  );
 
-  const handleInputChange = (field: keyof RegisterCredentials, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+  const handleInputChange = (
+    field: keyof RegisterCredentials,
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Clear error for this field
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -51,7 +63,7 @@ export default function RegisterScreen() {
         required: true,
         custom: (value: string) => {
           if (value !== formData.password) {
-            return 'Passwords do not match';
+            return "Passwords do not match";
           }
           return true;
         },
@@ -59,11 +71,11 @@ export default function RegisterScreen() {
     };
 
     const formErrors = ValidationUtils.validateForm(formData, validationRules);
-    
+
     if (!acceptedTerms) {
-      formErrors.terms = 'You must accept the Terms of Use and Privacy Policy';
+      formErrors.terms = "You must accept the Terms of Use and Privacy Policy";
     }
-    
+
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
   };
@@ -75,28 +87,28 @@ export default function RegisterScreen() {
 
     // Navigate immediately to email confirmation and start background signup
     setInProgress();
-    router.push('/(auth)/email-confirmation');
+    router.push("/(auth)/email-confirmation");
 
     try {
       const result = await signUp(formData);
       setSuccess();
       if (!result.needsVerification) {
-        router.push('/(auth)/welcome');
+        router.push("/(auth)/welcome");
       }
     } catch (error: any) {
-      const message = error?.message || 'An error occurred during registration';
+      const message = error?.message || "An error occurred during registration";
       setError(message);
-      router.replace('/(auth)/register');
-      Alert.alert('Registration Failed', message, [{ text: 'OK' }]);
+      router.replace("/(auth)/register");
+      Alert.alert("Registration Failed", message, [{ text: "OK" }]);
     }
   };
 
   const handleLogin = () => {
-    router.push('/(auth)/login');
+    router.push("/(auth)/login");
   };
 
   const handleArtistRegister = () => {
-    router.push('/(auth)/artist-register');
+    router.push("/(auth)/artist-register");
   };
 
   if (loading) {
@@ -123,16 +135,9 @@ export default function RegisterScreen() {
             onPress={handleLogin}
             className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
           >
-            <Image
-              source={require('@/assets/images/icons/close.png')}
-              resizeMode="contain"
-            />
+            <SVGIcons.Close className="w-8 h-8" />
           </TouchableOpacity>
-          <Image
-            source={require('@/assets/logo/logo-light.png')}
-            className="h-10"
-            resizeMode="contain"
-          />
+          <SVGIcons.LogoLight className="h-10" />
           <View className="w-10" />
         </View>
         <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
@@ -143,12 +148,18 @@ export default function RegisterScreen() {
         <View className="flex-row items-center relative gap-1">
           <View
             className="absolute left-0 right-0 top-1/2"
-            style={{ height: 1, backgroundColor: '#A49A99', zIndex: 0, marginLeft: 0, marginRight: 0 }}
+            style={{
+              height: 1,
+              backgroundColor: "#A49A99",
+              zIndex: 0,
+              marginLeft: 0,
+              marginRight: 0,
+            }}
           />
           {steps.map((step) => (
             <View
               key={step}
-              className={`${step === currentStep ? 'w-4 h-4' : ' w-[9px] h-[9px] opacity-70'} rounded-full bg-foreground `}
+              className={`${step === currentStep ? "w-4 h-4" : " w-[9px] h-[9px] opacity-70"} rounded-full bg-foreground `}
               style={{ zIndex: 100 }}
             />
           ))}
@@ -157,34 +168,42 @@ export default function RegisterScreen() {
 
       {/* Title */}
       <View className="px-6 mb-6 flex-row gap-2 items-center justify-center">
-        <Image
-          source={require('@/assets/images/icons/pen.png')}
-          resizeMode="contain"
-          className="w-7 h-7"
-        />
-        <Text className="text-foreground section-title font-neueBold">Registrati</Text>
+        <SVGIcons.Pen3 className="w-7 h-7" />
+        <ScaledText variant="sectionTitle" allowScaling={false} className="text-foreground">
+          Registrati
+        </ScaledText>
       </View>
 
       {/* Inputs */}
       <View className="px-6">
-        <Text className="text-foreground textcenter mb-2 ta-body-3-button-text">Username (inserisci un nome univoco)</Text>
-        <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'username' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+        <saleText className="text-foreground textcenter mb-2 ta-body-3-button-text">
+          Username (inserisci un nome univoco)
+        </saleText>
+        <View
+          className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
+        >
           <TextInput
             className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
             placeholder="TattooLover_97"
             placeholderTextColor="#A49A99"
             autoCapitalize="none"
             value={formData.username}
-            onChangeText={(value) => handleInputChange('username', value)}
-            onFocus={() => setFocusedField('username')}
+            onChangeText={(value) => handleInputChange("username", value)}
+            onFocus={() => setFocusedField("username")}
             onBlur={() => setFocusedField(null)}
           />
         </View>
-        {!!errors.username && <Text className="text-xs text-error mt-1">{errors.username}</Text>}
+        {!!errors.username && (
+          <Text className="text-xs text-error mt-1">{errors.username}</Text>
+        )}
 
         <View className="mt-6">
-          <Text className="text-foreground mb-2 ta-body-3-button-text">Email</Text>
-          <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'email' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+          <Text className="text-foreground mb-2 ta-body-3-button-text">
+            Email
+          </Text>
+          <View
+            className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
             <TextInput
               className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
               placeholder="abc@gmail.com"
@@ -193,46 +212,64 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               value={formData.email}
-              onChangeText={(value) => handleInputChange('email', value)}
-              onFocus={() => setFocusedField('email')}
+              onChangeText={(value) => handleInputChange("email", value)}
+              onFocus={() => setFocusedField("email")}
               onBlur={() => setFocusedField(null)}
             />
           </View>
-          {!!errors.email && <Text className="text-xs text-error mt-1">{errors.email}</Text>}
+          {!!errors.email && (
+            <Text className="text-xs text-error mt-1">{errors.email}</Text>
+          )}
         </View>
 
         <View className="mt-6">
-          <Text className="text-foreground mb-2 ta-body-3-button-text">Password (min. 8 caratteri, di cui almeno un numero)</Text>
-          <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'password' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+          <Text className="text-foreground mb-2 ta-body-3-button-text">
+            Password (min. 8 caratteri, di cui almeno un numero)
+          </Text>
+          <View
+            className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
             <TextInput
               className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
               placeholder="*************"
               placeholderTextColor="#A49A99"
               secureTextEntry
               value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
-              onFocus={() => setFocusedField('password')}
+              onChangeText={(value) => handleInputChange("password", value)}
+              onFocus={() => setFocusedField("password")}
               onBlur={() => setFocusedField(null)}
             />
           </View>
-          {!!errors.password && <Text className="text-xs text-error mt-1">{errors.password}</Text>}
+          {!!errors.password && (
+            <Text className="text-xs text-error mt-1">{errors.password}</Text>
+          )}
         </View>
 
         <View className="mt-6">
-          <Text className="text-foreground mb-2 ta-body-3-button-text">Conferma Password</Text>
-          <View className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === 'confirmPassword' ? 'border-2 border-foreground' : 'border border-gray'}`}>
+          <Text className="text-foreground mb-2 ta-body-3-button-text">
+            Conferma Password
+          </Text>
+          <View
+            className={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
             <TextInput
               className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
               placeholder="*************"
               placeholderTextColor="#A49A99"
               secureTextEntry
               value={formData.confirmPassword}
-              onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              onFocus={() => setFocusedField('confirmPassword')}
+              onChangeText={(value) =>
+                handleInputChange("confirmPassword", value)
+              }
+              onFocus={() => setFocusedField("confirmPassword")}
               onBlur={() => setFocusedField(null)}
             />
           </View>
-          {!!errors.confirmPassword && <Text className="text-xs text-error mt-1">{errors.confirmPassword}</Text>}
+          {!!errors.confirmPassword && (
+            <Text className="text-xs text-error mt-1">
+              {errors.confirmPassword}
+            </Text>
+          )}
         </View>
 
         {/* Register Button */}
@@ -243,18 +280,30 @@ export default function RegisterScreen() {
             disabled={loading}
             className="bg-primary rounded-full py-4 px-8 items-center w-full"
           >
-            <Text className="text-foreground tat-body-1 font-neueBold">Register</Text>
+            <Text className="text-foreground tat-body-1 font-neueBold">
+              Register
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer link */}
         <View className="items-center mt-8 mb-8">
           <Text className="text-[#A49A99]">
-            Already have an account?{' '}
-            <Text className="text-foreground font-semibold" onPress={handleLogin}>Sign in</Text>
+            Already have an account?{" "}
+            <Text
+              className="text-foreground font-semibold"
+              onPress={handleLogin}
+            >
+              Sign in
+            </Text>
           </Text>
           <View className="mt-2" />
-          <Text className="text-foreground font-semibold" onPress={handleArtistRegister}>Are you an Artist?</Text>
+          <Text
+            className="text-foreground font-semibold"
+            onPress={handleArtistRegister}
+          >
+            Are you an Artist?
+          </Text>
         </View>
       </View>
     </KeyboardAwareScrollView>

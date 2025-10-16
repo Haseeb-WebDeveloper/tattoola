@@ -570,6 +570,13 @@ export function getTypingChannel(conversationId: string) {
   });
 }
 
+// Presence: a single global channel to track who is online by userId
+export function getPresenceChannel() {
+  return supabase.channel("presence:users", {
+    config: { presence: { key: "user-presence" } },
+  });
+}
+
 export async function fetchConversationByIdWithPeer(
   userId: string,
   conversationId: string
