@@ -124,6 +124,7 @@ module.exports = {
         tat: {
           DEFAULT: "#A49A99",
           darkMaroon: "#140404",
+          foreground: "#100C0C",
         },
         // Base colors
         background: "#000000",

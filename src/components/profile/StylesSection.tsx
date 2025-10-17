@@ -1,6 +1,8 @@
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { mvs, s } from "@/utils/scale";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
 interface Style {
   id: string;
@@ -19,33 +21,48 @@ export const StylesSection: React.FC<StylesSectionProps> = ({ styles }) => {
   }
 
   return (
-    <View className="px-4 mt-6">
-      <Text className="text-foreground font-bold font-montserratSemibold mb-3 text-[16px] leading-[23px]">
+    <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="text-foreground font-montserratSemibold"
+        style={{ marginBottom: mvs(12) }}
+      >
         Preferred styles
-      </Text>
-      <View className="flex-row flex-wrap gap-2">
+      </ScaledText>
+      <View className="flex-row flex-wrap" style={{ gap: s(3) }}>
         {styles.map((style) => (
           <View
             key={style.id}
-            className={`px-4 py-2 rounded-full border border-foreground flex-row items-center`}
-            style={{ position: "relative" }}
+            className="rounded-full border border-foreground flex-row items-center"
+            style={{
+              paddingHorizontal: s(9),
+              paddingVertical: mvs(3),
+              position: "relative",
+            }}
           >
             {style.isMain && (
               <View
                 style={{
                   position: "absolute",
-                  top: -8,
-                  right: -3,
+                  top: -9,
+                  right: -6,
                   zIndex: 2,
-                  width: 20,
+                  width: s(20),
                   backgroundColor: "transparent",
                 }}
                 pointerEvents="none"
               >
-                <SVGIcons.King style={{ width: 20, height: 20 }} />
+                <SVGIcons.King style={{ width: s(20), height: s(20) }} />
               </View>
             )}
-            <Text className="text-foreground">{style.name}</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-foreground font-neueBold"
+            >
+              {style.name}
+            </ScaledText>
           </View>
         ))}
       </View>

@@ -1,10 +1,15 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step7Schema } from "@/utils/artistRegistrationValidation";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 export default function ArtistStep7V2() {
   const {
@@ -59,67 +64,85 @@ export default function ArtistStep7V2() {
       <AuthStepHeader />
 
       {/* Progress */}
-      <View className="items-center  mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 7 ? (idx === 6 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title */}
-      <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-        <SVGIcons.Heart width={22} height={22} />
-        <Text className="text-foreground section-title font-neueBold">
-          Add Bio & Socials
-        </Text>
-      </View>
+      <RegistrationProgress
+        currentStep={currentStepDisplay}
+        totalSteps={totalStepsDisplay}
+        name="Add Bio & Socials"
+        icon={<SVGIcons.Heart width={22} height={22} />}
+      />
 
       {/* Bio */}
-      <View className="px-6 mb-6">
-        <Text className="mb-2 label">
-          Racconta qualcosa di te<Text className="text-error">*</Text>
-        </Text>
-        <View
-          className={`rounded-2xl bg-black/40 ${focused === "bio" ? "border-2 border-foreground" : "border border-gray"}`}
+      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(15) }}>
+        <ScaledText
+          allowScaling={false}
+          variant="sm"
+          className="text-tat font-montserratSemibold"
+          style={{ marginBottom: mvs(4) }}
         >
-          <TextInput
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-2xl min-h-[120px] text-start"
-            placeholder="Hi, I’m John. I’m a tattoo artist from the past 10 years..."
-            placeholderTextColor="#A49A99"
-            value={step7.bio || ""}
-            onChangeText={(v) => updateStep7({ bio: v })}
-            onFocus={() => setFocused("bio")}
-            onBlur={() => {
-              setFocused(null);
-              validateAll();
-            }}
-          />
-        </View>
+          Racconta qualcosa di te
+          <ScaledText allowScaling={false} variant="sm" className="text-error">
+            *
+          </ScaledText>
+        </ScaledText>
+        <ScaledTextInput
+          containerClassName={`rounded-2xl bg-black/40 ${focused === "bio" ? "border-2 border-foreground" : "border border-gray"}`}
+          className="text-foreground"
+          placeholder="Hi, I’m John. I’m a tattoo artist from the past 10 years..."
+          placeholderTextColor="#A49A99"
+          value={step7.bio || ""}
+          onChangeText={(v) => updateStep7({ bio: v })}
+          onFocus={() => setFocused("bio")}
+          onBlur={() => {
+            setFocused(null);
+            validateAll();
+          }}
+          multiline
+          numberOfLines={6}
+          style={{ textAlignVertical: "top", minHeight: mvs(120) }}
+        />
         {!!errors.bio && (
-          <Text className="text-xs text-error mt-1">{errors.bio}</Text>
+          <ScaledText
+            allowScaling={false}
+            variant="body2"
+            className="text-error"
+            style={{ marginTop: mvs(4) }}
+          >
+            {errors.bio}
+          </ScaledText>
         )}
       </View>
 
       {/* Instagram */}
-      <View className="px-6 mb-6">
-        <Text className="mb-2 label">
+      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(15) }}>
+        <ScaledText
+          allowScaling={false}
+          variant="sm"
+          className="text-tat font-montserratSemibold"
+          style={{ marginBottom: mvs(4) }}
+        >
           Inserisci il link al tuo account Instagram (facoltativo)
-        </Text>
+        </ScaledText>
         <View
           className={`flex-row items-center rounded-xl bg-black/40 ${focused === "instagram" ? "border-2 border-foreground" : "border border-gray"}`}
         >
-          <View className="pl-4 pr-2 py-3">
-            <Text className="text-foreground font-neueBold">@</Text>
+          <View
+            style={{
+              paddingLeft: s(16),
+              paddingRight: s(8),
+              paddingVertical: mvs(12),
+            }}
+          >
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground font-neueBold"
+            >
+              @
+            </ScaledText>
           </View>
-          <TextInput
-            className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+          <ScaledTextInput
+            containerClassName="flex-1"
+            className="text-foreground"
             placeholder="tattooking_85"
             placeholderTextColor="#A49A99"
             autoCapitalize="none"
@@ -135,18 +158,36 @@ export default function ArtistStep7V2() {
       </View>
 
       {/* TikTok */}
-      <View className="px-6 mb-6">
-        <Text className="mb-2 label">
+      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(15) }}>
+        <ScaledText
+          allowScaling={false}
+          variant="sm"
+          className="text-tat font-montserratSemibold"
+          style={{ marginBottom: mvs(4) }}
+        >
           Inserisci il link al tuo account Tiktok (facoltativo)
-        </Text>
+        </ScaledText>
         <View
           className={`flex-row items-center rounded-xl bg-black/40 ${focused === "tiktok" ? "border-2 border-foreground" : "border border-gray"}`}
         >
-          <View className="pl-4 pr-2 py-3">
-            <Text className="text-foreground font-neueBold">@</Text>
+          <View
+            style={{
+              paddingLeft: s(16),
+              paddingRight: s(8),
+              paddingVertical: mvs(12),
+            }}
+          >
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground font-neueBold"
+            >
+              @
+            </ScaledText>
           </View>
-          <TextInput
-            className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+          <ScaledTextInput
+            containerClassName="flex-1"
+            className="text-foreground"
             placeholder="tattooking_85"
             placeholderTextColor="#A49A99"
             autoCapitalize="none"
@@ -162,21 +203,13 @@ export default function ArtistStep7V2() {
       </View>
 
       {/* Footer */}
-      <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onNext}
-          disabled={!canProceed}
-          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onNext={onNext}
+        nextLabel="Next"
+        nextDisabled={!canProceed}
+        backLabel="Back"
+        onBack={() => router.back()}
+      />
     </KeyboardAwareScrollView>
   );
 }

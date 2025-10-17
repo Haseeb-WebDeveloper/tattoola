@@ -1,14 +1,18 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useUserRegistrationStore } from "@/stores";
 import type {
-  CompleteUserRegistration,
-  FormErrors,
-  UserV2Step7,
+    CompleteUserRegistration,
+    FormErrors,
+    UserV2Step7,
 } from "@/types/auth";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Alert, TouchableOpacity, View } from "react-native";
 
 export default function UserRegistrationStep7() {
   const { step6, updateStep, clearRegistration, setCurrentStep } =
@@ -47,12 +51,6 @@ export default function UserRegistrationStep7() {
 
       // Build payload from current store steps (step3..step6)
       const { step3, step4, step5, step6 } = useUserRegistrationStore.getState() as any;
-
-      console.log("step3", step3);
-      console.log("step4", step4);
-      console.log("step5", step5);
-      console.log("step6", step6);
-      console.log("formData", formData);
 
       const completeData: CompleteUserRegistration = {
         step3: {
@@ -97,89 +95,81 @@ export default function UserRegistrationStep7() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
-    <View className="flex-1 bg-background px-4">
+    <View className="flex-1 bg-black">
       {/* Header */}
       <AuthStepHeader />
 
-      <View>
+      <View className="flex-1">
         {/* Progress */}
-        <View className="items-center mb-4 mt-8">
-          <View className="flex-row items-center">
-            {Array.from({ length: 8 }).map((_, idx) => (
-              <View
-                key={idx}
-                className={`
-                  ${
-                    idx < 8
-                      ? idx === 7
-                        ? "bg-white w-4 h-4"
-                        : "bg-success w-2 h-2"
-                      : "bg-gray w-2 h-2"
-                  }
-                  rounded-full mr-1
-                `}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Title */}
-        <View className="flex-col items-center mb-6">
-          <Text className="text-center text-foreground section-title font-neueBold">
-            Profile Type
-          </Text>
-          <Text className="text-tat ta-body-3-button-text mt-1">
-            Choose how much of your profile you want to share
-          </Text>
-        </View>
+        <RegistrationProgress
+          currentStep={7}
+          totalSteps={7}
+          name="Profile Type"
+          description="Choose how much of your profile you want to share"
+          icon={<SVGIcons.User width={22} height={22} />}
+        />
 
         {/* Options */}
-        <View>
+        <View style={{ paddingHorizontal: s(24) }}>
           <TouchableOpacity
-            className={`
-              rounded-xl p-5 mb-4 border-2 border-gray
-              ${formData.isPublic ? "bg-tat-darkMaroon border-tat-darkMaroon" : ""}
-            `}
+            className={`rounded-xl p-5 mb-4 border-2 ${formData.isPublic ? "bg-primary/20 border-primary" : "border-gray"}`}
             onPress={() => handleProfileTypeChange(true)}
+            style={{ paddingVertical: mvs(20), paddingHorizontal: s(20) }}
           >
             <View className="flex-row items-start relative">
               <View className="flex-1">
-                <Text className="text-lg font-semibold mb-2 text-foreground">
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueBold mb-2"
+                >
                   Public Profile
-                </Text>
-                <Text className="text-sm leading-5 text-tat">
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="body2"
+                  className="text-foreground/70"
+                >
                   Your tattoos and followed artists will be visible on your page
-                </Text>
+                </ScaledText>
               </View>
               {formData.isPublic && (
-                <View className="absolute top-0 right-0 w-6 h-6 rounded-full bg-success items-center justify-center" />
+                <View
+                  className="absolute top-0 right-0 w-6 h-6 rounded-full bg-success items-center justify-center"
+                  style={{ width: mvs(24), height: mvs(24) }}
+                />
               )}
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className={`
-              rounded-xl p-5 mb-4 border-2 border-gray
-              ${!formData.isPublic ? "bg-tat-darkMaroon border-tat-darkMaroon" : ""}
-            `}
+            className={`rounded-xl p-5 mb-4 border-2 ${!formData.isPublic ? "bg-primary/20 border-primary" : "border-gray"}`}
             onPress={() => handleProfileTypeChange(false)}
+            style={{ paddingVertical: mvs(20), paddingHorizontal: s(20) }}
           >
             <View className="flex-row items-start relative">
               <View className="flex-1">
-                <Text className="text-lg font-semibold mb-2 text-foreground">
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueBold mb-2"
+                >
                   Private Profile
-                </Text>
-                <Text className="text-sm leading-5 text-tat">
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="body2"
+                  className="text-foreground/70"
+                >
                   Your tattoos and followed artists are visible only to you
-                </Text>
+                </ScaledText>
               </View>
               {!formData.isPublic && (
-                <View className="absolute top-0 right-0 w-6 h-6 rounded-full bg-success items-center justify-center" />
+                <View
+                  className="absolute top-0 right-0 w-6 h-6 rounded-full bg-success items-center justify-center"
+                  style={{ width: mvs(24), height: mvs(24) }}
+                />
               )}
             </View>
           </TouchableOpacity>
@@ -187,14 +177,28 @@ export default function UserRegistrationStep7() {
       </View>
 
       {/* Complete Registration Button fixed at the bottom */}
-      <View className="absolute left-0 right-0 bottom-0 px-4 pb-6 bg-background flex justify-center items-center w-full">
+      <View
+        className="px-6 bg-background flex justify-center items-center w-full"
+        style={{
+          paddingVertical: mvs(16),
+          paddingHorizontal: s(24),
+        }}
+      >
         <TouchableOpacity
           onPress={handleComplete}
-          className="bg-success rounded-full py-3.5 items-center w-full max-w-[440px] mx-auto"
+          disabled={loading}
+          className={`rounded-full items-center w-full ${loading ? "bg-gray/40" : "bg-success"}`}
+          style={{
+            paddingVertical: mvs(14),
+          }}
         >
-          <Text className="text-white font-bold">
+          <ScaledText
+            allowScaling={false}
+            variant="body1"
+            className="text-foreground font-neueBold"
+          >
             {loading ? "Completing..." : "Complete Registration"}
-          </Text>
+          </ScaledText>
         </TouchableOpacity>
       </View>
     </View>

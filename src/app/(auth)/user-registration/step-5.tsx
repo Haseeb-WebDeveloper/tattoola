@@ -1,17 +1,16 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useUserRegistrationStore } from "@/stores";
 import type { FormErrors, UserV2Step5 } from "@/types/auth";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function UserRegistrationStep5() {
   const { step5, updateStep, setErrors, clearErrors, setCurrentStep } =
@@ -21,7 +20,6 @@ export default function UserRegistrationStep5() {
     tiktok: undefined,
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
-  const [focused, setFocused] = useState<"instagram" | "tiktok" | null>(null);
 
   // Load existing data if available
   useEffect(() => {
@@ -47,43 +45,47 @@ export default function UserRegistrationStep5() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background relative">
+    <View className="flex-1 bg-black">
       {/* Header */}
       <AuthStepHeader />
 
-      {/* Progress */}
-      <View className="items-center mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 5 ? (idx === 4 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
+      <KeyboardAwareScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: mvs(20),
+        }}
+      >
+        {/* Progress */}
+        <RegistrationProgress
+          currentStep={5}
+          totalSteps={5}
+          name="Social Media"
+          icon={<SVGIcons.Heart width={22} height={22} />}
+        />
 
-      <View className="flex-1">
-        {/* Title */}
-        <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-          <SVGIcons.Heart width={22} height={22} />
-          <Text className="text-foreground section-title font-neueBold">
-            Social Media
-          </Text>
-        </View>
-
-        {/* Inputs (artist step-7 style) */}
-        <View className="px-6 gap-6">
+        {/* Inputs */}
+        <View style={{ paddingHorizontal: s(24), gap: mvs(24) }}>
           <View>
-            <Text className="mb-2 label">Instagram (optional)</Text>
-            <View
-              className={`flex-row items-center rounded-xl bg-black/40 ${focused === "instagram" ? "border-2 border-foreground" : "border border-gray"}`}
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-foreground mb-2"
             >
-              <View className="pl-4 pr-2 py-3">
-                <Text className="text-foreground font-neueBold">@</Text>
+              Instagram (optional)
+            </ScaledText>
+            <View className="flex-row items-center rounded-xl border border-gray">
+              <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="body1"
+                  className="text-foreground font-neueBold"
+                >
+                  @
+                </ScaledText>
               </View>
-              <TextInput
-                className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              <ScaledTextInput
+                containerClassName="flex-1"
+                className="text-foreground rounded-xl"
                 placeholder="username"
                 placeholderTextColor="#A49A99"
                 autoCapitalize="none"
@@ -97,22 +99,31 @@ export default function UserRegistrationStep5() {
                     setLocalErrors((e) => ({ ...e, instagram: "" }));
                   clearErrors();
                 }}
-                onFocus={() => setFocused("instagram")}
-                onBlur={() => setFocused(null)}
               />
             </View>
           </View>
 
           <View>
-            <Text className="mb-2 label">TikTok (optional)</Text>
-            <View
-              className={`flex-row items-center rounded-xl bg-black/40 ${focused === "tiktok" ? "border-2 border-foreground" : "border border-gray"}`}
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-foreground mb-2"
             >
-              <View className="pl-4 pr-2 py-3">
-                <Text className="text-foreground font-neueBold">@</Text>
+              TikTok (optional)
+            </ScaledText>
+            <View className="flex-row items-center rounded-xl border border-gray">
+              <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="body1"
+                  className="text-foreground font-neueBold"
+                >
+                  @
+                </ScaledText>
               </View>
-              <TextInput
-                className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+              <ScaledTextInput
+                containerClassName="flex-1"
+                className="text-foreground rounded-xl"
                 placeholder="username"
                 placeholderTextColor="#A49A99"
                 autoCapitalize="none"
@@ -126,29 +137,19 @@ export default function UserRegistrationStep5() {
                     setLocalErrors((e) => ({ ...e, tiktok: "" }));
                   clearErrors();
                 }}
-                onFocus={() => setFocused("tiktok")}
-                onBlur={() => setFocused(null)}
               />
             </View>
           </View>
         </View>
+      </KeyboardAwareScrollView>
 
-        {/* Footer */}
-        <View className="flex-row justify-between w-full  px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
-          <TouchableOpacity
-            onPress={handleSkip}
-            className="rounded-full border border-foreground px-6 py-4"
-          >
-            <Text className="text-foreground">Skip for now</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleNext}
-            className="rounded-full bg-primary px-8 py-4"
-          >
-            <Text className="text-foreground">Continue</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+      {/* Footer */}
+      <NextBackFooter
+        onNext={handleNext}
+        nextLabel="Continue"
+        backLabel="Skip for now"
+        onBack={handleSkip}
+      />
+    </View>
   );
 }

@@ -199,8 +199,8 @@ export default function ArtistRegisterScreen() {
           Username (inserisci un nome univoco)
         </ScaledText>
         <ScaledTextInput
-          containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
-          className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+          containerClassName={`flex-row items-center rounded-xl bg-gray-foreground ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
+          className="flex-1 text-foreground rounded-xl"
           placeholder="TattooKing_97"
           placeholderTextColor="#A49A99"
           autoCapitalize="none"
@@ -215,12 +215,15 @@ export default function ArtistRegisterScreen() {
 
         {/* Email */}
         <View style={{ marginTop: mvs(15) }}>
-          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
+          <ScaledText
+            variant="sm"
+            className="text-tat mb-2 font-montserratSemibold"
+          >
             Email
           </ScaledText>
           <ScaledTextInput
-            containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
-            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-foreground rounded-xl"
             placeholder="abc@gmail.com"
             placeholderTextColor="#A49A99"
             keyboardType="email-address"
@@ -238,12 +241,15 @@ export default function ArtistRegisterScreen() {
 
         {/* Password */}
         <View style={{ marginTop: mvs(15) }}>
-          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
+          <ScaledText
+            variant="sm"
+            className="text-tat mb-2 font-montserratSemibold"
+          >
             Password (min. 8 caratteri, di cui almeno un numero)
           </ScaledText>
           <ScaledTextInput
-            containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
-            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            containerClassName={`flex-row items-center rounded-xl ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-foreground rounded-xl"
             placeholder="*************"
             placeholderTextColor="#A49A99"
             secureTextEntry={!showPassword}
@@ -259,9 +265,9 @@ export default function ArtistRegisterScreen() {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {showPassword ? (
-                  <SVGIcons.EyeOpen className="w-6 h-6" />
+                  <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
                 ) : (
-                  <SVGIcons.EyeClose className="w-6 h-6" />
+                  <SVGIcons.EyeClose width={s(18)} height={s(18)} />
                 )}
               </TouchableOpacity>
             }
@@ -273,12 +279,15 @@ export default function ArtistRegisterScreen() {
 
         {/* Confirm Password */}
         <View style={{ marginTop: mvs(15) }}>
-          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
+          <ScaledText
+            variant="sm"
+            className="text-tat mb-2 font-montserratSemibold"
+          >
             Conferma Password
           </ScaledText>
           <ScaledTextInput
-            containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
-            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            containerClassName={`flex-row items-center rounded-xl ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-foreground rounded-xl"
             placeholder="*************"
             placeholderTextColor="#A49A99"
             secureTextEntry={!showConfirmPassword}
@@ -295,10 +304,10 @@ export default function ArtistRegisterScreen() {
                 onPress={() => setShowConfirmPassword((v) => !v)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                {showConfirmPassword ? (
-                  <SVGIcons.EyeOpen className="w-6 h-6" />
+                {showPassword ? (
+                  <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
                 ) : (
-                  <SVGIcons.EyeClose className="w-6 h-6" />
+                  <SVGIcons.EyeClose width={s(18)} height={s(18)} />
                 )}
               </TouchableOpacity>
             }

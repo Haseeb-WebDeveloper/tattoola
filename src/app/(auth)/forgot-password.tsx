@@ -181,8 +181,8 @@ export default function ForgotPasswordScreen() {
             Email
           </ScaledText>
           <ScaledTextInput
-            containerClassName={`flex-row items-center rounded-xl bg-black/40 border ${errors.email ? "border-error" : "border-gray"}`}
-            className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+            containerClassName={`flex-row items-center rounded-xl border ${errors.email ? "border-error" : "border-gray"}`}
+            className="flex-1 text-foreground rounded-xl"
             placeholder="Enter your email"
             value={formData.email}
             onChangeText={(value) => handleInputChange("email", value)}

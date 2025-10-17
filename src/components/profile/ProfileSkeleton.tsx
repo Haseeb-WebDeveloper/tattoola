@@ -1,109 +1,224 @@
-import React from 'react';
-import { View } from 'react-native';
+import { mvs, s } from "@/utils/scale";
+import React from "react";
+import { View } from "react-native";
 
 export const ProfileSkeleton: React.FC = () => {
   return (
     <View className="flex-1 bg-background">
       {/* Edit button skeleton */}
-      <View className="px-4 absolute top-2 right-0 z-10">
-        <View className="w-9 h-9 rounded-full bg-gray/20" />
+      <View
+        className="absolute top-2 right-0 z-10"
+        style={{ paddingHorizontal: s(16) }}
+      >
+        <View
+          className="rounded-full bg-gray/20"
+          style={{ width: s(36), height: s(36) }}
+        />
       </View>
 
       {/* Banner skeleton */}
-      <View className="h-48 bg-gray/20" />
+      <View className="bg-gray/20" style={{ height: mvs(192) }} />
 
       {/* Profile Header skeleton */}
-      <View className="px-4 mt-6">
-        <View className="flex-row items-center gap-3">
+      <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+        <View className="flex-row items-center" style={{ gap: s(12) }}>
           {/* Avatar skeleton */}
-          <View className="w-20 h-20 rounded-full bg-gray/20" />
+          <View
+            className="rounded-full bg-gray/20"
+            style={{ width: s(80), height: s(80) }}
+          />
           <View className="flex-1">
             {/* Name skeleton */}
-            <View className="flex-row items-center mb-2">
-              <View className="w-32 h-6 bg-gray/20 rounded" />
-              <View className="w-5 h-5 bg-gray/20 rounded ml-1" />
+            <View className="flex-row items-center" style={{ marginBottom: mvs(8) }}>
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(128), height: mvs(24) }}
+              />
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(20), height: s(20), marginLeft: s(4) }}
+              />
             </View>
             {/* Studio skeleton */}
-            <View className="flex-row items-center mb-2">
-              <View className="w-4 h-4 bg-gray/20 rounded mr-1" />
-              <View className="w-24 h-4 bg-gray/20 rounded" />
+            <View className="flex-row items-center" style={{ marginBottom: mvs(8) }}>
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(16), height: s(16), marginRight: s(4) }}
+              />
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(96), height: mvs(16) }}
+              />
             </View>
             {/* Location skeleton */}
             <View className="flex-row items-center">
-              <View className="w-4 h-4 bg-gray/20 rounded mr-1" />
-              <View className="w-20 h-4 bg-gray/20 rounded" />
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(16), height: s(16), marginRight: s(4) }}
+              />
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(80), height: mvs(16) }}
+              />
             </View>
           </View>
         </View>
       </View>
 
       {/* Social Media Icons skeleton */}
-      <View className="px-4 mt-4 flex-row items-center gap-3">
-        <View className="w-12 h-12 rounded-full bg-gray/20" />
-        <View className="w-12 h-12 rounded-full bg-gray/20" />
-        <View className="w-12 h-12 rounded-full bg-gray/20" />
+      <View
+        className="flex-row items-center"
+        style={{
+          paddingHorizontal: s(16),
+          marginTop: mvs(16),
+          gap: s(12),
+        }}
+      >
+        <View
+          className="rounded-full bg-gray/20"
+          style={{ width: s(48), height: s(48) }}
+        />
+        <View
+          className="rounded-full bg-gray/20"
+          style={{ width: s(48), height: s(48) }}
+        />
+        <View
+          className="rounded-full bg-gray/20"
+          style={{ width: s(48), height: s(48) }}
+        />
       </View>
 
       {/* Bio skeleton */}
-      <View className="px-4 mt-6">
-        <View className="w-full h-4 bg-gray/20 rounded mb-2" />
-        <View className="w-3/4 h-4 bg-gray/20 rounded mb-2" />
-        <View className="w-1/2 h-4 bg-gray/20 rounded" />
+      <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+        <View
+          className="bg-gray/20 rounded"
+          style={{ width: "100%", height: mvs(16), marginBottom: mvs(8) }}
+        />
+        <View
+          className="bg-gray/20 rounded"
+          style={{ width: "75%", height: mvs(16), marginBottom: mvs(8) }}
+        />
+        <View
+          className="bg-gray/20 rounded"
+          style={{ width: "50%", height: mvs(16) }}
+        />
       </View>
 
       {/* Styles Section skeleton */}
-      <View className="px-4 mt-6">
-        <View className="w-32 h-5 bg-gray/20 rounded mb-3" />
-        <View className="flex-row flex-wrap gap-2">
-          <View className="w-20 h-8 bg-gray/20 rounded-full" />
-          <View className="w-24 h-8 bg-gray/20 rounded-full" />
-          <View className="w-16 h-8 bg-gray/20 rounded-full" />
+      <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+        <View
+          className="bg-gray/20 rounded"
+          style={{ width: s(128), height: mvs(20), marginBottom: mvs(12) }}
+        />
+        <View className="flex-row flex-wrap" style={{ gap: s(8) }}>
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(80), height: mvs(32) }}
+          />
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(96), height: mvs(32) }}
+          />
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(64), height: mvs(32) }}
+          />
         </View>
       </View>
 
       {/* Services Section skeleton */}
-      <View className="px-4 mt-6">
-        <View className="w-20 h-5 bg-gray/20 rounded mb-3" />
-        <View className="gap-2">
-          <View className="w-full h-4 bg-gray/20 rounded" />
-          <View className="w-3/4 h-4 bg-gray/20 rounded" />
-          <View className="w-5/6 h-4 bg-gray/20 rounded" />
+      <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+        <View
+          className="bg-gray/20 rounded"
+          style={{ width: s(80), height: mvs(20), marginBottom: mvs(12) }}
+        />
+        <View style={{ gap: mvs(8) }}>
+          <View
+            className="bg-gray/20 rounded"
+            style={{ width: "100%", height: mvs(16) }}
+          />
+          <View
+            className="bg-gray/20 rounded"
+            style={{ width: "75%", height: mvs(16) }}
+          />
+          <View
+            className="bg-gray/20 rounded"
+            style={{ width: "83%", height: mvs(16) }}
+          />
         </View>
       </View>
 
       {/* Collections Section skeleton */}
-      <View className="px-4 mt-8">
-        <View className="w-24 h-5 bg-gray/20 rounded mb-3" />
-        <View className="flex-row gap-3">
+      <View style={{ paddingHorizontal: s(16), marginTop: mvs(32) }}>
+        <View
+          className="bg-gray/20 rounded"
+          style={{ width: s(96), height: mvs(20), marginBottom: mvs(12) }}
+        />
+        <View className="flex-row" style={{ gap: s(12) }}>
           {/* Collection 1 */}
-          <View className="flex-1 min-w-[140px] max-w-[180px]">
-            <View className="rounded-xl bg-gray/20 p-2 flex-1 w-full h-32" />
-            <View className="w-20 h-3 bg-gray/20 rounded mt-2" />
+          <View style={{ flex: 1, minWidth: 140, maxWidth: 180 }}>
+            <View
+              className="rounded-xl bg-gray/20"
+              style={{ width: "100%", height: s(128), padding: s(8) }}
+            />
+            <View
+              className="bg-gray/20 rounded"
+              style={{ width: s(80), height: mvs(12), marginTop: mvs(8) }}
+            />
           </View>
-          {/* Collection 2 */}
-          {/* <View className="flex-1 min-w-[140px] max-w-[180px]">
-            <View className="rounded-xl bg-gray/20 p-2 flex-1 w-full h-32" />
-            <View className="w-24 h-3 bg-gray/20 rounded mt-2" />
-          </View> */}
           {/* Create new collection skeleton */}
-          <View className="rounded-xl border-2 border-dashed border-gray/40 p-3 flex-1 min-w-[140px] max-w-[180px] items-center justify-center gap-2">
-            <View className="w-8 h-8 bg-gray/20 rounded" />
-            <View className="w-20 h-3 bg-gray/20 rounded" />
+          <View
+            className="rounded-xl border-2 border-dashed border-gray/40 items-center justify-center"
+            style={{
+              flex: 1,
+              minWidth: 140,
+              maxWidth: 180,
+              padding: s(12),
+              gap: mvs(8),
+              height: s(128),
+            }}
+          >
+            <View
+              className="bg-gray/20 rounded"
+              style={{ width: s(32), height: s(32) }}
+            />
+            <View
+              className="bg-gray/20 rounded"
+              style={{ width: s(80), height: mvs(12) }}
+            />
           </View>
         </View>
       </View>
 
       {/* Body Parts Section skeleton */}
-      <View className="px-4 mt-8 mb-4">
-        <View className="flex-row items-center mb-3 gap-2">
-          <View className="w-4 h-4 bg-gray/20 rounded" />
-          <View className="w-48 h-5 bg-gray/20 rounded" />
+      <View style={{ paddingHorizontal: s(16), marginTop: mvs(32), marginBottom: mvs(16) }}>
+        <View className="flex-row items-center" style={{ marginBottom: mvs(12), gap: s(8) }}>
+          <View
+            className="bg-gray/20 rounded"
+            style={{ width: s(16), height: s(16) }}
+          />
+          <View
+            className="bg-gray/20 rounded"
+            style={{ width: s(192), height: mvs(20) }}
+          />
         </View>
-        <View className="flex-row flex-wrap gap-2">
-          <View className="w-16 h-6 bg-gray/20 rounded-full" />
-          <View className="w-20 h-6 bg-gray/20 rounded-full" />
-          <View className="w-14 h-6 bg-gray/20 rounded-full" />
-          <View className="w-18 h-6 bg-gray/20 rounded-full" />
+        <View className="flex-row flex-wrap" style={{ gap: s(8) }}>
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(64), height: mvs(24) }}
+          />
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(80), height: mvs(24) }}
+          />
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(56), height: mvs(24) }}
+          />
+          <View
+            className="bg-gray/20 rounded-full"
+            style={{ width: s(72), height: mvs(24) }}
+          />
         </View>
       </View>
     </View>

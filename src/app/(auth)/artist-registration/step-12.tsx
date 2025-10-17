@@ -1,4 +1,8 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { cloudinaryService } from "@/services/cloudinary.service";
@@ -6,6 +10,8 @@ import {
   PortfolioProjectInput,
   useArtistRegistrationV2Store,
 } from "@/stores/artistRegistrationV2Store";
+import { getFileNameFromUri } from "@/utils/get-file-name";
+import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -14,15 +20,13 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import DraggableFlatList, {
   RenderItemParams,
 } from "react-native-draggable-flatlist";
-import { getFileNameFromUri } from "@/utils/get-file-name";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type DraftProject = {
   media: { uri: string; type: "image" | "video"; cloud?: string }[];
@@ -42,6 +46,7 @@ export default function ArtistStep12V2() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<DraftProject>({ media: [] });
   const [modalStep, setModalStep] = useState<ModalStep>("upload");
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -134,7 +139,7 @@ export default function ArtistStep12V2() {
   }>) => {
     const index = draft.media.findIndex((m) => m.uri === item.uri);
     return (
-      <View className="mb-6" style={{ position: "relative" }}>
+      <View className="mb-4" style={{ position: "relative" }}>
         <View
           className="bg-gray-foreground border border-gray rounded-xl flex-row items-center py-1"
           style={{
@@ -174,7 +179,7 @@ export default function ArtistStep12V2() {
               />
             ) : (
               <View
-                className="items-center justify-center bg-black/40 border border-foreground/60"
+                className="items-center justify-center bg-tat-darkMaroon border border-gray rounded-lg"
                 style={{ width: "100%", height: "100%" }}
               >
                 <SVGIcons.Video width={30} height={30} />
@@ -183,9 +188,11 @@ export default function ArtistStep12V2() {
           </View>
           {/* Filename */}
           <View style={{ flex: 1 }}>
-            <Text
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
               className="text-foreground"
-              style={{ fontSize: 16, fontWeight: "400" }}
+              style={{ fontWeight: "400" }}
             >
               {(() => {
                 const fullName = getFileNameFromUri(item.uri);
@@ -198,7 +205,7 @@ export default function ArtistStep12V2() {
                 }
                 return `${TrimText(base, 15)}${ext}`;
               })()}
-            </Text>
+            </ScaledText>
           </View>
           {/* Trash/Delete */}
           <TouchableOpacity
@@ -257,33 +264,20 @@ export default function ArtistStep12V2() {
       <AuthStepHeader />
 
       {/* Progress */}
-      <View className="items-center  mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 12 ? (idx === 11 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title & helper */}
-      <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-        <SVGIcons.Work width={22} height={22} />
-        <Text className="text-foreground section-title font-neueBold">
-          Add your works
-        </Text>
-      </View>
-      <View className="px-6 mb-4">
-        <Text className="text-foreground/80">
-          Add 4 projects. Each can include up to 5 media (max 2 videos).
-        </Text>
-      </View>
+      <RegistrationProgress
+        currentStep={12}
+        totalSteps={totalStepsDisplay}
+        name="Add your works"
+        description="Add 4 projects. Each can include up to 5 media (max 2 videos)."
+        icon={<SVGIcons.Work width={19} height={19} />}
+      />
 
       {/* 2x2 grid */}
       <View className="px-6">
-        <View className="flex-row gap-2 mb-2">
+        <View
+          className="flex-row mb-2"
+          style={{ marginBottom: mvs(13), gap: mvs(15) }}
+        >
           {[0, 1].map((i) => (
             <Pressable
               key={i}
@@ -297,22 +291,30 @@ export default function ArtistStep12V2() {
                     className="w-full h-32"
                     resizeMode="cover"
                   />
-                  <Text className="text-gray tat-body-2-para">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-gray font-neueMedium"
+                  >
                     Work {i + 1}
-                  </Text>
+                  </ScaledText>
                 </View>
               ) : (
                 <View className="items-center justify-center gap-2">
                   <SVGIcons.AddRed className="w-6 h-6" />
-                  <Text className="text-gray tat-body-2-para">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-gray font-neueMedium"
+                  >
                     Work {i + 1}
-                  </Text>
+                  </ScaledText>
                 </View>
               )}
             </Pressable>
           ))}
         </View>
-        <View className="flex-row gap-2">
+        <View className="flex-row" style={{ gap: mvs(15) }}>
           {[2, 3].map((i) => (
             <Pressable
               key={i}
@@ -326,16 +328,24 @@ export default function ArtistStep12V2() {
                     className="w-full h-32"
                     resizeMode="cover"
                   />
-                  <Text className="text-gray tat-body-2-para">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="body2"
+                    className="text-gray"
+                  >
                     Work {i + 1}
-                  </Text>
+                  </ScaledText>
                 </View>
               ) : (
                 <View className="items-center justify-center gap-2">
                   <SVGIcons.AddRed className="w-6 h-6" />
-                  <Text className="text-gray tat-body-2-para">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="body2"
+                    className="text-gray"
+                  >
                     Work {i + 1}
-                  </Text>
+                  </ScaledText>
                 </View>
               )}
             </Pressable>
@@ -344,21 +354,12 @@ export default function ArtistStep12V2() {
       </View>
 
       {/* Footer */}
-      <View className="flex-row justify-between px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={!canProceed}
-          onPress={onNext}
-          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onNext={onNext}
+        nextDisabled={!canProceed}
+        backLabel="Back"
+        onBack={() => router.back()}
+      />
 
       {/* Modal flow */}
       <Modal
@@ -367,64 +368,178 @@ export default function ArtistStep12V2() {
         animationType="slide"
         onRequestClose={() => setActiveIndex(null)}
       >
-        <View className="flex-1 justify-end ">
-          <View className="w-full bg-black rounded-t-3xl h-[100vh]">
-            <View className="px-6 pb-6 pt-20 border-b border-gray flex-row items-center justify-between relative bg-primary/30">
+        <View className="flex-1  min-h-[100dvh] bg-background  ">
+          <View className="flex-1 w-full rounded-t-3xl">
+            <View
+              className="border-b border-gray flex-row items-center justify-between relative bg-primary/30"
+              style={{
+                paddingBottom: mvs(20),
+                paddingTop: mvs(70),
+                paddingHorizontal: s(20),
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setActiveIndex(null)}
-                className="absolute left-6 top-20 w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
+                className=" rounded-full bg-foreground/20 items-center justify-center"
+                style={{
+                  width: s(30),
+                  height: s(30),
+                }}
               >
                 <SVGIcons.Close className="w-8 h-8" />
               </TouchableOpacity>
-              <View className="flex-row items-center justify-center w-full">
-                <Text className="text-foreground text-lg font-neueBold tat-body-1">
+              <View className="flex-row items-center  justify-center">
+                <ScaledText
+                  allowScaling={false}
+                  variant="xl"
+                  className="text-foreground font-neueBold"
+                >
                   Add Design
-                </Text>
+                </ScaledText>
               </View>
+
+              <View style={{ height: mvs(30), width: mvs(30) }} />
             </View>
 
             {/* Step 1: media upload & re-order */}
             {modalStep === "upload" && (
-              <ScrollView className="px-6 pt-6">
-                <View className="mb-6">
-                  <Text className="text-foreground text-xl font-neueBold">
-                    Carica foto e video
-                  </Text>
-                  <Text className="text-foreground/80">
-                    You need to select atleast one photo and 3 photos/videos
-                  </Text>
-                </View>
-                {/* Upload area - matching step-6 design */}
-                <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
-                  <SVGIcons.Upload className="w-16 h-16" />
-                  <TouchableOpacity
-                    onPress={handlePickMedia}
-                    disabled={uploading}
-                    className="bg-primary rounded-full py-3 px-6 mt-4"
+              <View className="flex-1">
+                {draft.media.length === 0 ? (
+                  <ScrollView
+                    style={{ paddingTop: mvs(20) }}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: s(20) }}
                   >
-                    <Text className="text-foreground tat-body-1 font-neueBold">
-                      {uploading ? "Uploading..." : "Upload files"}
-                    </Text>
-                  </TouchableOpacity>
-                  <Text className="text-foreground/80 mt-6 text-center px-4">
-                    Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
-                    Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
-                  </Text>
-                </View>
+                    <View className="mb-6">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="lg"
+                        className="text-foreground font-neueBold"
+                      >
+                        Carica foto e video
+                      </ScaledText>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="text-foreground/80"
+                      >
+                        You need to select atleast{" "}
+                        <ScaledText
+                          allowScaling={false}
+                          variant="11"
+                          className="text-error"
+                        >
+                          one photo
+                        </ScaledText>{" "}
+                        and 3 photos/videos
+                      </ScaledText>
+                    </View>
+                    {/* Upload area - matching step-6 design */}
+                    <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
+                      <SVGIcons.Upload width={s(42)} height={s(42)} />
+                      <TouchableOpacity
+                        onPress={handlePickMedia}
+                        disabled={uploading}
+                        className="bg-primary rounded-full"
+                        style={{
+                          paddingVertical: mvs(8),
+                          paddingHorizontal: s(16),
+                          marginTop: mvs(8),
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueBold"
+                        >
+                          {uploading ? "Uploading..." : "Upload files"}
+                        </ScaledText>
+                      </TouchableOpacity>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="text-foreground/80 text-center"
+                        style={{ marginTop: mvs(12), paddingHorizontal: s(16) }}
+                      >
+                        Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
+                        Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
+                      </ScaledText>
+                    </View>
+                  </ScrollView>
+                ) : (
+                  <View className="px-6 pt-6 flex-1">
+                    <View className="mb-6">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="lg"
+                        className="text-foreground font-neueBold"
+                      >
+                        Carica foto e video
+                      </ScaledText>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="text-foreground/80"
+                      >
+                        You need to select atleast{" "}
+                        <ScaledText
+                          allowScaling={false}
+                          variant="11"
+                          className="text-error"
+                        >
+                          one photo
+                        </ScaledText>{" "}
+                        and 3 photos/videos
+                      </ScaledText>
+                    </View>
 
-                {/* Draggable media list */}
-                {draft.media.length > 0 && (
-                  <View className="mb-6">
-                    <Text className="text-foreground mb-3 tat-body-2-med">
-                      Uploaded files (drag to reorder)
-                    </Text>
+                    {/* Upload area */}
+                    <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
+                      <SVGIcons.Upload width={s(42)} height={s(42)} />
+                      <TouchableOpacity
+                        onPress={handlePickMedia}
+                        disabled={uploading}
+                        className="bg-primary rounded-full"
+                        style={{
+                          paddingVertical: mvs(8),
+                          paddingHorizontal: s(16),
+                          marginTop: mvs(8),
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueBold"
+                        >
+                          {uploading ? "Uploading..." : "Upload files"}
+                        </ScaledText>
+                      </TouchableOpacity>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="text-foreground/80 text-center"
+                        style={{ marginTop: mvs(12), paddingHorizontal: s(16) }}
+                      >
+                        Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
+                        Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
+                      </ScaledText>
+                    </View>
+
+                    <ScaledText
+                      allowScaling={false}
+                      variant="body2"
+                      className="text-foreground mb-3"
+                    >
+                      Uploaded files
+                    </ScaledText>
+
                     <View style={{ maxHeight: 350 }}>
                       <DraggableFlatList
                         data={draft.media}
                         onDragEnd={onDragEnd}
                         keyExtractor={(item, index) => `${item.uri}-${index}`}
                         renderItem={renderMediaItem}
-                        scrollEnabled
+                        scrollEnabled={true}
                         removeClippedSubviews={false}
                         style={{ maxHeight: 350 }}
                         showsVerticalScrollIndicator={false}
@@ -436,18 +551,30 @@ export default function ArtistStep12V2() {
                     </View>
                   </View>
                 )}
-              </ScrollView>
+              </View>
             )}
 
             {/* Step 2: description */}
             {modalStep === "description" && (
-              <ScrollView className="px-6 pt-6">
-                <Text className="text-foreground text-xl font-neueBold">
+              <ScrollView
+                className="px-6 pt-6"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: mvs(20) }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueBold"
+                >
                   Descrizione
-                </Text>
-                <Text className="text-foreground/80 mb-6">
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-foreground/80 mb-6"
+                >
                   Describe your post in a few words.
-                </Text>
+                </ScaledText>
 
                 {/* Display uploaded images */}
                 {draft.media.length > 0 && (
@@ -456,11 +583,11 @@ export default function ArtistStep12V2() {
                       {draft.media.map((item, index) => (
                         <View
                           key={`${item.uri}-${index}`}
-                          className="w-20 h-32  rounded-lg overflow-hidden"
+                          className="w-20 h-32 rounded-lg overflow-hidden"
                         >
                           <Image
                             source={{ uri: item.cloud || item.uri }}
-                            className="w-full h-full "
+                            className="w-full h-full"
                             resizeMode="cover"
                           />
                         </View>
@@ -470,32 +597,50 @@ export default function ArtistStep12V2() {
                 )}
 
                 {/* Description input */}
-                <View className="rounded-2xl bg-black/40 border border-gray">
-                  <TextInput
+                <View className="">
+                  <ScaledTextInput
+                    containerClassName="rounded-xl border border-gray "
+                    className="text-foreground rounded-xl pl-6"
                     multiline
                     numberOfLines={4}
-                    textAlignVertical="top"
-                    className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-2xl min-h-[120px] text-start"
                     placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus blandit augue et rhoncus consectetur. In ut metus lacinia, rutrum purus ac, malesuada magna. Ut euismod erat."
                     placeholderTextColor="#A49A99"
                     value={draft.description || ""}
                     onChangeText={(v) =>
                       setDraft((d) => ({ ...d, description: v }))
                     }
+                    style={{ textAlignVertical: "top", minHeight: 120 }}
                   />
                 </View>
               </ScrollView>
             )}
 
             {/* Modal footer */}
-            <View className="flex-row justify-between px-6 py-6">
+            <View
+              className="flex-row justify-between"
+              style={{
+                paddingHorizontal: s(20),
+                paddingTop: mvs(16),
+                paddingBottom: Math.max(insets.bottom, mvs(20)),
+              }}
+            >
               {modalStep === "upload" ? (
                 <>
                   <TouchableOpacity
                     onPress={() => setActiveIndex(null)}
-                    className="rounded-full border border-foreground px-6 py-3"
+                    className="rounded-full border border-foreground"
+                    style={{
+                      paddingVertical: mvs(12),
+                      paddingHorizontal: s(18),
+                    }}
                   >
-                    <Text className="text-foreground">Back</Text>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground"
+                    >
+                      Back
+                    </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => setModalStep("description")}
@@ -504,7 +649,13 @@ export default function ArtistStep12V2() {
                       draft.media.length > 0 ? "bg-primary" : "bg-gray/40"
                     }`}
                   >
-                    <Text className="text-foreground">Next</Text>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="body1"
+                      className="text-foreground"
+                    >
+                      Next
+                    </ScaledText>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -513,13 +664,25 @@ export default function ArtistStep12V2() {
                     onPress={() => setModalStep("upload")}
                     className="rounded-full border border-foreground px-6 py-3"
                   >
-                    <Text className="text-foreground">Back</Text>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="body1"
+                      className="text-foreground"
+                    >
+                      Back
+                    </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={saveDraftToProject}
                     className="rounded-full px-8 py-3 bg-primary"
                   >
-                    <Text className="text-foreground">Next</Text>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="body1"
+                      className="text-foreground"
+                    >
+                      Next
+                    </ScaledText>
                   </TouchableOpacity>
                 </>
               )}

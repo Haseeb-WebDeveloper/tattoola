@@ -1,6 +1,8 @@
-import React from 'react';
-import { Text, View } from 'react-native';
-import { SVGIcons } from '@/constants/svg';
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
+import { mvs, s } from "@/utils/scale";
+import React from "react";
+import { View } from "react-native";
 
 interface BodyPart {
   id: string;
@@ -11,26 +13,42 @@ interface BodyPartsSectionProps {
   bodyParts: BodyPart[];
 }
 
-export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({ bodyParts }) => {
+export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
+  bodyParts,
+}) => {
   if (!bodyParts || bodyParts.length === 0) {
     return null;
   }
 
   return (
-    <View className="px-4 mt-8 mb-12">
-      <View className="flex-row items-center mb-3 gap-2">
-        <SVGIcons.Stop className="w-4 h-4" />
-        <Text className="text-foreground font-bold font-montserratSemibold text-[16px] leading-[23px]">
+    <View style={{ paddingHorizontal: s(16), marginTop: mvs(32), marginBottom: mvs(48) }}>
+      <View className="flex-row items-center" style={{ marginBottom: mvs(12), gap: s(8) }}>
+        <SVGIcons.Stop style={{ width: s(16), height: s(16) }} />
+        <ScaledText
+          allowScaling={false}
+          variant="lg"
+          className="text-foreground font-neueBold"
+        >
           Parti del corpo su cui non lavoro
-        </Text>
+        </ScaledText>
       </View>
-      <View className="flex-row flex-wrap gap-2">
+      <View className="flex-row flex-wrap" style={{ gap: s(2) }}>
         {bodyParts.map((bodyPart) => (
           <View
             key={bodyPart.id}
-            className="px-3 py-1 rounded-xl bg-black/40 border border-error"
+            className="rounded-xl bg-black/40 border border-error"
+            style={{
+              paddingHorizontal: s(8),
+              paddingVertical: mvs(3),
+            }}
           >
-            <Text className="text-foreground">{bodyPart.name}</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="9"
+              className="text-foreground font-neueBold"
+            >
+              {bodyPart.name}
+            </ScaledText>
           </View>
         ))}
       </View>

@@ -1,6 +1,7 @@
-import { SVGIcons } from '@/constants/svg';
-import React from 'react';
-import { Text, View } from 'react-native';
+import ScaledText from "@/components/ui/ScaledText";
+import { mvs, s } from "@/utils/scale";
+import React from "react";
+import { View } from "react-native";
 
 interface Service {
   id: string;
@@ -14,24 +15,33 @@ interface ServicesSectionProps {
   services: Service[];
 }
 
-export const ServicesSection: React.FC<ServicesSectionProps> = ({ services }) => {
+export const ServicesSection: React.FC<ServicesSectionProps> = ({
+  services,
+}) => {
   if (!services || services.length === 0) {
     return null;
   }
 
   return (
-    <View className="px-4 mt-6">
-      <Text className="text-foreground font-bold font-montserratSemibold mb-3 text-[16px] leading-[23px]">
+    <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="text-foreground font-montserratSemibold"
+        style={{ marginBottom: mvs(10) }}
+      >
         Services
-      </Text>
-      <View className="gap-2">
+      </ScaledText>
+      <View style={{ gap: mvs(8) }}>
         {services.map((service) => (
-          <View
-            key={service.id}
-            className="flex-row items-center"
-          >
-            {/* <SVGIcons.CheckedCheckbox className="w-5 h-5 mr-3 text-green-500" /> */}
-            <Text className="text-foreground flex-1 tat-body-4 font-semibold">✅ {service.name}</Text>
+          <View key={service.id} className="flex-row items-center">
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-foreground flex-1 font-neueBold"
+            >
+              ✅ {service.name}
+            </ScaledText>
           </View>
         ))}
       </View>

@@ -1,31 +1,33 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
-import FixedFooter from "@/components/ui/FixedFooter";
+import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
 import { AR_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step8Schema } from "@/utils/artistRegistrationValidation";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Dimensions,
   FlatList,
   Image,
   Modal,
   Pressable,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function StyleSkeleton() {
   return (
     <View className="flex-row items-center justify-between border-b border-gray/20 px-4">
       <View className="w-6 h-6 rounded-md bg-gray/30 mr-3" />
-      <View className="w-36 h-28 bg-gray/30" />
+      <View className="w-32 h-24 bg-gray/30" />
       <View className="flex-1 px-4">
-        <View className="w-32 h-4 bg-gray/30 rounded" />
+        <View className="w-24 h-4 bg-gray/30 rounded" />
       </View>
       <View className="w-6 h-6 rounded-full bg-gray/30" />
     </View>
@@ -33,6 +35,7 @@ function StyleSkeleton() {
 }
 
 export default function ArtistStep8V2() {
+  const insets = useSafeAreaInsets();
   const {
     step8,
     updateStep8,
@@ -97,10 +100,14 @@ export default function ArtistStep8V2() {
     const isPrimary = step8.mainStyleId === item.id;
     const img = resolveImageUrl(item.imageUrl);
     return (
-      <View className="flex-row items-center px-4 border-b border-gray/20">
+      <View
+        className="flex-row items-center border-b border-gray/20"
+        style={{ paddingHorizontal: s(16) }}
+      >
         {/* Left select box */}
         <Pressable
-          className="w-10 items-center"
+          className="items-center"
+          style={{ width: s(40) }}
           onPress={() => toggleFavoriteStyle(item.id, AR_MAX_FAVORITE_STYLES)}
         >
           {isSelected ? (
@@ -114,24 +121,32 @@ export default function ArtistStep8V2() {
         {img ? (
           <Image
             source={{ uri: img }}
-            className="w-36 h-28"
+            className=""
+            style={{ width: s(120), height: s(96) }}
             resizeMode="cover"
           />
         ) : (
-          <View className="w-36 h-28 bg-gray/30" />
+          <View
+            className="bg-gray/30"
+            style={{ width: s(120), height: s(96) }}
+          />
         )}
 
         {/* Name */}
-        <View className="flex-1 px-4">
-          <Text className="text-foreground tat-body-1 font-neueBold">
+        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-foreground font-montserratSemibold"
+          >
             {item.name}
-          </Text>
+          </ScaledText>
         </View>
 
         {/* Primary star */}
         <TouchableOpacity
           onPress={() => isSelected && setPrimaryStyle(item.id)}
-          className="pr-4"
+          style={{ paddingRight: s(16) }}
           disabled={!isSelected}
         >
           {isPrimary ? (
@@ -144,80 +159,56 @@ export default function ArtistStep8V2() {
     );
   };
 
-  // Constrain list height and let it scroll, mirroring step 9 behavior
-  const windowHeight = Dimensions.get("window").height;
-  const HEADER_HEIGHT = 60; // AuthStepHeader
-  const PROGRESS_HEIGHT = 40; // Progress dots
-  const TITLE_HEIGHT = 100; // Title + helper
-  const FOOTER_HEIGHT = 80; // FixedFooter
-  const PADDING = 32; // extra padding
-  const LIST_HEIGHT =
-    windowHeight -
-    HEADER_HEIGHT -
-    PROGRESS_HEIGHT -
-    TITLE_HEIGHT -
-    FOOTER_HEIGHT -
-    PADDING;
-
   return (
-    <View className="flex-1 bg-black">
-      {/* Header */}
-      <AuthStepHeader />
+    <View className="flex-1 bg-background">
+      <View className="flex-1 bg-background">
+        {/* Header */}
+        <AuthStepHeader />
 
-      {/* Progress */}
-      <View className="items-center  mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 8 ? (idx === 7 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
+        {/* Progress */}
+        <RegistrationProgress
+          currentStep={8}
+          totalSteps={totalStepsDisplay}
+          name="Your preferred styles"
+          description="Choose at least 2 styles. Then mark one as your primary style (★)"
+          icon={<SVGIcons.Style width={19} height={19} />}
+          isIconPressable={true}
+          onIconPress={() => setInfoVisible(true)}
+        />
+
+        {/* List */}
+        <View className="flex-1">
+          {loading ? (
+            <ScrollView
+              contentContainerStyle={{
+                paddingBottom: mvs(68),
+              }}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <StyleSkeleton key={i} />
+              ))}
+            </ScrollView>
+          ) : (
+            <FlatList
+              data={styles}
+              keyExtractor={(i) => i.id}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{
+                paddingBottom: mvs(68),
+              }}
             />
-          ))}
+          )}
         </View>
-      </View>
 
-      {/* Title + helper text */}
-      <View className="px-6 mb-4 flex-row gap-2 items-center justify-center">
-        <SVGIcons.Style width={22} height={22} />
-        <Text className="text-foreground section-title font-neueBold">
-          Your preferred styles
-        </Text>
+        {/* Fixed Footer */}
+        <AbsoluteNextBackFooter
+          onNext={onNext}
+          nextDisabled={!canProceed}
+          backLabel="Back"
+          onBack={() => router.back()}
+        />
       </View>
-      <TouchableOpacity
-        onPress={() => setInfoVisible(true)}
-        className="px-6 mb-4"
-      >
-        <Text className="text-foreground/80">
-          Choose at least 2 styles. Then mark one as your primary style (★)
-        </Text>
-      </TouchableOpacity>
-
-      {/* List */}
-      <View className="flex-1 mb-24" style={{ maxHeight: LIST_HEIGHT }}>
-        {loading ? (
-          <View>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <StyleSkeleton key={i} />
-            ))}
-          </View>
-        ) : (
-          <FlatList
-            data={styles}
-            keyExtractor={(i) => i.id}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={true}
-            style={{ flexGrow: 0 }}
-            contentContainerStyle={{ paddingBottom: 8 }}
-          />
-        )}
-      </View>
-
-      {/* Fixed Footer */}
-      <FixedFooter
-        onBack={() => router.back()}
-        onNext={onNext}
-        nextDisabled={!canProceed}
-      />
 
       {/* Info Modal */}
       <Modal
@@ -226,51 +217,101 @@ export default function ArtistStep8V2() {
         animationType="slide"
         onRequestClose={() => setInfoVisible(false)}
       >
-        <View className="flex-1 justify-end">
-          <View className="w-full bg-black rounded-t-3xl h-[100vh]">
-            <View className="px-6 pb-12 pt-20 border-b border-gray flex-row items-center justify-between relative bg-primary/30">
+        <View className="flex-1 bg-background">
+          <View
+            className="flex-1 rounded-t-3xl"
+            style={{ marginTop: "auto", marginBottom: mvs(20) }}
+          >
+            <View
+              className="border-b border-gray flex-row items-center justify-between relative bg-background"
+              style={{
+                paddingBottom: mvs(20),
+                paddingTop: mvs(70),
+                paddingHorizontal: s(24),
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setInfoVisible(false)}
-                className="absolute left-6 top-20 w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
+                className="rounded-full bg-foreground/20 items-center justify-center"
+                style={{
+                  width: s(30),
+                  height: s(30),
+                }}
               >
-                <Image
-                  source={require("@/assets/images/icons/back.png")}
-                  resizeMode="contain"
-                />
+                <SVGIcons.ChevronLeft width={s(10)} height={s(10)} />
               </TouchableOpacity>
+              {/* empty view */}
+              <View style={{ height: mvs(30), width: mvs(30) }} />
             </View>
-            <ScrollView className="px-6 pt-6">
-              <Text className="text-foreground section-title mb-4">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: s(24),
+                paddingTop: mvs(15),
+                paddingBottom: mvs(40),
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="sectionTitle"
+                className="text-foreground font-neueSemibold"
+                style={{ marginBottom: mvs(8) }}
+              >
                 Why we need this data?
-              </Text>
-              <Text className="text-foreground mt-6 text-[16px] font-medium mb-4">
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueSemibold font-[600]"
+                style={{ marginTop: mvs(12), marginBottom: mvs(8) }}
+              >
                 Come Restare Ispirato su Tattoola
-              </Text>
-              <Text className="text-foreground/90 text-[16px] font-light mb-4">
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="body2"
+                className="text-foreground/90 font-neueLight"
+                style={{ marginBottom: mvs(8) }}
+              >
                 I tatuaggi sono molto più di semplice inchiostro sulla pelle:
                 sono espressioni di arte, personalità e creatività. Che tu stia
                 cercando il tuo primo tatuaggio o aggiungendo un nuovo
                 capolavoro alla tua collezione, Tattoola ti aiuta a rimanere
                 ispirato grazie a design di tendenza, stili vari e contenuti
                 esclusivi dal mondo del tatuaggio.
-              </Text>
-              <Text className="text-foreground mt-6 text-[16px] font-medium mb-4">
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueSemibold font-[600]"
+                style={{ marginTop: mvs(12), marginBottom: mvs(8) }}
+              >
                 Scopri Tatuaggi: Una Galleria di Ispirazione
-              </Text>
-              <Text className="text-foreground/90 text-[16px] font-light mb-4">
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="body2"
+                className="text-foreground/90 font-neueLight"
+                style={{ marginBottom: mvs(8) }}
+              >
                 La sezione “Scopri Tatuaggi” è il tuo spazio ideale per
                 esplorare gli ultimi caricamenti, sia da parte di artisti che di
                 utenti. Questa galleria dinamica offre una vasta gamma di
                 design, dandoti accesso immediato a nuove idee e tendenze
                 creative.
-              </Text>
-              <Text className="text-foreground/90 text-[16px] font-light mb-4">
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="body2"
+                className="text-foreground/90 font-neueLight"
+                style={{ marginBottom: mvs(8) }}
+              >
                 Vuoi restringere la ricerca? Usa il filtro per stile, che ti
                 consente di selezionare tatuaggi in base a stili specifici come
                 blackwork, old school, geometrico, tradizionale e molti altri.
                 Così potrai trovare più facilmente design che rispecchiano
                 davvero la tua visione e il tuo gusto estetico.
-              </Text>
+              </ScaledText>
             </ScrollView>
           </View>
         </View>

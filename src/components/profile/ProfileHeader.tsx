@@ -1,6 +1,8 @@
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { mvs, s } from "@/utils/scale";
 import React from "react";
-import { Image, Text, View } from "react-native";
+import { Image, View } from "react-native";
 
 interface ProfileHeaderProps {
   firstName?: string;
@@ -9,6 +11,7 @@ interface ProfileHeaderProps {
   businessName?: string;
   municipality?: string;
   province?: string;
+  username?: string;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -18,6 +21,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   businessName,
   municipality,
   province,
+  username,
 }) => {
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   const displayName =
@@ -28,41 +32,83 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   );
 
   return (
-    <View className="px-4 mt-6">
-      <View className="flex-row items-center gap-3">
+    <View
+      style={{
+        paddingHorizontal: s(16),
+        paddingTop: s(20),
+        borderTopLeftRadius: s(35),
+        borderTopRightRadius: s(35),
+        marginTop: -mvs(52), // -mt-12 => -48 if scale factor mvs(4) = 16 x 3
+      }}
+      className="bg-background "
+    >
+      <View className="flex-row items-center" style={{ gap: s(12) }}>
         {avatar ? (
           <Image
             source={{ uri: avatar }}
-            className="w-20 h-20 rounded-full"
+            className="rounded-full"
+            style={{ width: s(92), height: s(92) }}
             resizeMode="cover"
           />
         ) : (
-          <View className="w-20 h-20 rounded-full bg-gray/30" />
+          <View
+            className="rounded-full bg-gray/30"
+            style={{ width: s(92), height: s(92) }}
+          />
         )}
         <View className="flex-1">
           <View className="flex-row items-center">
-            <Text className="text-foreground font-neueBold section-title leading-none">
+            <ScaledText
+              allowScaling={false}
+              variant="20"
+              className="text-foreground font-neueBold leading-none "
+            >
               {displayName}
-            </Text>
-            <View className="ml-1">
-              <SVGIcons.VarifiedGreen className="w-5 h-5" />
+            </ScaledText>
+            <View style={{ marginLeft: s(4) }}>
+              <SVGIcons.VarifiedGreen style={{ width: s(20), height: s(20) }} />
             </View>
           </View>
-          <Text className="text-foreground flex-row items-center text-[16px]">
-            <View className="mr-1">
-              <SVGIcons.Studio className="w-5 h-5" />
+          <View className="flex-row items-center" style={{ marginTop: mvs(2) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className=" font-neueLight text-tat"
+            >
+              {username}
+            </ScaledText>
+          </View>
+          <View className="flex-row items-center" style={{ marginTop: mvs(3) }}>
+            <View style={{ marginRight: s(4) }}>
+              <SVGIcons.Studio style={{ width: s(20), height: s(20) }} />
             </View>
-            <Text className="text-foreground"> Titolare di </Text>
-            <Text className="text-foreground font-neueBlack">
-              {businessName || ""}
-            </Text>
-          </Text>
-          <Text className="text-foreground text-[16px] mt-1">
-            <View className="mr-1">
-              <SVGIcons.Location className="w-5 h-5" />
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground"
+            >
+              Titolare di{" "}
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-foreground font-neueBlack"
+              >
+                {businessName || ""}
+              </ScaledText>
+            </ScaledText>
+          </View>
+          <View className="flex-row items-center" style={{ marginTop: mvs(3) }}>
+            <View style={{ marginRight: s(4) }}>
+              <SVGIcons.Location style={{ width: s(20), height: s(20) }} />
             </View>
-            <Text className="text-foreground"> {location}</Text>
-          </Text>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground"
+            >
+              {location}
+            </ScaledText>
+          </View>
         </View>
       </View>
     </View>

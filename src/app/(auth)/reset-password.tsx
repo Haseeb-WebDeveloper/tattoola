@@ -156,8 +156,8 @@ export default function ResetPasswordScreen() {
           <View style={styles.form}>
             <ScaledText variant="sm" className="text-foreground mb-2">New Password</ScaledText>
             <ScaledTextInput
-              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
-              className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+              containerClassName={`flex-row items-center rounded-xl ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
+              className="flex-1 text-foreground rounded-xl"
               placeholder="Enter your new password"
               secureTextEntry={!showPassword}
               value={formData.password}
@@ -170,9 +170,9 @@ export default function ResetPasswordScreen() {
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   {showPassword ? (
-                    <SVGIcons.EyeOpen className="w-6 h-6" />
+                    <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
                   ) : (
-                    <SVGIcons.EyeClose className="w-6 h-6" />
+                    <SVGIcons.EyeClose width={s(18)} height={s(18)} />
                   )}
                 </TouchableOpacity>
               }
@@ -182,8 +182,8 @@ export default function ResetPasswordScreen() {
 
             <ScaledText variant="sm" className="text-foreground mb-2">Confirm New Password</ScaledText>
             <ScaledTextInput
-              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
-              className="flex-1 text-base text-foreground bg-[#100C0C] rounded-xl"
+              containerClassName={`flex-row items-center rounded-xl ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
+              className="flex-1 text-foreground rounded-xl"
               placeholder="Confirm your new password"
               secureTextEntry={!showConfirmPassword}
               value={formData.confirmPassword}
@@ -196,9 +196,9 @@ export default function ResetPasswordScreen() {
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   {showConfirmPassword ? (
-                    <SVGIcons.EyeOpen className="w-6 h-6" />
+                    <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
                   ) : (
-                    <SVGIcons.EyeClose className="w-6 h-6" />
+                    <SVGIcons.EyeClose width={s(18)} height={s(18)} />
                   )}
                 </TouchableOpacity>
               }

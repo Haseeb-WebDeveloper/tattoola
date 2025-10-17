@@ -1,19 +1,37 @@
+import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
 import AuthStepHeader from "@/components/ui/auth-step-header";
-import FixedFooter from "@/components/ui/FixedFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
 import { TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useUserRegistrationStore } from "@/stores";
 import type { FormErrors, UserV2Step6 } from "@/types/auth";
+import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Image, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, Image, ScrollView, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+function StyleSkeleton() {
+  return (
+    <View className="flex-row items-center border-b border-gray/20">
+      <View className="w-10 items-center" style={{ paddingVertical: mvs(12) }}>
+        <View className="w-5 h-5 rounded-md bg-gray/30" />
+      </View>
+      <View className="w-36 h-28 bg-gray/30" />
+      <View className="flex-1 px-4">
+        <View className="w-32 h-4 bg-gray/30 rounded" />
+      </View>
+    </View>
+  );
+}
 
 export default function UserRegistrationStep6() {
   const { step6, updateStep, setErrors, clearErrors, setCurrentStep } =
     useUserRegistrationStore();
+  const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState<UserV2Step6>({
     favoriteStyles: [],
   });
@@ -131,7 +149,10 @@ export default function UserRegistrationStep6() {
   const renderItem = ({ item }: { item: any }) => {
     const isSelected = formData.favoriteStyles.includes(item.id);
     return (
-      <View className="flex-row items-center px-4 border-b border-gray/20">
+      <View
+        className="flex-row items-center border-b border-gray/20"
+        style={{ paddingVertical: mvs(12) }}
+      >
         <TouchableOpacity
           className="w-10 items-center"
           onPress={() => handleStyleToggle(item.id)}
@@ -152,83 +173,79 @@ export default function UserRegistrationStep6() {
           <View className="w-36 h-28 bg-gray/30" />
         )}
         <View className="flex-1 px-4">
-          <Text className="text-foreground tat-body-1 font-neueBold">
+          <ScaledText
+            allowScaling={false}
+            variant="body1"
+            className="text-foreground font-neueBold"
+          >
             {item.name}
-          </Text>
-          {/* {!!item.description && (
-            <Text className="text-white/60 mt-1" numberOfLines={2}>
-              {item.description}
-            </Text>
-          )} */}
+          </ScaledText>
         </View>
       </View>
     );
   };
 
+  const canProceed = formData.favoriteStyles.length > 0;
+
   return (
-    <View className="flex-1 bg-background">
-      {/* Header */}
-      <AuthStepHeader />
+    <View className="flex-1 bg-black">
+      <View className="flex-1 bg-black">
+        {/* Header */}
+        <AuthStepHeader />
 
-      {/* Progress */}
-      <View className="items-center mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 7 ? (idx === 6 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
+        {/* Progress */}
+        <RegistrationProgress
+          currentStep={6}
+          totalSteps={7}
+          name="Favorite Styles"
+          icon={<SVGIcons.Style width={22} height={22} />}
+        />
+
+        {/* Helper Text */}
+        <View style={{ paddingHorizontal: s(24), marginBottom: mvs(16) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="body2"
+            className="text-foreground/80"
+          >
+            Choose up to {TL_MAX_FAVORITE_STYLES} styles you love
+          </ScaledText>
         </View>
-      </View>
 
-      {/* Title */}
-      <View className="px-6 mb-6 ">
-        <Text className="text-center text-foreground section-title font-neueBold">
-          Favorite Styles
-        </Text>
-      </View>
+        {/* List */}
+        <View className="flex-1" style={{ paddingHorizontal: s(24) }}>
+          {loading ? (
+            <ScrollView
+              contentContainerStyle={{
+                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
+              }}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <StyleSkeleton key={i} />
+              ))}
+            </ScrollView>
+          ) : (
+            <FlatList
+              data={tattooStyles}
+              keyExtractor={(i) => i.id}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{
+                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
+              }}
+            />
+          )}
+        </View>
 
-      {/* List */}
-      <View className="flex-1 mb-24">
-        <Text className="mb-4 px-4 text-tat ta-body-3-button-text mt-1">
-          Choose up to {TL_MAX_FAVORITE_STYLES} styles you love
-        </Text>
-        {loading ? (
-          <View className="px-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <View
-                key={i}
-                className="flex-row items-center justify-between border-b border-gray/20 px-4"
-              >
-                <View className="w-6 h-6 rounded-md bg-gray/30 mr-3" />
-                <View className="w-36 h-28 bg-gray/30" />
-                <View className="flex-1 px-4">
-                  <View className="w-32 h-4 bg-gray/30 rounded" />
-                </View>
-                {/* <View className="w-6 h-6 rounded-full bg-gray/30" /> */}
-              </View>
-            ))}
-          </View>
-        ) : (
-          <FlatList
-            data={tattooStyles}
-            keyExtractor={(i) => i.id}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={true}
-            style={{ flexGrow: 0 }}
-            contentContainerStyle={{ paddingBottom: 8 }}
-          />
-        )}
+        {/* Fixed Footer */}
+        <AbsoluteNextBackFooter
+          onNext={handleNext}
+          nextDisabled={!canProceed}
+          nextLabel="Continue"
+          backLabel="Back"
+          onBack={handleBack}
+        />
       </View>
-
-      {/* Fixed Footer */}
-      <FixedFooter
-        onBack={handleBack}
-        onNext={handleNext}
-        nextDisabled={formData.favoriteStyles.length === 0}
-        nextLabel="Continue"
-      />
     </View>
   );
 }

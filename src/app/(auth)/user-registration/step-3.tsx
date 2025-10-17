@@ -1,18 +1,18 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { SVGIcons } from "@/constants/svg";
 import { useUserRegistrationStore } from "@/stores";
 import type { FormErrors, UserV2Step3 } from "@/types/auth";
+import { normalizeItalianPhone } from "@/utils/normalize-italian-phone";
+import { mvs, s } from "@/utils/scale";
 import { UserStep3ValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { normalizeItalianPhone } from "@/utils/normalize-italian-phone";
+import { View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 function formatItalianPhoneForInput(phone: string): string {
   // Show only the user part (remove +39 prefix), pad with leading zeros
@@ -29,9 +29,6 @@ export default function UserRegistrationStep3() {
     phone: "",
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
-  const [focused, setFocused] = useState<
-    "firstName" | "lastName" | "phone" | null
-  >(null);
 
   // Load existing data if available
   useEffect(() => {
@@ -89,129 +86,122 @@ export default function UserRegistrationStep3() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-background relative"
-    >
+    <View className="flex-1 bg-black">
       {/* Header */}
       <AuthStepHeader />
 
-      {/* Progress dots */}
-      <View className="items-center mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 3 ? (idx === 2 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
+      <KeyboardAwareScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: mvs(20),
+        }}
+      >
+        {/* Progress */}
+        <RegistrationProgress
+          currentStep={3}
+          totalSteps={5}
+          name="Informazioni personali"
+          description="Queste informazioni servono solo per registrare il tuo account e non saranno mai pubblicate."
+          icon={<SVGIcons.User width={22} height={22} />}
+        />
+
+        {/* Inputs */}
+        <View style={{ paddingHorizontal: s(24) }}>
+          <View>
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-foreground mb-2"
+            >
+              Nome<ScaledText variant="body2" className="text-error">*</ScaledText>
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName="rounded-xl border border-gray"
+              className="text-foreground rounded-xl"
+              placeholder="Mario"
+              placeholderTextColor="#A49A99"
+              value={formData.firstName}
+              onChangeText={(v) => handleInputChange("firstName", v)}
             />
-          ))}
-        </View>
-      </View>
+            {!!errors.firstName && (
+              <ScaledText variant="11" className="text-error mt-1">
+                {errors.firstName}
+              </ScaledText>
+            )}
+          </View>
 
-      {/* Title */}
-      <View className="px-6 mb-4 items-center">
-        <Text className="text-foreground section-title font-neueBold">
-          Informazioni personali
-        </Text>
-        <Text className="text-tat ta-body-3-button-text mt-2 text-center px-2">
-          Queste informazioni servono solo per registrare il tuo account e non
-          saranno mai pubblicate.
-        </Text>
-      </View>
-
-      {/* Inputs */}
-      <View className="px-6">
-        <Text className="mb-2 label">
-          Nome<Text className="text-error">*</Text>
-        </Text>
-        <View
-          className={`rounded-xl bg-black/40 ${focused === "firstName" ? "border-2 border-foreground" : "border border-gray"}`}
-        >
-          <TextInput
-            className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-            placeholder="Mario"
-            placeholderTextColor="#A49A99"
-            value={formData.firstName}
-            onChangeText={(v) => handleInputChange("firstName", v)}
-            onFocus={() => setFocused("firstName")}
-            onBlur={() => setFocused(null)}
-          />
-        </View>
-        {!!errors.firstName && (
-          <Text className="text-xs text-error mt-1">{errors.firstName}</Text>
-        )}
-
-        <View className="mt-6">
-          <Text className="mb-2 label">
-            Cognome<Text className="text-error">*</Text>
-          </Text>
-          <View
-            className={`rounded-xl bg-black/40 ${focused === "lastName" ? "border-2 border-foreground" : "border border-gray"}`}
-          >
-            <TextInput
-              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+          <View style={{ marginTop: mvs(24) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-foreground mb-2"
+            >
+              Cognome<ScaledText variant="body2" className="text-error">*</ScaledText>
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName="rounded-xl border border-gray"
+              className="text-foreground rounded-xl"
               placeholder="Rossi"
               placeholderTextColor="#A49A99"
               value={formData.lastName}
               onChangeText={(v) => handleInputChange("lastName", v)}
-              onFocus={() => setFocused("lastName")}
-              onBlur={() => setFocused(null)}
             />
+            {!!errors.lastName && (
+              <ScaledText variant="11" className="text-error mt-1">
+                {errors.lastName}
+              </ScaledText>
+            )}
           </View>
-          {!!errors.lastName && (
-            <Text className="text-xs text-error mt-1">{errors.lastName}</Text>
-          )}
-        </View>
 
-        <View className="mt-6">
-          <Text className="mb-2 label">
-            Telefono<Text className="text-error">*</Text>
-          </Text>
-          <View
-            className={`flex-row items-center rounded-xl bg-black/40 ${focused === "phone" ? "border-2 border-foreground" : "border border-gray"}`}
-          >
-            <View className="pl-4 pr-2 py-3 flex-row items-center">
-              <Text className="text-foreground font-neueBold">+39</Text>
+          <View style={{ marginTop: mvs(24) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-foreground mb-2"
+            >
+              Telefono<ScaledText variant="body2" className="text-error">*</ScaledText>
+            </ScaledText>
+            <View className="flex-row items-center rounded-xl border border-gray">
+              <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="body1"
+                  className="text-foreground font-neueBold"
+                >
+                  +39
+                </ScaledText>
+              </View>
+              <ScaledTextInput
+                containerClassName="flex-1"
+                className="text-foreground rounded-xl"
+                placeholder="3XXXXXXXXX"
+                placeholderTextColor="#A49A99"
+                value={formatItalianPhoneForInput(formData.phone)}
+                onChangeText={(v) => {
+                  const digits = v.replace(/[^0-9]/g, "").slice(0, 10);
+                  handleInputChange("phone", `+39${digits}`);
+                }}
+                keyboardType="number-pad"
+                textContentType="telephoneNumber"
+                maxLength={10}
+              />
             </View>
-            <TextInput
-              className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="3XXXXXXXXX"
-              placeholderTextColor="#A49A99"
-              value={formatItalianPhoneForInput(formData.phone)}
-              onChangeText={(v) => {
-                // Only let user enter digits, max 10 (cell), no prefix
-                const digits = v.replace(/[^0-9]/g, "").slice(0, 10);
-                handleInputChange("phone", `+39${digits}`);
-              }}
-              onFocus={() => setFocused("phone")}
-              onBlur={() => setFocused(null)}
-              keyboardType="number-pad"
-              textContentType="telephoneNumber"
-              maxLength={10}
-              // Italian mobile numbers are 10 digits after +39
-            />
+            {!!errors.phone && (
+              <ScaledText variant="11" className="text-error mt-1">
+                {errors.phone}
+              </ScaledText>
+            )}
           </View>
-          {!!errors.phone && (
-            <Text className="text-xs text-error mt-1">{errors.phone}</Text>
-          )}
         </View>
-      </View>
+      </KeyboardAwareScrollView>
 
-      {/* Footer actions */}
-      <View className="flex-row justify-between px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
-        <TouchableOpacity
-          onPress={handleBack}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleNext}
-          className="rounded-full bg-primary px-8 py-4"
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      {/* Footer */}
+      <NextBackFooter
+        onNext={handleNext}
+        nextLabel="Next"
+        backLabel="Back"
+        onBack={handleBack}
+      />
+    </View>
   );
 }

@@ -1,21 +1,26 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { getMunicipalities, getProvinces } from "@/services/location.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step5Schema } from "@/utils/artistRegistrationValidation";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  FlatList,
   Image,
   Modal,
   Pressable,
+  ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 
 export default function ArtistStep5V2() {
   const {
@@ -87,50 +92,55 @@ export default function ArtistStep5V2() {
       <AuthStepHeader />
 
       {/* Progress */}
-      <View className="items-center  mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 5 ? (idx === 4 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
+      <RegistrationProgress
+        currentStep={currentStepDisplay}
+        totalSteps={totalStepsDisplay}
+        name="Studio Details"
+        icon={<SVGIcons.Studio width={19} height={19} />}
+      />
 
-      {/* Title */}
-      <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-        <SVGIcons.Studio width={22} height={22} />
-        <Text className="text-foreground section-title font-neueBold">
-          Studio Details
-        </Text>
-      </View>
 
       {/* Form */}
-      <View className="px-6 gap-6">
+      <View style={{ paddingHorizontal: s(20), rowGap: mvs(15) }}>
         {/* Studio Name */}
         <View>
-          <Text className="mb-2 label">
-            Name of the Studio<Text className="text-error">*</Text>
-          </Text>
-          <View
-            className={`rounded-xl bg-black/40 ${focused === "studioName" ? "border-2 border-foreground" : "border border-gray"}`}
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-tat font-montserratSemibold"
+            style={{ marginBottom: mvs(4) }}
           >
-            <TextInput
-              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="Tattoo Paradise"
-              placeholderTextColor="#A49A99"
-              value={step5.studioName || ""}
-              onChangeText={(v) => updateStep5({ studioName: v })}
-              onFocus={() => setFocused("studioName")}
-              onBlur={() => {
-                setFocused(null);
-                validateAll();
-              }}
-            />
-          </View>
+            Name of the Studio
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error font-montserratSemibold"
+            >
+              *
+            </ScaledText>
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`rounded-xl ${focused === "studioName" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="text-foreground rounded-xl"
+            placeholder="Tattoo Paradise"
+            placeholderTextColor="#A49A99"
+            value={step5.studioName || ""}
+            onChangeText={(v) => updateStep5({ studioName: v })}
+            onFocus={() => setFocused("studioName")}
+            onBlur={() => {
+              setFocused(null);
+              validateAll();
+            }}
+          />
           {!!errors.studioName && (
-            <Text className="text-xs text-error mt-1">{errors.studioName}</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error font-montserratSemibold"
+              style={{ marginTop: mvs(4) }}
+            >
+              {errors.studioName}
+            </ScaledText>
           )}
         </View>
 
@@ -148,67 +158,108 @@ export default function ArtistStep5V2() {
 
         {/* Address */}
         <View>
-          <Text className="mb-2 label">
-            Inserisci l’indirizzo dello Studio dove lavori
-            <Text className="text-error">*</Text>
-          </Text>
-          <View
-            className={`rounded-xl bg-black/40 ${focused === "studioAddress" ? "border-2 border-foreground" : "border border-gray"}`}
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-tat font-montserratSemibold"
+            style={{ marginBottom: mvs(4) }}
           >
-            <TextInput
-              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="Via A.G. Alaimo 139, Ancona, 60044"
-              placeholderTextColor="#A49A99"
-              value={step5.studioAddress || ""}
-              onChangeText={(v) => updateStep5({ studioAddress: v })}
-              onFocus={() => setFocused("studioAddress")}
-              onBlur={() => {
-                setFocused(null);
-                validateAll();
-              }}
-            />
-          </View>
+            Inserisci l’indirizzo dello Studio dove lavori
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error font-montserratSemibold"
+            >
+              *
+            </ScaledText>
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`rounded-xl ${focused === "studioAddress" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="text-foreground rounded-xl"
+            placeholder="Via A.G. Alaimo 139, Ancona, 60044"
+            placeholderTextColor="#A49A99"
+            value={step5.studioAddress || ""}
+            onChangeText={(v) => updateStep5({ studioAddress: v })}
+            onFocus={() => setFocused("studioAddress")}
+            onBlur={() => {
+              setFocused(null);
+              validateAll();
+            }}
+          />
           {!!errors.studioAddress && (
-            <Text className="text-xs text-error mt-1">
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error font-montserratSemibold"
+              style={{ marginTop: mvs(4) }}
+            >
               {errors.studioAddress}
-            </Text>
+            </ScaledText>
           )}
         </View>
 
         {/* Website */}
         <View>
-          <Text className="mb-2 label">
-            Studio website
-          </Text>
-          <View
-            className={`rounded-xl bg-black/40 ${focused === "website" ? "border-2 border-foreground" : "border border-gray"}`}
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-tat font-montserratSemibold"
+            style={{ marginBottom: mvs(4) }}
           >
-            <TextInput
-              className="px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="https://..."
-              placeholderTextColor="#A49A99"
-              value={step5.website || ""}
-              onChangeText={(v) => updateStep5({ website: v })}
-              onFocus={() => setFocused("website")}
-              onBlur={() => setFocused(null)}
-              autoCapitalize="none"
-            />
-          </View>
+            Studio website
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`rounded-xl ${focused === "website" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="text-foreground rounded-xl"
+            placeholder="https://..."
+            placeholderTextColor="#A49A99"
+            value={step5.website || ""}
+            onChangeText={(v) => updateStep5({ website: v })}
+            onFocus={() => setFocused("website")}
+            onBlur={() => setFocused(null)}
+            autoCapitalize="none"
+          />
         </View>
 
         {/* Phone */}
         <View>
-          <Text className="mb-2 label">
-            Enter phone number<Text className="text-error">*</Text>
-          </Text>
-          <View
-            className={`flex-row items-center rounded-xl bg-black/40 ${focused === "phone" ? "border-2 border-foreground" : "border border-gray"}`}
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-tat font-montserratSemibold"
+            style={{ marginBottom: mvs(4) }}
           >
-            <View className="pl-4 pr-2 py-3 flex-row items-center">
-              <Text className="text-foreground font-neueBold">+39</Text>
+            Enter phone number
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error font-montserratSemibold"
+            >
+              *
+            </ScaledText>
+          </ScaledText>
+          <View
+            className={`flex-row items-center rounded-xl ${focused === "phone" ? "border-2 border-foreground" : "border border-gray"}`}
+          >
+            <View
+              className="flex-row items-center"
+              style={{
+                paddingLeft: s(16),
+                paddingRight: s(8),
+                paddingVertical: mvs(12),
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-foreground font-neueBold"
+              >
+                +39
+              </ScaledText>
             </View>
-            <TextInput
-              className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+            <ScaledTextInput
+              containerClassName="flex-1"
+              className="text-foreground rounded-xl"
               placeholder="3XXXXXXXXX"
               placeholderTextColor="#A49A99"
               value={(step5.phone || "").replace(/^\+?39\s?/, "")}
@@ -227,27 +278,26 @@ export default function ArtistStep5V2() {
             />
           </View>
           {!!errors.phone && (
-            <Text className="text-xs text-error mt-1">{errors.phone}</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error font-montserratSemibold"
+              style={{ marginTop: mvs(4) }}
+            >
+              {errors.phone}
+            </ScaledText>
           )}
         </View>
       </View>
 
       {/* Footer actions */}
-      <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onNext}
-          disabled={!canProceed}
-          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+
+      <NextBackFooter
+        onNext={onNext}
+        nextDisabled={!canProceed}
+        backLabel="Back"
+        onBack={() => router.back()}
+      />
     </KeyboardAwareScrollView>
   );
 }
@@ -261,6 +311,7 @@ function ProvinceMunicipalityInput({
   valueMunicipality: string;
   onChange: (provinceLabel: string, municipalityLabel: string) => void;
 }) {
+  const insets = useSafeAreaInsets();
   const [modalStep, setModalStep] = useState<
     "province" | "municipality" | null
   >(null);
@@ -294,23 +345,39 @@ function ProvinceMunicipalityInput({
   }, [modalStep, selectedProvince]);
 
   const topSix = provinces.slice(0, 6);
-  const listFiltered = (
-    modalStep === "province" ? provinces : municipalities
-  ).filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const topSixIds = new Set(topSix.map((p) => p.id));
+  const isSearching = search.trim().length > 0;
+
+  const listFiltered = (modalStep === "province" ? provinces : municipalities)
+    .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
+    // When searching, include all results (including popular cities)
+    // When not searching, exclude popular cities from the "Other provinces" list
+    .filter((r) =>
+      modalStep === "province" && !isSearching ? !topSixIds.has(r.id) : true
+    );
 
   const displayValue =
     valueProvince && valueMunicipality
       ? `${valueProvince}, ${valueMunicipality}`
       : "Roma, Lazio";
 
-  console.log(valueProvince, valueMunicipality);
-  console.log(topSix, topSix);
-
   return (
     <View className="">
-      <Text className="mb-2 label">
-        Enter province and municipality<Text className="text-error">*</Text>
-      </Text>
+      <ScaledText
+        allowScaling={false}
+        variant="sm"
+        className="text-tat font-montserratSemibold"
+        style={{ marginBottom: mvs(6) }}
+      >
+        Enter province and municipality
+        <ScaledText
+          allowScaling={false}
+          variant="sm"
+          className="text-error font-montserratSemibold"
+        >
+          *
+        </ScaledText>
+      </ScaledText>
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => {
@@ -319,9 +386,13 @@ function ProvinceMunicipalityInput({
         }}
         className="rounded-xl border border-gray bg-[#100C0C] px-4 py-3"
       >
-        <Text className={valueProvince ? "text-foreground" : "text-[#A49A99]"}>
+        <ScaledText
+          allowScaling={false}
+          variant="md"
+          className={valueProvince ? "text-foreground" : "text-[#A49A99]"}
+        >
           {displayValue}
-        </Text>
+        </ScaledText>
       </TouchableOpacity>
 
       <Modal
@@ -330,31 +401,58 @@ function ProvinceMunicipalityInput({
         animationType="slide"
         onRequestClose={() => setModalStep(null)}
       >
-        <View className="flex-1 justify-end ">
-          <View className="w-full bg-black rounded-t-3xl h-[100vh] ">
+        <View className="flex-1 bg-black/50">
+          <View
+            className="flex-1 bg-black rounded-t-3xl"
+            style={{ marginTop: "auto" }}
+          >
             {/* Header */}
-            <View className="px-6 pb-6 pt-20 border-b border-gray flex-row items-center justify-between  relative bg-primary/30">
+            <View
+              className="border-b border-gray flex-row items-center justify-between  relative bg-primary/30"
+              style={{
+                paddingBottom: mvs(20),
+                paddingTop: mvs(70),
+                paddingHorizontal: s(20),
+              }}
+            >
               <TouchableOpacity
                 onPress={() => {
                   setModalStep(null);
                   setSelectedProvince(null);
                   setSearch("");
                 }}
-                className="absolute left-6 top-20 w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
+                className=" rounded-full bg-foreground/20 items-center justify-center"
+                style={{
+                  width: s(30),
+                  height: s(30),
+                }}
               >
-                <SVGIcons.Close className="w-8 h-8" />
+                <SVGIcons.Close width={s(10)} height={s(10)} />
               </TouchableOpacity>
-              <View className="flex-row items-center  justify-center w-full">
-                <Text className="text-foreground text-lg font-neueBold tat-body-1">
+              <View className="flex-row items-center  justify-center">
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueBold"
+                >
                   {modalStep === "province"
                     ? "Seleziona la provincia"
                     : "Seleziona il comune"}
-                </Text>
+                </ScaledText>
               </View>
+
+              {/* empty view */}
+              <View style={{ height: mvs(30), width: mvs(30) }} />
             </View>
 
             {/* Content */}
-            <View className="pt-8 mb-28 relative">
+            <ScrollView
+              className="flex-1 pt-8"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
+              }}
+            >
               {/* Selected province pill with edit (with image preview) */}
               {modalStep === "municipality" && selectedProvince && (
                 <View className="flex-row items-center justify-between mb-6 px-6 bg-[#100C0C]">
@@ -392,10 +490,18 @@ function ProvinceMunicipalityInput({
               )}
 
               {/* Search */}
-              <View className="mx-6 border border-gray py-0.5 px-4 mb-8 rounded-full flex-row items-center">
-                <SVGIcons.Search className="w-5 h-5 mr-2" />
-                <TextInput
-                  className="text-foreground flex-1"
+              <View
+                className="border border-gray rounded-full flex-row items-center"
+                style={{
+                  paddingHorizontal: s(12),
+                  marginHorizontal: s(24),
+                  marginBottom: mvs(16),
+                }}
+              >
+                <SVGIcons.Search width={s(20)} height={s(20)} />
+                <ScaledTextInput
+                  containerClassName="flex-1"
+                  className="text-foreground"
                   placeholder={
                     modalStep === "province"
                       ? "Cerca provincia"
@@ -407,71 +513,101 @@ function ProvinceMunicipalityInput({
                 />
               </View>
 
-              {/* Popular six for province step */}
-              {modalStep === "province" && topSix.length > 0 && (
-                <View className="mb-6">
-                  <Text className="px-6 text-lg font-semibold text-gray tat-body-1 mb-3 ml-1">
-                    Popular cities
-                  </Text>
-                  <View className="flex-row flex-wrap gap-[2px] bg-background">
-                    {topSix.map((p, idx) => {
-                      const active =
-                        selectedProvince?.id === p.id ||
-                        valueProvince === p.name ||
-                        valueMunicipality === p.name;
-                      return (
-                        <TouchableOpacity
-                          key={p.id}
-                          onPress={() => {
-                            // Select only; move next via Next button
-                            setSelectedProvince(p);
-                            setSearch("");
-                          }}
-                          style={{
-                            width: "32%",
-                            overflow: "hidden",
-                          }}
-                          className="h-32"
-                        >
-                          {p.imageUrl ? (
-                            <Image
-                              source={{ uri: p.imageUrl }}
-                              className="w-full h-[75%]"
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <View className="w-full h-[70%] bg-gray/30" />
-                          )}
-                          <View
-                            className={`h-[25%] flex items-center justify-center  ${active ? "bg-primary" : "bg-background"}`}
+              {/* Popular six for province step - only show when not searching */}
+              {modalStep === "province" &&
+                topSix.length > 0 &&
+                !isSearching && (
+                  <View
+                    style={{
+                      paddingBottom: mvs(16),
+                    }}
+                  >
+                    <ScaledText
+                      allowScaling={false}
+                      variant="lg"
+                      className="text-gray font-neueBold mb-3 ml-1"
+                      style={{
+                        paddingHorizontal: s(20),
+                      }}
+                    >
+                      Popular cities
+                    </ScaledText>
+                    <View className="flex-row flex-wrap gap-[2px] bg-background">
+                      {topSix.map((p, idx) => {
+                        const active =
+                          selectedProvince?.id === p.id ||
+                          valueProvince === p.name ||
+                          valueMunicipality === p.name;
+                        return (
+                          <TouchableOpacity
+                            key={p.id}
+                            onPress={() => {
+                              // Select only; move next via Next button
+                              setSelectedProvince(p);
+                              setSearch("");
+                            }}
+                            style={{
+                              width: "32%",
+                              overflow: "hidden",
+                            }}
+                            className="h-32"
                           >
-                            <Text
-                              className={`text-foreground text-center text-[11px] `}
+                            {p.imageUrl ? (
+                              <Image
+                                source={{ uri: p.imageUrl }}
+                                className="w-full h-[75%]"
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <View className="w-full h-[70%] bg-gray/30" />
+                            )}
+                            <View
+                              className={`h-[25%] flex items-center justify-center  ${active ? "bg-primary" : "bg-background"}`}
                             >
-                              {p.name}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
+                              <ScaledText
+                                allowScaling={false}
+                                variant="body2"
+                                className={`text-foreground text-center`}
+                              >
+                                {p.name}
+                              </ScaledText>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                   </View>
-                </View>
-              )}
+                )}
 
               {/* List */}
               <View className="">
-                <Text className="px-6 mb-2 tat-body-1 text-gray font-semibold">
-                  {modalStep === "province"
-                    ? "Other provinces"
-                    : `Comunes  under ${selectedProvince?.name || valueProvince || "Roma"}`}
-                </Text>
-                <FlatList
-                  data={listFiltered}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
+                <ScaledText
+                  allowScaling={false}
+                  variant="body1"
+                  className="px-6 mb-2 text-gray font-semibold"
+                >
+                  {isSearching
+                    ? `Search results${listFiltered.length > 0 ? ` (${listFiltered.length})` : ""}`
+                    : modalStep === "province"
+                      ? "Other provinces"
+                      : `Comunes  under ${selectedProvince?.name || valueProvince || "Roma"}`}
+                </ScaledText>
+                {listFiltered.length === 0 && isSearching ? (
+                  <View className="py-8 px-6">
+                    <ScaledText
+                      allowScaling={false}
+                      variant="body1"
+                      className="text-gray text-center"
+                    >
+                      No results found for "{search}"
+                    </ScaledText>
+                  </View>
+                ) : (
+                  listFiltered.map((item) => (
                     <Pressable
+                      key={item.id}
                       className={`py-4 border-b border-gray/20 
-                        ${valueMunicipality === item.name && valueProvince === selectedProvince?.name ? "bg-primary" : " bg-[#100C0C]"}`}
+                      ${valueMunicipality === item.name && valueProvince === selectedProvince?.name ? "bg-primary" : " bg-[#100C0C]"}`}
                       onPress={() => {
                         if (modalStep === "province") {
                           // Select province only; proceed with Next button
@@ -487,7 +623,7 @@ function ProvinceMunicipalityInput({
                         }
                       }}
                     >
-                      <View className="flex-row items-center gap-3 px-6 tat-body-2-light">
+                      <View className="flex-row items-center gap-3 px-6">
                         {/* <View
                         className="rounded-lg overflow-hidden bg-gray/20"
                         style={{ width: 28, height: 28 }}
@@ -502,43 +638,21 @@ function ProvinceMunicipalityInput({
                           <View className="w-full h-full bg-gray/30" />
                         )}
                       </View> */}
-                        <Text className="text-foreground">{item.name}</Text>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="body2"
+                          className="text-foreground"
+                        >
+                          {item.name}
+                        </ScaledText>
                       </View>
                     </Pressable>
-                  )}
-                  style={{ maxHeight: 360 }}
-                />
-              </View>
-
-              {/* Footer actions (fixed at bottom) */}
-              <View className="absolute top-[75vh] left-0 right-0 px-6 pt-4 pb-10 bg-background/90 blur-sm backdrop-blur-xl flex-row justify-between">
-                <TouchableOpacity
-                  onPress={() => {
-                    if (modalStep === "municipality") setModalStep("province");
-                    else setModalStep(null);
-                  }}
-                  className="rounded-full border border-foreground px-6 py-3"
-                >
-                  <Text className="text-foreground">Back</Text>
-                </TouchableOpacity>
-                {modalStep === "province" ? (
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (selectedProvince) {
-                        setModalStep("municipality");
-                        setSearch("");
-                      }
-                    }}
-                    className={`rounded-full px-8 py-3 ${selectedProvince ? "bg-primary" : "bg-gray/40"}`}
-                    disabled={!selectedProvince}
-                  >
-                    <Text className="text-foreground">Next</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View />
+                  ))
                 )}
               </View>
-            </View>
+            </ScrollView>
+
+            {/* Footer actions  */}
           </View>
         </View>
       </Modal>

@@ -1,19 +1,26 @@
 import {
-    Banner,
-    BodyPartsSection,
-    CollectionsSection,
-    ProfileHeader,
-    ProfileSkeleton,
-    ServicesSection,
-    SocialMediaIcons,
-    StylesSection,
+  Banner,
+  BodyPartsSection,
+  CollectionsSection,
+  ProfileHeader,
+  ProfileSkeleton,
+  ServicesSection,
+  SocialMediaIcons,
+  StylesSection,
 } from "@/components/profile";
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchArtistSelfProfile } from "@/services/profile.service";
+import { mvs, s } from "@/utils/scale";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Linking,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -63,7 +70,9 @@ export default function ProfileScreen() {
   );
 
   const handleSocialMediaPress = (url: string) => {
-    Linking.openURL(url).catch((err) => console.error('Failed to open URL:', err));
+    Linking.openURL(url).catch((err) =>
+      console.error("Failed to open URL:", err)
+    );
   };
 
   const handleCreateNewCollection = () => {
@@ -77,7 +86,14 @@ export default function ProfileScreen() {
   if (error) {
     return (
       <View className="flex-1 bg-background items-center justify-center">
-        <Text className="text-foreground text-center px-6">{error}</Text>
+        <ScaledText
+          allowScaling={false}
+          variant="body1"
+          className="text-foreground text-center"
+          style={{ paddingHorizontal: s(24) }}
+        >
+          {error}
+        </ScaledText>
       </View>
     );
   }
@@ -86,13 +102,17 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-background">
       <ScrollView className="relative" showsVerticalScrollIndicator={false}>
         {/* settings button */}
-        <View className="px-4 absolute top-2 right-0 z-10">
+        <View
+          className="absolute top-2 right-0 z-10"
+          style={{ paddingHorizontal: s(16) }}
+        >
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => router.push('/settings' as any)}
-            className="w-9 h-9 rounded-full bg-primary items-center justify-center"
+            onPress={() => router.push("/settings" as any)}
+            className="rounded-full bg-primary items-center justify-center"
+            style={{ width: s(36), height: s(36) }}
           >
-            <SVGIcons.Settings className="w-5 h-5" />
+            <SVGIcons.Settings style={{ width: s(20), height: s(20) }} />
           </TouchableOpacity>
         </View>
 
@@ -101,11 +121,14 @@ export default function ProfileScreen() {
 
         {/* Profile Header */}
         <ProfileHeader
+          username={data?.user?.username || ""}
           firstName={data?.user?.firstName}
           lastName={data?.user?.lastName}
           avatar={data?.user?.avatar}
           businessName={data?.artistProfile?.businessName}
-          municipality={data?.artistProfile?.municipality || data?.user?.municipality}
+          municipality={
+            data?.artistProfile?.municipality || data?.user?.municipality
+          }
           province={data?.artistProfile?.province || data?.user?.province}
         />
 
@@ -121,8 +144,14 @@ export default function ProfileScreen() {
 
         {/* Bio */}
         {!!data?.artistProfile?.bio && (
-          <View className="px-4 mt-6">
-            <Text className="text-foreground tat-body-2-light">{data.artistProfile.bio}</Text>
+          <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground font-neueLight"
+            >
+              {data.artistProfile.bio}
+            </ScaledText>
           </View>
         )}
 
@@ -140,7 +169,7 @@ export default function ProfileScreen() {
 
         {/* Body Parts Section */}
         <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
-        <View style={{ height: 90 }} />
+        <View style={{ height: mvs(90) }} />
       </ScrollView>
     </View>
   );

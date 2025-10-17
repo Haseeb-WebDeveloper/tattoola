@@ -1,10 +1,15 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step11Schema } from "@/utils/artistRegistrationValidation";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 
 export default function ArtistStep11V2() {
   const { step11, updateStep11, totalStepsDisplay, setCurrentStepDisplay } =
@@ -52,16 +57,36 @@ export default function ArtistStep11V2() {
     onChange: (n?: number) => void,
     field: string
   ) => (
-    <View className="px-6 mb-6">
-      <Text className="mb-2 label">{label}</Text>
+    <View style={{ paddingHorizontal: s(24), marginBottom: mvs(12) }}>
+      <ScaledText
+        allowScaling={false}
+        variant="sm"
+        className="text-tat font-montserratSemibold"
+        style={{ marginBottom: mvs(4) }}
+      >
+        {label}
+      </ScaledText>
       <View
         className={`flex-row items-center rounded-xl bg-black/40 ${focused === field ? "border-2 border-foreground" : "border border-gray"}`}
       >
-        <View className="pl-4 pr-2 py-3">
-          <Text className="text-foreground font-neueBold">€</Text>
+        <View
+          style={{
+            paddingLeft: s(16),
+            paddingRight: s(8),
+            paddingVertical: mvs(12),
+          }}
+        >
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-foreground font-neueBold"
+          >
+            €
+          </ScaledText>
         </View>
-        <TextInput
-          className="flex-1 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
+        <ScaledTextInput
+          containerClassName="flex-1"
+          className="text-foreground rounded-xl"
           placeholder="0"
           placeholderTextColor="#A49A99"
           keyboardType="numeric"
@@ -74,8 +99,14 @@ export default function ArtistStep11V2() {
           onBlur={() => setFocused(null)}
           maxLength={6}
         />
-        <View className="pr-4 py-3">
-          <Text className="text-foreground/80">EUR</Text>
+        <View style={{ paddingRight: s(16), paddingVertical: mvs(12) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="body2"
+            className="text-foreground/80"
+          >
+            EUR
+          </ScaledText>
         </View>
       </View>
     </View>
@@ -87,24 +118,13 @@ export default function ArtistStep11V2() {
       <AuthStepHeader />
 
       {/* Progress */}
-      <View className="items-center  mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 11 ? (idx === 10 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title */}
-      <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-        <SVGIcons.Pricing width={22} height={22} />
-        <Text className="text-foreground section-title font-neueBold">
-          Pricing
-        </Text>
-      </View>
+      <RegistrationProgress
+        currentStep={11}
+        totalSteps={totalStepsDisplay}
+        name=" Set your pricing"
+        description="Enter your minimum price and hourly rate to guide clients."
+        icon={<SVGIcons.Pricing width={19} height={19} />}
+      />
 
       {renderCurrencyInput(
         "Minimum rate",
@@ -120,21 +140,12 @@ export default function ArtistStep11V2() {
       )}
 
       {/* Footer */}
-      <View className="flex-row justify-between px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onNext}
-          disabled={!canProceed}
-          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onNext={onNext}
+        nextDisabled={!canProceed}
+        backLabel="Back"
+        onBack={() => router.back()}
+      />
     </View>
   );
 }

@@ -1,12 +1,16 @@
+import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { WorkArrangement } from "@/types/auth";
 import { isValid, step4Schema } from "@/utils/artistRegistrationValidation";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import AuthStepHeader from "@/components/ui/auth-step-header";
-import { SVGIcons } from "@/constants/svg";
 
 const OPTIONS: { key: WorkArrangement; label: string }[] = [
   {
@@ -49,27 +53,15 @@ export default function ArtistStep4V2() {
       <AuthStepHeader />
 
       {/* Progress */}
-      <View className="items-center  mb-4 mt-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < activeStep ? (idx === activeStep - 1 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title */}
-      <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-        <SVGIcons.Pen2 width={22} height={22} />
-        <Text className="text-foreground section-title font-neueBold">
-          How do you work as an artist?
-        </Text>
-      </View>
+      <RegistrationProgress
+        currentStep={activeStep}
+        totalSteps={totalStepsDisplay}
+        name="How do you work as an artist?"
+        icon={<SVGIcons.Pen2 width={18} height={18} />}
+      />
 
       {/* Options */}
-      <View className="px-6 gap-4">
+      <View style={{ paddingHorizontal: s(24), rowGap: mvs(8) }}>
         {OPTIONS.map((opt) => {
           const active = selected === opt.key;
           return (
@@ -84,12 +76,14 @@ export default function ArtistStep4V2() {
                 ) : (
                   <SVGIcons.CircleUncheckedCheckbox width={24} height={24} />
                 )}
-                <Text
-                  className="text-foreground text-base flex-1 text-[12px] font-montserratMedium"
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-foreground font-montserratMedium flex-1"
                   style={{ flexShrink: 1, flexWrap: "wrap" }}
                 >
                   {opt.label}
-                </Text>
+                </ScaledText>
               </View>
             </TouchableOpacity>
           );
@@ -97,21 +91,11 @@ export default function ArtistStep4V2() {
       </View>
 
       {/* Footer actions */}
-      <View className="flex-row justify-between px-6 mt-10 mb-10 absolute top-[80vh] left-0 right-0">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onNext}
-          disabled={!canProceed}
-          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onNext={onNext}
+        nextDisabled={!canProceed}
+        onBack={() => router.back()}
+      />
     </KeyboardAwareScrollView>
   );
 }

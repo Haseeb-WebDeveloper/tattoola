@@ -1,20 +1,18 @@
+import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step3Schema } from "@/utils/artistRegistrationValidation";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Image,
-  Pressable,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import AuthStepHeader from "@/components/ui/auth-step-header";
-import { SVGIcons } from "@/constants/svg";
 
 export default function ArtistStep3V2() {
   const {
@@ -89,7 +87,7 @@ export default function ArtistStep3V2() {
   };
 
   return (
-    <View className="flex-1 bg-background relative">
+    <View className="flex-1 bg-background ">
       <KeyboardAwareScrollView
         enableOnAndroid={true}
         enableAutomaticScroll={true}
@@ -100,52 +98,73 @@ export default function ArtistStep3V2() {
         {/* Header */}
         <AuthStepHeader />
 
-        {/* Progress dots (show step 3 of total) */}
-        <View className="items-center mb-4 mt-8">
-          <View className="flex-row items-center gap-1">
-            {Array.from({ length: totalStepsDisplay }).map((_, idx) => (
-              <View
-                key={idx}
-                className={`${idx < currentStepDisplay ? (idx === currentStepDisplay - 1 ? "bg-foreground w-4 h-4" : "bg-success w-2 h-2") : "bg-gray w-2 h-2"} rounded-full`}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Title */}
-        <View className="px-6 mb-8 flex-row gap-2 items-center justify-center">
-          <SVGIcons.Person width={25} height={25} />
-          <Text className="text-foreground section-title font-neueBold">
-            Create your profile
-          </Text>
-        </View>
+        {/* Progress */}
+        <RegistrationProgress
+          currentStep={3}
+          totalSteps={totalStepsDisplay}
+          name="Create your profile"
+          icon={<SVGIcons.Person width={25} height={25} />}
+        />
 
         {/* Upload section */}
-        <View className="px-6">
-          <Text className="text-foreground font-montserratSemibold mb-1">
-            Upload your photo<Text className="text-error">*</Text>
-          </Text>
-          <Text className="tat-body-2-light mb-4">
+        <View style={{ paddingHorizontal: s(24) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="body2"
+            className="text-foreground font-montserratSemibold"
+            style={{ marginBottom: mvs(4) }}
+          >
+            Upload your photo
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-error"
+            >
+              *
+            </ScaledText>
+          </ScaledText>
+          <ScaledText
+            allowScaling={false}
+            variant="body2"
+            className="text-foreground font-montserratLight"
+            style={{ marginBottom: mvs(12) }}
+          >
             Supporta JPG, PNG, max size 5MB
-          </Text>
+          </ScaledText>
 
           <Pressable
             onPress={handlePickAvatar}
-            className="items-center w-52 h-52 rounded-full bg-black/40"
+            className="items-center rounded-full bg-black/40"
+            style={{ width: s(180), height: s(180) }}
           >
             {step3?.avatar ? (
               <Image
                 source={{ uri: step3.avatar }}
-                className="w-52 h-52 rounded-full border-2 border-dashed border-error/70 "
+                className="rounded-full border-2 border-dashed border-error/70 "
+                style={{ width: s(180), height: s(180) }}
                 resizeMode="cover"
               />
             ) : (
-              <View className="items-center border-2 border-dashed border-error/70 w-52 h-52 rounded-full justify-center gap-4 bg-primary/20">
-                <SVGIcons.User className="w-10 h-10 mb-3" />
-                <View className="bg-primary rounded-full py-2 px-4">
-                  <Text className="text-foreground tat-body-1 font-neueBold">
+              <View
+                className="items-center border-2 border-dashed border-error/70 rounded-full justify-center bg-primary/20"
+                style={{ width: s(180), height: s(180), gap: s(12) }}
+              >
+                <SVGIcons.User
+                  style={{ marginBottom: s(6) }}
+                  width={s(40)}
+                  height={s(40)}
+                />
+                <View
+                  className="bg-primary rounded-full"
+                  style={{ paddingVertical: mvs(8), paddingHorizontal: s(16) }}
+                >
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueBold"
+                  >
                     Upload image
-                  </Text>
+                  </ScaledText>
                 </View>
               </View>
             )}
@@ -153,69 +172,94 @@ export default function ArtistStep3V2() {
         </View>
 
         {/* Inputs */}
-        <View className="px-6 mt-8">
-          <Text className="mb-2 label">
-            Name<Text className="text-error">*</Text>
-          </Text>
-          <View
-            className={`flex-row items-center rounded-xl bg-black/40 ${focused === "firstName" ? "border-2 border-foreground" : "border border-gray"}`}
+        <View style={{ paddingHorizontal: s(24), marginTop: mvs(24) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-tat font-montserratSemibold"
+            style={{ marginBottom: mvs(4) }}
           >
-            <TextInput
-              className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-              placeholder="John"
-              placeholderTextColor="#A49A99"
-              value={step3?.firstName || ""}
-              onChangeText={(v) => updateStep3({ firstName: v })}
-              onFocus={() => setFocused("firstName")}
-              onBlur={() => {
-                setFocused(null);
-                validateField("firstName");
-              }}
-            />
-          </View>
+            Name
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-error"
+            >
+              *
+            </ScaledText>
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl  ${focused === "firstName" ? "border-2 border-foreground" : "border border-gray"}`}
+            className="flex-1 text-foreground"
+            placeholder="John"
+            placeholderTextColor="#A49A99"
+            value={step3?.firstName || ""}
+            onChangeText={(v) => updateStep3({ firstName: v })}
+            onFocus={() => setFocused("firstName")}
+            onBlur={() => {
+              setFocused(null);
+              validateField("firstName");
+            }}
+          />
           {!!errors.firstName && (
-            <Text className="text-xs text-error mt-1">{errors.firstName}</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-error"
+              style={{ marginTop: mvs(4) }}
+            >
+              {errors.firstName}
+            </ScaledText>
           )}
 
-          <View className="mt-6">
-            <Text className="mb-2 label">
-              Surname<Text className="text-error">*</Text>
-            </Text>
-            <View
-              className={`flex-row items-center rounded-xl bg-black/40 ${focused === "lastName" ? "border-2 border-foreground" : "border border-gray"}`}
+          <View style={{ marginTop: mvs(15) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-tat font-montserratSemibold"
+              style={{ marginBottom: mvs(4) }}
             >
-              <TextInput
-                className="flex-1 px-4 py-3 text-base text-foreground bg-[#100C0C] rounded-xl"
-                placeholder="Doe"
-                placeholderTextColor="#A49A99"
-                value={step3?.lastName || ""}
-                onChangeText={(v) => updateStep3({ lastName: v })}
-                onFocus={() => setFocused("lastName")}
-                onBlur={() => {
-                  setFocused(null);
-                  validateField("lastName");
-                }}
-              />
-            </View>
+              Surname
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-error"
+              >
+                *
+              </ScaledText>
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl ${focused === "lastName" ? "border-2 border-foreground" : "border border-gray"}`}
+              className="flex-1 text-foreground rounded-xl"
+              placeholder="Doe"
+              placeholderTextColor="#A49A99"
+              value={step3?.lastName || ""}
+              onChangeText={(v) => updateStep3({ lastName: v })}
+              onFocus={() => setFocused("lastName")}
+              onBlur={() => {
+                setFocused(null);
+                validateField("lastName");
+              }}
+            />
             {!!errors.lastName && (
-              <Text className="text-xs text-error mt-1">{errors.lastName}</Text>
+              <ScaledText
+                allowScaling={false}
+                variant="body2"
+                className="text-error"
+                style={{ marginTop: mvs(4) }}
+              >
+                {errors.lastName}
+              </ScaledText>
             )}
           </View>
         </View>
 
         {/* Next button */}
-        <View className="px-6 mt-10 mb-10 items-end absolute top-[80vh] left-0 right-0">
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={handleNext}
-            disabled={!canProceed}
-            className={`${canProceed ? "bg-primary" : "bg-gray/40"} rounded-full py-4 px-8 items-center`}
-          >
-            <Text className="text-foreground tat-body-1 font-neueBold">
-              Next
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <NextBackFooter
+          showBack={false}
+          onNext={handleNext}
+          nextDisabled={!canProceed}
+        />
       </KeyboardAwareScrollView>
     </View>
   );

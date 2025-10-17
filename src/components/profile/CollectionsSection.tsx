@@ -1,7 +1,9 @@
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Dimensions, Image, Text, TouchableOpacity, View, ScrollView } from "react-native";
+import { Dimensions, Image, ScrollView, TouchableOpacity, View } from "react-native";
 
 interface Collection {
   id: string;
@@ -40,16 +42,16 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
       images.push(""); // empty string means no image, placeholder
     }
     return (
-      <View className="flex flex-row flex-wrap w-full aspect-square gap-2">
+      <View className="flex flex-row flex-wrap w-full aspect-square" style={{ gap: s(8) }}>
         {[0, 1].map((row) => (
-          <View className="w-full flex-1 gap-2" key={row}>
+          <View className="w-full flex-1" key={row} style={{ gap: s(8) }}>
             {[0, 1].map((col) => {
               const idx = row * 2 + col;
               const url = images[idx];
               return (
                 <View
                   key={idx}
-                  className="flex-1 bg-gray-200 rounded overflow-hidden aspect-square gap-2"
+                  className="flex-1 bg-gray-200 rounded overflow-hidden aspect-square"
                   style={{
                     minWidth: 0,
                   }}
@@ -74,7 +76,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
 
   // Calculate width for each item to fit 2 columns, similar to grid-cols-2 with gap
   const screenWidth = Dimensions.get("window").width;
-  const horizontalPadding = 32; // px-4 left/right = 16*2
+  const horizontalPadding = s(32); // paddingHorizontal s(16) * 2
   const itemGap = COLLECTION_GAP;
   const itemWidth = Math.floor((screenWidth - horizontalPadding - itemGap) / NUM_COLUMNS);
 
@@ -84,7 +86,12 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     // So we chunk the collections into rows of 2
     const items = [...collections];
     // Insert the "create new" as the last one
-    items.push({ id: "__new__", name: "", isPortfolioCollection: false, thumbnails: [] });
+    items.push({
+      id: "__new__",
+      name: "",
+      isPortfolioCollection: false,
+      thumbnails: [],
+    });
 
     const rows = [];
     for (let i = 0; i < items.length; i += NUM_COLUMNS) {
@@ -100,11 +107,22 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     return (
       <View>
         {rows.map((row, rowIdx) => (
-          <View key={rowIdx} style={{ flexDirection: "row", marginBottom: rowIdx !== rows.length - 1 ? itemGap : 0 }}>
+          <View
+            key={rowIdx}
+            style={{
+              flexDirection: "row",
+              marginBottom: rowIdx !== rows.length - 1 ? itemGap : 0,
+            }}
+          >
             {row.map((collection, colIdx) => {
               if (!collection) {
                 // Empty spot, render transparent view for grid consistency
-                return <View key={colIdx} style={{ width: itemWidth, marginRight: colIdx === 0 ? itemGap : 0 }} />;
+                return (
+                  <View
+                    key={colIdx}
+                    style={{ width: itemWidth, marginRight: colIdx === 0 ? itemGap : 0 }}
+                  />
+                );
               }
               if (collection.id === "__new__") {
                 return (
@@ -117,7 +135,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                       minWidth: 140,
                       maxWidth: 180,
                       aspectRatio: 1,
-                      borderRadius: 16,
+                      borderRadius: s(16),
                       borderWidth: 2,
                       borderColor: "#FF4646",
                       borderStyle: "dashed",
@@ -125,13 +143,18 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                       alignItems: "center",
                       justifyContent: "center",
                       marginRight: colIdx === 0 ? itemGap : 0,
-                      padding: 10,
+                      padding: s(10),
                     }}
                   >
-                    <SVGIcons.AddRed className="w-8 h-8" />
-                    <Text style={{ color: "#fff", textAlign: "center", fontSize: 15, marginTop: 8 }}>
+                    <SVGIcons.AddRed style={{ width: s(32), height: s(32) }} />
+                    <ScaledText
+                      allowScaling={false}
+                      variant="body2"
+                      className="text-foreground text-center"
+                      style={{ marginTop: mvs(8) }}
+                    >
                       Create new collection
-                    </Text>
+                    </ScaledText>
                   </TouchableOpacity>
                 );
               }
@@ -149,11 +172,11 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                 >
                   <View
                     style={{
-                      borderRadius: 16,
+                      borderRadius: s(16),
                       backgroundColor: "rgba(255,255,255,0.05)",
                       borderWidth: 1,
                       borderColor: "#fff",
-                      padding: 8,
+                      padding: s(8),
                       flex: 1,
                       width: "100%",
                       height: "100%",
@@ -162,17 +185,15 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                   >
                     {renderThumbnailGrid(collection.thumbnails)}
                   </View>
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontSize: 13,
-                      marginTop: 8,
-                      fontFamily: "Montserrat-SemiBold",
-                    }}
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-foreground font-neueBold"
+                    style={{ marginTop: mvs(8) }}
                     numberOfLines={1}
                   >
                     {collection.name}
-                  </Text>
+                  </ScaledText>
                 </TouchableOpacity>
               );
             })}
@@ -183,19 +204,15 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   };
 
   return (
-    <View style={{ paddingHorizontal: 16, marginTop: 32 }}>
-      <Text
-        style={{
-          color: "#fff",
-          fontWeight: "bold",
-          fontFamily: "Montserrat-SemiBold",
-          marginBottom: 12,
-          fontSize: 16,
-          lineHeight: 23,
-        }}
+    <View style={{ paddingHorizontal: s(16), marginTop: mvs(32) }}>
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="text-foreground font-montserratSemibold"
+        style={{ marginBottom: mvs(12) }}
       >
         Collections
-      </Text>
+      </ScaledText>
       <ScrollView
         horizontal={false}
         scrollEnabled={false}

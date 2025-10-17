@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, View } from 'react-native';
+import { mvs } from '@/utils/scale';
 
 interface BannerMedia {
   mediaType: 'IMAGE' | 'VIDEO';
@@ -18,14 +19,15 @@ export const Banner: React.FC<BannerProps> = ({ banner }) => {
 
   if (hasVideo) {
     // TODO: Implement video player when needed
-    return <View className="h-48 bg-gray/20" />;
+    return <View style={{ height: mvs(200) }} className="bg-gray/20" />;
   }
 
   if (bannerImages.length === 1) {
     return (
       <Image
         source={{ uri: bannerImages[0].mediaUrl }}
-        className="w-full h-48"
+        className="w-full"
+        style={{ height: mvs(200) }}
         resizeMode="cover"
       />
     );
@@ -33,12 +35,13 @@ export const Banner: React.FC<BannerProps> = ({ banner }) => {
 
   if (bannerImages.length > 1) {
     return (
-      <View className="w-full h-48 flex-row">
+      <View className="w-full flex-row" style={{ height: mvs(200) }}>
         {bannerImages.map((img, idx) => (
           <Image
             key={idx}
             source={{ uri: img.mediaUrl }}
-            className="flex-1 h-full"
+            className="flex-1"
+            style={{ height: mvs(200) }}
             resizeMode="cover"
           />
         ))}
@@ -47,5 +50,5 @@ export const Banner: React.FC<BannerProps> = ({ banner }) => {
   }
 
   // No banner media
-  return <View className="h-48 bg-gray/20" />;
+  return <View style={{ height: mvs(200) }} className="bg-gray/20" />;
 };

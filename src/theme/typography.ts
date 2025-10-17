@@ -18,6 +18,9 @@ export type TypographyVariant =
   | "md"
   | "lg"
   | "xl"
+  | "20"
+  | "11"
+  | "9"
   | "2xl"
   | "3xl"
   | "4xl"
@@ -100,8 +103,23 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
     lineHeight: scaledFont(23),
   },
   xl: {
-    fontSize: scaledFont(20),
+    fontSize: scaledFont(21),
     lineHeight: scaledFont(36),
+  },
+  "11": {
+    fontSize: scaledFont(11),
+    lineHeight: scaledFont(11 * 1.3),
+    letterSpacing: -0.5,
+  },
+  "20": {
+    fontSize: scaledFont(20),
+    lineHeight: scaledFont(20 * 1.3),
+    letterSpacing: -0.5,
+  },
+  "9": {
+    fontSize: scaledFont(9),
+    lineHeight: scaledFont(9 * 1.3),
+    letterSpacing: -0.5,
   },
   "2xl": {
     fontSize: scaledFont(24),
@@ -119,7 +137,6 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
   },
   "5xl": {
     fontSize: scaledFont(36),
-    lineHeight: scaledFont(60),
   },
   "6xl": {
     fontSize: scaledFont(40),

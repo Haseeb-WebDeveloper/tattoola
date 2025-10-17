@@ -161,8 +161,8 @@ function LoginScreenContent() {
         <View className="px-6 mt-10">
           <View style={{ marginBottom: mvs(15) }}>
             <ScaledTextInput
-              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
-              className="flex-1 text-base text-foreground"
+              containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
+              className="flex-1 text-foreground rounded-xl"
               placeholder="Email"
               placeholderTextColor="#A49A99"
               keyboardType="email-address"
@@ -180,8 +180,8 @@ function LoginScreenContent() {
 
           <View style={{ marginBottom: mvs(8) }}>
             <ScaledTextInput
-              containerClassName={`flex-row items-center rounded-xl bg-black/40 ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
-              className="flex-1 text-base text-foreground"
+              containerClassName={`flex-row items-center rounded-xl ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+              className="flex-1 text-foreground rounded-xl"
               placeholder="Password"
               placeholderTextColor="#A49A99"
               secureTextEntry={!showPassword}
@@ -192,14 +192,14 @@ function LoginScreenContent() {
               rightAccessory={
                 <TouchableOpacity
                   accessibilityRole="button"
-                  className="px-3 py-2 bg-[#100C0C] rounded-xl m-1"
+                  className="px-3 py-1 rounded-xl m-1"
                   onPress={() => setShowPassword((v) => !v)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   {showPassword ? (
-                    <SVGIcons.EyeOpen className="w-6 h-6" />
+                    <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
                   ) : (
-                    <SVGIcons.EyeClose className="w-6 h-6" />
+                    <SVGIcons.EyeClose width={s(18)} height={s(18)} />
                   )}
                 </TouchableOpacity>
               }
