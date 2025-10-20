@@ -17,7 +17,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-
 export default function ChatThreadScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const { user } = useAuth();
@@ -28,25 +27,50 @@ export default function ChatThreadScreen() {
   const unsubscribe = useChatThreadStore((s) => s.unsubscribe);
   const optimisticSend = useChatThreadStore((s) => s.optimisticSend);
   const markRead = useChatThreadStore((s) => s.markRead);
+  const refreshReceipts = useChatThreadStore((s) => s.refreshReceipts);
   const messagesByConv = useChatThreadStore((s) => s.messagesByConv);
 
   const [text, setText] = useState("");
-  const [peer, setPeer] = useState<{ name?: string; avatar?: string } | null>(null);
+  const [peer, setPeer] = useState<{ name?: string; avatar?: string } | null>(
+    null
+  );
   const [conv, setConv] = useState<any>(null);
   const listRef = useRef<FlatList>(null);
-  const messages = messagesByConv[conversationId || ""] || [];
+  const rawMessages = messagesByConv[conversationId || ""] || [];
+
+  // Deduplicate messages by ID (safety check)
+  // Reverse array for inverted FlatList (newest at index 0 = bottom of screen)
+  const messages = React.useMemo(() => {
+    const seen = new Set();
+    const unique = rawMessages.filter((m: any) => {
+      if (seen.has(m.id)) {
+        return false;
+      }
+      seen.add(m.id);
+      return true;
+    });
+    // Reverse for inverted list - newest first
+    return unique.slice().reverse();
+  }, [rawMessages]);
+
   const insets = useSafeAreaInsets();
   const [headerHeight, setHeaderHeight] = useState(0);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !user?.id) return;
     console.log("ui: mount thread", conversationId);
-    loadLatest(conversationId);
-    try {
-      subscribe(conversationId);
-    } catch (e) {
-      console.log("ui: subscribe error", e);
-    }
+
+    // Load messages first, THEN subscribe to prevent race condition
+    (async () => {
+      try {
+        await loadLatest(conversationId, user.id);
+        console.log("ui: messages loaded, now subscribing");
+        subscribe(conversationId, user.id);
+      } catch (e) {
+        console.log("ui: load/subscribe error", e);
+      }
+    })();
+
     return () => {
       console.log("ui: unmount thread", conversationId);
       try {
@@ -55,7 +79,7 @@ export default function ChatThreadScreen() {
         console.log("ui: unsubscribe error", e);
       }
     };
-  }, [conversationId]);
+  }, [conversationId, user?.id]);
 
   useEffect(() => {
     (async () => {
@@ -70,14 +94,19 @@ export default function ChatThreadScreen() {
     })();
   }, [conversationId, user?.id]);
 
+  // Mark messages as read when conversation is viewed or new messages arrive
   useEffect(() => {
-    if (!conversationId || !user?.id) return;
-    markRead(conversationId, user.id);
-  }, [conversationId, messages.length]);
+    if (!conversationId || !user?.id || messages.length === 0) return;
+    
+    const timer = setTimeout(async () => {
+      await markRead(conversationId, user.id);
+    }, 300); // Reduced delay for faster marking
+    
+    return () => clearTimeout(timer);
+  }, [conversationId, user?.id, messages.length]);
 
   const handleSend = async () => {
     if (!text.trim() || !conversationId || !user?.id) return;
-    console.log("ui: send", { text, conversationId, sender: user.id });
     await optimisticSend({
       conversationId,
       senderId: user.id,
@@ -85,7 +114,8 @@ export default function ChatThreadScreen() {
       text: text.trim(),
     });
     setText("");
-    listRef.current?.scrollToEnd({ animated: true });
+    // Inverted list: scroll to index 0 for newest message
+    setTimeout(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }), 100);
   };
 
   const renderItem = ({ item, index }: any) => (
@@ -98,11 +128,6 @@ export default function ChatThreadScreen() {
     />
   );
 
-  useEffect(() => {
-    // Auto-scroll when new messages arrive
-    listRef.current?.scrollToEnd({ animated: true });
-  }, [messages.length]);
-
   return (
     <View style={{ flex: 1, backgroundColor: "#1F2124" }}>
       {/* Header - avatar + name + actions */}
@@ -111,7 +136,10 @@ export default function ChatThreadScreen() {
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="w-9 h-9 rounded-full bg-foreground/20 items-center justify-center">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-9 h-9 rounded-full bg-foreground/20 items-center justify-center"
+          >
             <SVGIcons.ChevronLeft className="w-5 h-5" />
           </TouchableOpacity>
           <View className="flex-row items-center gap-3">
@@ -119,7 +147,9 @@ export default function ChatThreadScreen() {
               source={{ uri: peer?.avatar || "https://via.placeholder.com/40" }}
               className="w-10 h-10 rounded-full"
             />
-            <Text className="text-foreground tat-body-1 font-neueBold">{peer?.name || ""}</Text>
+            <Text className="text-foreground tat-body-1 font-neueBold">
+              {peer?.name || ""}
+            </Text>
           </View>
           <View className="w-9 h-9" />
         </View>
@@ -135,11 +165,16 @@ export default function ChatThreadScreen() {
           data={messages}
           keyExtractor={(item: any) => item.id}
           renderItem={renderItem}
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-          onEndReached={() => conversationId && loadOlder(conversationId)}
-          onEndReachedThreshold={0.1}
-          contentContainerStyle={{ paddingTop: 12, flexGrow: 1 }}
-          ListHeaderComponent={() => (
+          inverted={true}
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+          onEndReached={() =>
+            conversationId && user?.id && loadOlder(conversationId, user.id)
+          }
+          onEndReachedThreshold={0.5}
+          contentContainerStyle={{ paddingVertical: 12 }}
+          ListFooterComponent={() =>
             conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
               <View className="px-4 py-3 bg-[#2A0F10] border-b border-foreground/10">
                 <Text className="text-foreground tat-body-2-med mb-3">
@@ -149,9 +184,14 @@ export default function ChatThreadScreen() {
                   <TouchableOpacity
                     onPress={async () => {
                       try {
-                        const { acceptConversation } = await import("@/services/chat.service");
+                        const { acceptConversation } = await import(
+                          "@/services/chat.service"
+                        );
                         await acceptConversation(user!.id, conversationId!);
-                        const c = await fetchConversationByIdWithPeer(user!.id, conversationId!);
+                        const c = await fetchConversationByIdWithPeer(
+                          user!.id,
+                          conversationId!
+                        );
                         setConv(c);
                       } catch {}
                     }}
@@ -162,22 +202,31 @@ export default function ChatThreadScreen() {
                   <TouchableOpacity
                     onPress={async () => {
                       try {
-                        const { rejectConversation } = await import("@/services/chat.service");
+                        const { rejectConversation } = await import(
+                          "@/services/chat.service"
+                        );
                         await rejectConversation(user!.id, conversationId!);
-                        const c = await fetchConversationByIdWithPeer(user!.id, conversationId!);
+                        const c = await fetchConversationByIdWithPeer(
+                          user!.id,
+                          conversationId!
+                        );
                         setConv(c);
                       } catch {}
                     }}
                     className="flex-1 h-11 rounded-full border border-foreground/30 items-center justify-center"
                   >
-                    <Text className="text-foreground font-neueBold">Reject</Text>
+                    <Text className="text-foreground font-neueBold">
+                      Reject
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : null
-          )}
+          }
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+          }}
         />
 
         {/* Composer pill (disabled until accepted for the lover) */}
@@ -189,20 +238,26 @@ export default function ChatThreadScreen() {
           }}
         >
           <View className="flex-row items-center rounded-full border border-foreground/20 px-4 py-3">
-            <SVGIcons.Attachment className={`w-5 h-5 mr-2 ${conv?.status === "REQUESTED" && user?.id !== conv?.artistId ? "opacity-40" : ""}`} />
+            <SVGIcons.Attachment
+              className={`w-5 h-5 mr-2 ${conv?.status === "REQUESTED" && user?.id !== conv?.artistId ? "opacity-40" : ""}`}
+            />
             <TextInput
               value={text}
               onChangeText={setText}
               placeholder="Hello I’m looking for sketch tattoo"
               placeholderTextColor="#A49A99"
               className="flex-1 text-foreground"
-              editable={!(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)}
+              editable={
+                !(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+              }
               onSubmitEditing={handleSend}
               blurOnSubmit={false}
               returnKeyType="send"
             />
             <TouchableOpacity
-              disabled={conv?.status === "REQUESTED" && user?.id !== conv?.artistId}
+              disabled={
+                conv?.status === "REQUESTED" && user?.id !== conv?.artistId
+              }
               onPress={handleSend}
               className="w-10 h-10 items-center justify-center"
             >

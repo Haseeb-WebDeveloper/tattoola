@@ -1,8 +1,10 @@
-import { fetchConversationsPage, getPresenceChannel, subscribeConversations } from "@/services/chat.service";
+import { fetchConversationsPage, subscribeConversations } from "@/services/chat.service";
+import { supabase } from "@/utils/supabase";
 import { create } from "zustand";
 import { loadJSON, saveJSON } from "./mmkv";
 
 type Conversation = any;
+type UserCache = Record<string, { id: string; username?: string; firstName?: string; lastName?: string; avatar?: string }>;
 
 type InboxState = {
   conversationsById: Record<string, Conversation>;
@@ -12,7 +14,8 @@ type InboxState = {
   error?: string | null;
   unsubscribe?: () => void;
   presenceUnsub?: () => void;
-  onlineUserIds: Record<string, boolean>;
+  currentRealtimeUserId?: string; // Track which user is currently subscribed
+  userCache: UserCache; // Cache user data to prevent "Unknown" issues
   loadFirstPage(userId: string): Promise<void>;
   loadMore(userId: string): Promise<void>;
   upsertConversation(c: Conversation): void;
@@ -30,15 +33,31 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
   error: null,
   unsubscribe: undefined,
   presenceUnsub: undefined,
-  onlineUserIds: {},
+  currentRealtimeUserId: undefined,
+  userCache: {},
   async loadFirstPage(userId) {
     set({ loading: true, error: null });
     try {
       const { items, nextCursor } = await fetchConversationsPage(userId);
       const byId: Record<string, Conversation> = {};
       const order = items.map((c: any) => c.id);
-      for (const c of items) byId[c.id] = c;
-      set({ conversationsById: byId, order, cursor: nextCursor, loading: false });
+      const userCache: UserCache = { ...get().userCache };
+      
+      for (const c of items) {
+        byId[c.id] = c;
+        // Cache peer user data
+        if (c.peerId && c.peerName) {
+          userCache[c.peerId] = {
+            id: c.peerId,
+            username: c.peerName,
+            firstName: c.peerName.split(' ')[0],
+            lastName: c.peerName.split(' ')[1],
+            avatar: c.peerAvatar,
+          };
+        }
+      }
+      
+      set({ conversationsById: byId, order, cursor: nextCursor, loading: false, userCache });
       saveJSON(KEY, { conversationsById: byId, order });
     } catch (e: any) {
       set({ loading: false, error: e?.message || "Failed to load" });
@@ -61,7 +80,27 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
     } catch {}
   },
   upsertConversation(c) {
-    const byId = { ...get().conversationsById, [c.id]: { ...(get().conversationsById[c.id] || {}), ...c } };
+    const existing = get().conversationsById[c.id];
+    const userCache = get().userCache;
+    
+    // Preserve existing peer data if new data is incomplete
+    const merged = {
+      ...(existing || {}),
+      ...c,
+      // Never overwrite good peer data with "Unknown" or empty
+      peerName: c.peerName && c.peerName !== "Unknown" ? c.peerName : (existing?.peerName || c.peerName),
+      peerAvatar: c.peerAvatar || existing?.peerAvatar,
+      peerId: c.peerId || existing?.peerId,
+    };
+    
+    // If peer data is still missing/incomplete, try to get from cache
+    if (merged.peerId && (!merged.peerName || merged.peerName === "Unknown") && userCache[merged.peerId]) {
+      const cached = userCache[merged.peerId];
+      merged.peerName = `${cached.firstName || ''} ${cached.lastName || ''}`.trim() || cached.username || merged.peerName;
+      merged.peerAvatar = cached.avatar || merged.peerAvatar;
+    }
+    
+    const byId = { ...get().conversationsById, [c.id]: merged };
     let order = get().order.filter((id) => id !== c.id);
     // push to top
     order = [c.id, ...order];
@@ -69,48 +108,68 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
     saveJSON(KEY, { conversationsById: byId, order });
   },
   startRealtime(userId) {
-    get().stopRealtime();
+    console.log("📬 [INBOX REALTIME] Starting realtime for userId:", userId);
+    
+    // Guard: if already subscribed for the same user, skip
+    const currentUserId = get().currentRealtimeUserId;
+    if (currentUserId === userId && get().unsubscribe) {
+      console.log("📬 [INBOX REALTIME] Already subscribed for this user, skipping...");
+      return;
+    }
+    
+    // Only stop if different user or not initialized
+    if (currentUserId && currentUserId !== userId) {
+      console.log("📬 [INBOX REALTIME] Different user detected, stopping old realtime...");
+      get().stopRealtime();
+    }
+    
     const unsub = subscribeConversations(userId, {
       onInsert: (row) => get().upsertConversation(row),
       onUpdate: (row) => get().upsertConversation(row),
     });
-    // presence
-    const channel = getPresenceChannel();
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState() as Record<string, any[]>;
-        const online: Record<string, boolean> = {};
-        Object.values(state).forEach((arr: any[]) => {
-          for (const entry of arr) {
-            if (entry?.userId) online[entry.userId] = true;
+    
+    // Subscribe to conversation_users changes to update unread counts in real-time
+    const cuChannel = supabase
+      .channel(`conv-users-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversation_users",
+          filter: `userId=eq.${userId}`,
+        },
+        (payload) => {
+          console.log("📊 conversation_users UPDATE", payload.new);
+          const { conversationId, unreadCount } = payload.new as any;
+          // Update the unread count for this conversation
+          const conv = get().conversationsById[conversationId];
+          if (conv) {
+            get().upsertConversation({ ...conv, unreadCount });
           }
-        });
-        set({ onlineUserIds: online });
-      })
-      .subscribe(async (status: any) => {
-        if (status === "SUBSCRIBED") {
-          // Track current user as online with timestamp
-          try {
-            await channel.track({ online_at: new Date().toISOString(), userId });
-          } catch {}
         }
-      });
-    const presenceUnsub = () => {
-      try { (channel as any)?.untrack?.(); } catch {}
-      try { (channel as any) && (window as any)?.supabase?.removeChannel?.(channel); } catch {}
+      )
+      .subscribe();
+    
+    const combinedUnsub = () => {
+      unsub();
+      supabase.removeChannel(cuChannel);
     };
-    set({ unsubscribe: unsub, presenceUnsub });
+    
+    set({ unsubscribe: combinedUnsub, presenceUnsub: undefined, currentRealtimeUserId: userId });
+    console.log("📬 [INBOX REALTIME] Realtime setup complete for userId:", userId);
   },
   stopRealtime() {
+    console.log("📬 [INBOX REALTIME] Stopping realtime...");
     const u = get().unsubscribe;
     if (u) {
-      try { u(); } catch {}
+      console.log("📬 [INBOX REALTIME] Unsubscribing from conversations...");
+      try { u(); } catch (e) {
+        console.error("📬 [INBOX REALTIME] Error unsubscribing conversations:", e);
+      }
     }
-    const p = get().presenceUnsub;
-    if (p) {
-      try { p(); } catch {}
-    }
-    set({ unsubscribe: undefined });
+    set({ unsubscribe: undefined, presenceUnsub: undefined, currentRealtimeUserId: undefined });
+    console.log("📬 [INBOX REALTIME] Realtime stopped");
   },
 }));
 

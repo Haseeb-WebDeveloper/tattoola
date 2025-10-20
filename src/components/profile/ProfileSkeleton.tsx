@@ -1,4 +1,4 @@
-import { mvs, s } from "@/utils/scale";
+import { mvs, s, scaledFont } from "@/utils/scale";
 import React from "react";
 import { View } from "react-native";
 
@@ -17,48 +17,64 @@ export const ProfileSkeleton: React.FC = () => {
       </View>
 
       {/* Banner skeleton */}
-      <View className="bg-gray/20" style={{ height: mvs(192) }} />
+      <View className="bg-gray/20" style={{ height: mvs(200) }} />
 
-      {/* Profile Header skeleton */}
-      <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+      {/* Profile Header skeleton with rounded top */}
+      <View
+        style={{
+          paddingHorizontal: s(16),
+          paddingTop: s(20),
+          borderTopLeftRadius: s(35),
+          borderTopRightRadius: s(35),
+          marginTop: -mvs(52),
+        }}
+        className="bg-background"
+      >
         <View className="flex-row items-center" style={{ gap: s(12) }}>
-          {/* Avatar skeleton */}
+          {/* Avatar skeleton - now 92x92 */}
           <View
             className="rounded-full bg-gray/20"
-            style={{ width: s(80), height: s(80) }}
+            style={{ width: s(92), height: s(92) }}
           />
           <View className="flex-1">
-            {/* Name skeleton */}
-            <View className="flex-row items-center" style={{ marginBottom: mvs(8) }}>
+            {/* Name skeleton - variant "20" (fontSize 20) */}
+            <View className="flex-row items-center" style={{ marginBottom: mvs(2) }}>
               <View
                 className="bg-gray/20 rounded"
-                style={{ width: s(128), height: mvs(24) }}
+                style={{ width: s(140), height: scaledFont(20) }}
               />
               <View
                 className="bg-gray/20 rounded"
                 style={{ width: s(20), height: s(20), marginLeft: s(4) }}
               />
             </View>
-            {/* Studio skeleton */}
-            <View className="flex-row items-center" style={{ marginBottom: mvs(8) }}>
+            {/* Username skeleton - variant "md" (fontSize 14) */}
+            <View style={{ marginTop: mvs(2), marginBottom: mvs(3) }}>
               <View
                 className="bg-gray/20 rounded"
-                style={{ width: s(16), height: s(16), marginRight: s(4) }}
-              />
-              <View
-                className="bg-gray/20 rounded"
-                style={{ width: s(96), height: mvs(16) }}
+                style={{ width: s(100), height: scaledFont(14) }}
               />
             </View>
-            {/* Location skeleton */}
+            {/* Studio skeleton - variant "md" (fontSize 14) */}
+            <View className="flex-row items-center" style={{ marginBottom: mvs(3) }}>
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(20), height: s(20), marginRight: s(4) }}
+              />
+              <View
+                className="bg-gray/20 rounded"
+                style={{ width: s(120), height: scaledFont(14) }}
+              />
+            </View>
+            {/* Location skeleton - variant "md" (fontSize 14) */}
             <View className="flex-row items-center">
               <View
                 className="bg-gray/20 rounded"
-                style={{ width: s(16), height: s(16), marginRight: s(4) }}
+                style={{ width: s(20), height: s(20), marginRight: s(4) }}
               />
               <View
                 className="bg-gray/20 rounded"
-                style={{ width: s(80), height: mvs(16) }}
+                style={{ width: s(100), height: scaledFont(14) }}
               />
             </View>
           </View>
@@ -88,71 +104,88 @@ export const ProfileSkeleton: React.FC = () => {
         />
       </View>
 
-      {/* Bio skeleton */}
+      {/* Bio skeleton - variant "md" (fontSize 14) */}
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
         <View
           className="bg-gray/20 rounded"
-          style={{ width: "100%", height: mvs(16), marginBottom: mvs(8) }}
+          style={{ width: "100%", height: scaledFont(14), marginBottom: mvs(8) }}
         />
         <View
           className="bg-gray/20 rounded"
-          style={{ width: "75%", height: mvs(16), marginBottom: mvs(8) }}
+          style={{ width: "75%", height: scaledFont(14), marginBottom: mvs(8) }}
         />
         <View
           className="bg-gray/20 rounded"
-          style={{ width: "50%", height: mvs(16) }}
+          style={{ width: "50%", height: scaledFont(14) }}
         />
       </View>
 
       {/* Styles Section skeleton */}
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+        {/* Title - variant "md" (fontSize 14) */}
         <View
           className="bg-gray/20 rounded"
-          style={{ width: s(128), height: mvs(20), marginBottom: mvs(12) }}
+          style={{ width: s(130), height: scaledFont(14), marginBottom: mvs(12) }}
         />
-        <View className="flex-row flex-wrap" style={{ gap: s(8) }}>
+        {/* Style chips - variant "sm" (fontSize 12), gap s(3) */}
+        <View className="flex-row flex-wrap" style={{ gap: s(3) }}>
           <View
             className="bg-gray/20 rounded-full"
-            style={{ width: s(80), height: mvs(32) }}
+            style={{
+              width: s(70),
+              height: scaledFont(12) + mvs(6), // fontSize 12 + padding vertical mvs(3) * 2
+              paddingHorizontal: s(9),
+            }}
           />
           <View
             className="bg-gray/20 rounded-full"
-            style={{ width: s(96), height: mvs(32) }}
+            style={{
+              width: s(90),
+              height: scaledFont(12) + mvs(6),
+              paddingHorizontal: s(9),
+            }}
           />
           <View
             className="bg-gray/20 rounded-full"
-            style={{ width: s(64), height: mvs(32) }}
+            style={{
+              width: s(60),
+              height: scaledFont(12) + mvs(6),
+              paddingHorizontal: s(9),
+            }}
           />
         </View>
       </View>
 
       {/* Services Section skeleton */}
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+        {/* Title - variant "md" (fontSize 14) */}
         <View
           className="bg-gray/20 rounded"
-          style={{ width: s(80), height: mvs(20), marginBottom: mvs(12) }}
+          style={{ width: s(80), height: scaledFont(14), marginBottom: mvs(10) }}
         />
+        {/* Service items - variant "sm" (fontSize 12) */}
         <View style={{ gap: mvs(8) }}>
           <View
             className="bg-gray/20 rounded"
-            style={{ width: "100%", height: mvs(16) }}
+            style={{ width: "100%", height: scaledFont(12) }}
           />
           <View
             className="bg-gray/20 rounded"
-            style={{ width: "75%", height: mvs(16) }}
+            style={{ width: "75%", height: scaledFont(12) }}
           />
           <View
             className="bg-gray/20 rounded"
-            style={{ width: "83%", height: mvs(16) }}
+            style={{ width: "83%", height: scaledFont(12) }}
           />
         </View>
       </View>
 
       {/* Collections Section skeleton */}
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(32) }}>
+        {/* Title - variant "md" (fontSize 14) */}
         <View
           className="bg-gray/20 rounded"
-          style={{ width: s(96), height: mvs(20), marginBottom: mvs(12) }}
+          style={{ width: s(100), height: scaledFont(14), marginBottom: mvs(12) }}
         />
         <View className="flex-row" style={{ gap: s(12) }}>
           {/* Collection 1 */}
@@ -161,9 +194,10 @@ export const ProfileSkeleton: React.FC = () => {
               className="rounded-xl bg-gray/20"
               style={{ width: "100%", height: s(128), padding: s(8) }}
             />
+            {/* Collection name - variant "sm" (fontSize 12) */}
             <View
               className="bg-gray/20 rounded"
-              style={{ width: s(80), height: mvs(12), marginTop: mvs(8) }}
+              style={{ width: s(80), height: scaledFont(12), marginTop: mvs(8) }}
             />
           </View>
           {/* Create new collection skeleton */}
@@ -184,7 +218,7 @@ export const ProfileSkeleton: React.FC = () => {
             />
             <View
               className="bg-gray/20 rounded"
-              style={{ width: s(80), height: mvs(12) }}
+              style={{ width: s(80), height: scaledFont(12) }}
             />
           </View>
         </View>
@@ -192,6 +226,7 @@ export const ProfileSkeleton: React.FC = () => {
 
       {/* Body Parts Section skeleton */}
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(32), marginBottom: mvs(16) }}>
+        {/* Title - variant "lg" (fontSize 16) */}
         <View className="flex-row items-center" style={{ marginBottom: mvs(12), gap: s(8) }}>
           <View
             className="bg-gray/20 rounded"
@@ -199,25 +234,42 @@ export const ProfileSkeleton: React.FC = () => {
           />
           <View
             className="bg-gray/20 rounded"
-            style={{ width: s(192), height: mvs(20) }}
+            style={{ width: s(220), height: scaledFont(16) }}
           />
         </View>
-        <View className="flex-row flex-wrap" style={{ gap: s(8) }}>
+        {/* Body part chips - variant "9" (fontSize 9), gap s(2) */}
+        <View className="flex-row flex-wrap" style={{ gap: s(2) }}>
           <View
-            className="bg-gray/20 rounded-full"
-            style={{ width: s(64), height: mvs(24) }}
+            className="bg-gray/20 rounded-xl"
+            style={{
+              width: s(60),
+              height: scaledFont(9) + mvs(6), // fontSize 9 + padding vertical mvs(3) * 2
+              paddingHorizontal: s(8),
+            }}
           />
           <View
-            className="bg-gray/20 rounded-full"
-            style={{ width: s(80), height: mvs(24) }}
+            className="bg-gray/20 rounded-xl"
+            style={{
+              width: s(75),
+              height: scaledFont(9) + mvs(6),
+              paddingHorizontal: s(8),
+            }}
           />
           <View
-            className="bg-gray/20 rounded-full"
-            style={{ width: s(56), height: mvs(24) }}
+            className="bg-gray/20 rounded-xl"
+            style={{
+              width: s(55),
+              height: scaledFont(9) + mvs(6),
+              paddingHorizontal: s(8),
+            }}
           />
           <View
-            className="bg-gray/20 rounded-full"
-            style={{ width: s(72), height: mvs(24) }}
+            className="bg-gray/20 rounded-xl"
+            style={{
+              width: s(70),
+              height: scaledFont(9) + mvs(6),
+              paddingHorizontal: s(8),
+            }}
           />
         </View>
       </View>

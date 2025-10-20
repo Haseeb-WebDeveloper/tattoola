@@ -1,19 +1,21 @@
 import { FeedPostCard } from "@/components/FeedPostCard";
-import { SVGIcons } from '@/constants/svg';
+import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
+import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect } from "react";
 import {
   FlatList,
   RefreshControl,
   View,
-  useWindowDimensions,
+  useWindowDimensions
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const posts = useFeedStore((s) => s.posts);
   const isLoading = useFeedStore((s) => s.isLoading);
@@ -26,6 +28,7 @@ export default function HomeScreen() {
   const { height: screenHeight } = useWindowDimensions();
   const startRealtime = useChatInboxStore((s) => s.startRealtime);
   const stopRealtime = useChatInboxStore((s) => s.stopRealtime);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -45,10 +48,10 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-background">
+
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
         onEndReachedThreshold={0.5}
         onEndReached={handleEndReached}
@@ -82,12 +85,18 @@ export default function HomeScreen() {
         }
       />
       {/* Header brand (centered logo) */}
-      <View className="absolute top-6 left-0 right-0 px-5 flex-row items-center justify-between">
+      <View
+        className="absolute left-0 right-0 flex-row items-center justify-between"
+        style={{
+          top: Math.max(insets.top, mvs(24)),
+          paddingHorizontal: s(20),
+        }}
+      >
         <View className="rounded-full items-center justify-center">
-          <SVGIcons.Flash className="w-5 h-5" />
+          <SVGIcons.Flash style={{ width: s(20), height: s(20) }} />
         </View>
-        <SVGIcons.LogoLight className="w-10 h-10" />
-        <View style={{ width: 20 }} className=" h-5" />
+        <SVGIcons.LogoLight style={{ width: s(40), height: s(40) }} />
+        <View style={{ width: s(20), height: s(20) }} />
       </View>
     </View>
   );

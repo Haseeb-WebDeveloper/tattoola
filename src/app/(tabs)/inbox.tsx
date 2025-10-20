@@ -1,6 +1,8 @@
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
+import { usePresenceStore } from "@/stores/presenceStore";
+import { formatMessageTime } from "@/utils/formatMessageTime";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -22,7 +24,7 @@ export default function InboxScreen() {
   const loadMore = useChatInboxStore((s) => s.loadMore);
   const startRealtime = useChatInboxStore((s) => s.startRealtime);
   const stopRealtime = useChatInboxStore((s) => s.stopRealtime);
-  const onlineUserIds = useChatInboxStore((s) => s.onlineUserIds);
+  const onlineUserIds = usePresenceStore((s) => s.onlineUserIds);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -32,6 +34,8 @@ export default function InboxScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return () => {};
+      console.log("📱 [INBOX] Screen focused, reloading conversations...");
+      loadFirstPage(user.id); // Reload conversations when screen is focused
       startRealtime(user.id);
       return () => stopRealtime();
     }, [user?.id])
@@ -46,7 +50,10 @@ export default function InboxScreen() {
         : true
     );
 
-    console.log("data", data);
+  // Debug: Log online users count
+  if (Object.keys(onlineUserIds || {}).length > 0) {
+    console.log("📱 [INBOX] Online users:", Object.keys(onlineUserIds || {}).length);
+  }
 
   return (
     <View className="flex-1 bg-background">
@@ -86,26 +93,45 @@ export default function InboxScreen() {
                   className="w-14 h-14 rounded-full"
                 />
                 <View
-                  className={`w-3 h-3 rounded-full absolute right-0 top-0 ${onlineUserIds?.[item.peerId] ? 'bg-error' : 'bg-gray'}`}
+                  className={`w-3 h-3 rounded-full absolute right-0 bottom-0 ${onlineUserIds?.[item.peerId] ? 'bg-success' : 'bg-gray'}`}
                   style={{ borderWidth: 2, borderColor: '#0F0202' }}
                 />
               </View>
               <View className="flex-1">
-                <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center justify-between mb-1">
                   <Text className="text-foreground tat-body-1 font-neueBold">
                     {item.peerName || "Unknown"}
                   </Text>
-                  {!!item.unreadCount && (
-                    <View className="w-6 h-6 rounded-full bg-error items-center justify-center">
-                      <Text className="text-white text-[12px]">
-                        {item.unreadCount}
-                      </Text>
-                    </View>
+                  {item.lastMessageTime && (
+                    <Text className="text-foreground/60 text-xs">
+                      {formatMessageTime(item.lastMessageTime)}
+                    </Text>
                   )}
                 </View>
-                <Text numberOfLines={1} className="text-foreground/80">
-                  {item.lastMessagePreview || "New conversation"}
-                </Text>
+                <View className="flex-row items-center justify-between">
+                  <Text numberOfLines={1} className="text-foreground/80 flex-1 mr-2">
+                    {item.lastMessageText || "New conversation"}
+                  </Text>
+                  <View className="flex-row items-center gap-2">
+                    {/* Show read/unread icon for both users if there's a last message */}
+                    {item.lastMessageTime && (
+                      <View className="w-4 h-4">
+                        {item.lastMessageIsRead ? (
+                          <SVGIcons.Seen className="w-4 h-4" />
+                        ) : (
+                          <SVGIcons.Unseen className="w-4 h-4" />
+                        )}
+                      </View>
+                    )}
+                    {item.unreadCount > 0 && (
+                      <View className="w-6 h-6 rounded-full bg-error items-center justify-center">
+                        <Text className="text-white text-[12px]">
+                          {item.unreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
               </View>
             </View>
           </TouchableOpacity>

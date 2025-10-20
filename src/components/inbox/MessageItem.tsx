@@ -1,3 +1,4 @@
+import { SVGIcons } from "@/constants/svg";
 import React from "react";
 import { Image, Text, View } from "react-native";
 import {
@@ -63,6 +64,7 @@ export default function MessageItem({
   const isStrictSystem =
     isIntakeMessage(item) && !item.mediaUrl && !item.contentBubble;
 
+
   return (
     <View className="px-4">
       {showDivider && (
@@ -92,12 +94,24 @@ export default function MessageItem({
         >
           {renderBubble()}
           {!!item.createdAt && (
-            <Text className="text-foreground/70 text-[12px] mt-2">
-              {new Date(item.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
+            <View className="flex-row items-center gap-1 mt-2">
+              <Text className="text-foreground/70 text-[12px]">
+                {new Date(item.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+              {/* Only show read/unread icon for messages sent by current user */}
+              {isMine && (
+                <View className="w-3 h-3">
+                  {item.receiptStatus === 'READ' ? (
+                    <SVGIcons.Seen className="w-3 h-3" />
+                  ) : (
+                    <SVGIcons.Unseen className="w-3 h-3" />
+                  )}
+                </View>
+              )}
+            </View>
           )}
         </View>
       )}

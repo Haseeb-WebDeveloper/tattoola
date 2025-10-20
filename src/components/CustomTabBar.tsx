@@ -1,8 +1,11 @@
-import Feather from '@expo/vector-icons/Feather';
+import { ScaledText } from "@/components/ui/ScaledText";
+import { SVGIcons } from '@/constants/svg';
+import { useUser } from '@/providers/AuthProvider';
+import { mvs, s } from '@/utils/scale';
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from 'expo-router';
-import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { memo } from "react";
+import { Image, TouchableOpacity, View } from "react-native";
 
 interface TabBarProps {
   state: any;
@@ -10,28 +13,78 @@ interface TabBarProps {
   navigation: any;
 }
 
-// Map route names to Feather icon names
-const routeIconMap: Record<string, keyof typeof Feather.glyphMap> = {
-  index: "home",
-  search: "search",
-  upload: "upload",
-  inbox: "message-circle",
-  profile: "user",
+// Map route names to SVGIcons names
+const routeIconMap: Record<string, keyof typeof SVGIcons> = {
+  index: "Home",
+  search: "Search",
+  upload: "Plus",
+  inbox: "Inbox",
+  profile: "Profile",
 };
+
+// Memoized Avatar component for better performance
+// React Native's Image component has built-in caching (memory + disk cache)
+const ProfileAvatar = memo(({ avatar, isFocused }: { avatar?: string; isFocused: boolean }) => {
+  const size = s(24);
+  
+  if (avatar) {
+    return (
+      <Image
+        source={{ uri: avatar }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          opacity: isFocused ? 1 : 0.7,
+          borderWidth: isFocused ? 1.5 : 0,
+          borderColor: isFocused ? "#ffffff" : "transparent",
+        }}
+        resizeMode="cover"
+        fadeDuration={0} // Instant display from cache
+      />
+    );
+  }
+  
+  // Fallback to Profile icon if no avatar
+  const ProfileIcon = SVGIcons.Profile;
+  return (
+    <ProfileIcon
+      width={size}
+      height={size}
+      color={isFocused ? "#ffffff" : "#A49A99"}
+      style={{
+        opacity: isFocused ? 1 : 0.7,
+      }}
+    />
+  );
+});
+
+ProfileAvatar.displayName = 'ProfileAvatar';
 
 export default function CustomTabBar({
   state,
   descriptors,
   navigation,
 }: TabBarProps) {
+  const user = useUser();
 
   const getIcon = (routeName: string, isFocused: boolean) => {
-    const iconName = routeIconMap[routeName] || "circle";
+    // Special handling for profile tab to show user avatar
+    if (routeName === 'profile') {
+      return <ProfileAvatar avatar={user?.avatar} isFocused={isFocused} />;
+    }
+    
+    const iconName = routeIconMap[routeName];
+    const IconComponent = iconName ? SVGIcons[iconName] : null;
+    if (!IconComponent) return null;
     return (
-      <Feather
-        name={iconName}
-        size={24}
+      <IconComponent
+        width={s(24)}
+        height={s(24)}
         color={isFocused ? "#ffffff" : "#A49A99"}
+        style={{
+          opacity: isFocused ? 1 : 0.7,
+        }}
       />
     );
   };
@@ -50,14 +103,18 @@ export default function CustomTabBar({
         zIndex: 100,
       }}
     >
-      <View className="px-4 pb-2 pt-6">
+      <View style={{ paddingHorizontal: s(16), paddingBottom: mvs(8), paddingTop: mvs(24) }}>
         <View className="rounded-full overflow-hidden">
           <LinearGradient
             colors={["#3a0000", "#000000"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="flex-row items-center justify-around px-4 py-4"
-            style={{ borderRadius: 9999 }}
+            className="flex-row items-center justify-around"
+            style={{ 
+              borderRadius: 9999,
+              paddingHorizontal: s(16),
+              paddingVertical: mvs(16),
+            }}
           >
             {state.routes.map((route: any, index: number) => {
               const { options } = descriptors[route.key];
@@ -107,13 +164,15 @@ export default function CustomTabBar({
                   className="items-center justify-center flex-1"
                 >
                   {getIcon(route.name, isFocused)}
-                  <Text
-                    className={`ta-body-4 mt-1 ${
+                  <ScaledText
+                    variant="11"
+                    className={` bg-transparent font-neueBold ${
                       isFocused ? "text-foreground" : "text-gray"
                     }`}
+                    style={{ marginTop: mvs(4) }}
                   >
                     {label}
-                  </Text>
+                  </ScaledText>
                 </TouchableOpacity>
               );
             })}

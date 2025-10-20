@@ -120,6 +120,18 @@ import Reload from "@/assets/icons/reload.svg";
 import EyeClose from "@/assets/icons/eye-close.svg";
 // @ts-ignore
 import EyeOpen from "@/assets/icons/eye-open.svg";
+// @ts-ignore
+import Home from "@/assets/icons/home.svg";
+// @ts-ignore
+import Plus from "@/assets/icons/plus.svg";
+// @ts-ignore
+import Inbox from "@/assets/icons/inbox.svg";
+// @ts-ignore
+import Profile from "@/assets/icons/profile.svg";
+// @ts-ignore
+import Seen from "@/assets/icons/seen.svg";
+// @ts-ignore
+import Unseen from "@/assets/icons/unseen.svg";
 
 export const SVGIcons = {
   Close,
@@ -182,7 +194,13 @@ export const SVGIcons = {
   MailSent,
   Reload,
   EyeClose,
-  EyeOpen
+  EyeOpen,
+  Home,
+  Plus,
+  Inbox,
+  Profile,
+  Seen,
+  Unseen
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

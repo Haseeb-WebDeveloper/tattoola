@@ -248,7 +248,8 @@ export async function fetchConversationsPage(
       id, artistId, loverId, status, lastMessageAt, lastMessageId, updatedAt,
       artist:artistId ( id, username, firstName, lastName, avatar ),
       lover:loverId   ( id, username, firstName, lastName, avatar ),
-      conversation_users ( userId, unreadCount )
+      conversation_users ( userId, unreadCount ),
+      lastMessage:lastMessageId ( id, senderId, receiverId, content, messageType, createdAt, mediaUrl, isRead )
     `
     )
     .or(`artistId.eq.${userId},loverId.eq.${userId}`)
@@ -260,6 +261,25 @@ export async function fetchConversationsPage(
   }
   const { data, error } = (await q) as any;
   if (error) throw new Error(error.message);
+  
+  // Fetch receipt status for last messages sent by current user
+  const conversationsWithReceipts = await Promise.all(
+    (data || []).map(async (conv: any) => {
+      // Only check receipt if the last message was sent by current user
+      if (conv.lastMessage && conv.lastMessage.senderId === userId) {
+        const { data: receipt } = await supabase
+          .from("message_receipts")
+          .select("status")
+          .eq("messageId", conv.lastMessageId)
+          .neq("userId", userId) // Get the other user's receipt
+          .maybeSingle();
+        
+        return { ...conv, lastMessageReceipt: receipt };
+      }
+      return conv;
+    })
+  );
+  
   const nextCursor =
     data && data.length === 20
       ? {
@@ -267,7 +287,7 @@ export async function fetchConversationsPage(
           id: data[data.length - 1]?.id,
         }
       : undefined;
-  const items = (data || []).map((c: any) =>
+  const items = conversationsWithReceipts.map((c: any) =>
     enrichConversationForUser(c, userId)
   );
   return { items, nextCursor };
@@ -364,12 +384,27 @@ export async function sendMessage(m: {
   } catch (e) {
     console.log("sendMessage conversation aggregate failed", e);
   }
+  // Increment unread count for the receiver
   try {
+    // First get current unread count
+    const { data: cuData } = await supabase
+      .from("conversation_users")
+      .select("unreadCount")
+      .eq("conversationId", m.conversationId)
+      .eq("userId", receiverId)
+      .maybeSingle();
+    
+    const currentCount = cuData?.unreadCount || 0;
+    
+    // Increment it
     await supabase
       .from("conversation_users")
-      .update({ unreadCount: (undefined as any) }) // noop to satisfy types; we will increment with RPC below if available
-      .eq("conversationId", m.conversationId);
-  } catch {}
+      .update({ unreadCount: currentCount + 1 })
+      .eq("conversationId", m.conversationId)
+      .eq("userId", receiverId);
+  } catch (e) {
+    console.log("sendMessage unreadCount increment failed", e);
+  }
 }
 
 export async function markReadUpTo(
@@ -377,19 +412,31 @@ export async function markReadUpTo(
   userId: string,
   newestMessageId: string
 ) {
+  const now = new Date().toISOString();
+  
   // Reset unreadCount, set lastReadAt "now".
   const { error } = await supabase
     .from("conversation_users")
-    .update({ unreadCount: 0, lastReadAt: new Date().toISOString() })
+    .update({ unreadCount: 0, lastReadAt: now })
     .eq("conversationId", conversationId)
     .eq("userId", userId);
   if (error) throw new Error(error.message);
-  // Receipts can be flipped by server-side trigger/policy; here we issue a best-effort batch
+  
+  // Update messages.isRead for all messages in this conversation that the user received
+  await supabase
+    .from("messages")
+    .update({ isRead: true })
+    .eq("conversationId", conversationId)
+    .eq("receiverId", userId)
+    .eq("isRead", false);
+  
+  // Update receipts to READ status
   await supabase
     .from("message_receipts")
-    .update({ status: "READ", readAt: new Date().toISOString() })
+    .update({ status: "READ", readAt: now })
     .eq("userId", userId)
-    .eq("conversationId", conversationId as any);
+    .eq("conversationId", conversationId as any)
+    .eq("status", "DELIVERED");
 }
 
 // Subscriptions
@@ -411,6 +458,7 @@ export function subscribeConversations(
         filter: `artistId=eq.${userId}`,
       },
       async (payload) => {
+        console.log("📥 Conversation INSERT (artist)", payload.new.id);
         const row = await enrichConversationRow(payload.new, userId);
         handlers.onInsert?.(row);
       }
@@ -424,6 +472,7 @@ export function subscribeConversations(
         filter: `loverId=eq.${userId}`,
       },
       async (payload) => {
+        console.log("📥 Conversation INSERT (lover)", payload.new.id);
         const row = await enrichConversationRow(payload.new, userId);
         handlers.onInsert?.(row);
       }
@@ -437,6 +486,7 @@ export function subscribeConversations(
         filter: `artistId=eq.${userId}`,
       },
       async (p) => {
+        console.log("🔄 Conversation UPDATE (artist)", p.new.id, "lastMessageId:", p.new.lastMessageId);
         const row = await enrichConversationRow(p.new, userId);
         handlers.onUpdate?.(row);
       }
@@ -450,6 +500,7 @@ export function subscribeConversations(
         filter: `loverId=eq.${userId}`,
       },
       async (p) => {
+        console.log("🔄 Conversation UPDATE (lover)", p.new.id, "lastMessageId:", p.new.lastMessageId);
         const row = await enrichConversationRow(p.new, userId);
         handlers.onUpdate?.(row);
       }
@@ -470,49 +521,166 @@ function displayName(u?: {
   return full || u.username || "";
 }
 
+function getMessagePreviewText(message: any): string {
+  if (!message) return "New conversation";
+  
+  const { content, messageType, mediaUrl } = message;
+  
+  // Handle media messages
+  if (mediaUrl) {
+    switch (messageType) {
+      case 'IMAGE':
+        return '📷 Photo';
+      case 'VIDEO':
+        return '🎥 Video';
+      case 'FILE':
+        return '📎 File';
+      default:
+        return 'Media';
+    }
+  }
+  
+  // Handle system messages
+  if (messageType === 'SYSTEM') {
+    return content || 'System message';
+  }
+  
+  if (messageType === 'INTAKE_QUESTION') {
+    return content || 'Question';
+  }
+  
+  if (messageType === 'INTAKE_ANSWER') {
+    return content || 'Answer';
+  }
+  
+  // Regular text message
+  return content || "New conversation";
+}
+
 export function enrichConversationForUser(row: any, userId: string) {
   const peer = row.artist?.id === userId ? row.lover : row.artist;
   const cu = (row.conversation_users || []).find(
     (r: any) => r.userId === userId
   );
+  
+  const lastMessage = row.lastMessage;
+  const lastMessageSentByMe = lastMessage?.senderId === userId;
+  
+  // Single source of truth for read status:
+  // - If message was sent BY me: use receipt status (shows if OTHER person read it)
+  // - If message was sent TO me: use isRead field (shows if I read it)
+  let lastMessageIsRead = false;
+  if (lastMessageSentByMe) {
+    // I sent it - check if receiver read it via receipt
+    lastMessageIsRead = row.lastMessageReceipt?.status === 'READ';
+  } else {
+    // I received it - check if I read it
+    lastMessageIsRead = lastMessage?.isRead === true;
+  }
+  
   return {
     ...row,
     peerId: peer?.id,
     peerName: displayName(peer),
     peerAvatar: peer?.avatar,
     unreadCount: cu?.unreadCount || 0,
+    lastMessageText: getMessagePreviewText(lastMessage),
+    lastMessageTime: lastMessage?.createdAt || row.lastMessageAt,
+    lastMessageSentByMe,
+    lastMessageIsRead,
   };
 }
 
 async function enrichConversationRow(row: any, userId: string) {
-  if (row.artist && row.lover) return enrichConversationForUser(row, userId);
+  if (row.artist && row.lover && row.lastMessage) {
+    return enrichConversationForUser(row, userId);
+  }
+  
+  console.log("🔄 Enriching conversation row:", row.id);
+  
   // fetch peer user to enrich minimal row
   const peerId = row.artistId === userId ? row.loverId : row.artistId;
-  if (!peerId) return enrichConversationForUser(row, userId);
-  const { data: peer, error } = await supabase
-    .from("users")
-    .select("id,username,firstName,lastName,avatar")
-    .eq("id", peerId)
-    .maybeSingle();
-  const cu = await supabase
-    .from("conversation_users")
-    .select("userId,unreadCount")
-    .eq("conversationId", row.id)
-    .eq("userId", userId)
-    .maybeSingle();
-  return enrichConversationForUser(
-    {
-      ...row,
-      artist: row.artistId
-        ? row.artist || (row.artistId === peer?.id ? peer : undefined)
-        : undefined,
-      lover: row.loverId
-        ? row.lover || (row.loverId === peer?.id ? peer : undefined)
-        : undefined,
-      conversation_users: cu.data ? [cu.data] : [],
-    },
-    userId
-  );
+  if (!peerId) {
+    console.warn("⚠️ No peerId found for conversation:", row.id);
+    return enrichConversationForUser(row, userId);
+  }
+  
+  let peer = null;
+  let cu = null;
+  let lastMessage = row.lastMessage;
+  let lastMessageReceipt = row.lastMessageReceipt;
+  
+  try {
+    // Fetch peer user data
+    const { data: peerData, error: peerError } = await supabase
+      .from("users")
+      .select("id,username,firstName,lastName,avatar")
+      .eq("id", peerId)
+      .maybeSingle();
+    
+    if (peerError) {
+      console.error("❌ Failed to fetch peer user:", peerError);
+    } else {
+      peer = peerData;
+    }
+    
+    // Fetch conversation user data
+    const { data: cuData, error: cuError } = await supabase
+      .from("conversation_users")
+      .select("userId,unreadCount")
+      .eq("conversationId", row.id)
+      .eq("userId", userId)
+      .maybeSingle();
+    
+    if (cuError) {
+      console.error("❌ Failed to fetch conversation_users:", cuError);
+    } else {
+      cu = cuData;
+    }
+    
+    // Fetch last message if not present
+    if (!lastMessage && row.lastMessageId) {
+      const { data: msg, error: msgError } = await supabase
+        .from("messages")
+        .select("id, senderId, receiverId, content, messageType, createdAt, mediaUrl, isRead")
+        .eq("id", row.lastMessageId)
+        .maybeSingle();
+      
+      if (msgError) {
+        console.error("❌ Failed to fetch last message:", msgError);
+      } else {
+        lastMessage = msg;
+        
+        // Fetch receipt if message was sent by current user
+        if (msg && msg.senderId === userId) {
+          const { data: receipt } = await supabase
+            .from("message_receipts")
+            .select("status")
+            .eq("messageId", row.lastMessageId)
+            .neq("userId", userId)
+            .maybeSingle();
+          lastMessageReceipt = receipt;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("❌ Error enriching conversation:", e);
+  }
+  
+  const enriched = {
+    ...row,
+    artist: row.artistId
+      ? row.artist || (row.artistId === peer?.id ? peer : undefined)
+      : undefined,
+    lover: row.loverId
+      ? row.lover || (row.loverId === peer?.id ? peer : undefined)
+      : undefined,
+    conversation_users: cu ? [cu] : [],
+    lastMessage,
+    lastMessageReceipt,
+  };
+  
+  return enrichConversationForUser(enriched, userId);
 }
 
 export function subscribeMessages(
@@ -572,9 +740,12 @@ export function getTypingChannel(conversationId: string) {
 
 // Presence: a single global channel to track who is online by userId
 export function getPresenceChannel() {
-  return supabase.channel("presence:users", {
+  console.log("🔧 [SERVICE] Creating presence channel: 'presence:users'");
+  const channel = supabase.channel("presence:users", {
     config: { presence: { key: "user-presence" } },
   });
+  console.dir("🔧 [SERVICE] Presence channel created:", channel);
+  return channel;
 }
 
 export async function fetchConversationByIdWithPeer(
