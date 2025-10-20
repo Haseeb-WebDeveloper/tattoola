@@ -1,17 +1,22 @@
 import MessageItem from "@/components/inbox/MessageItem";
+import ScaledText from "@/components/ui/ScaledText";
+import { ScaledTextInput } from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchConversationByIdWithPeer } from "@/services/chat.service";
+import cloudinaryService from "@/services/cloudinary.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
+import { ms, mvs, s } from "@/utils/scale";
+import { TrimText } from "@/utils/text-trim";
+import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   KeyboardAvoidingView,
   Platform,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -35,6 +40,8 @@ export default function ChatThreadScreen() {
     null
   );
   const [conv, setConv] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
   const listRef = useRef<FlatList>(null);
   const rawMessages = messagesByConv[conversationId || ""] || [];
 
@@ -97,25 +104,74 @@ export default function ChatThreadScreen() {
   // Mark messages as read when conversation is viewed or new messages arrive
   useEffect(() => {
     if (!conversationId || !user?.id || messages.length === 0) return;
-    
+
     const timer = setTimeout(async () => {
       await markRead(conversationId, user.id);
     }, 300); // Reduced delay for faster marking
-    
+
     return () => clearTimeout(timer);
   }, [conversationId, user?.id, messages.length]);
 
   const handleSend = async () => {
-    if (!text.trim() || !conversationId || !user?.id) return;
-    await optimisticSend({
-      conversationId,
-      senderId: user.id,
-      type: "TEXT",
-      text: text.trim(),
-    });
-    setText("");
-    // Inverted list: scroll to index 0 for newest message
-    setTimeout(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }), 100);
+    if ((!text.trim() && !selectedFile) || !conversationId || !user?.id) return;
+    
+    setUploading(true);
+    try {
+      let mediaUrl = undefined;
+      
+      // Upload file first if selected
+      if (selectedFile) {
+        const uploadResult = await cloudinaryService.uploadFile(selectedFile, {
+          folder: 'tattoola/chat',
+          resourceType: 'auto', // Auto-detect file type
+        });
+        mediaUrl = uploadResult.secureUrl;
+      }
+      
+      setText("");
+      setSelectedFile(null);
+      
+      await optimisticSend({
+        conversationId,
+        senderId: user.id,
+        type: selectedFile ? (selectedFile.mimeType?.startsWith('image/') ? 'IMAGE' : 'FILE') : 'TEXT',
+        text: text.trim() || undefined,
+        mediaUrl,
+      });
+     
+      // Inverted list: scroll to index 0 for newest message
+      listRef.current?.scrollToOffset({ offset: 0, animated: true })
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+      
+      if (result.canceled) return;
+      
+      const file = result.assets[0];
+      
+      // Check file size (100MB limit)
+      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+      if (file.size && file.size > maxSize) {
+        alert('File size exceeds 100MB limit. Please choose a smaller file.');
+        return;
+      }
+      
+      setSelectedFile(file);
+    } catch (error) {
+      console.error('Error picking file:', error);
+      alert('Failed to pick file. Please try again.');
+    }
   };
 
   const renderItem = ({ item, index }: any) => (
@@ -132,33 +188,53 @@ export default function ChatThreadScreen() {
     <View style={{ flex: 1, backgroundColor: "#1F2124" }}>
       {/* Header - avatar + name + actions */}
       <View
-        className="px-4 pt-8 pb-4 bg-tat-darkMaroon border-b border-foreground/10"
+        className="bg-tat-darkMaroon border-gray"
+        style={{
+          paddingHorizontal: s(16),
+          paddingTop: mvs(16),
+          paddingBottom: mvs(16),
+          borderBottomWidth: mvs(0.5),
+        }}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-9 h-9 rounded-full bg-foreground/20 items-center justify-center"
+            className="rounded-full bg-foreground/20 items-center justify-center"
           >
-            <SVGIcons.ChevronLeft className="w-5 h-5" />
+            <SVGIcons.CircleChevronRIght width={s(34)} height={s(34)} />
           </TouchableOpacity>
-          <View className="flex-row items-center gap-3">
+          <View
+            className="flex-row items-center"
+            style={{
+              gap: s(12),
+            }}
+          >
             <Image
-              source={{ uri: peer?.avatar || "https://via.placeholder.com/40" }}
-              className="w-10 h-10 rounded-full"
+              source={{ uri: peer?.avatar || "https://via.placeholder.com/36" }}
+              className="rounded-full"
+              style={{
+                width: s(36),
+                height: s(36),
+              }}
             />
-            <Text className="text-foreground tat-body-1 font-neueBold">
-              {peer?.name || ""}
-            </Text>
+            <ScaledText
+              variant="md"
+              className="text-foreground font-montserratMedium"
+            >
+              {TrimText(peer?.name || "", 18)}
+            </ScaledText>
           </View>
-          <View className="w-9 h-9" />
+          <View>
+            <SVGIcons.CircleMenu width={s(20)} height={s(20)} />
+          </View>
         </View>
       </View>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={(insets?.top || 0) + headerHeight}
+        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
       >
         <FlatList
           ref={listRef}
@@ -173,14 +249,31 @@ export default function ChatThreadScreen() {
             conversationId && user?.id && loadOlder(conversationId, user.id)
           }
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ paddingVertical: 12 }}
+          contentContainerStyle={{ paddingVertical: mvs(12) }}
           ListFooterComponent={() =>
             conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
-              <View className="px-4 py-3 bg-[#2A0F10] border-b border-foreground/10">
-                <Text className="text-foreground tat-body-2-med mb-3">
+              <View
+                className="bg-[#2A0F10] border-b border-foreground/10"
+                style={{
+                  paddingHorizontal: s(16),
+                  paddingVertical: mvs(12),
+                }}
+              >
+                <ScaledText
+                  variant="md"
+                  className="text-foreground font-neueMedium"
+                  style={{
+                    marginBottom: mvs(12),
+                  }}
+                >
                   You have received a private request. Accept to start chatting.
-                </Text>
-                <View className="flex-row gap-3">
+                </ScaledText>
+                <View
+                  className="flex-row"
+                  style={{
+                    gap: s(12),
+                  }}
+                >
                   <TouchableOpacity
                     onPress={async () => {
                       try {
@@ -195,9 +288,17 @@ export default function ChatThreadScreen() {
                         setConv(c);
                       } catch {}
                     }}
-                    className="flex-1 h-11 rounded-full bg-primary items-center justify-center"
+                    className="flex-1 rounded-full bg-primary items-center justify-center"
+                    style={{
+                      height: mvs(44),
+                    }}
                   >
-                    <Text className="text-white font-neueBold">Accept</Text>
+                    <ScaledText
+                      variant="md"
+                      className="text-white font-neueBold"
+                    >
+                      Accept
+                    </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={async () => {
@@ -213,11 +314,17 @@ export default function ChatThreadScreen() {
                         setConv(c);
                       } catch {}
                     }}
-                    className="flex-1 h-11 rounded-full border border-foreground/30 items-center justify-center"
+                    className="flex-1 rounded-full border border-foreground/30 items-center justify-center"
+                    style={{
+                      height: mvs(44),
+                    }}
                   >
-                    <Text className="text-foreground font-neueBold">
+                    <ScaledText
+                      variant="md"
+                      className="text-foreground font-neueBold"
+                    >
                       Reject
-                    </Text>
+                    </ScaledText>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -232,23 +339,97 @@ export default function ChatThreadScreen() {
         {/* Composer pill (disabled until accepted for the lover) */}
         <View
           style={{
-            paddingHorizontal: 16,
-            paddingVertical: 12,
+            paddingHorizontal: s(16),
+            paddingTop: mvs(12),
+            paddingBottom: Platform.OS === "ios" 
+              ? Math.max(insets?.bottom || 0, mvs(12)) 
+              : mvs(12),
             backgroundColor: "#1F2124",
           }}
         >
-          <View className="flex-row items-center rounded-full border border-foreground/20 px-4 py-3">
-            <SVGIcons.Attachment
-              className={`w-5 h-5 mr-2 ${conv?.status === "REQUESTED" && user?.id !== conv?.artistId ? "opacity-40" : ""}`}
-            />
-            <TextInput
+          {/* File Preview */}
+          {selectedFile && (
+            <View
+              className="flex-row items-center rounded-lg border border-foreground/20 mb-2"
+              style={{
+                paddingHorizontal: s(12),
+                paddingVertical: mvs(8),
+                backgroundColor: "#2A2A2A",
+              }}
+            >
+              <View
+                className="bg-primary/20 rounded items-center justify-center"
+                style={{
+                  width: s(40),
+                  height: s(40),
+                  marginRight: s(12),
+                }}
+              >
+                <ScaledText variant="lg" className="text-primary">
+                  📎
+                </ScaledText>
+              </View>
+              <View className="flex-1">
+                <ScaledText
+                  variant="md"
+                  numberOfLines={1}
+                  className="text-foreground font-neueMedium"
+                >
+                  {selectedFile.name}
+                </ScaledText>
+                <ScaledText variant="sm" className="text-foreground/60">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </ScaledText>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedFile(null)}
+                style={{
+                  padding: s(8),
+                }}
+              >
+                <SVGIcons.Close width={s(16)} height={s(16)} />
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          <View
+            className="flex-row items-center rounded-full border border-foreground/20"
+            style={{
+              paddingVertical: mvs(8),
+              paddingHorizontal: s(8),
+            }}
+          >
+            <TouchableOpacity
+              onPress={handlePickFile}
+              disabled={uploading || (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)}
+              style={{
+                marginRight: s(4),
+                opacity:
+                  uploading || (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                    ? 0.4
+                    : 1,
+              }}
+            >
+              <SVGIcons.Attachment width={s(20)} height={s(20)} />
+            </TouchableOpacity>
+            <ScaledTextInput
               value={text}
               onChangeText={setText}
-              placeholder="Hello I’m looking for sketch tattoo"
+              placeholder="Hello I'm looking for sketch tattoo"
               placeholderTextColor="#A49A99"
               className="flex-1 text-foreground"
+              containerClassName="bg-transparent"
+              containerStyle={{
+                flex: 1,
+              }}
+              style={{
+                fontSize: ms(14),
+                lineHeight: mvs(17),
+                paddingHorizontal: s(8),
+                paddingVertical: mvs(10),
+              }}
               editable={
-                !(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                !uploading && !(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
               }
               onSubmitEditing={handleSend}
               blurOnSubmit={false}
@@ -256,14 +437,16 @@ export default function ChatThreadScreen() {
             />
             <TouchableOpacity
               disabled={
-                conv?.status === "REQUESTED" && user?.id !== conv?.artistId
+                uploading || (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
               }
               onPress={handleSend}
-              className="w-10 h-10 items-center justify-center"
+              className="items-center justify-center rounded-full p-0"
             >
-              <View className="w-9 h-9 rounded-full bg-primary items-center justify-center">
-                <SVGIcons.Send className="w-5 h-5" />
-              </View>
+              {uploading ? (
+                <ActivityIndicator size="small" color="#DC2626" />
+              ) : (
+                <SVGIcons.Send width={s(36)} height={s(36)} />
+              )}
             </TouchableOpacity>
           </View>
         </View>

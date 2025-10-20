@@ -132,6 +132,12 @@ import Profile from "@/assets/icons/profile.svg";
 import Seen from "@/assets/icons/seen.svg";
 // @ts-ignore
 import Unseen from "@/assets/icons/unseen.svg";
+// @ts-ignore
+import Menu from "@/assets/icons/menu.svg";
+// @ts-ignore
+import CircleMenu from "@/assets/icons/circle-menu.svg";
+// @ts-ignore
+import CircleChevronRIght from "@/assets/icons/circle-chevron-right.svg";
 
 export const SVGIcons = {
   Close,
@@ -200,7 +206,10 @@ export const SVGIcons = {
   Inbox,
   Profile,
   Seen,
-  Unseen
+  Unseen,
+  Menu,
+  CircleMenu,
+  CircleChevronRIght
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

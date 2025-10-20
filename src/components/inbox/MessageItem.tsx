@@ -1,11 +1,9 @@
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import React from "react";
-import { Image, Text, View } from "react-native";
-import {
-  formatDividerLabel,
-  isIntakeMessage,
-  shouldShowDivider,
-} from "../../utils/utils";
+import { ms, mvs, s } from "@/utils/scale";
+import React, { useEffect, useRef } from "react";
+import { Animated, Image, View } from "react-native";
+import { isIntakeMessage } from "../../utils/utils";
 
 type Props = {
   item: any;
@@ -22,104 +20,182 @@ export default function MessageItem({
   currentUserId,
   peerAvatar,
 }: Props) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
   const isMine = item.senderId === currentUserId;
   const prev = index > 0 ? messages[index - 1] : null;
-  const showDivider = shouldShowDivider(
-    prev?.createdAt,
-    item?.createdAt,
-    index
-  );
   const showAvatar =
     !isMine && (index === 0 || (prev && prev.senderId === currentUserId));
 
-  // Intake messages should use same UI as normal messages; we'll only center text if truly system-only without bubble
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const renderBubble = () => {
     if (item.mediaUrl) {
-      {console.log("item.mediaUrl", item)}
       return (
         <View
-          className="rounded-2xl overflow-hidden border border-foreground/10 "
-          style={{ maxWidth: "80%" }}
+          className="rounded-2xl overflow-hidden"
+          style={{
+            maxWidth: "75%",
+            borderRadius: s(16),
+          }}
         >
           <Image
             source={{ uri: item.mediaUrl }}
             resizeMode="cover"
-            className="w-full h-fit aspect-square"
+            style={{
+              width: s(280),
+              height: s(280),
+            }}
           />
         </View>
       );
     }
+    
     return (
       <View
-        className={`${isMine ? "bg-primary" : "bg-gray-foreground"} px-5 py-4 rounded-2xl max-w-[82%]`}
+        style={{
+          backgroundColor: isMine ? "#5C1F1F" : "#404040",
+          paddingHorizontal: s(20),
+          paddingVertical: mvs(16),
+          borderRadius: s(20),
+          maxWidth: "75%",
+        }}
+        className="w-full"
       >
-        <Text className={`${isMine ? "text-white" : "text-foreground"}`}>
+        <ScaledText
+          variant="md"
+          style={{
+            color: "#FFFFFF",
+            fontSize: ms(15),
+            lineHeight: mvs(22),
+            flexWrap: "wrap",
+          }}
+          className="w-full"
+        >
           {item.content}
-        </Text>
+        </ScaledText>
       </View>
     );
   };
 
-  // If a strict system message with no media and no content for bubble, center it
   const isStrictSystem =
     isIntakeMessage(item) && !item.mediaUrl && !item.contentBubble;
 
-
   return (
-    <View className="px-4">
-      {showDivider && (
-        <View className="items-center my-2">
-          <Text className="text-foreground/70 text-[12px]">
-            {formatDividerLabel(item.createdAt)}
-          </Text>
-        </View>
-      )}
+    <View
+      style={{
+        marginVertical: mvs(6),
+      }}
+    >
       {isStrictSystem ? (
-        <View
-          className={`px-4 my-2 w-full ${isMine ? "items-end" : "items-start"}`}
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+            flexDirection: "row",
+            justifyContent: isMine ? "flex-end" : "flex-start",
+            paddingHorizontal: s(16),
+          }}
         >
           {renderBubble()}
-          {!!item.createdAt && (
-            <Text className="text-foreground/70 text-[12px] mt-2">
-              {new Date(item.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-          )}
-        </View>
+        </Animated.View>
       ) : (
-        <View
-          className={`px-4 my-2 w-full ${isMine ? "items-end" : "items-start"}`}
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          }}
         >
-          {renderBubble()}
-          {!!item.createdAt && (
-            <View className="flex-row items-center gap-1 mt-2">
-              <Text className="text-foreground/70 text-[12px]">
-                {new Date(item.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-              {/* Only show read/unread icon for messages sent by current user */}
-              {isMine && (
-                <View className="w-3 h-3">
-                  {item.receiptStatus === 'READ' ? (
-                    <SVGIcons.Seen className="w-3 h-3" />
-                  ) : (
-                    <SVGIcons.Unseen className="w-3 h-3" />
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: isMine ? "flex-end" : "flex-start",
+              paddingHorizontal: s(16),
+              alignItems: "flex-end",
+            }}
+          >
+            {/* Avatar for received messages */}
+            {!isMine && showAvatar && (
+              <Image
+                source={{ uri: peerAvatar || "https://via.placeholder.com/36" }}
+                style={{
+                  width: s(36),
+                  height: s(36),
+                  borderRadius: s(18),
+                  marginRight: s(8),
+                }}
+              />
+            )}
+            {!isMine && !showAvatar && (
+              <View style={{ width: s(44) }} />
+            )}
+
+            <View
+              style={{
+                maxWidth: "75%",
+              }}
+            >
+              {renderBubble()}
+              
+              {/* Timestamp */}
+              {!!item.createdAt && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: mvs(6),
+                    gap: s(4),
+                    alignSelf: isMine ? "flex-end" : "flex-start",
+                  }}
+                >
+                  <ScaledText
+                    variant="sm"
+                    style={{
+                      color: "#9CA3AF",
+                      fontSize: ms(12),
+                    }}
+                  >
+                    {new Date(item.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </ScaledText>
+                  
+                  {/* Read receipts for sent messages */}
+                  {isMine && (
+                    <View
+                      style={{
+                        width: s(12),
+                        height: s(12),
+                      }}
+                    >
+                      {item.receiptStatus === "READ" ? (
+                        <SVGIcons.Seen width={s(12)} height={s(12)} />
+                      ) : (
+                        <SVGIcons.Unseen width={s(12)} height={s(12)} />
+                      )}
+                    </View>
                   )}
                 </View>
               )}
             </View>
-          )}
-        </View>
-      )}
-      {!isMine && showAvatar && !!peerAvatar && (
-        <Image
-          source={{ uri: peerAvatar }}
-          className="w-6 h-6 rounded-full ml-3 -mt-2"
-        />
+          </View>
+        </Animated.View>
       )}
     </View>
   );
