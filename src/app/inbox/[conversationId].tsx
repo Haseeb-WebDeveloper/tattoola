@@ -9,13 +9,13 @@ import { useChatThreadStore } from "@/stores/chatThreadStore";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import * as DocumentPicker from "expo-document-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
   View,
@@ -61,7 +61,7 @@ export default function ChatThreadScreen() {
   }, [rawMessages]);
 
   const insets = useSafeAreaInsets();
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const prevMessageCountRef = useRef<number>(0);
 
   useEffect(() => {
     if (!conversationId || !user?.id) return;
@@ -112,65 +112,112 @@ export default function ChatThreadScreen() {
     return () => clearTimeout(timer);
   }, [conversationId, user?.id, messages.length]);
 
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    // Check if we have a new message (message count increased)
+    const hasNewMessage = messages.length > prevMessageCountRef.current;
+
+    if (hasNewMessage && prevMessageCountRef.current > 0) {
+      // Auto-scroll to newest message (bottom of chat)
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          try {
+            listRef.current?.scrollToIndex({ index: 0, animated: true });
+          } catch {
+            listRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }
+        }, 100);
+      });
+    }
+
+    // Update the ref with current message count
+    prevMessageCountRef.current = messages.length;
+  }, [messages.length]);
+
   const handleSend = async () => {
     if ((!text.trim() && !selectedFile) || !conversationId || !user?.id) return;
-    
-    setUploading(true);
+
+    const hasFile = !!selectedFile;
+    if (hasFile) {
+      setUploading(true);
+    }
+
     try {
       let mediaUrl = undefined;
-      
+
       // Upload file first if selected
       if (selectedFile) {
         const uploadResult = await cloudinaryService.uploadFile(selectedFile, {
-          folder: 'tattoola/chat',
-          resourceType: 'auto', // Auto-detect file type
+          folder: "tattoola/chat",
+          resourceType: "auto", // Auto-detect file type
         });
         mediaUrl = uploadResult.secureUrl;
       }
-      
+
+      const messageType = selectedFile
+        ? selectedFile.mimeType?.startsWith("image/")
+          ? "IMAGE"
+          : "FILE"
+        : "TEXT";
+      const messageText = text.trim() || undefined;
+
       setText("");
       setSelectedFile(null);
-      
+
       await optimisticSend({
         conversationId,
         senderId: user.id,
-        type: selectedFile ? (selectedFile.mimeType?.startsWith('image/') ? 'IMAGE' : 'FILE') : 'TEXT',
-        text: text.trim() || undefined,
+        type: messageType,
+        text: messageText,
         mediaUrl,
       });
-     
-      // Inverted list: scroll to index 0 for newest message
-      listRef.current?.scrollToOffset({ offset: 0, animated: true })
+
+      // Inverted list: scroll to index 0 for newest message (bottom of chat)
+      // Use requestAnimationFrame + setTimeout to ensure FlatList has rendered
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          try {
+            listRef.current?.scrollToIndex({ index: 0, animated: true });
+          } catch {
+            // Fallback to scrollToOffset if scrollToIndex fails
+            listRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }
+        }, 100);
+      });
     } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
+      console.error("Error sending message:", error);
+      alert("Failed to send message. Please try again.");
     } finally {
-      setUploading(false);
+      if (hasFile) {
+        setUploading(false);
+      }
     }
   };
 
   const handlePickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
+        type: "*/*",
         copyToCacheDirectory: true,
       });
-      
+
       if (result.canceled) return;
-      
+
       const file = result.assets[0];
-      
+
       // Check file size (100MB limit)
       const maxSize = 100 * 1024 * 1024; // 100MB in bytes
       if (file.size && file.size > maxSize) {
-        alert('File size exceeds 100MB limit. Please choose a smaller file.');
+        alert("File size exceeds 100MB limit. Please choose a smaller file.");
         return;
       }
-      
+
       setSelectedFile(file);
     } catch (error) {
-      console.error('Error picking file:', error);
-      alert('Failed to pick file. Please try again.');
+      console.error("Error picking file:", error);
+      alert("Failed to pick file. Please try again.");
     }
   };
 
@@ -185,7 +232,12 @@ export default function ChatThreadScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#1F2124" }}>
+    <LinearGradient
+      colors={["#000000", "#0F0202"]}
+      start={{ x: 0.4, y: 0 }}
+      end={{ x: 0.6, y: 1 }}
+      className="flex-1"
+    >
       {/* Header - avatar + name + actions */}
       <View
         className="bg-tat-darkMaroon border-gray"
@@ -195,7 +247,6 @@ export default function ChatThreadScreen() {
           paddingBottom: mvs(16),
           borderBottomWidth: mvs(0.5),
         }}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
@@ -211,7 +262,9 @@ export default function ChatThreadScreen() {
             }}
           >
             <Image
-              source={{ uri: peer?.avatar || "https://via.placeholder.com/36" }}
+              source={{
+                uri: peer?.avatar || "https://via.placeholder.com/36",
+              }}
               className="rounded-full"
               style={{
                 width: s(36),
@@ -231,11 +284,7 @@ export default function ChatThreadScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
-      >
+      <View style={{ flex: 1 }}>
         <FlatList
           ref={listRef}
           data={messages}
@@ -340,21 +389,21 @@ export default function ChatThreadScreen() {
         <View
           style={{
             paddingHorizontal: s(16),
-            paddingTop: mvs(12),
-            paddingBottom: Platform.OS === "ios" 
-              ? Math.max(insets?.bottom || 0, mvs(12)) 
-              : mvs(12),
-            backgroundColor: "#1F2124",
+            paddingTop: mvs(8),
+            paddingBottom:
+              Platform.OS === "ios"
+                ? Math.max(insets?.bottom || 0, mvs(8))
+                : mvs(8),
           }}
+          className="bg-tat-darkMaroon"
         >
           {/* File Preview */}
           {selectedFile && (
             <View
-              className="flex-row items-center rounded-lg border border-foreground/20 mb-2"
+              className="flex-row items-center rounded-full border border-gray/40 mb-2"
               style={{
                 paddingHorizontal: s(12),
                 paddingVertical: mvs(8),
-                backgroundColor: "#2A2A2A",
               }}
             >
               <View
@@ -391,66 +440,90 @@ export default function ChatThreadScreen() {
               </TouchableOpacity>
             </View>
           )}
-          
+
           <View
-            className="flex-row items-center rounded-full border border-foreground/20"
+            className="flex-row items-end border border-gray/40 mb-2"
             style={{
-              paddingVertical: mvs(8),
+              paddingVertical: mvs(2),
               paddingHorizontal: s(8),
+              borderRadius: s(24),
             }}
           >
             <TouchableOpacity
               onPress={handlePickFile}
-              disabled={uploading || (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)}
+              disabled={
+                uploading ||
+                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+              }
               style={{
                 marginRight: s(4),
+                paddingBottom: mvs(10),
                 opacity:
-                  uploading || (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                  uploading ||
+                  (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
                     ? 0.4
                     : 1,
               }}
             >
               <SVGIcons.Attachment width={s(20)} height={s(20)} />
             </TouchableOpacity>
-            <ScaledTextInput
-              value={text}
-              onChangeText={setText}
-              placeholder="Hello I'm looking for sketch tattoo"
-              placeholderTextColor="#A49A99"
-              className="flex-1 text-foreground"
-              containerClassName="bg-transparent"
-              containerStyle={{
-                flex: 1,
-              }}
-              style={{
-                fontSize: ms(14),
-                lineHeight: mvs(17),
-                paddingHorizontal: s(8),
-                paddingVertical: mvs(10),
-              }}
-              editable={
-                !uploading && !(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
-              }
-              onSubmitEditing={handleSend}
-              blurOnSubmit={false}
-              returnKeyType="send"
-            />
+            <View style={{ flex: 1 }}>
+              <ScaledTextInput
+                value={text}
+                onChangeText={setText}
+                placeholder="Hello I'm looking for sketch tattoo"
+                placeholderTextColor="#A49A99"
+                className="text-foreground"
+                containerClassName="bg-transparent"
+                multiline={true}
+                textAlignVertical="top"
+                containerStyle={{
+                  width: "100%",
+                }}
+                style={{
+                  fontSize: ms(14),
+                  lineHeight: mvs(20),
+                  fontWeight: "600",
+                  paddingHorizontal: s(8),
+                  paddingTop: mvs(10),
+                  paddingBottom: mvs(10),
+                  maxHeight: mvs(110),
+                  minHeight: mvs(40),
+                }}
+                editable={
+                  !uploading &&
+                  !(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                }
+                scrollEnabled={true}
+              />
+            </View>
             <TouchableOpacity
               disabled={
-                uploading || (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                uploading ||
+                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
               }
               onPress={handleSend}
-              className="items-center justify-center rounded-full p-0"
+              className="items-center justify-center rounded-full"
+              style={{
+                paddingBottom: mvs(4),
+              }}
             >
               {uploading ? (
-                <ActivityIndicator size="small" color="#DC2626" />
+                <SVGIcons.Loading
+                  width={s(20)}
+                  height={s(20)}
+                  color="animate-spin"
+                  style={{
+                    paddingBottom: mvs(4),
+                  }}
+                />
               ) : (
-                <SVGIcons.Send width={s(36)} height={s(36)} />
+                <SVGIcons.Send width={s(32)} height={s(32)} />
               )}
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </LinearGradient>
   );
 }

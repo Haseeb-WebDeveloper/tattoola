@@ -98,7 +98,7 @@ export default function InboxScreen() {
         style={{
           paddingHorizontal: s(16),
           paddingVertical: mvs(16),
-          borderBottomWidth: mvs(1),
+          borderBottomWidth: mvs(0.5),
         }}
       >
         <View className="flex-row items-center">
@@ -275,7 +275,7 @@ export default function InboxScreen() {
         }}
       >
         <View
-          className="flex-row items-center rounded-full relative"
+          className="flex-row items-center rounded-full relative bg-gray-foreground"
           style={{
             paddingHorizontal: s(12),
             paddingVertical: mvs(0),
@@ -288,7 +288,7 @@ export default function InboxScreen() {
           <ScaledTextInput
             placeholder="Search conversations..."
             placeholderTextColor="#A49A99"
-            className="text-foreground"
+            className="text-foreground w-full"
             value={query}
             onChangeText={setQuery}
             style={{
@@ -300,11 +300,10 @@ export default function InboxScreen() {
           {query.length > 0 && (
             <TouchableOpacity
               onPress={() => setQuery("")}
-              className="absolute opacity-50"
+              className="absolute opacity-50 bg-gray-foreground"
               style={{
                 right: s(12),
               }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <SVGIcons.Close width={s(14)} height={s(14)} />
             </TouchableOpacity>

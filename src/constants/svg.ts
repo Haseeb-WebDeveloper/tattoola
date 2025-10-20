@@ -138,6 +138,18 @@ import Menu from "@/assets/icons/menu.svg";
 import CircleMenu from "@/assets/icons/circle-menu.svg";
 // @ts-ignore
 import CircleChevronRIght from "@/assets/icons/circle-chevron-right.svg";
+// @ts-ignore
+import BubbleMe from "@/assets/icons/bubble-me.svg";
+// @ts-ignore
+import BubbleYou from "@/assets/icons/bubble-you.svg";
+// @ts-ignore
+import Loading from "@/assets/icons/loading.svg";
+// @ts-ignore
+import Play from "@/assets/icons/play.svg";
+// @ts-ignore
+import Docs from "@/assets/icons/docs.svg";
+// @ts-ignore
+import Audio from "@/assets/icons/audio.svg";
 
 export const SVGIcons = {
   Close,
@@ -209,7 +221,13 @@ export const SVGIcons = {
   Unseen,
   Menu,
   CircleMenu,
-  CircleChevronRIght
+  CircleChevronRIght,
+  BubbleMe,
+  BubbleYou,
+  Loading,
+  Play,
+  Docs,
+  Audio,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

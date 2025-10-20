@@ -1,7 +1,8 @@
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { FeedPost } from "@/services/post.service";
-import { getTabBarHeight, mvs, s } from "@/utils/scale";
+import { useTabBarStore } from "@/stores/tabBarStore";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { memo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
@@ -16,12 +17,12 @@ type Props = {
 function FeedPostCardComponent({ post, onPress, onLikePress }: Props) {
   const cover = post.media[0]?.mediaUrl;
   const insets = useSafeAreaInsets();
-  
-  // Calculate bottom position using tab bar height helper
-  // This ensures content is always positioned correctly above the custom tab bar
-  // accounting for safe area insets and the gradient overlay
-  const bottomPosition = getTabBarHeight(insets.bottom);
-  
+  const tabBarHeight = useTabBarStore((state) => state.tabBarHeight);
+
+  // Use measured tab bar height + safe area bottom
+  // If tab bar hasn't been measured yet, use a sensible default
+  const bottomPosition = tabBarHeight > 0 ? tabBarHeight + insets.bottom : mvs(119) + insets.bottom;
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}

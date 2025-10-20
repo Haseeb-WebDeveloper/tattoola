@@ -1,9 +1,10 @@
 import { ScaledText } from "@/components/ui/ScaledText";
-import { SVGIcons } from '@/constants/svg';
-import { useUser } from '@/providers/AuthProvider';
-import { mvs, s } from '@/utils/scale';
+import { SVGIcons } from "@/constants/svg";
+import { useUser } from "@/providers/AuthProvider";
+import { useTabBarStore } from "@/stores/tabBarStore";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from 'expo-router';
+import { router } from "expo-router";
 import React, { memo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 
@@ -24,42 +25,44 @@ const routeIconMap: Record<string, keyof typeof SVGIcons> = {
 
 // Memoized Avatar component for better performance
 // React Native's Image component has built-in caching (memory + disk cache)
-const ProfileAvatar = memo(({ avatar, isFocused }: { avatar?: string; isFocused: boolean }) => {
-  const size = s(24);
-  
-  if (avatar) {
+const ProfileAvatar = memo(
+  ({ avatar, isFocused }: { avatar?: string; isFocused: boolean }) => {
+    const size = s(24);
+
+    if (avatar) {
+      return (
+        <Image
+          source={{ uri: avatar }}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            opacity: isFocused ? 1 : 0.7,
+            borderWidth: isFocused ? 1.5 : 0,
+            borderColor: isFocused ? "#ffffff" : "transparent",
+          }}
+          resizeMode="cover"
+          fadeDuration={0} // Instant display from cache
+        />
+      );
+    }
+
+    // Fallback to Profile icon if no avatar
+    const ProfileIcon = SVGIcons.Profile;
     return (
-      <Image
-        source={{ uri: avatar }}
+      <ProfileIcon
+        width={size}
+        height={size}
+        color={isFocused ? "#ffffff" : "#A49A99"}
         style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
           opacity: isFocused ? 1 : 0.7,
-          borderWidth: isFocused ? 1.5 : 0,
-          borderColor: isFocused ? "#ffffff" : "transparent",
         }}
-        resizeMode="cover"
-        fadeDuration={0} // Instant display from cache
       />
     );
   }
-  
-  // Fallback to Profile icon if no avatar
-  const ProfileIcon = SVGIcons.Profile;
-  return (
-    <ProfileIcon
-      width={size}
-      height={size}
-      color={isFocused ? "#ffffff" : "#A49A99"}
-      style={{
-        opacity: isFocused ? 1 : 0.7,
-      }}
-    />
-  );
-});
+);
 
-ProfileAvatar.displayName = 'ProfileAvatar';
+ProfileAvatar.displayName = "ProfileAvatar";
 
 export default function CustomTabBar({
   state,
@@ -67,13 +70,14 @@ export default function CustomTabBar({
   navigation,
 }: TabBarProps) {
   const user = useUser();
+  const setTabBarHeight = useTabBarStore((state) => state.setTabBarHeight);
 
   const getIcon = (routeName: string, isFocused: boolean) => {
     // Special handling for profile tab to show user avatar
-    if (routeName === 'profile') {
+    if (routeName === "profile") {
       return <ProfileAvatar avatar={user?.avatar} isFocused={isFocused} />;
     }
-    
+
     const iconName = routeIconMap[routeName];
     const IconComponent = iconName ? SVGIcons[iconName] : null;
     if (!IconComponent) return null;
@@ -103,17 +107,28 @@ export default function CustomTabBar({
         zIndex: 100,
       }}
     >
-      <View style={{ paddingHorizontal: s(16), paddingBottom: mvs(8), paddingTop: mvs(24) }}>
-        <View className="rounded-full overflow-hidden">
+      <View
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          setTabBarHeight(height);
+        }}
+        style={{
+          paddingHorizontal: s(12),
+          paddingBottom: mvs(8),
+          paddingTop: mvs(48),
+        }}
+      >
+        <View className="rounded-full" style={{ overflow: "visible" }}>
           <LinearGradient
             colors={["#3a0000", "#000000"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             className="flex-row items-center justify-around"
-            style={{ 
+            style={{
               borderRadius: 9999,
               paddingHorizontal: s(16),
               paddingVertical: mvs(16),
+              overflow: "visible",
             }}
           >
             {state.routes.map((route: any, index: number) => {
@@ -122,15 +137,15 @@ export default function CustomTabBar({
                 options.tabBarLabel !== undefined
                   ? options.tabBarLabel
                   : options.title !== undefined
-                  ? options.title
-                  : route.name;
+                    ? options.title
+                    : route.name;
 
               const isFocused = state.index === index;
 
               const onPress = () => {
                 // Intercept Upload tab to open the upload wizard directly, without showing the tab screen
-                if (route.name === 'upload') {
-                  router.push('/upload/media');
+                if (route.name === "upload") {
+                  router.push("/upload/media");
                   return;
                 }
 
@@ -151,6 +166,35 @@ export default function CustomTabBar({
                   target: route.key,
                 });
               };
+
+              // Special styling for the Upload button
+              if (route.name === "upload") {
+                return (
+                  <TouchableOpacity
+                    key={route.key}
+                    accessibilityRole="button"
+                    accessibilityLabel={options.tabBarAccessibilityLabel}
+                    testID={options.tabBarTestID}
+                    onPress={onPress}
+                    onLongPress={onLongPress}
+                    className="items-center justify-center z-[300]"
+                    style={{
+                      width: s(56),
+                      height: s(56),
+                      borderRadius: s(28),
+                      backgroundColor: "#AE0E0E",
+                      marginTop: mvs(-32),
+                      shadowColor: "#AE0E0E",
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      elevation: 8,
+                    }}
+                  >
+                    {getIcon(route.name, true)}
+                  </TouchableOpacity>
+                );
+              }
 
               return (
                 <TouchableOpacity

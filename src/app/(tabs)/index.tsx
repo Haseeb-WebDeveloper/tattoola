@@ -88,7 +88,7 @@ export default function HomeScreen() {
       <View
         className="absolute left-0 right-0 flex-row items-center justify-between"
         style={{
-          top: Math.max(insets.top, mvs(24)),
+          top: Math.max(insets.top, mvs(16)),
           paddingHorizontal: s(20),
         }}
       >

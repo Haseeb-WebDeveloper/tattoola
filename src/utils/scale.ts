@@ -41,28 +41,3 @@ export const vh = (percentage: number) => (windowHeight * percentage) / 100;
  */
 export const vw = (percentage: number) => (windowWidth * percentage) / 100;
 
-/**
- * Calculate the total height of the custom tab bar including gradient overlay
- * This ensures consistent spacing for content positioned above the tab bar
- * @param safeAreaBottom - The bottom safe area inset from useSafeAreaInsets()
- * @returns The total height to offset content above the tab bar
- */
-export const getTabBarHeight = (safeAreaBottom: number = 0) => {
-  // Tab bar structure from CustomTabBar.tsx:
-  // - Outer padding: paddingTop mvs(24) + paddingBottom mvs(8) = mvs(32)
-  // - Inner pill padding: paddingVertical mvs(16) * 2 = mvs(32)
-  // - Icon height: s(24)
-  // - Text + margin: scaledFont(11) + mvs(4) ≈ mvs(15)
-  // - Gradient fade zone: Additional visual space ~mvs(50)
-  
-  const outerPadding = mvs(32); // paddingTop + paddingBottom
-  const innerPadding = mvs(32); // py top + bottom
-  const iconHeight = s(24); // icon size
-  const textHeight = mvs(15); // text + margin
-  const gradientFadeZone = mvs(50); // extra space for gradient transition
-  
-  // Add safe area bottom (for devices with home indicators)
-  const baseHeight = outerPadding + innerPadding + iconHeight + textHeight + gradientFadeZone;
-  return baseHeight + Math.max(safeAreaBottom, mvs(16));
-};
-
