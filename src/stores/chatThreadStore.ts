@@ -40,7 +40,19 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   async loadLatest(conversationId, userId) {
     set((s) => ({ loadingByConv: { ...s.loadingByConv, [conversationId]: true }, currentUserId: userId }));
     try {
-      const { items, nextCursor } = await fetchMessagesPage(conversationId);
+      // Fetch user's deletedAt timestamp
+      let deletedAt: string | undefined;
+      if (userId) {
+        const { data: cuData } = await supabase
+          .from("conversation_users")
+          .select("deletedAt")
+          .eq("conversationId", conversationId)
+          .eq("userId", userId)
+          .maybeSingle();
+        deletedAt = cuData?.deletedAt || undefined;
+      }
+      
+      const { items, nextCursor } = await fetchMessagesPage(conversationId, undefined, deletedAt);
       // Database returns newest first, reverse to get oldest first for display
       const list = (items || []).slice().reverse();
       
@@ -87,7 +99,20 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   async loadOlder(conversationId, userId) {
     const cursor = get().cursors[conversationId];
     if (!cursor) return;
-    const { items, nextCursor } = await fetchMessagesPage(conversationId, cursor);
+    
+    // Fetch user's deletedAt timestamp
+    let deletedAt: string | undefined;
+    if (userId) {
+      const { data: cuData } = await supabase
+        .from("conversation_users")
+        .select("deletedAt")
+        .eq("conversationId", conversationId)
+        .eq("userId", userId)
+        .maybeSingle();
+      deletedAt = cuData?.deletedAt || undefined;
+    }
+    
+    const { items, nextCursor } = await fetchMessagesPage(conversationId, cursor, deletedAt);
     const older = (items || []).slice().reverse();
     
     console.log(`📥 Loading ${older.length} older messages`);
@@ -124,7 +149,7 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       });
       
       return {
-        messagesByConv: { ...s.messagesByConv, [conversationId]: [...existing, ...newMessages] },
+        messagesByConv: { ...s.messagesByConv, [conversationId]: [...newMessages, ...existing] },
         cursors: { ...s.cursors, [conversationId]: nextCursor },
         seenMessageIds: { ...s.seenMessageIds, [conversationId]: seen },
       };
@@ -224,6 +249,29 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
         }
         
         console.log("✅ Adding new message from realtime:", row.id);
+        
+        // Clear deletedAt if user has deleted this conversation (conversation reappears)
+        const clearDeletedAt = async () => {
+          if (userId) {
+            const { data: cuData } = await supabase
+              .from("conversation_users")
+              .select("deletedAt")
+              .eq("conversationId", conversationId)
+              .eq("userId", userId)
+              .maybeSingle();
+            
+            if (cuData?.deletedAt) {
+              console.log("🔄 Clearing deletedAt - conversation reappearing");
+              await supabase
+                .from("conversation_users")
+                .update({ deletedAt: null })
+                .eq("conversationId", conversationId)
+                .eq("userId", userId);
+            }
+          }
+        };
+        clearDeletedAt().catch(console.error);
+        
         set((s) => {
           const nextSeen = { ...s.seenMessageIds[conversationId] || {}, [row.id]: true };
           const messages = s.messagesByConv[conversationId] || [];

@@ -35,7 +35,13 @@ CREATE TYPE "public"."ConversationRole" AS ENUM ('ARTIST', 'LOVER');
 CREATE TYPE "public"."ReceiptStatus" AS ENUM ('DELIVERED', 'READ');
 
 -- CreateEnum
-CREATE TYPE "public"."NotificationType" AS ENUM ('FOLLOW', 'LIKE', 'COMMENT', 'MESSAGE', 'CONNECTION_REQUEST', 'SUBSCRIPTION_EXPIRY', 'STUDIO_INVITATION', 'SYSTEM');
+CREATE TYPE "public"."NotificationType" AS ENUM ('FOLLOW', 'LIKE', 'COMMENT', 'MESSAGE', 'CONNECTION_REQUEST', 'SUBSCRIPTION_EXPIRY', 'STUDIO_INVITATION', 'SYSTEM', 'REPORT_RECEIVED', 'REPORT_REVIEWED', 'BLOCKED');
+
+-- CreateEnum
+CREATE TYPE "public"."ReportType" AS ENUM ('USER', 'CONVERSATION', 'POST', 'COMMENT');
+
+-- CreateEnum
+CREATE TYPE "public"."ReportStatus" AS ENUM ('PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED', 'DISMISSED');
 
 -- CreateEnum
 CREATE TYPE "public"."WorkArrangement" AS ENUM ('STUDIO_OWNER', 'STUDIO_EMPLOYEE', 'FREELANCE');
@@ -378,6 +384,8 @@ CREATE TABLE "public"."conversation_users" (
     "unreadCount" INTEGER NOT NULL DEFAULT 0,
     "canSend" BOOLEAN NOT NULL DEFAULT false,
     "isMuted" BOOLEAN NOT NULL DEFAULT false,
+    "deletedAt" TIMESTAMP(3),
+    "isHidden" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "conversation_users_pkey" PRIMARY KEY ("id")
 );
@@ -617,6 +625,34 @@ CREATE TABLE "public"."notifications" (
     CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."reports" (
+    "id" TEXT NOT NULL,
+    "reporterId" TEXT NOT NULL,
+    "reportedUserId" TEXT NOT NULL,
+    "conversationId" TEXT,
+    "reportType" "public"."ReportType" NOT NULL DEFAULT 'USER',
+    "reason" TEXT NOT NULL,
+    "status" "public"."ReportStatus" NOT NULL DEFAULT 'PENDING',
+    "reviewedBy" TEXT,
+    "reviewNotes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "reviewedAt" TIMESTAMP(3),
+
+    CONSTRAINT "reports_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."blocked_users" (
+    "id" TEXT NOT NULL,
+    "blockerId" TEXT NOT NULL,
+    "blockedId" TEXT NOT NULL,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "blocked_users_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 
@@ -846,6 +882,9 @@ CREATE INDEX "conversation_users_conversationId_idx" ON "public"."conversation_u
 CREATE INDEX "conversation_users_userId_idx" ON "public"."conversation_users"("userId");
 
 -- CreateIndex
+CREATE INDEX "conversation_users_deletedAt_idx" ON "public"."conversation_users"("deletedAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "conversation_users_conversationId_userId_key" ON "public"."conversation_users"("conversationId", "userId");
 
 -- CreateIndex
@@ -1012,6 +1051,27 @@ CREATE INDEX "notifications_isRead_idx" ON "public"."notifications"("isRead");
 
 -- CreateIndex
 CREATE INDEX "notifications_createdAt_idx" ON "public"."notifications"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "reports_reporterId_idx" ON "public"."reports"("reporterId");
+
+-- CreateIndex
+CREATE INDEX "reports_reportedUserId_idx" ON "public"."reports"("reportedUserId");
+
+-- CreateIndex
+CREATE INDEX "reports_status_idx" ON "public"."reports"("status");
+
+-- CreateIndex
+CREATE INDEX "reports_createdAt_idx" ON "public"."reports"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "blocked_users_blockerId_idx" ON "public"."blocked_users"("blockerId");
+
+-- CreateIndex
+CREATE INDEX "blocked_users_blockedId_idx" ON "public"."blocked_users"("blockedId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "blocked_users_blockerId_blockedId_key" ON "public"."blocked_users"("blockerId", "blockedId");
 
 -- AddForeignKey
 ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_mainStyleId_fkey" FOREIGN KEY ("mainStyleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1210,4 +1270,22 @@ ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_receiverId_fk
 
 -- AddForeignKey
 ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."reports" ADD CONSTRAINT "reports_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."reports" ADD CONSTRAINT "reports_reportedUserId_fkey" FOREIGN KEY ("reportedUserId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."reports" ADD CONSTRAINT "reports_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."conversations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."reports" ADD CONSTRAINT "reports_reviewedBy_fkey" FOREIGN KEY ("reviewedBy") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."blocked_users" ADD CONSTRAINT "blocked_users_blockerId_fkey" FOREIGN KEY ("blockerId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."blocked_users" ADD CONSTRAINT "blocked_users_blockedId_fkey" FOREIGN KEY ("blockedId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

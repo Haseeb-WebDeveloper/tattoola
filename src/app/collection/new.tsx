@@ -12,7 +12,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Dimensions,
   Image,
   Modal,
@@ -27,6 +26,7 @@ import DraggableFlatList, {
   ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 const GAP = 8;
@@ -106,30 +106,13 @@ export default function NewCollectionScreen() {
       setSelectedPostIds(new Set());
       setSelectModalVisible(false);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to add posts to collection");
+      toast.error(err.message || "Failed to add posts to collection");
     }
   };
 
   const handleDeletePost = (postId: string, caption?: string) => {
-    Alert.alert(
-      "Delete Post",
-      `Are you sure you want to remove "${caption || "this post"}" from the collection?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (!collectionId) return;
-              await removePostFromCollection(collectionId, postId);
-              setPosts((prev) => prev.filter((p) => p.id !== postId));
-            } catch (err: any) {
-              Alert.alert("Error", err.message || "Failed to remove post");
-            }
-          },
-        },
-      ]
+    toast.warning(
+      `Are you sure you want to remove "${caption || "this post"}" from the collection?`
     );
   };
 
@@ -163,7 +146,7 @@ export default function NewCollectionScreen() {
       await updateCollectionName(collectionId, newName);
     } catch (e: any) {
       setName(previousNameRef.current);
-      Alert.alert("Error", e?.message || "Failed to update collection name");
+      toast.error(e?.message || "Failed to update collection name");
     }
   };
 

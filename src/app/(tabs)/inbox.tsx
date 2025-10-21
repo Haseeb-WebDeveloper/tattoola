@@ -111,7 +111,7 @@ export default function InboxScreen() {
           >
             <Image
               source={{
-                uri: item.peerAvatar || "https://via.placeholder.com/40",
+                uri: item.peerAvatar || `https://api.dicebear.com/7.x/initials/png?seed=${item.peerName?.split(" ")[0]}`,
               }}
               className="rounded-full"
               style={{
@@ -222,10 +222,10 @@ export default function InboxScreen() {
           paddingHorizontal: s(24),
         }}
       >
-        <ScaledText variant="lg" className="text-foreground/70 text-center">
+        <ScaledText variant="md" className="text-gray text-center font-montserratMedium">
           {hasSearchQuery
             ? `No conversations found for "${debouncedQuery.trim()}"`
-            : "No conversations yet"}
+            : "No conversations yet.\nSend a request to get started!"}
         </ScaledText>
         {hasSearchQuery && (
           <ScaledText

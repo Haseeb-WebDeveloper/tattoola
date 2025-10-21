@@ -1,8 +1,11 @@
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
+import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import { Text, TouchableOpacity, View, Pressable } from "react-native";
-import { SVGIcons } from "@/constants/svg";
+import { Pressable, ScrollView, View } from "react-native";
 
 const options = [
   { key: "credit_card", label: "Le dimensioni di una carta di credito  💳" },
@@ -25,57 +28,71 @@ export default function SizeStep() {
   // User can only select one size. When a Pressable is pressed, only that one will be selected.
   return (
     <View className="flex-1 bg-background">
-      <View className="px-4">
-        <Text className="text-foreground tat-body-2-med text-center mt-2 mb-6 px-4">
-          Approximately what size would you like the tattoo to be?
-        </Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <View style={{ paddingHorizontal: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-foreground text-center font-montserratMedium"
+            style={{
+              marginTop: mvs(8),
+              marginBottom: mvs(24),
+              paddingHorizontal: s(16),
+            }}
+          >
+            Approximately what size would you like the tattoo to be?
+          </ScaledText>
 
-        <View className="gap-4">
-          {options.map((opt) => {
-            const isSelected = size === opt.key;
-            return (
-              <Pressable
-                key={opt.key}
-                className={`flex-row items-center px-2 py-4 border-gray/20 bg-gray-foreground border rounded-xl`}
-                onPress={() => setSize(opt.key as any)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-              >
-                <View className="w-10 items-center">
-                  {isSelected ? (
-                    <SVGIcons.CircleCheckedCheckbox className="w-5 h-5" />
-                  ) : (
-                    <SVGIcons.CircleUncheckedCheckbox className="w-5 h-5" />
-                  )}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-foreground tat-body-1 font-neueBold">
-                    {opt.label}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
+          <View style={{ gap: s(16) }}>
+            {options.map((opt) => {
+              const isSelected = size === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  className="flex-row items-center border-gray/20 bg-gray-foreground border rounded-xl"
+                  style={{ paddingHorizontal: s(8), paddingVertical: mvs(16) }}
+                  onPress={() => setSize(opt.key as any)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  <View className="items-center" style={{ width: s(40) }}>
+                    {isSelected ? (
+                      <SVGIcons.CircleCheckedCheckbox
+                        width={s(20)}
+                        height={s(20)}
+                      />
+                    ) : (
+                      <SVGIcons.CircleUncheckedCheckbox
+                        width={s(20)}
+                        height={s(20)}
+                      />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-montserratMedium"
+                    >
+                      {opt.label}
+                    </ScaledText>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
 
-      <View className="flex-row items-center justify-between px-4 py-4 mt-auto">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={!size}
-          onPress={() =>
-            router.push(("/user/" + id + "/request/references") as any)
-          }
-          className={`rounded-full px-8 py-4 ${size ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+        <NextBackFooter
+          onBack={() => router.back()}
+          onNext={() => router.push(`/user/${id}/request/references`)}
+          nextLabel="Next"
+          backLabel="Back"
+        />
+      </ScrollView>
     </View>
   );
 }

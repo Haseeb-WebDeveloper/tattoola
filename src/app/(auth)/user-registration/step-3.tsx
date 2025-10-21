@@ -4,7 +4,7 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useUserRegistrationStore } from "@/stores";
+import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import type { FormErrors, UserV2Step3 } from "@/types/auth";
 import { normalizeItalianPhone } from "@/utils/normalize-italian-phone";
 import { mvs, s } from "@/utils/scale";
@@ -20,8 +20,8 @@ function formatItalianPhoneForInput(phone: string): string {
 }
 
 export default function UserRegistrationStep3() {
-  const { step3, updateStep, setErrors, clearErrors, setCurrentStep } =
-    useUserRegistrationStore();
+  const { step3, updateStep3, setErrors, clearErrors, setCurrentStepDisplay } =
+    useUserRegistrationV2Store();
 
   const [formData, setFormData] = useState<UserV2Step3>({
     firstName: "",
@@ -73,11 +73,11 @@ export default function UserRegistrationStep3() {
     }
 
     // Save always with normalized phone number
-    updateStep("step3", {
+    updateStep3({
       ...formData,
       phone: normalizeItalianPhone(formData.phone),
     });
-    setCurrentStep(3);
+    setCurrentStepDisplay(3);
     router.push("/(auth)/user-registration/step-4");
   };
 

@@ -1,8 +1,12 @@
+import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
+import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 
 export default function DescriptionStep() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,38 +24,44 @@ export default function DescriptionStep() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-4">
-          <Text className="text-foreground tat-body-2-med text-center mt-2 mb-6 px-4">
+        <View style={{ paddingHorizontal: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-foreground text-center font-montserratMedium"
+            style={{
+              marginTop: mvs(8),
+              marginBottom: mvs(24),
+              paddingHorizontal: s(16),
+            }}
+          >
             Describe your tattoo design in brief
-          </Text>
-          <TextInput
+          </ScaledText>
+          <ScaledTextInput
+            containerClassName="rounded-2xl border border-gray text-foreground"
+            style={{
+              minHeight: mvs(180),
+              textAlignVertical: "top",
+              paddingHorizontal: s(16),
+              paddingVertical: mvs(12),
+              color: "#FFFFFF",
+            }}
             value={description}
             onChangeText={setDescription}
             placeholder="Describe your tattoo design in brief"
-            placeholderTextColor="#A49A99"
+            placeholderTextColor="#6B7280"
             multiline
             numberOfLines={6}
-            className="text-foreground rounded-2xl border border-foreground/40 px-4 py-3"
-            style={{ minHeight: 180, textAlignVertical: "top" }}
           />
         </View>
       </KeyboardAwareScrollView>
 
-      <View className="flex-row items-center justify-between px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={!description.trim()}
-          onPress={() => router.push(`/user/${id}/request/age` as any)}
-          className={`rounded-full px-8 py-4 ${description.trim() ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onBack={() => router.back()}
+        onNext={() => router.push(`/user/${id}/request/age`)}
+        nextLabel="Next"
+        backLabel="Back"
+      />
     </View>
   );
 }

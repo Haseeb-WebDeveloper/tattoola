@@ -2,8 +2,9 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAuth } from "@/providers/AuthProvider";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 export default function VerifyEmailScreen() {
   const { verifyEmail } = useAuth();
@@ -64,24 +65,16 @@ export default function VerifyEmailScreen() {
 
       // If we get here, verification was successful
       console.log(
-        "🎉 VerifyEmailScreen.handleEmailVerification: Showing success alert"
+        "🎉 VerifyEmailScreen.handleEmailVerification: Showing success toast"
       );
-      Alert.alert(
-        "Email Verified!",
-        "Your email has been successfully verified. You can now complete your profile.",
-        [
-          {
-            text: "Continue",
-            onPress: () => {
-              console.log(
-                "📧 VerifyEmailScreen.handleEmailVerification: Navigating to email confirmation"
-              );
-              // The AuthProvider will handle the redirect based on user role
-              router.replace("/(auth)/email-confirmation");
-            },
-          },
-        ]
-      );
+      toast.success("Your email has been successfully verified. You can now complete your profile.");
+      setTimeout(() => {
+        console.log(
+          "📧 VerifyEmailScreen.handleEmailVerification: Navigating to email confirmation"
+        );
+        // The AuthProvider will handle the redirect based on user role
+        router.replace("/(auth)/email-confirmation");
+      }, 1000);
     } catch (err) {
       console.error(
         "❌ VerifyEmailScreen.handleEmailVerification: Verification failed",
@@ -90,17 +83,13 @@ export default function VerifyEmailScreen() {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to verify email";
       setError(errorMessage);
-      Alert.alert("Verification Failed", errorMessage, [
-        {
-          text: "Try Again",
-          onPress: () => {
-            console.log(
-              "🔄 VerifyEmailScreen.handleEmailVerification: Navigating to login"
-            );
-            router.replace("/(auth)/login");
-          },
-        },
-      ]);
+      toast.error(errorMessage);
+      setTimeout(() => {
+        console.log(
+          "🔄 VerifyEmailScreen.handleEmailVerification: Navigating to login"
+        );
+        router.replace("/(auth)/login");
+      }, 1000);
     } finally {
       console.log(
         "🏁 VerifyEmailScreen.handleEmailVerification: Setting loading to false"

@@ -4,7 +4,7 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useUserRegistrationStore } from "@/stores";
+import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import type { FormErrors, UserV2Step5 } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
@@ -13,8 +13,8 @@ import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function UserRegistrationStep5() {
-  const { step5, updateStep, setErrors, clearErrors, setCurrentStep } =
-    useUserRegistrationStore();
+  const { step5, updateStep5, setErrors, clearErrors, setCurrentStepDisplay } =
+    useUserRegistrationV2Store();
   const [formData, setFormData] = useState<UserV2Step5>({
     instagram: undefined,
     tiktok: undefined,
@@ -29,14 +29,14 @@ export default function UserRegistrationStep5() {
   }, [step5]);
 
   const handleSkip = () => {
-    updateStep("step5", formData);
-    setCurrentStep(6);
+    updateStep5(formData);
+    setCurrentStepDisplay(5);
     router.push("/(auth)/user-registration/step-6");
   };
 
   const handleNext = () => {
-    updateStep("step5", formData);
-    setCurrentStep(6);
+    updateStep5(formData);
+    setCurrentStepDisplay(5);
     router.push("/(auth)/user-registration/step-6");
   };
 

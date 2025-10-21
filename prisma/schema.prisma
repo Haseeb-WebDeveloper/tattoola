@@ -56,6 +56,11 @@ model User {
   conversationsAsLover  Conversation[]      @relation("ConversationLover")
   messageReceipts       MessageReceipt[]
   createdIntakes        ConversationIntake[]
+  reportsSubmitted      Report[]            @relation("UserReports")
+  reportsReceived       Report[]            @relation("UserReported")
+  reviewedReports       Report[]            @relation("AdminReviews")
+  blocking              BlockedUser[]       @relation("UserBlocking")
+  blockedBy             BlockedUser[]       @relation("UserBlocked")
 
   @@index([email])
   @@index([username])
@@ -456,6 +461,7 @@ model Conversation {
   artist       User?              @relation("ConversationArtist", fields: [artistId], references: [id])
   lover        User?              @relation("ConversationLover", fields: [loverId], references: [id])
   intake       ConversationIntake?
+  reports      Report[]
 
   @@unique([artistId, loverId])
   @@index([status])
@@ -473,12 +479,15 @@ model ConversationUser {
   unreadCount    Int          @default(0)
   canSend        Boolean      @default(false)
   isMuted        Boolean      @default(false)
+  deletedAt      DateTime?
+  isHidden       Boolean      @default(false)
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
   @@index([conversationId])
   @@index([userId])
+  @@index([deletedAt])
   @@map("conversation_users")
 }
 
@@ -791,6 +800,45 @@ model Notification {
   @@map("notifications")
 }
 
+model Report {
+  id              String       @id @default(uuid())
+  reporterId      String
+  reportedUserId  String
+  conversationId  String?
+  reportType      ReportType   @default(USER)
+  reason          String
+  status          ReportStatus @default(PENDING)
+  reviewedBy      String?
+  reviewNotes     String?
+  createdAt       DateTime     @default(now())
+  reviewedAt      DateTime?
+  reporter        User         @relation("UserReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser    User         @relation("UserReported", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  conversation    Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  reviewer        User?        @relation("AdminReviews", fields: [reviewedBy], references: [id])
+
+  @@index([reporterId])
+  @@index([reportedUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+model BlockedUser {
+  id           String   @id @default(uuid())
+  blockerId    String
+  blockedId    String
+  reason       String?
+  createdAt    DateTime @default(now())
+  blocker      User     @relation("UserBlocking", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked      User     @relation("UserBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("blocked_users")
+}
+
 enum UserRole {
   ADMIN
   ARTIST
@@ -870,6 +918,24 @@ enum NotificationType {
   SUBSCRIPTION_EXPIRY
   STUDIO_INVITATION
   SYSTEM
+  REPORT_RECEIVED
+  REPORT_REVIEWED
+  BLOCKED
+}
+
+enum ReportType {
+  USER
+  CONVERSATION
+  POST
+  COMMENT
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+  DISMISSED
 }
 
 enum WorkArrangement {

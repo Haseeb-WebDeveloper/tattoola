@@ -9,7 +9,6 @@ import { ResetPasswordValidationSchema, ValidationUtils } from '@/utils/validati
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -18,6 +17,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { toast } from "sonner-native";
 
 export default function ResetPasswordScreen() {
   const { resetPassword, loading } = useAuth();
@@ -67,11 +67,10 @@ export default function ResetPasswordScreen() {
     }
 
     if (!token) {
-      Alert.alert(
-        'Invalid Link',
-        'This password reset link is invalid or has expired. Please request a new one.',
-        [{ text: 'OK', onPress: () => router.push('/(auth)/forgot-password') }]
-      );
+      toast.error('This password reset link is invalid or has expired. Please request a new one.');
+      setTimeout(() => {
+        router.push('/(auth)/forgot-password');
+      }, 1000);
       return;
     }
 
@@ -79,11 +78,7 @@ export default function ResetPasswordScreen() {
       await resetPassword(formData);
       setPasswordReset(true);
     } catch (error) {
-      Alert.alert(
-        'Reset Failed',
-        error instanceof Error ? error.message : 'Failed to reset password',
-        [{ text: 'OK' }]
-      );
+      toast.error(error instanceof Error ? error.message : 'Failed to reset password');
     }
   };
 

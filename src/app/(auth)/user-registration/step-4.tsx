@@ -4,7 +4,7 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useUserRegistrationStore } from "@/stores";
+import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import type { FormErrors, UserV2Step4 } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -23,8 +23,8 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function UserRegistrationStep4() {
-  const { step2, updateStep, setErrors, clearErrors, setCurrentStep } =
-    useUserRegistrationStore();
+  const { step4, updateStep4, setErrors, clearErrors, setCurrentStepDisplay } =
+    useUserRegistrationV2Store();
   const insets = useSafeAreaInsets();
 
   const [formData, setFormData] = useState<UserV2Step4>({
@@ -48,10 +48,10 @@ export default function UserRegistrationStep4() {
 
   // Load existing data if available
   useEffect(() => {
-    if (step2 && Object.keys(step2).length > 0) {
-      setFormData(step2 as UserV2Step4);
+    if (step4 && Object.keys(step4).length > 0) {
+      setFormData(step4 as UserV2Step4);
     }
-  }, [step2]);
+  }, [step4]);
 
   // Load provinces on mount (for modal selections)
   useEffect(() => {
@@ -131,8 +131,8 @@ export default function UserRegistrationStep4() {
     }
 
     // Store data in Zustand store
-    updateStep("step4", formData);
-    setCurrentStep(3);
+    updateStep4(formData);
+    setCurrentStepDisplay(4);
     router.push("/(auth)/user-registration/step-5");
   };
 

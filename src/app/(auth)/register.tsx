@@ -10,9 +10,10 @@ import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 export default function RegisterScreen() {
   const { signUp, loading } = useAuth();
@@ -94,7 +95,7 @@ export default function RegisterScreen() {
       const message = error?.message || "An error occurred during registration";
       setError(message);
       router.replace("/(auth)/register");
-      Alert.alert("Registration Failed", message, [{ text: "OK" }]);
+      toast.error(message);
     }
   };
 

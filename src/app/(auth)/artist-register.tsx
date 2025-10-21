@@ -10,9 +10,10 @@ import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 export default function ArtistRegisterScreen() {
   const { signUp, loading } = useAuth();
@@ -98,7 +99,7 @@ export default function ArtistRegisterScreen() {
       setError(message);
       // Go back to the form and show the error
       router.replace("/(auth)/artist-register");
-      Alert.alert("Registration Failed", message, [{ text: "OK" }]);
+      toast.error(message);
     }
   };
 

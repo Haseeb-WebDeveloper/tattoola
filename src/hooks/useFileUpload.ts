@@ -1,7 +1,8 @@
 import { cloudinaryService, UploadOptions, UploadResult } from '@/services/cloudinary.service';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { toast } from 'sonner-native';  
 
 export interface FileUploadOptions {
   mediaType?: 'image' | 'video' | 'all';
@@ -32,11 +33,7 @@ export const useFileUpload = () => {
       if (Platform.OS !== 'web') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert(
-            'Permission Required',
-            'We need access to your media library to upload files.',
-            [{ text: 'OK' }]
-          );
+          toast.error('Permission Required');
           return false;
         }
       }
@@ -83,11 +80,7 @@ export const useFileUpload = () => {
       const files = Array.isArray(result.assets) ? result.assets : [result.assets];
       
       if (files.length > maxFiles) {
-        Alert.alert(
-          'Too Many Files',
-          `You can only select up to ${maxFiles} files.`,
-          [{ text: 'OK' }]
-        );
+        toast.error(`You can only select up to ${maxFiles} files.`);
         return [];
       }
 
@@ -103,7 +96,7 @@ export const useFileUpload = () => {
       return uploadedFiles;
     } catch (error) {
       console.error('File picker error:', error);
-      Alert.alert('Error', 'Failed to pick files. Please try again.');
+      toast.error('Failed to pick files. Please try again.');
       return [];
     }
   };
@@ -143,7 +136,7 @@ export const useFileUpload = () => {
       return [uploadedFile];
     } catch (error) {
       console.error('Camera error:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+      toast.error('Failed to take photo. Please try again.');
       return [];
     }
   };
@@ -196,7 +189,7 @@ export const useFileUpload = () => {
       return uploadedFiles;
     } catch (error) {
       console.error('Cloudinary upload error:', error);
-      Alert.alert('Upload Error', 'Failed to upload files. Please try again.');
+      toast.error('Failed to upload files. Please try again.');
       return files;
     } finally {
       setUploading(false);

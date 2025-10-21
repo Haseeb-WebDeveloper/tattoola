@@ -1,12 +1,20 @@
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
+import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo } from "react";
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const GAP = 14; // inter-image gap size in px
 const MAX_IMAGES = 5;
 const NUM_COLUMNS = 2;
 
@@ -33,7 +41,9 @@ export default function ReferencesStep() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
-  const media = usePrivateRequestStore((s) => s.answers.referenceMedia) as ReferenceMedia[];
+  const media = usePrivateRequestStore(
+    (s) => s.answers.referenceMedia
+  ) as ReferenceMedia[];
   const setReferences = usePrivateRequestStore((s) => s.setReferences);
 
   const canProceed = useMemo(() => media.length > 0, [media]);
@@ -49,11 +59,13 @@ export default function ReferencesStep() {
     });
     if (!files || files.length === 0) return;
 
-    const locals: ReferenceMedia[] = files.slice(0, MAX_IMAGES - media.length).map((f: any) => ({
-      id: f.uri,
-      uri: f.uri,
-      type: f.type === "video" ? "video" : "image",
-    }));
+    const locals: ReferenceMedia[] = files
+      .slice(0, MAX_IMAGES - media.length)
+      .map((f: any) => ({
+        id: f.uri,
+        uri: f.uri,
+        type: f.type === "video" ? "video" : "image",
+      }));
     setReferences([...media, ...locals] as any);
 
     const uploaded = await uploadToCloudinary(
@@ -70,59 +82,99 @@ export default function ReferencesStep() {
     );
   };
 
+  const GAP = s(14); // inter-image gap size in px
+
   return (
     <View className="flex-1 bg-background">
-      <View className="px-4">
-        <Text className="text-foreground tat-body-2-med text-center mt-2 mb-6 px-4">
-          Can you post some examples of tattoos that resemble the result you'd
-          like?
-        </Text>
-        {media.length === 0 ? (
-          // Initial upload box (existing UI)
-          <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
-            <SVGIcons.Upload className="w-5 h-5" />
-            <TouchableOpacity
-              onPress={handlePick}
-              disabled={uploading}
-              className="bg-primary rounded-full py-3 px-6 mt-3"
-            >
-              <Text className="text-foreground tat-body-1 font-neueBold">
-                {uploading ? "Uploading..." : "Upload files"}
-              </Text>
-            </TouchableOpacity>
-            <Text className="text-foreground/80 mt-6 text-center px-4">
-              Fino a 5 foto, supporta JPG, PNG. Max size 5MB Fino a 2 video,
-              supporta MOV, MP4, AVI. Max size 10MB
-            </Text>
-          </View>
-        ) : (
-          // Two-column grid layout for uploaded images and add image button
-          <View
-            className="mb-8 w-full"
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <View style={{ paddingHorizontal: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-foreground text-center font-montserratMedium"
             style={{
-              flexDirection: "column",
-              justifyContent: "flex-start",
-              // prevent horizontal scrolling, wrap in a ScrollView if more than (MAX_IMAGES / NUM_COLUMNS) rows
+              marginTop: mvs(8),
+              marginBottom: mvs(24),
+              paddingHorizontal: s(16),
             }}
           >
-            {(() => {
-              const gridItems: GridItem[] = [
-                ...media,
-                ...(canAddMore ? ([{ id: "__add__", isAdd: true }] as GridItem[]) : []),
-              ];
-              return to2Columns(gridItems);
-            })().map(
-              (row, rowIdx) => (
+            Can you post some examples of tattoos that resemble the result you'd
+            like?
+          </ScaledText>
+          {media.length === 0 ? (
+            // Initial upload box (existing UI)
+            <View
+              className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center"
+              style={{ paddingVertical: mvs(40), marginBottom: mvs(24) }}
+            >
+              <SVGIcons.Upload width={s(32)} height={s(32)} />
+              <TouchableOpacity
+                onPress={handlePick}
+                disabled={uploading}
+                className="bg-primary rounded-full"
+                style={{
+                  paddingVertical: mvs(8),
+                  paddingHorizontal: s(16),
+                  marginTop: mvs(8),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueBold"
+                >
+                  {uploading ? "Uploading..." : "Upload files"}
+                </ScaledText>
+              </TouchableOpacity>
+              <ScaledText
+                allowScaling={false}
+                variant="11"
+                className="text-foreground/80 text-center"
+                style={{ marginTop: mvs(24), paddingHorizontal: s(16) }}
+              >
+                Fino a 5 foto, supporta JPG, PNG. Max size 5MB Fino a 2 video,
+                supporta MOV, MP4, AVI. Max size 10MB
+              </ScaledText>
+            </View>
+          ) : (
+            // Two-column grid layout for uploaded images and add image button
+            <View
+              className="w-full"
+              style={{
+                flexDirection: "column",
+                justifyContent: "flex-start",
+                marginBottom: mvs(32),
+              }}
+            >
+              {(() => {
+                const gridItems: GridItem[] = [
+                  ...media,
+                  ...(canAddMore
+                    ? ([{ id: "__add__", isAdd: true }] as GridItem[])
+                    : []),
+                ];
+                return to2Columns(gridItems);
+              })().map((row, rowIdx) => (
                 <View
                   key={rowIdx}
                   style={{
                     flexDirection: "row",
                     justifyContent: "flex-start",
-                    marginBottom: rowIdx < Math.ceil((media.length + (canAddMore ? 1 : 0))/NUM_COLUMNS)-1 ? GAP : 0,
+                    marginBottom:
+                      rowIdx <
+                      Math.ceil(
+                        (media.length + (canAddMore ? 1 : 0)) / NUM_COLUMNS
+                      ) -
+                        1
+                        ? GAP
+                        : 0,
                   }}
                 >
                   {row.map((item, colIdx) =>
-                    ("isAdd" in item && item.isAdd) ? (
+                    "isAdd" in item && item.isAdd ? (
                       <TouchableOpacity
                         key="add"
                         onPress={handlePick}
@@ -130,14 +182,15 @@ export default function ReferencesStep() {
                         style={{
                           flex: 1,
                           aspectRatio: 1,
-                          borderRadius: 16,
+                          borderRadius: s(16),
                           borderWidth: 1.5,
                           borderStyle: "dashed",
                           borderColor: "#A62E2E",
                           alignItems: "center",
                           justifyContent: "center",
                           backgroundColor: "rgba(227, 31, 36, 0.12)",
-                          marginRight: colIdx === 0 && row.length === 2 ? GAP : 0, // gap between columns
+                          marginRight:
+                            colIdx === 0 && row.length === 2 ? GAP : 0, // gap between columns
                         }}
                         accessibilityLabel="Add image"
                       >
@@ -145,19 +198,20 @@ export default function ReferencesStep() {
                           <ActivityIndicator color="#A62E2E" size="small" />
                         ) : (
                           <>
-                            <SVGIcons.Upload width={24} height={24} />
-                            <Text
+                            <SVGIcons.Upload width={s(24)} height={s(24)} />
+                            <ScaledText
+                              allowScaling={false}
+                              variant="11"
                               className="text-foreground"
                               style={{
                                 color: "#fff",
-                                marginTop: 10,
+                                marginTop: mvs(10),
                                 textAlign: "center",
-                                fontSize: 14,
                                 opacity: 0.8,
                               }}
                             >
                               Add image
-                            </Text>
+                            </ScaledText>
                           </>
                         )}
                       </TouchableOpacity>
@@ -167,64 +221,78 @@ export default function ReferencesStep() {
                         style={{
                           flex: 1,
                           aspectRatio: 1,
-                          borderRadius: 16,
+                          borderRadius: s(16),
                           overflow: "hidden",
                           position: "relative",
                           backgroundColor: "#191415", // fallback
                           borderWidth: 1,
                           borderColor: "#31000044",
-                          marginRight: colIdx === 0 && row.length === 2 ? GAP : 0, // gap between columns
+                          marginRight:
+                            colIdx === 0 && row.length === 2 ? GAP : 0, // gap between columns
                         }}
                       >
                         <Image
-                          source={{ uri: (item as ReferenceMedia).cloud || (item as ReferenceMedia).uri }}
+                          source={{
+                            uri:
+                              (item as ReferenceMedia).cloud ||
+                              (item as ReferenceMedia).uri,
+                          }}
                           style={{ width: "100%", height: "100%" }}
                           resizeMode="cover"
                         />
                         <TouchableOpacity
                           style={{
                             position: "absolute",
-                            top: 6,
-                            right: 6,
+                            top: s(6),
+                            right: s(6),
                             backgroundColor: "rgba(0,0,0,0.7)",
                             borderRadius: 99,
-                            padding: 4,
+                            padding: s(4),
                             zIndex: 2,
                           }}
                           accessibilityLabel="Remove image"
-                          onPress={() => setReferences(media.filter((m) => m.id !== (item as ReferenceMedia).id))}
-                          hitSlop={10}
+                          onPress={() =>
+                            setReferences(
+                              media.filter(
+                                (m) => m.id !== (item as ReferenceMedia).id
+                              )
+                            )
+                          }
+                          hitSlop={s(10)}
                         >
-                          <SVGIcons.Close className="w-4 h-4" color="#fff" />
+                          <SVGIcons.Close
+                            width={s(16)}
+                            height={s(16)}
+                            color="#fff"
+                          />
                         </TouchableOpacity>
                       </View>
                     )
                   )}
                   {row.length === 1 && (
-                    <View style={{ flex: 1, aspectRatio: 1, marginLeft: GAP, opacity: 0 }} />
+                    <View
+                      style={{
+                        flex: 1,
+                        aspectRatio: 1,
+                        marginLeft: GAP,
+                        opacity: 0,
+                      }}
+                    />
                   )}
                 </View>
-              )
-            )}
-          </View>
-        )}
-      </View>
+              ))}
+            </View>
+          )}
+        </View>
 
-      <View className="flex-row items-center justify-between px-6 py-4 bg-background absolute bottom-0 left-0 right-0 z-10">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={!canProceed}
-          onPress={() => router.push(("/user/" + id + "/request/color") as any)}
-          className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+        <NextBackFooter
+          onBack={() => router.back()}
+          onNext={() => router.push(`/user/${id}/request/color`)}
+          nextLabel="Next"
+          backLabel="Back"
+          nextDisabled={!canProceed}
+        />
+      </ScrollView>
     </View>
   );
 }

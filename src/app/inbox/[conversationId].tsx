@@ -1,9 +1,15 @@
+import ConversationMenuModals from "@/components/inbox/ConversationMenuModals";
 import MessageItem from "@/components/inbox/MessageItem";
 import ScaledText from "@/components/ui/ScaledText";
 import { ScaledTextInput } from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { fetchConversationByIdWithPeer } from "@/services/chat.service";
+import {
+  blockUser,
+  deleteConversation,
+  fetchConversationByIdWithPeer,
+  reportUser,
+} from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
 import { ms, mvs, s } from "@/utils/scale";
@@ -13,7 +19,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Platform,
@@ -21,6 +26,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 export default function ChatThreadScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
@@ -36,14 +42,23 @@ export default function ChatThreadScreen() {
   const messagesByConv = useChatThreadStore((s) => s.messagesByConv);
 
   const [text, setText] = useState("");
-  const [peer, setPeer] = useState<{ name?: string; avatar?: string } | null>(
-    null
-  );
+  const [peer, setPeer] = useState<{
+    name?: string;
+    avatar?: string;
+    username?: string;
+    id?: string;
+  } | null>(null);
   const [conv, setConv] = useState<any>(null);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
+  const [menuModalVisible, setMenuModalVisible] = useState(false);
   const listRef = useRef<FlatList>(null);
   const rawMessages = messagesByConv[conversationId || ""] || [];
+
+  // Memoize peer username for modal
+  const peerUsername = React.useMemo(() => {
+    return peer?.username || `${peer?.name || ""}`.trim() || "User";
+  }, [peer?.username, peer?.name]);
 
   // Deduplicate messages by ID (safety check)
   // Reverse array for inverted FlatList (newest at index 0 = bottom of screen)
@@ -94,7 +109,14 @@ export default function ChatThreadScreen() {
       try {
         const c = await fetchConversationByIdWithPeer(user.id, conversationId);
         if (c) {
-          setPeer({ name: c.peerName, avatar: c.peerAvatar });
+          // Extract peer info from conversation
+          const peerUser = c.artist?.id === user.id ? c.lover : c.artist;
+          setPeer({
+            name: c.peerName,
+            avatar: c.peerAvatar,
+            username: peerUser?.username,
+            id: c.peerId,
+          });
           setConv(c);
         }
       } catch {}
@@ -188,7 +210,7 @@ export default function ChatThreadScreen() {
       });
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Failed to send message. Please try again.");
+      toast.error("Failed to send message");
     } finally {
       if (hasFile) {
         setUploading(false);
@@ -210,16 +232,55 @@ export default function ChatThreadScreen() {
       // Check file size (100MB limit)
       const maxSize = 100 * 1024 * 1024; // 100MB in bytes
       if (file.size && file.size > maxSize) {
-        alert("File size exceeds 100MB limit. Please choose a smaller file.");
+        toast.error("File Too Large");
         return;
       }
 
       setSelectedFile(file);
     } catch (error) {
       console.error("Error picking file:", error);
-      alert("Failed to pick file. Please try again.");
+      toast.error("Failed to pick file");
     }
   };
+
+  const handleReport = React.useCallback(async (reason: string) => {
+    if (!user?.id || !peer?.id || !conversationId) return;
+    try {
+      await reportUser(user.id, peer.id, conversationId, reason);
+      toast.success("Report Submitted");
+    } catch (error) {
+      console.error("Error reporting user:", error);
+      toast.error("Failed to submit report");
+    }
+  }, [user?.id, peer?.id, conversationId]);
+
+  const handleBlock = React.useCallback(async () => {
+    if (!user?.id || !peer?.id || !conversationId) return;
+    try {
+      console.log("ui: blocking user", user.id, peer.id, conversationId);
+      await blockUser(user.id, peer.id, conversationId);
+      toast.success("User Blocked");
+    } catch (error) {
+      console.error("Error blocking user:", error);
+      toast.error("Failed to block user");
+    }
+  }, [user?.id, peer?.id, conversationId]);
+
+  const handleDelete = React.useCallback(async () => {
+    if (!user?.id || !conversationId) return;
+    try {
+      await deleteConversation(conversationId, user.id);
+      toast.success("Chat Deleted");
+      router.back();
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      toast.error("Failed to delete conversation");
+    }
+  }, [user?.id, conversationId, router]);
+
+  const handleMenuClose = React.useCallback(() => {
+    setMenuModalVisible(false);
+  }, []);
 
   const renderItem = ({ item, index }: any) => (
     <MessageItem
@@ -243,7 +304,7 @@ export default function ChatThreadScreen() {
         className="bg-tat-darkMaroon border-gray"
         style={{
           paddingHorizontal: s(16),
-          paddingTop: mvs(16),
+          paddingTop: mvs(20),
           paddingBottom: mvs(16),
           borderBottomWidth: mvs(0.5),
         }}
@@ -263,7 +324,9 @@ export default function ChatThreadScreen() {
           >
             <Image
               source={{
-                uri: peer?.avatar || "https://via.placeholder.com/36",
+                uri:
+                  peer?.avatar ||
+                  `https://api.dicebear.com/7.x/initials/png?seed=${user?.firstName?.split(" ")[0]}`,
               }}
               className="rounded-full"
               style={{
@@ -278,9 +341,14 @@ export default function ChatThreadScreen() {
               {TrimText(peer?.name || "", 18)}
             </ScaledText>
           </View>
-          <View>
+          <TouchableOpacity onPress={() => setMenuModalVisible(true)} className="rounded-full  items-end justify-center"
+            style={{
+              width: s(32),
+              height: s(32),
+            }}
+            >
             <SVGIcons.CircleMenu width={s(20)} height={s(20)} />
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -298,7 +366,7 @@ export default function ChatThreadScreen() {
             conversationId && user?.id && loadOlder(conversationId, user.id)
           }
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ paddingVertical: mvs(12) }}
+          contentContainerStyle={{ paddingVertical: mvs(1) }}
           ListFooterComponent={() =>
             conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
               <View
@@ -310,7 +378,7 @@ export default function ChatThreadScreen() {
               >
                 <ScaledText
                   variant="md"
-                  className="text-foreground font-neueMedium"
+                  className="text-foreground font-montserratMedium"
                   style={{
                     marginBottom: mvs(12),
                   }}
@@ -339,7 +407,7 @@ export default function ChatThreadScreen() {
                     }}
                     className="flex-1 rounded-full bg-primary items-center justify-center"
                     style={{
-                      height: mvs(44),
+                      paddingVertical: mvs(10.5),
                     }}
                   >
                     <ScaledText
@@ -365,7 +433,7 @@ export default function ChatThreadScreen() {
                     }}
                     className="flex-1 rounded-full border border-foreground/30 items-center justify-center"
                     style={{
-                      height: mvs(44),
+                      paddingVertical: mvs(10.5),
                     }}
                   >
                     <ScaledText
@@ -395,7 +463,6 @@ export default function ChatThreadScreen() {
                 ? Math.max(insets?.bottom || 0, mvs(8))
                 : mvs(8),
           }}
-          className="bg-tat-darkMaroon"
         >
           {/* File Preview */}
           {selectedFile && (
@@ -489,6 +556,7 @@ export default function ChatThreadScreen() {
                   paddingBottom: mvs(10),
                   maxHeight: mvs(110),
                   minHeight: mvs(40),
+                  backgroundColor: "#140404",
                 }}
                 editable={
                   !uploading &&
@@ -524,6 +592,16 @@ export default function ChatThreadScreen() {
           </View>
         </View>
       </View>
+
+      {/* Menu Modals */}
+      <ConversationMenuModals
+        visible={menuModalVisible}
+        onClose={handleMenuClose}
+        peerUsername={peerUsername}
+        onReport={handleReport}
+        onBlock={handleBlock}
+        onDelete={handleDelete}
+      />
     </LinearGradient>
   );
 }

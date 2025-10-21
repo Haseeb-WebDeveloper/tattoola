@@ -4,7 +4,7 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
-import { useUserRegistrationStore } from "@/stores";
+import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import type { FormErrors, UserV2Step6 } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -29,8 +29,8 @@ function StyleSkeleton() {
 }
 
 export default function UserRegistrationStep6() {
-  const { step6, updateStep, setErrors, clearErrors, setCurrentStep } =
-    useUserRegistrationStore();
+  const { step6, updateStep6, setErrors, clearErrors, setCurrentStepDisplay } =
+    useUserRegistrationV2Store();
   const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState<UserV2Step6>({
     favoriteStyles: [],
@@ -137,8 +137,8 @@ export default function UserRegistrationStep6() {
     }
 
     // Store data in registration context
-    updateStep("step6", formData);
-    setCurrentStep(8);
+    updateStep6(formData);
+    setCurrentStepDisplay(6);
     router.push("/(auth)/user-registration/step-7");
   };
 

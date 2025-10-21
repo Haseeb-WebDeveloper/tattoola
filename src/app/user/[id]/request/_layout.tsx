@@ -5,7 +5,7 @@ import { View } from "react-native";
 
 export default function RequestLayout() {
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-background">
       <RequestHeader
         title="Inviare una richiesta privata a"
         stepIndex={0}

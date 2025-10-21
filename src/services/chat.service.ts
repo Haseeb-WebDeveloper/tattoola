@@ -32,6 +32,27 @@ export async function createPrivateRequestConversation(
 
   console.log("createPrivateRequestConversation", loverId, artistId, intake);
 
+  // Verify both users exist in public.users table
+  const { data: loverExists } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", loverId)
+    .maybeSingle();
+  
+  if (!loverExists) {
+    throw new Error(`Lover user ${loverId} not found in users table`);
+  }
+
+  const { data: artistExists } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", artistId)
+    .maybeSingle();
+  
+  if (!artistExists) {
+    throw new Error(`Artist user ${artistId} not found in users table`);
+  }
+
   // Insert conversation
   const now = new Date().toISOString();
   const { error: convErr } = await supabase.from("conversations").insert({
@@ -43,7 +64,10 @@ export async function createPrivateRequestConversation(
     createdAt: now,
     updatedAt: now,
   });
-  if (convErr) throw new Error(convErr.message);
+  if (convErr) {
+    console.error("Conversation insert error:", convErr);
+    throw new Error(convErr.message);
+  }
 
   console.log("conversation inserted");
 
@@ -191,12 +215,31 @@ export async function acceptConversation(
   artistId: string,
   conversationId: string
 ) {
+  console.log("acceptConversation starting", artistId, conversationId);
+  
+  // Get conversation to find the loverId (receiverId for system message)
+  const { data: conv, error: convFetchErr } = await supabase
+    .from("conversations")
+    .select("loverId")
+    .eq("id", conversationId)
+    .maybeSingle();
+  
+  if (convFetchErr || !conv) {
+    console.error("Failed to fetch conversation:", convFetchErr);
+    throw new Error(convFetchErr?.message || "Conversation not found");
+  }
+  
   const { error } = await supabase
     .from("conversations")
     .update({ status: "ACTIVE" })
     .eq("id", conversationId)
     .eq("artistId", artistId);
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Conversation update error:", error);
+    throw new Error(error.message);
+  }
+
+  console.log("conversation updated now accepting lover");
 
   // enable lover canSend, keep artist row as-is
   const { error: cuErr } = await supabase
@@ -204,35 +247,64 @@ export async function acceptConversation(
     .update({ canSend: true })
     .eq("conversationId", conversationId)
     .not("userId", "eq", artistId);
-  if (cuErr) throw new Error(cuErr.message);
+  if (cuErr) {
+    console.error("Conversation user update error:", cuErr);
+    throw new Error(cuErr.message);
+  }
+  console.log("conversation user updated now accepting lover");
 
-  // system message
+  // system message (need to include receiverId and timestamps)
+  const now = new Date().toISOString();
   const { error: mErr } = await supabase.from("messages").insert({
     id: uuidv4(),
     conversationId,
     senderId: artistId,
+    receiverId: conv.loverId, // Add the required receiverId
     messageType: "SYSTEM",
     content: "Request accepted",
+    createdAt: now,
+    updatedAt: now,
   });
-  if (mErr) throw new Error(mErr.message);
+  if (mErr) {
+    console.error("Message insert error:", mErr);
+    throw new Error(mErr.message);
+  }
+  console.log("system message inserted");
 }
 
 export async function rejectConversation(
   artistId: string,
   conversationId: string
 ) {
+  // Get conversation to find the loverId (receiverId for system message)
+  const { data: conv, error: convFetchErr } = await supabase
+    .from("conversations")
+    .select("loverId")
+    .eq("id", conversationId)
+    .maybeSingle();
+  
+  if (convFetchErr || !conv) {
+    console.error("Failed to fetch conversation:", convFetchErr);
+    throw new Error(convFetchErr?.message || "Conversation not found");
+  }
+  
   const { error } = await supabase
     .from("conversations")
     .update({ status: "REJECTED" })
     .eq("id", conversationId)
     .eq("artistId", artistId);
   if (error) throw new Error(error.message);
+  
+  const now = new Date().toISOString();
   const { error: mErr } = await supabase.from("messages").insert({
     id: uuidv4(),
     conversationId,
     senderId: artistId,
+    receiverId: conv.loverId, // Add the required receiverId
     messageType: "SYSTEM",
     content: "Request rejected",
+    createdAt: now,
+    updatedAt: now,
   });
   if (mErr) throw new Error(mErr.message);
 }
@@ -248,7 +320,7 @@ export async function fetchConversationsPage(
       id, artistId, loverId, status, lastMessageAt, lastMessageId, updatedAt,
       artist:artistId ( id, username, firstName, lastName, avatar ),
       lover:loverId   ( id, username, firstName, lastName, avatar ),
-      conversation_users ( userId, unreadCount ),
+      conversation_users ( userId, unreadCount, deletedAt ),
       lastMessage:lastMessageId ( id, senderId, receiverId, content, messageType, createdAt, mediaUrl, isRead )
     `
     )
@@ -262,9 +334,17 @@ export async function fetchConversationsPage(
   const { data, error } = (await q) as any;
   if (error) throw new Error(error.message);
   
+  // Filter out conversations deleted by current user
+  const filteredData = (data || []).filter((conv: any) => {
+    const currentUserRecord = (conv.conversation_users || []).find(
+      (cu: any) => cu.userId === userId
+    );
+    return !currentUserRecord?.deletedAt;
+  });
+  
   // Fetch receipt status for last messages sent by current user
   const conversationsWithReceipts = await Promise.all(
-    (data || []).map(async (conv: any) => {
+    filteredData.map(async (conv: any) => {
       // Only check receipt if the last message was sent by current user
       if (conv.lastMessage && conv.lastMessage.senderId === userId) {
         const { data: receipt } = await supabase
@@ -281,10 +361,10 @@ export async function fetchConversationsPage(
   );
   
   const nextCursor =
-    data && data.length === 20
+    filteredData && filteredData.length === 20
       ? {
-          lastMessageAt: data[data.length - 1]?.lastMessageAt,
-          id: data[data.length - 1]?.id,
+          lastMessageAt: filteredData[filteredData.length - 1]?.lastMessageAt,
+          id: filteredData[filteredData.length - 1]?.id,
         }
       : undefined;
   const items = conversationsWithReceipts.map((c: any) =>
@@ -295,7 +375,8 @@ export async function fetchConversationsPage(
 
 export async function fetchMessagesPage(
   conversationId: string,
-  cursor?: { createdAt: string; id: string }
+  cursor?: { createdAt: string; id: string },
+  deletedAt?: string
 ) {
   let q = supabase
     .from("messages")
@@ -305,6 +386,10 @@ export async function fetchMessagesPage(
     .limit(50);
   if (cursor) {
     q = q.lt("createdAt", cursor.createdAt as any);
+  }
+  // Filter messages to only show those created after deletion
+  if (deletedAt) {
+    q = q.gt("createdAt", deletedAt);
   }
   const { data, error } = await q;
   if (error) throw new Error(error.message);
@@ -759,7 +844,7 @@ export async function fetchConversationByIdWithPeer(
       id, artistId, loverId, status, updatedAt,
       artist:artistId ( id, username, firstName, lastName, avatar ),
       lover:loverId   ( id, username, firstName, lastName, avatar ),
-      conversation_users ( userId, canSend, role, lastReadAt, unreadCount )
+      conversation_users ( userId, canSend, role, lastReadAt, unreadCount, deletedAt )
     `
     )
     .eq("id", conversationId)
@@ -767,4 +852,70 @@ export async function fetchConversationByIdWithPeer(
   if (error) throw new Error(error.message);
   if (!data) return null;
   return enrichConversationForUser(data as any, userId);
+}
+
+// Report user
+export async function reportUser(
+  reporterId: string,
+  reportedUserId: string,
+  conversationId: string,
+  reason: string
+) {
+  const { error } = await supabase.from("reports").insert({
+    id: uuidv4(),
+    reporterId,
+    reportedUserId,
+    conversationId,
+    reportType: "USER",
+    reason,
+    status: "PENDING",
+    createdAt: new Date().toISOString(),
+  });
+  
+  if (error) throw new Error(error.message);
+}
+
+// Block user
+export async function blockUser(
+  blockerId: string,
+  blockedId: string,
+  conversationId: string
+) {
+  console.log("Starting blockUser", blockerId, blockedId, conversationId);
+  // Create blocked_users record
+  const { error: blockError } = await supabase.from("blocked_users").insert({
+    id: uuidv4(),
+    blockerId,
+    blockedId,
+    createdAt: new Date().toISOString(),
+  });
+
+  console.log("blockError", blockError);  
+  if (blockError) throw new Error(blockError.message);
+  
+  console.log("starting to update conversation status to BLOCKED", conversationId);
+  // Update conversation status to BLOCKED
+  const { error: convError } = await supabase
+    .from("conversations")
+    .update({ status: "BLOCKED", updatedAt: new Date().toISOString() })
+    .eq("id", conversationId);
+  
+  console.log("convError", convError);
+  if (convError) throw new Error(convError.message);
+}
+
+// Delete conversation (soft delete for specific user)
+export async function deleteConversation(
+  conversationId: string,
+  userId: string
+) {
+  const now = new Date().toISOString();
+  
+  const { error } = await supabase
+    .from("conversation_users")
+    .update({ deletedAt: now })
+    .eq("conversationId", conversationId)
+    .eq("userId", userId);
+  
+  if (error) throw new Error(error.message);
 }

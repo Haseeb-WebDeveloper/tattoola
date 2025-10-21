@@ -128,7 +128,7 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
       onUpdate: (row) => get().upsertConversation(row),
     });
     
-    // Subscribe to conversation_users changes to update unread counts in real-time
+    // Subscribe to conversation_users changes to update unread counts and handle deletedAt changes
     const cuChannel = supabase
       .channel(`conv-users-${userId}`)
       .on(
@@ -139,13 +139,51 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
           table: "conversation_users",
           filter: `userId=eq.${userId}`,
         },
-        (payload) => {
+        async (payload) => {
           console.log("📊 conversation_users UPDATE", payload.new);
-          const { conversationId, unreadCount } = payload.new as any;
-          // Update the unread count for this conversation
+          const { conversationId, unreadCount, deletedAt } = payload.new as any;
           const conv = get().conversationsById[conversationId];
-          if (conv) {
-            get().upsertConversation({ ...conv, unreadCount });
+          
+          // If deletedAt was cleared (conversation should reappear/stay visible)
+          if (deletedAt === null) {
+            if (!conv) {
+              // Conversation not in store, fetch and add it
+              console.log("🔄 deletedAt cleared, reloading conversation", conversationId);
+              try {
+                const { data } = await supabase
+                  .from("conversations")
+                  .select(
+                    `
+                    id, artistId, loverId, status, lastMessageAt, lastMessageId, updatedAt,
+                    artist:artistId ( id, username, firstName, lastName, avatar ),
+                    lover:loverId   ( id, username, firstName, lastName, avatar ),
+                    conversation_users ( userId, unreadCount, deletedAt ),
+                    lastMessage:lastMessageId ( id, senderId, receiverId, content, messageType, createdAt, mediaUrl, isRead )
+                  `
+                  )
+                  .eq("id", conversationId)
+                  .maybeSingle();
+                
+                if (data) {
+                  const { enrichConversationForUser } = await import("@/services/chat.service");
+                  const enriched = enrichConversationForUser(data as any, userId);
+                  get().upsertConversation(enriched);
+                }
+              } catch (e) {
+                console.error("Failed to reload conversation", e);
+              }
+            } else {
+              // Conversation exists, just update it
+              console.log("🔄 Updating conversation after deletedAt cleared", conversationId);
+              get().upsertConversation({ ...conv, unreadCount });
+            }
+          } else if (deletedAt !== null && conv) {
+            // deletedAt was set (user deleted), remove from inbox
+            console.log("🗑️ Conversation deleted by user, removing from inbox", conversationId);
+            const byId = { ...get().conversationsById };
+            delete byId[conversationId];
+            const order = get().order.filter((id) => id !== conversationId);
+            set({ conversationsById: byId, order });
           }
         }
       )

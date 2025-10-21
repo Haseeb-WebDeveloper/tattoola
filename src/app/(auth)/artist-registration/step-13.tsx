@@ -5,8 +5,8 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  SubscriptionPlan,
-  SubscriptionService,
+    SubscriptionPlan,
+    SubscriptionService,
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import type { CompleteArtistRegistration } from "@/types/auth";
@@ -16,7 +16,8 @@ import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { toast } from "sonner-native";
 
 // Skeleton component that mirrors the Subscription plan block layout and sizing exactly
 function PlanLoadingSkeleton() {
@@ -77,7 +78,7 @@ export default function ArtistStep13V2() {
       }
     } catch (error) {
       console.error("Error fetching plans:", error);
-      Alert.alert("Error", "Failed to load subscription plans");
+      toast.error("Failed to load subscription plans");
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ export default function ArtistStep13V2() {
 
   const handleCompleteRegistration = async () => {
     if (!step13.selectedPlanId) {
-      Alert.alert("Error", "Please select a subscription plan");
+      toast.error("Please select a subscription plan");
       return;
     }
 
@@ -191,10 +192,7 @@ export default function ArtistStep13V2() {
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Registration error:", error);
-      Alert.alert(
-        "Error",
-        "Failed to complete registration. Please try again."
-      );
+      toast.error("Failed to complete registration. Please try again.");
     } finally {
       setSubmitting(false);
     }

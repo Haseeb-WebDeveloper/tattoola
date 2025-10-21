@@ -28,6 +28,7 @@ import DraggableFlatList, {
   ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 const GAP = 8;
@@ -135,7 +136,7 @@ export default function CollectionDetailsScreen() {
         ...prev,
         name: previousNameRef.current,
       }));
-      Alert.alert("Error", err.message || "Failed to update collection name");
+      toast.error(err.message || "Failed to update collection name");
     }
   };
 
@@ -407,7 +408,7 @@ export default function CollectionDetailsScreen() {
                   uri:
                     collection?.author?.avatar ||
                     user?.avatar ||
-                    "https://via.placeholder.com/20",
+                    `https://api.dicebear.com/7.x/initials/png?seed=${collection?.author?.firstName?.split(" ")[0]}`,
                 }}
                 className="w-5 h-5 rounded-full mr-2 border border-foreground"
               />

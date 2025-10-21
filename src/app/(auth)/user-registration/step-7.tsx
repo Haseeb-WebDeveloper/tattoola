@@ -3,20 +3,21 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { useUserRegistrationStore } from "@/stores";
+import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import type {
-    CompleteUserRegistration,
-    FormErrors,
-    UserV2Step7,
+  CompleteUserRegistration,
+  FormErrors,
+  UserV2Step7,
 } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
+import { toast } from "sonner-native";
 
 export default function UserRegistrationStep7() {
   const { step6, updateStep, clearRegistration, setCurrentStep } =
-    useUserRegistrationStore();
+    useUserRegistrationV2Store();
 
   const { completeUserRegistration, loading } = useAuth();
   const [formData, setFormData] = useState<UserV2Step7>({
@@ -50,7 +51,7 @@ export default function UserRegistrationStep7() {
       updateStep("step7", formData);
 
       // Build payload from current store steps (step3..step6)
-      const { step3, step4, step5, step6 } = useUserRegistrationStore.getState() as any;
+      const { step3, step4, step5, step6 } = useUserRegistrationV2Store.getState() as any;
 
       const completeData: CompleteUserRegistration = {
         step3: {
@@ -85,12 +86,10 @@ export default function UserRegistrationStep7() {
       // Navigate to main app
       router.replace("/(tabs)");
     } catch (error) {
-      Alert.alert(
-        "Registration Failed",
+      toast.error(
         error instanceof Error
           ? error.message
-          : "An error occurred during registration",
-        [{ text: "OK" }]
+          : "An error occurred during registration"
       );
     }
   };

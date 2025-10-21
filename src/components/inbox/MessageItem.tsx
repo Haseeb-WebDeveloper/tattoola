@@ -4,8 +4,9 @@ import { formatMessageTimestamp } from "@/utils/formatMessageTimestamp";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import React, { useState } from "react";
-import { Alert, Clipboard, Image, Linking, Modal, TouchableOpacity, View } from "react-native";
+import { Clipboard, Image, Linking, Modal, TouchableOpacity, View } from "react-native";
 import { isIntakeMessage } from "../../utils/utils";
+import { toast } from "sonner-native";
 
 type Props = {
   item: any;
@@ -54,7 +55,7 @@ export default function MessageItem({
         await Clipboard.setString(item.content);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to copy message");
+      toast.error("Failed to copy message");
     } finally {
       setShowMenu(false);
     }
@@ -71,11 +72,11 @@ export default function MessageItem({
       if (canOpen) {
         await Linking.openURL(item.mediaUrl);
       } else {
-        Alert.alert("Error", "Cannot open this file");
+        toast.error("Cannot open this file");
       }
     } catch (error) {
       console.error("Download error:", error);
-      Alert.alert("Error", "Failed to download file");
+      toast.error("Failed to download file");
     } finally {
       setShowMenu(false);
     }

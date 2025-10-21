@@ -87,6 +87,8 @@ import HeartFilled from "@/assets/icons/heart-filled.svg";
 // @ts-ignore
 import Trash from "@/assets/icons/trash.svg";
 // @ts-ignore
+import Delete from "@/assets/icons/delete.svg";
+// @ts-ignore
 import EditUser from "@/assets/icons/edit-user.svg";
 // @ts-ignore
 import Subscription from "@/assets/icons/subscription.svg";
@@ -150,6 +152,12 @@ import Play from "@/assets/icons/play.svg";
 import Docs from "@/assets/icons/docs.svg";
 // @ts-ignore
 import Audio from "@/assets/icons/audio.svg";
+// @ts-ignore
+import Error from "@/assets/icons/error.svg";
+// @ts-ignore
+import Success from "@/assets/icons/success.svg";
+// @ts-ignore
+import Warning from "@/assets/icons/warning.svg";
 
 export const SVGIcons = {
   Close,
@@ -193,6 +201,7 @@ export const SVGIcons = {
   ChevronRight,
   HeartFilled,
   Trash,
+  Delete,
   EditUser,
   Subscription,
   DimondYellow,
@@ -228,6 +237,9 @@ export const SVGIcons = {
   Play,
   Docs,
   Audio,
+  Error,
+  Success,
+  Warning,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

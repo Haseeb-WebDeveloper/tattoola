@@ -11,17 +11,17 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
+  Dimensions,
   Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
-  ScrollView,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet } from "react-native";
+import { toast } from "sonner-native";
 
 function LoginScreenContent() {
   const { signIn, loading } = useAuth();
@@ -62,12 +62,10 @@ function LoginScreenContent() {
       await signIn(formData);
       // Navigation will be handled by the auth context
     } catch (error) {
-      Alert.alert(
-        "Login Failed",
+      toast.error(
         error instanceof Error
           ? error.message
-          : "An error occurred during login",
-        [{ text: "OK" }]
+          : "An error occurred during login"
       );
     }
   };

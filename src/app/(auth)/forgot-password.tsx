@@ -6,21 +6,21 @@ import { useAuth } from "@/providers/AuthProvider";
 import type { ForgotPasswordData, FormErrors } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import {
-  ForgotPasswordValidationSchema,
-  ValidationUtils,
+    ForgotPasswordValidationSchema,
+    ValidationUtils,
 } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 export default function ForgotPasswordScreen() {
   const { forgotPassword, loading } = useAuth();
@@ -60,10 +60,8 @@ export default function ForgotPasswordScreen() {
       await forgotPassword(formData);
       setEmailSent(true);
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to send reset email",
-        [{ text: "OK" }]
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send reset email"
       );
     }
   };
