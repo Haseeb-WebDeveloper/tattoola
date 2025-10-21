@@ -2,19 +2,19 @@ import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { clearProfileCache } from "@/utils/database";
 import { mvs, s, scaledFont } from "@/utils/scale";
 import { ValidationRules, ValidationUtils } from "@/utils/validation";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    TouchableOpacity,
+    View
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { toast } from "sonner-native";
 
 export default function UsernameSettingsScreen() {
@@ -84,6 +84,9 @@ export default function UsernameSettingsScreen() {
       await updateProfile({
         username: username.trim(),
       });
+
+      // Clear profile cache to force refresh
+      await clearProfileCache(user!.id);
 
       toast.success("Username updated successfully");
 

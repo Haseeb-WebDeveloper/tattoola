@@ -17,6 +17,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Linking,
+  RefreshControl,
   ScrollView,
   TouchableOpacity,
   View,
@@ -26,48 +27,61 @@ export default function ProfileScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
 
+  // Load profile with cache-first approach
+  const loadProfile = useCallback(
+    async (forceRefresh = false) => {
+      try {
+        if (!user) return;
+        
+        const profile = await fetchArtistSelfProfile(user.id, forceRefresh);
+        setData(profile);
+        setError(null);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id]
+  );
+
+  // Initial load - use cache for instant display
   useEffect(() => {
     let mounted = true;
     (async () => {
-      try {
-        if (!user) return;
-        const profile = await fetchArtistSelfProfile(user.id);
-        if (mounted) setData(profile);
-      } catch (e: any) {
-        if (mounted) setError(e?.message || "Failed to load profile");
-      } finally {
-        if (mounted) setLoading(false);
-      }
+      if (!user) return;
+      await loadProfile(false);
     })();
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, loadProfile]);
 
-  // Refresh profile data whenever this screen gains focus
+  // Refresh profile data whenever this screen gains focus (background sync)
   useFocusEffect(
     useCallback(() => {
       let active = true;
       (async () => {
-        try {
-          if (!user) return;
-          const profile = await fetchArtistSelfProfile(user.id);
-          if (active) {
-            setData(profile);
-            setError(null);
-          }
-        } catch (e: any) {
-          if (active) setError(e?.message || "Failed to load profile");
-        }
+        if (!user || !active) return;
+        // Use cache-first but trigger background sync if stale
+        await loadProfile(false);
       })();
       return () => {
         active = false;
       };
-    }, [user?.id])
+    }, [user?.id, loadProfile])
   );
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadProfile(true); // Force refresh from Supabase
+    setRefreshing(false);
+  }, [loadProfile]);
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -100,7 +114,18 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView className="relative" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="relative"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#AD2E2E"
+            colors={["#AD2E2E"]}
+          />
+        }
+      >
         {/* settings button */}
         <View
           className="absolute top-2 right-0 z-10"

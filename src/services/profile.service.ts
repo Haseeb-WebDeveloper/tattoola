@@ -1,3 +1,8 @@
+import {
+    getProfileFromCache,
+    saveProfileToCache,
+    shouldRefreshCache,
+} from "@/utils/database";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 
@@ -75,8 +80,34 @@ export type ArtistSelfProfile = {
   bodyPartsNotWorkedOn: { id: string; name: string }[];
 };
 
-export async function fetchArtistSelfProfile(userId: string): Promise<ArtistSelfProfile> {
-  // Step 1: fetch user + artist profile first
+export async function fetchArtistSelfProfile(
+  userId: string,
+  forceRefresh = false
+): Promise<ArtistSelfProfile> {
+  // Step 1: Try cache first (unless forceRefresh is true)
+  if (!forceRefresh) {
+    const cached = await getProfileFromCache(userId);
+    if (cached) {
+      console.log("📦 Using cached profile for user:", userId);
+      
+      // Optionally trigger background sync if cache is stale
+      shouldRefreshCache(userId).then((shouldRefresh) => {
+        if (shouldRefresh) {
+          console.log("🔄 Cache is stale, triggering background sync...");
+          // Trigger background refresh without awaiting
+          fetchArtistSelfProfile(userId, true).catch((err) =>
+            console.error("Background sync failed:", err)
+          );
+        }
+      });
+      
+      return cached;
+    }
+  }
+
+  console.log("🌐 Fetching profile from Supabase for user:", userId);
+
+  // Step 2: fetch user + artist profile from Supabase
   const userQ = await supabase
     .from("users")
     .select(
@@ -226,7 +257,7 @@ export async function fetchArtistSelfProfile(userId: string): Promise<ArtistSelf
     .sort((a, b) => (a.isPortfolioCollection === b.isPortfolioCollection ? 0 : a.isPortfolioCollection ? -1 : 1));
 
 
-  return {
+  const profile: ArtistSelfProfile = {
     user: {
       id: userRow.id,
       email: userRow.email,
@@ -254,6 +285,20 @@ export async function fetchArtistSelfProfile(userId: string): Promise<ArtistSelf
     collections: collectionsOut,
     bodyPartsNotWorkedOn,
   };
+
+  // Step 3: Save to cache for next time
+  saveProfileToCache(userId, profile).catch((err) =>
+    console.error("Failed to cache profile:", err)
+  );
+
+  return profile;
+}
+
+/**
+ * Force refresh profile from Supabase and update cache
+ */
+export async function syncProfileToCache(userId: string): Promise<ArtistSelfProfile> {
+  return fetchArtistSelfProfile(userId, true);
 }
 
 

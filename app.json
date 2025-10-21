@@ -70,7 +70,8 @@
           "backgroundColor": "#000000"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -50,6 +50,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    // Initialize SQLite database first
+    // Temporarily disabled until dev client is rebuilt
+    // initDatabase().catch((error) => {
+    //   console.error("Failed to initialize database:", error);
+    // });
+
     // Initialize deep linking
     console.log("🔗 RootLayout: Initializing deep linking...");
     const subscription = initializeDeepLinking();

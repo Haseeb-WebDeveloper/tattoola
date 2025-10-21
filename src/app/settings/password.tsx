@@ -2,21 +2,22 @@ import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { clearProfileCache } from "@/utils/database";
 import { mvs, s, scaledFont } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { ValidationRules, ValidationUtils } from "@/utils/validation";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
-import { LinearGradient } from "expo-linear-gradient";
 
 export default function PasswordSettingsScreen() {
   const router = useRouter();
@@ -165,6 +166,11 @@ export default function PasswordSettingsScreen() {
 
       if (data) {
         console.log("password updated successfully");
+        
+        // Clear profile cache (though password doesn't affect profile data)
+        // This ensures any auth-related caching is fresh
+        await clearProfileCache(user!.id);
+        
         toast.success("Password updated successfully");
       } else {
         console.log("error", error);

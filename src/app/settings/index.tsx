@@ -177,7 +177,7 @@ export default function SettingsScreen() {
         style={{
           paddingHorizontal: s(16),
           paddingVertical: mvs(16),
-          marginBottom: mvs(24),
+          marginBottom: mvs(20),
         }}
       >
         <TouchableOpacity
