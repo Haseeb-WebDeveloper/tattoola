@@ -24,9 +24,8 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
     Math.max(1, (stepIndex ?? 0) + 1)
   );
 
-  // Use fixed pixel values for calculation (same as upload-header)
-  const LARGE_DOT_SIZE = 16; // w-4 in px (4*4)
-  const SMALL_DOT_SIZE = 8; // w-2 in px (2*4)
+  const LARGE_DOT_SIZE = s(16); // px
+  const SMALL_DOT_SIZE = s(8); // px
 
   const handleBarLayout = (e: any) => {
     if (e?.nativeEvent?.layout?.width)

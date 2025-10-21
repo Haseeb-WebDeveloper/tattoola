@@ -51,6 +51,8 @@ import Pen1 from "@/assets/icons/pen.svg";
 // @ts-ignore
 import Pen3 from "@/assets/icons/pen-3.svg";
 // @ts-ignore
+import PenRed from "@/assets/icons/pen-red.svg";
+// @ts-ignore
 import Search from "@/assets/icons/search.svg";
 // @ts-ignore
 import Style from "@/assets/icons/style.svg";
@@ -158,6 +160,8 @@ import Error from "@/assets/icons/error.svg";
 import Success from "@/assets/icons/success.svg";
 // @ts-ignore
 import Warning from "@/assets/icons/warning.svg";
+// @ts-ignore
+import WarningYellow from "@/assets/icons/warning-yellow.svg";
 
 export const SVGIcons = {
   Close,
@@ -183,6 +187,7 @@ export const SVGIcons = {
   Checkout,
   Pen2,
   Pen1,
+  PenRed,
   Search,
   Style,
   CheckedCheckbox,
@@ -240,6 +245,7 @@ export const SVGIcons = {
   Error,
   Success,
   Warning,
+  WarningYellow,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

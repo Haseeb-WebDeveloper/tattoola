@@ -1,8 +1,10 @@
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 
 interface SettingsItemProps {
   title: string;
@@ -25,36 +27,62 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    className="flex-row items-center justify-between py-4 bg-[#100C0C] px-4"
+    className={`flex-row items-center justify-between 
+      ${isDanger ? "bg-tat-darkMaroon" : "bg-[#100C0C]"}
+      `}
+    style={{ paddingVertical: mvs(16), paddingHorizontal: s(16) }}
   >
     {/* Main row of setting item */}
     {!iconRight ? (
       <View className="flex-row items-center flex-1">
-        {icon && <View className="mr-3">{icon}</View>}
-        <View className="flex-1 flex-row items-center gap-6">
-          <Text
-            className={`text-base font-semibold ${isDanger ? "text-error" : "text-white"}`}
+        {icon && <View style={{ marginRight: s(12) }}>{icon}</View>}
+        <View className="flex-1 flex-row items-center" style={{ gap: s(24) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className={`font-semibold ${isDanger && icon ? "text-error" : "text-white"}`}
           >
             {title}
-          </Text>
-          {value && <Text className="text-gray-300 text-sm">{value}</Text>}
+          </ScaledText>
+          {value && (
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-gray-300 font-light"
+            >
+              {value}
+            </ScaledText>
+          )}
         </View>
         {showChevron && (
           <SVGIcons.ChevronRight
-            className={`w-5 h-5 ${isDanger ? "text-error" : "text-white"}`}
+            className={isDanger ? "text-error" : "text-white"}
+            width={s(10)}
+            height={s(10)}
           />
         )}
       </View>
     ) : (
       <View className="flex-row items-center flex-1">
         {/* Only text with icon immediately after it when iconRight is true */}
-        <Text
-          className={`text-base font-semibold ${isDanger ? "text-error" : "text-white"}`}
+        <ScaledText
+          allowScaling={false}
+          variant="body1"
+          className={`font-semibold ${isDanger ? "text-error" : "text-white"}`}
         >
           {title}
-        </Text>
-        {icon && <View className="ml-3">{icon}</View>}
-        {value && <Text className="ml-3 text-gray-300 text-sm">{value}</Text>}
+        </ScaledText>
+        {icon && <View style={{ marginLeft: s(12) }}>{icon}</View>}
+        {value && (
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-gray-300"
+            style={{ marginLeft: s(12) }}
+          >
+            {value}
+          </ScaledText>
+        )}
       </View>
     )}
   </TouchableOpacity>
@@ -71,10 +99,19 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   icon,
   children,
 }) => (
-  <View className="mb-6">
-    <View className="flex-row items-center mb-3 px-4">
-      {icon && <View className="mr-2">{icon}</View>}
-      <Text className="text-sm font-medium text-gray">{title}</Text>
+  <View style={{ marginBottom: mvs(24) }}>
+    <View
+      className="flex-row items-center"
+      style={{ marginBottom: mvs(12), paddingHorizontal: s(16) }}
+    >
+      {icon && <View style={{ marginRight: s(8) }}>{icon}</View>}
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="font-light text-gray"
+      >
+        {title}
+      </ScaledText>
     </View>
     <View>{children}</View>
   </View>
@@ -135,22 +172,40 @@ export default function SettingsScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="px-4 py-4 flex-row items-center justify-center mb-8 relative">
+      <View
+        className="flex-row items-center justify-center relative"
+        style={{
+          paddingHorizontal: s(16),
+          paddingVertical: mvs(16),
+          marginBottom: mvs(24),
+        }}
+      >
         <TouchableOpacity
           onPress={handleBack}
-          className="w-10 h-10 absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-foreground/20 items-center justify-center mr-4 p-2"
-          style={{ transform: [{ translateY: 0 }] }} // w-10 == 40px, so -h/2
+          className="absolute rounded-full bg-foreground/20 items-center justify-center"
+          style={{
+            width: s(34),
+            height: s(34),
+            left: s(16),
+            padding: s(8),
+          }}
         >
-          <SVGIcons.ChevronLeft className="w-4 h-4" />
+          <SVGIcons.ChevronLeft style={{ width: s(12), height: s(16) }} />
         </TouchableOpacity>
-        <Text className="text-white text-2xl font-bold">Settings</Text>
+        <ScaledText
+          allowScaling={false}
+          variant="2xl"
+          className="text-white font-bold"
+        >
+          Settings
+        </ScaledText>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Account Management */}
         <SettingsSection
           title="Account Management"
-          icon={<SVGIcons.EditUser className="w-4 h-4" />}
+          icon={<SVGIcons.EditUser style={{ width: s(16), height: s(16) }} />}
         >
           <SettingsItem
             title="Username"
@@ -158,8 +213,8 @@ export default function SettingsScreen() {
             onPress={handleUsernamePress}
           />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.5), marginVertical: mvs(1) }}
           />
           <SettingsItem
             title="Email"
@@ -167,8 +222,8 @@ export default function SettingsScreen() {
             onPress={handleEmailPress}
           />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.2), marginVertical: mvs(1) }}
           />
           <SettingsItem title="Password" onPress={handlePasswordPress} />
         </SettingsSection>
@@ -176,12 +231,14 @@ export default function SettingsScreen() {
         {/* Subscription & Billing */}
         <SettingsSection
           title="Subscription & Billing"
-          icon={<SVGIcons.Subscription className="w-4 h-4" />}
+          icon={
+            <SVGIcons.Subscription style={{ width: s(16), height: s(16) }} />
+          }
         >
           <SettingsItem title="Abbonamento" onPress={handleSubscriptionPress} />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.2), marginVertical: mvs(1) }}
           />
           <SettingsItem title="Fatturazione" onPress={handleBillingPress} />
         </SettingsSection>
@@ -190,28 +247,32 @@ export default function SettingsScreen() {
         <SettingsSection title="Advanced settings">
           <SettingsItem title="Profilo" onPress={handleProfilePress} />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.2), marginVertical: mvs(1) }}
           />
           <SettingsItem title="Community" onPress={handleCommunityPress} />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.2), marginVertical: mvs(1) }}
           />
           <SettingsItem
             title="Premium"
             onPress={handlePremiumPress}
-            icon={<SVGIcons.DimondYellow className="w-4 h-4" />}
+            icon={
+              <SVGIcons.DimondYellow style={{ width: s(16), height: s(16) }} />
+            }
             iconRight={true}
           />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.2), marginVertical: mvs(1) }}
           />
           <SettingsItem
             title="Studio"
             onPress={handleStudioPress}
-            icon={<SVGIcons.DimondRed className="w-4 h-4" />}
+            icon={
+              <SVGIcons.DimondRed style={{ width: s(16), height: s(16) }} />
+            }
             iconRight={true}
           />
         </SettingsSection>
@@ -221,20 +282,20 @@ export default function SettingsScreen() {
           <SettingsItem
             title="Eliminazione account"
             onPress={handleAccountDeletionPress}
+            isDanger={true}
           />
           <View
-            className="bg-[#A49A99]"
-            style={{ height: 0.2, marginVertical: 1 }}
+            className="bg-gray"
+            style={{ height: s(0.2), marginVertical: mvs(1) }}
           />
           <SettingsItem
             title="Logout"
             onPress={handleLogout}
             isDanger={true}
             showChevron={false}
-            icon={<SVGIcons.Logout className="w-4 h-4" />}
+            icon={<SVGIcons.Logout style={{ width: s(16), height: s(16) }} />}
           />
         </SettingsSection>
-
       </ScrollView>
     </View>
   );
