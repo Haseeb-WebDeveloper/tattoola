@@ -322,34 +322,28 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
 
         <View className="flex-row" style={{ gap: s(12) }}>
           <TouchableOpacity
+            onPress={handleBlockConfirm}
+            className="flex-1 items-center justify-center  rounded-full"
+            style={{
+              paddingVertical: mvs(10),
+              borderWidth: mvs(2),
+              borderColor: "#AE0E0E",
+            }}
+          >
+            <ScaledText variant="md" className="font-neueBold text-[#AE0E0E]">
+              Yes
+            </ScaledText>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={handleClose}
             className="flex-1 items-center justify-center"
             style={{
-              backgroundColor: "#F5F5F5",
               borderRadius: s(100),
               paddingVertical: mvs(10),
-              borderWidth: 1,
-              borderColor: "#E0E0E0",
             }}
           >
-            <ScaledText
-              variant="md"
-              className="font-neueBold"
-              style={{ color: "#666666" }}
-            >
+            <ScaledText variant="md" className="font-neueBold opacity-70">
               No
-            </ScaledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleBlockConfirm}
-            className="flex-1 items-center justify-center bg-primary rounded-full"
-            style={{
-              paddingVertical: mvs(10),
-            }}
-          >
-            <ScaledText variant="md" className="font-neueBold text-foreground">
-              Yes
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -401,34 +395,31 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
 
         <View className="flex-row" style={{ gap: s(12) }}>
           <TouchableOpacity
-            onPress={handleClose}
-            className="flex-1 items-center justify-center"
-            style={{
-              backgroundColor: "#F5F5F5",
-              borderRadius: s(100),
-              paddingVertical: mvs(10),
-              borderWidth: 1,
-              borderColor: "#E0E0E0",
-            }}
-          >
-            <ScaledText
-              variant="md"
-              className="font-neueBold"
-              style={{ color: "#666666" }}
-            >
-              No
-            </ScaledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             onPress={handleDeleteConfirm}
             className="flex-1 items-center justify-center bg-primary rounded-full"
             style={{
               paddingVertical: mvs(10),
+              borderWidth: mvs(2),
+              borderColor: "#AE0E0E",
             }}
           >
-            <ScaledText variant="md" className="font-neueBold text-foreground">
+            <ScaledText variant="md" className="font-neueBold text-[#AE0E0E]">
               Yes
+            </ScaledText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleClose}
+            className="flex-1 items-center justify-center"
+            style={{
+              borderRadius: s(100),
+              paddingVertical: mvs(10),
+            }}
+          >
+            <ScaledText
+              variant="md"
+              className="font-neueBold opacity-70"
+            >
+              No
             </ScaledText>
           </TouchableOpacity>
         </View>

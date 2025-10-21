@@ -50,7 +50,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() =>
           router.push("/user/23377731-a5cf-4d99-8de7-61f952c177a7")
         }
@@ -64,9 +64,9 @@ export default function HomeScreen() {
         className="bg-foreground text-background p-4 rounded-full"
       >
         <Text>Logout</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
-      {/* <FlatList
+      <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -100,9 +100,9 @@ export default function HomeScreen() {
             tintColor="#fff"
           />
         }
-      /> */}
+      />
       {/* Header brand (centered logo) */}
-      {/* <View
+      <View
         className="absolute left-0 right-0 flex-row items-center justify-between"
         style={{
           top: Math.max(insets.top, mvs(16)),
@@ -114,7 +114,7 @@ export default function HomeScreen() {
         </View>
         <SVGIcons.LogoLight style={{ width: s(40), height: s(40) }} />
         <View style={{ width: s(20), height: s(20) }} />
-      </View> */}
+      </View>
     </View>
   );
 }

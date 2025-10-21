@@ -334,17 +334,12 @@ export async function fetchConversationsPage(
   const { data, error } = (await q) as any;
   if (error) throw new Error(error.message);
   
-  // Filter out conversations deleted by current user
-  const filteredData = (data || []).filter((conv: any) => {
-    const currentUserRecord = (conv.conversation_users || []).find(
-      (cu: any) => cu.userId === userId
-    );
-    return !currentUserRecord?.deletedAt;
-  });
+  // Note: We don't filter out conversations with deletedAt here
+  // Conversations always appear in inbox; deletedAt only filters messages in chat thread
   
   // Fetch receipt status for last messages sent by current user
   const conversationsWithReceipts = await Promise.all(
-    filteredData.map(async (conv: any) => {
+    (data || []).map(async (conv: any) => {
       // Only check receipt if the last message was sent by current user
       if (conv.lastMessage && conv.lastMessage.senderId === userId) {
         const { data: receipt } = await supabase
@@ -361,10 +356,10 @@ export async function fetchConversationsPage(
   );
   
   const nextCursor =
-    filteredData && filteredData.length === 20
+    data && data.length === 20
       ? {
-          lastMessageAt: filteredData[filteredData.length - 1]?.lastMessageAt,
-          id: filteredData[filteredData.length - 1]?.id,
+          lastMessageAt: data[data.length - 1]?.lastMessageAt,
+          id: data[data.length - 1]?.id,
         }
       : undefined;
   const items = conversationsWithReceipts.map((c: any) =>

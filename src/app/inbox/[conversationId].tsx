@@ -271,12 +271,13 @@ export default function ChatThreadScreen() {
     try {
       await deleteConversation(conversationId, user.id);
       toast.success("Chat Deleted");
-      router.back();
+      // Reload messages to apply deletedAt filter (will hide old messages)
+      await loadLatest(conversationId, user.id);
     } catch (error) {
       console.error("Error deleting conversation:", error);
       toast.error("Failed to delete conversation");
     }
-  }, [user?.id, conversationId, router]);
+  }, [user?.id, conversationId, loadLatest]);
 
   const handleMenuClose = React.useCallback(() => {
     setMenuModalVisible(false);
@@ -326,7 +327,7 @@ export default function ChatThreadScreen() {
               source={{
                 uri:
                   peer?.avatar ||
-                  `https://api.dicebear.com/7.x/initials/png?seed=${user?.firstName?.split(" ")[0]}`,
+                  `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0]}`,
               }}
               className="rounded-full"
               style={{
@@ -353,6 +354,22 @@ export default function ChatThreadScreen() {
       </View>
 
       <View style={{ flex: 1 }}>
+        {messages.length === 0 && (
+          <View 
+            className="absolute inset-0 items-center justify-center z-10 w-full h-full"
+            style={{
+              paddingHorizontal: s(24),
+            }}
+            pointerEvents="none"
+          >
+            <ScaledText 
+              variant="md" 
+              className="text-gray text-center font-montserratMedium"
+            >
+              Chat history deleted.{'\n'}New messages will appear here.
+            </ScaledText>
+          </View>
+        )}
         <FlatList
           ref={listRef}
           data={messages}
@@ -366,7 +383,9 @@ export default function ChatThreadScreen() {
             conversationId && user?.id && loadOlder(conversationId, user.id)
           }
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ paddingVertical: mvs(1) }}
+          contentContainerStyle={{ 
+            paddingVertical: mvs(1),
+          }}
           ListFooterComponent={() =>
             conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
               <View
