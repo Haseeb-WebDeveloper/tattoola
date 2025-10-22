@@ -140,7 +140,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     channel
       .on('presence', { event: 'sync' }, () => {
-        console.log('🌐 [GLOBAL PRESENCE] Presence sync event');
+        // console.log('🌐 [GLOBAL PRESENCE] Presence sync event');
         const state = channel.presenceState() as Record<string, any[]>;
         const online: Record<string, boolean> = {};
         Object.values(state).forEach((arr: any[]) => {
@@ -165,7 +165,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (status === 'SUBSCRIBED' && !presenceTrackedRef.current) {
           try {
             const trackPayload = { online_at: new Date().toISOString(), userId: user.id };
-            console.log('🌐 [GLOBAL PRESENCE] Tracking user:', trackPayload);
+            // console.log('🌐 [GLOBAL PRESENCE] Tracking user:', trackPayload);
             await channel.track(trackPayload);
             presenceTrackedRef.current = true;
             console.log('🌐 [GLOBAL PRESENCE] ✅ User tracked successfully');

@@ -18,6 +18,7 @@ import { AuthProvider } from "../providers/AuthProvider";
 // import "../utils/debugLogger"; // Import debug logger
 import { SVGIcons } from "@/constants/svg";
 import { s } from "@/utils/scale";
+import { initDatabase } from "../utils/database";
 import { initializeDeepLinking } from "../utils/deepLinking";
 // Enable debug logging
 if (__DEV__) {
@@ -51,13 +52,12 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Initialize SQLite database first
-    // Temporarily disabled until dev client is rebuilt
-    // initDatabase().catch((error) => {
-    //   console.error("Failed to initialize database:", error);
-    // });
+    initDatabase().catch((error) => {
+      console.error("Failed to initialize database:", error);
+    });
 
     // Initialize deep linking
-    console.log("🔗 RootLayout: Initializing deep linking...");
+    // console.log("🔗 RootLayout: Initializing deep linking...");
     const subscription = initializeDeepLinking();
     console.log("🔗 RootLayout: Deep linking initialized");
 
@@ -82,8 +82,6 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="collection" />
-            <Stack.Screen name="settings" />
             <Stack.Screen name="modal" />
           </Stack>
           <Toaster

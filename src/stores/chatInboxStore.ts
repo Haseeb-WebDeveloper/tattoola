@@ -113,7 +113,7 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
     // Guard: if already subscribed for the same user, skip
     const currentUserId = get().currentRealtimeUserId;
     if (currentUserId === userId && get().unsubscribe) {
-      console.log("📬 [INBOX REALTIME] Already subscribed for this user, skipping...");
+      // console.log("📬 [INBOX REALTIME] Already subscribed for this user, skipping...");
       return;
     }
     

@@ -214,7 +214,7 @@ export default function SettingsScreen() {
           />
           <View
             className="bg-gray"
-            style={{ height: s(0.5), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem
             title="Email"
@@ -223,7 +223,7 @@ export default function SettingsScreen() {
           />
           <View
             className="bg-gray"
-            style={{ height: s(0.2), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem title="Password" onPress={handlePasswordPress} />
         </SettingsSection>
@@ -238,7 +238,7 @@ export default function SettingsScreen() {
           <SettingsItem title="Abbonamento" onPress={handleSubscriptionPress} />
           <View
             className="bg-gray"
-            style={{ height: s(0.2), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem title="Fatturazione" onPress={handleBillingPress} />
         </SettingsSection>
@@ -248,12 +248,12 @@ export default function SettingsScreen() {
           <SettingsItem title="Profilo" onPress={handleProfilePress} />
           <View
             className="bg-gray"
-            style={{ height: s(0.2), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem title="Community" onPress={handleCommunityPress} />
           <View
             className="bg-gray"
-            style={{ height: s(0.2), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem
             title="Premium"
@@ -265,7 +265,7 @@ export default function SettingsScreen() {
           />
           <View
             className="bg-gray"
-            style={{ height: s(0.2), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem
             title="Studio"
@@ -286,7 +286,7 @@ export default function SettingsScreen() {
           />
           <View
             className="bg-gray"
-            style={{ height: s(0.2), marginVertical: mvs(1) }}
+            style={{ height: s(0.5)}}
           />
           <SettingsItem
             title="Logout"

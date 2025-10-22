@@ -8,6 +8,7 @@ import {
   reorderCollectionPosts,
   updateCollectionName,
 } from "@/services/collection.service";
+import { clearProfileCache } from "@/utils/database";
 import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -81,8 +82,12 @@ export default function CollectionDetailsScreen() {
   const previousNameRef = useRef<string>("");
   const previousPostsRef = useRef<CollectionPost[] | null>(null);
   const [selectModalVisible, setSelectModalVisible] = useState(false);
-  const [allUserPosts, setAllUserPosts] = useState<{ id: string; caption?: string; thumbnailUrl?: string }[]>([]);
-  const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
+  const [allUserPosts, setAllUserPosts] = useState<
+    { id: string; caption?: string; thumbnailUrl?: string }[]
+  >([]);
+  const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const loadCollection = useCallback(async () => {
     if (!id) return;
@@ -130,6 +135,11 @@ export default function CollectionDetailsScreen() {
 
     try {
       await updateCollectionName(collection.id, newName);
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
     } catch (err: any) {
       // Revert on error
       setCollection((prev: any) => ({
@@ -161,6 +171,11 @@ export default function CollectionDetailsScreen() {
                 ...prev,
                 postsCount: prev.postsCount - 1,
               }));
+              
+              // Clear profile cache to refresh collections on profile screen
+              if (user?.id) {
+                await clearProfileCache(user.id);
+              }
             } catch (err: any) {
               Alert.alert("Error", err.message || "Failed to remove post");
             }
@@ -180,6 +195,11 @@ export default function CollectionDetailsScreen() {
         collection.id,
         data.map((p) => p.postId)
       );
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
     } catch (err: any) {
       console.error("Failed to reorder posts:", err);
       // Revert on error to previous order
@@ -234,16 +254,27 @@ export default function CollectionDetailsScreen() {
     }));
     const prevPostsSnapshot = posts;
     setPosts((prev) => [...optimistic, ...prev]);
-    setCollection((prev: any) => ({ ...prev, postsCount: (prev?.postsCount || 0) + optimistic.length }));
+    setCollection((prev: any) => ({
+      ...prev,
+      postsCount: (prev?.postsCount || 0) + optimistic.length,
+    }));
     setSelectedPostIds(new Set());
     setSelectModalVisible(false);
 
     try {
       await addPostsToCollection(collection.id, toAdd);
       await loadCollection();
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
     } catch (err: any) {
       setPosts(prevPostsSnapshot);
-      setCollection((prev: any) => ({ ...prev, postsCount: Math.max((prev?.postsCount || 0) - optimistic.length, 0) }));
+      setCollection((prev: any) => ({
+        ...prev,
+        postsCount: Math.max((prev?.postsCount || 0) - optimistic.length, 0),
+      }));
       Alert.alert("Error", err.message || "Failed to add posts to collection");
     }
   };
@@ -431,15 +462,9 @@ export default function CollectionDetailsScreen() {
             className={`${editMode ? "bg-primary rounded-full" : ""}`}
           >
             {editMode ? (
-              <SVGIcons.Add
-               width={16}
-               height={16}
-              />
+              <SVGIcons.Add width={16} height={16} />
             ) : (
-              <SVGIcons.Edit
-                width={20}
-                height={20}
-              />
+              <SVGIcons.Edit width={20} height={20} />
             )}
           </TouchableOpacity>
         </View>
@@ -516,7 +541,9 @@ export default function CollectionDetailsScreen() {
         >
           <View className="flex-1 bg-black/60 items-center justify-center px-4">
             <View className="bg-background rounded-xl p-4 w-full max-w-xl">
-              <Text className="text-foreground text-lg font-bold mb-3">Select tattoos</Text>
+              <Text className="text-foreground text-lg font-bold mb-3">
+                Select tattoos
+              </Text>
               <ScrollView className="max-h-[60vh]">
                 <View className="flex-row flex-wrap justify-between">
                   {allUserPosts.map((p) => {
@@ -528,14 +555,23 @@ export default function CollectionDetailsScreen() {
                         style={{ width: POST_WIDTH }}
                         className="mb-4"
                       >
-                        <View className={`rounded-lg overflow-hidden border ${checked ? "border-primary" : "border-transparent"}`}>
+                        <View
+                          className={`rounded-lg overflow-hidden border ${checked ? "border-primary" : "border-transparent"}`}
+                        >
                           <Image
-                            source={{ uri: p.thumbnailUrl || "https://via.placeholder.com/200" }}
+                            source={{
+                              uri:
+                                p.thumbnailUrl ||
+                                "https://via.placeholder.com/200",
+                            }}
                             className="w-full aspect-[9/16]"
                             resizeMode="cover"
                           />
                         </View>
-                        <Text className="text-foreground text-xs mt-2" numberOfLines={2}>
+                        <Text
+                          className="text-foreground text-xs mt-2"
+                          numberOfLines={2}
+                        >
                           {p.caption || "Untitled"}
                         </Text>
                       </TouchableOpacity>
@@ -544,11 +580,21 @@ export default function CollectionDetailsScreen() {
                 </View>
               </ScrollView>
               <View className="flex-row gap-3 mt-4">
-                <TouchableOpacity onPress={() => setSelectModalVisible(false)} className="flex-1 bg-gray-200 py-3 rounded-lg">
-                  <Text className="text-foreground text-center font-semibold">Cancel</Text>
+                <TouchableOpacity
+                  onPress={() => setSelectModalVisible(false)}
+                  className="flex-1 bg-gray-200 py-3 rounded-lg"
+                >
+                  <Text className="text-foreground text-center font-semibold">
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={confirmAdd} className="flex-1 bg-primary py-3 rounded-lg">
-                  <Text className="text-white text-center font-semibold">Add to collection</Text>
+                <TouchableOpacity
+                  onPress={confirmAdd}
+                  className="flex-1 bg-primary py-3 rounded-lg"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    Add to collection
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

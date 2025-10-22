@@ -1,29 +1,29 @@
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  addPostsToCollection,
-  createCollection,
-  fetchUserPosts,
-  removePostFromCollection,
-  reorderCollectionPosts,
-  updateCollectionName,
+    addPostsToCollection,
+    createCollection,
+    fetchUserPosts,
+    reorderCollectionPosts,
+    updateCollectionName
 } from "@/services/collection.service";
+import { clearProfileCache } from "@/utils/database";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  Modal,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    Modal,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
+    RenderItemParams,
+    ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { toast } from "sonner-native";
@@ -75,6 +75,10 @@ export default function NewCollectionScreen() {
     if (!user) throw new Error("Not authenticated");
     const created = await createCollection(user.id, name);
     setCollectionId(created.id);
+    
+    // Clear profile cache to refresh collections on profile screen
+    await clearProfileCache(user.id);
+    
     return created.id;
   };
 
@@ -105,6 +109,11 @@ export default function NewCollectionScreen() {
       setPosts((prev) => [...added, ...prev]);
       setSelectedPostIds(new Set());
       setSelectModalVisible(false);
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to add posts to collection");
     }
@@ -124,6 +133,11 @@ export default function NewCollectionScreen() {
         collectionId,
         data.map((p) => p.id)
       );
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -144,6 +158,11 @@ export default function NewCollectionScreen() {
     setShowEditNameModal(false);
     try {
       await updateCollectionName(collectionId, newName);
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
     } catch (e: any) {
       setName(previousNameRef.current);
       toast.error(e?.message || "Failed to update collection name");

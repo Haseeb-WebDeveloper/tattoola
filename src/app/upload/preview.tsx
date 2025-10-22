@@ -2,17 +2,18 @@ import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { createPostWithMediaAndCollection } from "@/services/post.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
+import { clearProfileCache } from "@/utils/database";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 
 export default function UploadPreviewStep() {
   const { media, caption, styleId, collectionId, reset, setSubmitting } =
@@ -41,6 +42,12 @@ export default function UploadPreviewStep() {
         })),
         collectionId,
       });
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
+      
       reset();
       router.replace(`/post/${postId}`);
     } catch (e) {
