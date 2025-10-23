@@ -25,7 +25,7 @@ export default function AgeStep() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    console.log("isAdult", isAdult);
+ 
     if (!user?.id || !id) {
       toast.error("User information is missing. Please log in again.");
       return;

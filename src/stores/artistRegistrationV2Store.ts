@@ -16,8 +16,10 @@ export interface ArtistV2Step4 {
 
 export interface ArtistV2Step5 {
   studioName: string;
-  province: string;
-  municipality: string;
+  province: string;          // province name (for display)
+  provinceId: string;        // province ID (for DB)
+  municipality: string;      // municipality name (for display)
+  municipalityId: string;    // municipality ID (for DB)
   studioAddress: string;
   website?: string;
   phone: string;
@@ -104,7 +106,7 @@ interface ArtistV2RegistrationState {
 const initialState: Pick<ArtistV2RegistrationState, 'step3'|'step4'|'step5'|'step7'|'step8'|'step9'|'step10'|'step11'|'step12'|'step13'|'currentStepDisplay'|'totalStepsDisplay'|'errors'|'isSubmitting'> = {
   step3: {},
   step4: {},
-  step5: {},
+  step5: { studioName: '', province: '', provinceId: '', municipality: '', municipalityId: '', studioAddress: '', phone: '', website: '' },
   step7: {},
   step8: { favoriteStyles: [] },
   step9: { servicesOffered: [] },

@@ -95,7 +95,7 @@ export default function ArtistStep8V2() {
   };
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
-    console.log("item", item);
+  
     const isSelected = selected.includes(item.id);
     const isPrimary = step8.mainStyleId === item.id;
     const img = resolveImageUrl(item.imageUrl);

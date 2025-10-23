@@ -53,6 +53,24 @@ export async function createPrivateRequestConversation(
     throw new Error(`Artist user ${artistId} not found in users table`);
   }
 
+  // Check if artist accepts private requests
+  const { data: artistProfile, error: profileError } = await supabase
+    .from("artist_profiles")
+    .select("acceptPrivateRequests, rejectionMessage")
+    .eq("userId", artistId)
+    .maybeSingle();
+  
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+  
+  if (artistProfile && artistProfile.acceptPrivateRequests === false) {
+    // Artist doesn't accept private requests - throw error with rejection message
+    const rejectionMsg = artistProfile.rejectionMessage || 
+      "L'artista non può ricevere nuove richieste private in questo momento";
+    throw new Error(rejectionMsg);
+  }
+
   // Insert conversation
   const now = new Date().toISOString();
   const { error: convErr } = await supabase.from("conversations").insert({

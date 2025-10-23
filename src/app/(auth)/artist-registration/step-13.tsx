@@ -126,6 +126,8 @@ export default function ArtistStep13V2() {
         step5: {
           studioName: step5.studioName || "",
           province: step5.province || "",
+          provinceId: step5.provinceId || "",
+          municipalityId: step5.municipalityId || "",
           municipality: step5.municipality || "",
           studioAddress: step5.studioAddress || "",
           website: step5.website || "",
@@ -188,7 +190,7 @@ export default function ArtistStep13V2() {
       );
 
       // Reset store and redirect to home
-      reset();
+      // reset();
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Registration error:", error);

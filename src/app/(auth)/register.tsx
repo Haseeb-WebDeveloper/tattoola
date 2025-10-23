@@ -88,9 +88,9 @@ export default function RegisterScreen() {
     try {
       const result = await signUp(formData);
       setSuccess();
-      if (!result.needsVerification) {
-        router.push("/(auth)/welcome");
-      }
+      // if (!result.needsVerification) {
+      //   router.push("/(auth)/welcome");
+      // }
     } catch (error: any) {
       const message = error?.message || "An error occurred during registration";
       setError(message);

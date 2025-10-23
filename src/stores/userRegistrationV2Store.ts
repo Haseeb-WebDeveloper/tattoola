@@ -42,7 +42,7 @@ interface UserV2RegistrationState {
 
 const initialState: Pick<UserV2RegistrationState, 'step3' | 'step4' | 'step5' | 'step6' | 'step7' | 'currentStepDisplay' | 'totalStepsDisplay' | 'errors' | 'isSubmitting'> = {
   step3: {},
-  step4: {},
+  step4: { province: '', provinceId: '', municipality: '', municipalityId: '' },
   step5: {},
   step6: {},
   step7: {},

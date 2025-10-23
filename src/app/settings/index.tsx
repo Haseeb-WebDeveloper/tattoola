@@ -122,7 +122,7 @@ export default function SettingsScreen() {
   const { user, logout } = useAuth();
 
   const handleBack = () => {
-    router.back();
+    router.push("/(tabs)/profile" as any);
   };
 
   const handleUsernamePress = () => {

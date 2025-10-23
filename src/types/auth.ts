@@ -166,8 +166,10 @@ export interface UserV2Step3 {
   avatar?: string;
 }
 export interface UserV2Step4 {
-  province: string;
-  municipality: string;
+  province: string;        // province name (for display)
+  provinceId: string;      // province ID (for DB)
+  municipality: string;    // municipality name (for display)
+  municipalityId: string;  // municipality ID (for DB)
 }
 export interface UserV2Step5 {
   instagram?: string;
@@ -200,8 +202,10 @@ export interface ArtistRegistrationStep4 {
 // step-5: studio details
 export interface ArtistRegistrationStep5 {
   studioName: string;
-  province: string;
-  municipality: string;
+  province: string;          // province name (for display)
+  provinceId: string;        // province ID (for DB)
+  municipality: string;      // municipality name (for display)
+  municipalityId: string;    // municipality ID (for DB)
   studioAddress: string;
   website?: string;
   phone: string;

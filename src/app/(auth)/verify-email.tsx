@@ -1,5 +1,7 @@
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAuth } from "@/providers/AuthProvider";
+import { UserRole } from "@/types/auth";
+import { supabase } from "@/utils/supabase";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -63,17 +65,52 @@ export default function VerifyEmailScreen() {
         "✅ VerifyEmailScreen.handleEmailVerification: Email verification successful"
       );
 
+      // Get session to determine user info
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authUser: any = sessionData?.session?.user;
+
+      if (!authUser) {
+        throw new Error("No session found after verification");
+      }
+
+      const userId = authUser.id;
+      const role = authUser.user_metadata?.displayName === 'AR' ? UserRole.ARTIST : UserRole.TATTOO_LOVER;
+
+      console.log("Checking if user has completed profile, userId:", userId, "role:", role);
+
+      // Check if user has completed their profile
+      const { data: existingUser, error: userCheckError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (userCheckError) {
+        console.error("Error checking user profile:", userCheckError);
+      }
+
+      const hasCompletedProfile = !!existingUser;
+      console.log("Has completed profile:", hasCompletedProfile);
+
       // If we get here, verification was successful
       console.log(
         "🎉 VerifyEmailScreen.handleEmailVerification: Showing success toast"
       );
       toast.success("Your email has been successfully verified. You can now complete your profile.");
+      
       setTimeout(() => {
-        console.log(
-          "📧 VerifyEmailScreen.handleEmailVerification: Navigating to email confirmation"
-        );
-        // The AuthProvider will handle the redirect based on user role
-        router.replace("/(auth)/email-confirmation");
+        if (hasCompletedProfile) {
+          console.log("User has completed profile, redirecting to app");
+          router.replace("/(tabs)");
+        } else {
+          console.log("User needs to complete registration, redirecting based on role:", role);
+          // Redirect to appropriate registration step based on role
+          if (role === UserRole.ARTIST) {
+            router.replace("/(auth)/artist-registration/step-3");
+          } else {
+            router.replace("/(auth)/user-registration/step-3");
+          }
+        }
       }, 1000);
     } catch (err) {
       console.error(

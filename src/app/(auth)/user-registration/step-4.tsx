@@ -29,7 +29,9 @@ export default function UserRegistrationStep4() {
 
   const [formData, setFormData] = useState<UserV2Step4>({
     province: "",
+    provinceId: "",
     municipality: "",
+    municipalityId: "",
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
   const [modalStep, setModalStep] = useState<null | "province" | "municipality">(null);
@@ -153,13 +155,19 @@ export default function UserRegistrationStep4() {
   };
 
   const handleMunicipalitySelect = (municipality: any) => {
-    setFormData((prev) => ({ ...prev, municipality: municipality.name }));
+    setFormData((prev) => ({ 
+      ...prev, 
+      municipality: municipality.name,
+      municipalityId: municipality.id,
+      province: selectedProvince?.name || formData.province,
+      provinceId: selectedProvince?.id || (provinces.find(p => p.name === formData.province)?.id || '')
+    }));
     setModalStep(null);
     setSearch("");
   };
 
-  const onChange = (province: string, municipality: string) => {
-    setFormData({ province, municipality });
+  const onChange = (province: string, municipality: string, provinceId: string, municipalityId: string) => {
+    setFormData({ province, municipality, provinceId, municipalityId });
     clearErrors();
   };
 
@@ -414,7 +422,9 @@ export default function UserRegistrationStep4() {
                         } else {
                           onChange(
                             selectedProvince?.name || formData.province,
-                            item.name
+                            item.name,
+                            selectedProvince?.id || (provinces.find(p => p.name === formData.province)?.id || ''),
+                            item.id
                           );
                           setModalStep(null);
                           setSearch("");

@@ -75,8 +75,8 @@ export default function ProfileSettingsScreen() {
     router.push("/settings/profile/body-parts" as any);
   };
 
-  const handleMinRatePress = () => {
-    router.push("/settings/profile/min-rate" as any);
+  const handleRatesPress = () => {
+    router.push("/settings/profile/rates" as any);
   };
 
   const handleWorkModalityPress = () => {
@@ -93,10 +93,6 @@ export default function ProfileSettingsScreen() {
 
   const handleExperiencePress = () => {
     router.push("/settings/profile/experience" as any);
-  };
-
-  const handleMultilocationsPress = () => {
-    router.push("/settings/profile/multilocations" as any);
   };
 
   return (
@@ -174,7 +170,7 @@ export default function ProfileSettingsScreen() {
           />
           <ProfileSettingsItem
             title="Tariffa minima"
-            onPress={handleMinRatePress}
+            onPress={handleRatesPress}
           />
           <ProfileSettingsItem
             title="Modalita di lavoro"
@@ -188,10 +184,6 @@ export default function ProfileSettingsScreen() {
           <ProfileSettingsItem
             title="Esperienza"
             onPress={handleExperiencePress}
-          />
-          <ProfileSettingsItem
-            title="Multilocations"
-            onPress={handleMultilocationsPress}
           />
         </ScrollView>
       </LinearGradient>

@@ -120,10 +120,10 @@ export default function CustomTabBar({
       >
         <View className="rounded-full" style={{ overflow: "visible" }}>
           <LinearGradient
-            colors={["#3a0000", "#000000"]}
+            colors={["#3a0000ec", "#000000f5"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="flex-row items-center justify-around"
+            className="flex-row items-center justify-around backdrop-blur-xl"
             style={{
               borderRadius: 9999,
               paddingHorizontal: s(16),

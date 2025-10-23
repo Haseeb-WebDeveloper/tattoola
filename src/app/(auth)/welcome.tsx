@@ -1,5 +1,6 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
 import { mvs, s, scaledVSize } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -10,12 +11,13 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
-  View,
-  StyleSheet,
+  View
 } from "react-native";
 
 export default function WelcomeScreen() {
+  const { user, initialized } = useAuth();
+
+  // Removed navigation logic - AuthProvider handles routing after email verification
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -52,7 +54,13 @@ export default function WelcomeScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 className="absolute w-full top-0 left-0 right-0 bottom-0 z-10"
-                style={{ height: scaledVSize(230) , position: "absolute", top: 0, left: 0, right: 0 }}
+                style={{
+                  height: scaledVSize(230),
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                }}
                 pointerEvents="none"
               />
               {/* Headline overlay */}

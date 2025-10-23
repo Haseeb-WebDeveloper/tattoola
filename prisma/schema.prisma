@@ -94,6 +94,8 @@ model ArtistProfile {
   coverPhoto        String?
   coverVideo        String?
   mainStyleId       String?
+  acceptPrivateRequests Boolean           @default(true)
+  rejectionMessage  String?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   bodyParts         ArtistBodyPart[]

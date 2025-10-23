@@ -1,4 +1,6 @@
+import { SVGIcons } from "@/constants/svg";
 import "@/global.css";
+import { mvs, s } from "@/utils/scale";
 import {
   Montserrat_300Light,
   Montserrat_400Regular,
@@ -15,17 +17,9 @@ import "react-native-get-random-values"; // Import polyfill for crypto functions
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 import { AuthProvider } from "../providers/AuthProvider";
-// import "../utils/debugLogger"; // Import debug logger
-import { SVGIcons } from "@/constants/svg";
-import { s } from "@/utils/scale";
 import { initDatabase } from "../utils/database";
 import { initializeDeepLinking } from "../utils/deepLinking";
-// Enable debug logging
-if (__DEV__) {
-  console.log("🔧 Debug mode enabled - Console logs should be visible");
-  // Ensure all console methods are available
-  global.console = console;
-}
+
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -51,18 +45,25 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    console.log("🏁 RootLayout: Starting initialization");
+    
     // Initialize SQLite database first
     initDatabase().catch((error) => {
-      console.error("Failed to initialize database:", error);
+      console.error("❌ Failed to initialize database:", error);
     });
 
     // Initialize deep linking
-    // console.log("🔗 RootLayout: Initializing deep linking...");
+    console.log("🔗 RootLayout: Initializing deep linking...");
     const subscription = initializeDeepLinking();
-    console.log("🔗 RootLayout: Deep linking initialized");
+    console.log("✅ RootLayout: Deep linking initialized");
+
+    // Monitor app state changes
+    console.log("📱 RootLayout: Setting up app state listener");
+
+    console.log("✅ RootLayout: All initialization complete");
 
     return () => {
-      console.log("🔗 RootLayout: Cleaning up deep linking subscription");
+      console.log("🧹 RootLayout: Cleaning up subscriptions");
       subscription?.remove();
     };
   }, []);
@@ -88,49 +89,59 @@ export default function RootLayout() {
             position="top-center"
             offset={60}
             swipeToDismissDirection="up"
-            duration={4000}
+            duration={6000}
+            closeButton
             toastOptions={{
               style: {
                 backgroundColor: "#100C0C",
                 borderWidth: 1,
                 borderColor: "#A49A99",
-                borderRadius: 16,
-                paddingVertical: 20,
-                paddingHorizontal: 16,
+                borderRadius: mvs(16),
+                paddingVertical: mvs(14),
+                paddingHorizontal: mvs(16),
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 8 },
                 shadowOpacity: 0.3,
                 shadowRadius: 12,
-                elevation: 12,
-                height: 60,
+                elevation: mvs(12),
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               },
               titleStyle: {
                 color: "#ffffff",
-                fontSize: 14,
+                fontSize: mvs(11),
                 fontWeight: "500",
-                lineHeight: 20,
+                lineHeight: 16,
               },
               descriptionStyle: {
                 color: "#a1a1aa",
-                fontSize: 12,
+                fontSize: mvs(12),
                 fontWeight: "400",
+                backgroundColor: "#A49A99",
               },
               actionButtonStyle: {
                 backgroundColor: "#A49A99",
-                borderRadius: 8,
+                borderRadius: mvs(8),
               },
               actionButtonTextStyle: {
                 color: "#100C0C",
+                fontSize: mvs(14),
                 fontWeight: "600",
+                paddingVertical: mvs(10),
+                paddingHorizontal: mvs(16),
+              },
+              closeButtonStyle: {
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: [{ translateY: -9 }],
               },
             }}
             icons={{
-              success: <SVGIcons.Success width={s(18)} height={s(18)} />,
+              success: <SVGIcons.CheckedCheckbox width={s(18)} height={s(18)} />,
               error: <SVGIcons.Error width={s(18)} height={s(18)} />,
-              loading: <SVGIcons.Loading width={s(18)} height={s(18)}   />,
+              loading: <SVGIcons.Loading width={s(18)} height={s(18)} />,
             }}
           />
         </SafeAreaView>

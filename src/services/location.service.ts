@@ -57,4 +57,9 @@ export async function getMunicipalities(provinceId: string): Promise<Municipalit
   return rows;
 }
 
+export function buildGoogleMapsUrl(municipalityName: string, provinceName: string): string {
+  const query = encodeURIComponent(`${municipalityName}, ${provinceName}`);
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+}
+
 

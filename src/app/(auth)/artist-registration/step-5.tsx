@@ -1,3 +1,5 @@
+import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
@@ -20,7 +22,6 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import NextBackFooter from "@/components/ui/NextBackFooter";
 
 export default function ArtistStep5V2() {
   const {
@@ -148,10 +149,12 @@ export default function ArtistStep5V2() {
         <ProvinceMunicipalityInput
           valueProvince={step5.province || ""}
           valueMunicipality={step5.municipality || ""}
-          onChange={(provinceLabel, municipalityLabel) =>
+          onChange={(provinceLabel, municipalityLabel, provinceId, municipalityId) =>
             updateStep5({
               province: provinceLabel,
               municipality: municipalityLabel,
+              provinceId,
+              municipalityId,
             })
           }
         />
@@ -309,7 +312,7 @@ function ProvinceMunicipalityInput({
 }: {
   valueProvince: string;
   valueMunicipality: string;
-  onChange: (provinceLabel: string, municipalityLabel: string) => void;
+  onChange: (provinceLabel: string, municipalityLabel: string, provinceId: string, municipalityId: string) => void;
 }) {
   const insets = useSafeAreaInsets();
   const [modalStep, setModalStep] = useState<
@@ -616,7 +619,9 @@ function ProvinceMunicipalityInput({
                         } else {
                           onChange(
                             selectedProvince?.name || valueProvince,
-                            item.name
+                            item.name,
+                            selectedProvince?.id || '',
+                            item.id
                           );
                           setModalStep(null);
                           setSearch("");
@@ -653,6 +658,31 @@ function ProvinceMunicipalityInput({
             </ScrollView>
 
             {/* Footer actions  */}
+            <NextBackFooter
+              onNext={() => {
+                if (modalStep === "province") {
+                  if (selectedProvince) {
+                    setModalStep("municipality");
+                    setSearch("");
+                  }
+                } else {
+                  setModalStep(null);
+                  setSearch("");
+                }
+              }}
+              nextDisabled={false}
+              backLabel="Back"
+              onBack={() => {
+                if (modalStep === "municipality") {
+                  setModalStep("province");
+                  setSearch("");
+                } else {
+                  setModalStep(null);
+                  setSelectedProvince(null);
+                  setSearch("");
+                }
+              }}
+            />
           </View>
         </View>
       </Modal>

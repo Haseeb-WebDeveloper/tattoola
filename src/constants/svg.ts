@@ -3,6 +3,8 @@ import Close from "@/assets/icons/close.svg";
 // @ts-ignore
 import CloseRed from "@/assets/icons/close-red.svg";
 // @ts-ignore
+import CloseGray from "@/assets/icons/close-gray.svg";
+// @ts-ignore
 import LogoLight from "@/assets/icons/logo-light.svg";
 // @ts-ignore
 import Person from "@/assets/icons/person.svg";
@@ -168,6 +170,7 @@ import WarningYellow from "@/assets/icons/warning-yellow.svg";
 export const SVGIcons = {
   Close,
   CloseRed,
+  CloseGray,
   LogoLight,
   Person,
   UserFilled,

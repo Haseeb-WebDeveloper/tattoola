@@ -62,6 +62,9 @@ CREATE TABLE "public"."users" (
     "avatar" TEXT,
     "bio" TEXT,
     "phone" TEXT,
+    "country" TEXT,
+    "province" TEXT,
+    "municipality" TEXT,
     "instagram" TEXT,
     "tiktok" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -85,6 +88,11 @@ CREATE TABLE "public"."artist_profiles" (
     "specialties" TEXT[],
     "businessName" TEXT,
     "studioAddress" TEXT,
+    "province" TEXT,
+    "municipality" TEXT,
+    "location" TEXT,
+    "city" TEXT,
+    "country" TEXT,
     "instagram" TEXT,
     "website" TEXT,
     "phone" TEXT,
@@ -647,20 +655,6 @@ CREATE TABLE "public"."blocked_users" (
     CONSTRAINT "blocked_users_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "public"."user_locations" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "provinceId" TEXT NOT NULL,
-    "municipalityId" TEXT NOT NULL,
-    "address" TEXT,
-    "isPrimary" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "user_locations_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 
@@ -687,6 +681,12 @@ CREATE INDEX "artist_profiles_userId_idx" ON "public"."artist_profiles"("userId"
 
 -- CreateIndex
 CREATE INDEX "artist_profiles_portfolioComplete_idx" ON "public"."artist_profiles"("portfolioComplete");
+
+-- CreateIndex
+CREATE INDEX "artist_profiles_city_idx" ON "public"."artist_profiles"("city");
+
+-- CreateIndex
+CREATE INDEX "artist_profiles_province_idx" ON "public"."artist_profiles"("province");
 
 -- CreateIndex
 CREATE INDEX "artist_profiles_workArrangement_idx" ON "public"."artist_profiles"("workArrangement");
@@ -1075,18 +1075,6 @@ CREATE INDEX "blocked_users_blockedId_idx" ON "public"."blocked_users"("blockedI
 -- CreateIndex
 CREATE UNIQUE INDEX "blocked_users_blockerId_blockedId_key" ON "public"."blocked_users"("blockerId", "blockedId");
 
--- CreateIndex
-CREATE INDEX "user_locations_userId_idx" ON "public"."user_locations"("userId");
-
--- CreateIndex
-CREATE INDEX "user_locations_provinceId_idx" ON "public"."user_locations"("provinceId");
-
--- CreateIndex
-CREATE INDEX "user_locations_municipalityId_idx" ON "public"."user_locations"("municipalityId");
-
--- CreateIndex
-CREATE INDEX "user_locations_isPrimary_idx" ON "public"."user_locations"("isPrimary");
-
 -- AddForeignKey
 ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_mainStyleId_fkey" FOREIGN KEY ("mainStyleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -1302,13 +1290,4 @@ ALTER TABLE "public"."blocked_users" ADD CONSTRAINT "blocked_users_blockerId_fke
 
 -- AddForeignKey
 ALTER TABLE "public"."blocked_users" ADD CONSTRAINT "blocked_users_blockedId_fkey" FOREIGN KEY ("blockedId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_locations" ADD CONSTRAINT "user_locations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_locations" ADD CONSTRAINT "user_locations_provinceId_fkey" FOREIGN KEY ("provinceId") REFERENCES "public"."provinces"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."user_locations" ADD CONSTRAINT "user_locations_municipalityId_fkey" FOREIGN KEY ("municipalityId") REFERENCES "public"."municipalities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

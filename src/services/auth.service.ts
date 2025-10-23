@@ -1,15 +1,16 @@
 import type {
-  AuthSession,
-  CompleteArtistRegistration,
-  CompleteUserRegistration,
-  ForgotPasswordData,
-  LoginCredentials,
-  RegisterCredentials,
-  ResetPasswordData,
-  User,
+    AuthSession,
+    CompleteArtistRegistration,
+    CompleteUserRegistration,
+    ForgotPasswordData,
+    LoginCredentials,
+    RegisterCredentials,
+    ResetPasswordData,
+    User,
 } from "../types/auth";
 import { UserRole } from "../types/auth";
 import { supabase } from "../utils/supabase";
+import { buildGoogleMapsUrl } from "./location.service";
 
 // Simple UUID generator for React Native
 function generateUUID(): string {
@@ -271,8 +272,6 @@ export class AuthService {
           firstName: (data as any).step3.firstName,
           lastName: (data as any).step3.lastName,
           phone: (data as any).step3.phone,
-          province: (data as any).step4.province,
-          municipality: (data as any).step4.municipality,
           avatar: (data as any).step3.avatar,
           instagram: (data as any).step5.instagram,
           tiktok: (data as any).step5.tiktok,
@@ -302,8 +301,6 @@ export class AuthService {
           firstName: (data as any).step3.firstName,
           lastName: (data as any).step3.lastName,
           phone: (data as any).step3.phone,
-          province: (data as any).step4.province,
-          municipality: (data as any).step4.municipality,
           avatar: (data as any).step3.avatar,
           instagram: (data as any).step5.instagram,
           tiktok: (data as any).step5.tiktok,
@@ -323,6 +320,28 @@ export class AuthService {
         throw new Error(updateError.message);
       }
       updatedUser = updated;
+    }
+
+    console.log("Now adding locations");
+    // Create primary user location
+    if ((data as any).step4?.provinceId && (data as any).step4?.municipalityId) {
+      const locationAddress = buildGoogleMapsUrl(
+        (data as any).step4.municipality,
+        (data as any).step4.province
+      );
+      console.log("location address:", locationAddress);
+      console.log("province id:", (data as any).step4.provinceId);
+      console.log("municipality id:", (data as any).step4.municipalityId);
+      await supabase.from('user_locations').insert({
+        id: generateUUID(),
+        userId: userId,
+        provinceId: (data as any).step4.provinceId,
+        municipalityId: (data as any).step4.municipalityId,
+        address: locationAddress,
+        isPrimary: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     }
 
     console.log("Now adding favorite styles");
@@ -457,9 +476,6 @@ export class AuthService {
         bio: data.step7.bio,
         instagram: data.step7.instagram,
         tiktok: data.step7.tiktok,
-        province: data.step5.province,
-        municipality: data.step5.municipality,
-        phone: data.step5.phone,
         updatedAt: new Date().toISOString(),
       })
       .eq("id", userId)
@@ -488,8 +504,6 @@ export class AuthService {
               ? "STUDIO_EMPLOYEE"
               : "FREELANCE",
         businessName: data.step5.studioName,
-        province: data.step5.province,
-        municipality: data.step5.municipality,
         studioAddress: data.step5.studioAddress,
         website: data.step5.website,
         phone: data.step5.phone,
@@ -510,6 +524,25 @@ export class AuthService {
     }
 
     console.log("artist profile creatd");
+
+    // Create primary location for artist using studio location
+    if (data.step5.provinceId && data.step5.municipalityId) {
+      const locationAddress = buildGoogleMapsUrl(
+        data.step5.municipality,
+        data.step5.province
+      );
+      
+      await adminOrUserClient.from('user_locations').insert({
+        id: generateUUID(),
+        userId: userId,
+        provinceId: data.step5.provinceId,
+        municipalityId: data.step5.municipalityId,
+        address: locationAddress,
+        isPrimary: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
 
     // Create studio + membership if studio owner
     if (data.step4.workArrangement === "STUDIO_OWNER") {
