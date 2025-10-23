@@ -154,13 +154,24 @@ export async function fetchPostDetails(postId: string, userId: string): Promise<
       authorId,
       styleId,
       tattoo_styles(id,name,imageUrl),
-      users!posts_authorId_fkey(id,username,firstName,lastName,avatar,municipality,province),
+      users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
       post_media(id,mediaType,mediaUrl,order)
     `)
     .eq("id", postId)
     .single();
 
   if (postError) throw new Error(postError.message);
+
+  // Fetch author's location separately
+  const { data: locationData } = await supabase
+    .from("user_locations")
+    .select(`
+      municipalities(name),
+      provinces(name)
+    `)
+    .eq("userId", (post as any).users.id)
+    .eq("isPrimary", true)
+    .maybeSingle();
 
   // Check if current user liked this post
   const { data: likeData } = await supabase
@@ -218,8 +229,8 @@ export async function fetchPostDetails(postId: string, userId: string): Promise<
       firstName: author.firstName,
       lastName: author.lastName,
       avatar: author.avatar,
-      municipality: author.municipality,
-      province: author.province,
+      municipality: (locationData as any)?.municipalities?.name,
+      province: (locationData as any)?.provinces?.name,
     },
     isLiked: !!likeData,
     isFollowingAuthor: !!followData,

@@ -83,9 +83,7 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
       username,
       firstName,
       lastName,
-      avatar,
-      municipality,
-      province
+      avatar
     `)
     .eq("id", collection.ownerId)
     .single();
@@ -107,7 +105,7 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
         authorId,
         styleId,
         tattoo_styles(id,name,imageUrl),
-        users!posts_authorId_fkey(id,username,firstName,lastName,avatar,municipality,province),
+        users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
         post_media(id,mediaType,mediaUrl,order)
       )
     `)
@@ -116,30 +114,58 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
 
   if (postsError) throw new Error(postsError.message);
 
-  const posts: CollectionPost[] = (collectionPosts || []).map((cp: any) => ({
-    id: cp.postId,
-    postId: cp.postId,
-    caption: cp.posts.caption,
-    thumbnailUrl: cp.posts.thumbnailUrl,
-    likesCount: cp.posts.likesCount,
-    commentsCount: cp.posts.commentsCount,
-    createdAt: cp.posts.createdAt,
-    media: (cp.posts.post_media || []).sort((a: any, b: any) => a.order - b.order),
-    style: cp.posts.tattoo_styles ? {
-      id: cp.posts.tattoo_styles.id,
-      name: cp.posts.tattoo_styles.name,
-      imageUrl: cp.posts.tattoo_styles.imageUrl,
-    } : undefined,
-    author: {
-      id: cp.posts.users.id,
-      username: cp.posts.users.username,
-      firstName: cp.posts.users.firstName,
-      lastName: cp.posts.users.lastName,
-      avatar: cp.posts.users.avatar,
-      municipality: cp.posts.users.municipality,
-      province: cp.posts.users.province,
-    },
-  }));
+  // Fetch location data for all users (owner + post authors)
+  const userIds = [collection.ownerId, ...(collectionPosts || []).map((cp: any) => cp.posts.authorId)];
+  const uniqueUserIds = Array.from(new Set(userIds));
+  
+  const { data: locationsData } = await supabase
+    .from("user_locations")
+    .select(`
+      userId,
+      municipalities(name),
+      provinces(name)
+    `)
+    .in("userId", uniqueUserIds)
+    .eq("isPrimary", true);
+
+  // Create a map of userId to location data
+  const locationMap = new Map();
+  (locationsData || []).forEach((loc: any) => {
+    locationMap.set(loc.userId, {
+      municipality: loc.municipalities?.name,
+      province: loc.provinces?.name,
+    });
+  });
+
+  const posts: CollectionPost[] = (collectionPosts || []).map((cp: any) => {
+    const authorLocation = locationMap.get(cp.posts.authorId) || {};
+    return {
+      id: cp.postId,
+      postId: cp.postId,
+      caption: cp.posts.caption,
+      thumbnailUrl: cp.posts.thumbnailUrl,
+      likesCount: cp.posts.likesCount,
+      commentsCount: cp.posts.commentsCount,
+      createdAt: cp.posts.createdAt,
+      media: (cp.posts.post_media || []).sort((a: any, b: any) => a.order - b.order),
+      style: cp.posts.tattoo_styles ? {
+        id: cp.posts.tattoo_styles.id,
+        name: cp.posts.tattoo_styles.name,
+        imageUrl: cp.posts.tattoo_styles.imageUrl,
+      } : undefined,
+      author: {
+        id: cp.posts.users.id,
+        username: cp.posts.users.username,
+        firstName: cp.posts.users.firstName,
+        lastName: cp.posts.users.lastName,
+        avatar: cp.posts.users.avatar,
+        municipality: authorLocation.municipality,
+        province: authorLocation.province,
+      },
+    };
+  });
+
+  const ownerLocation = locationMap.get(collection.ownerId) || {};
 
   return {
     id: collection.id,
@@ -158,8 +184,8 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
       firstName: owner.firstName,
       lastName: owner.lastName,
       avatar: owner.avatar,
-      municipality: owner.municipality,
-      province: owner.province,
+      municipality: ownerLocation.municipality,
+      province: ownerLocation.province,
     },
   };
 }

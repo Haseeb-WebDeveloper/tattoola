@@ -1,12 +1,12 @@
 import type {
-    AuthSession,
-    CompleteArtistRegistration,
-    CompleteUserRegistration,
-    ForgotPasswordData,
-    LoginCredentials,
-    RegisterCredentials,
-    ResetPasswordData,
-    User,
+  AuthSession,
+  CompleteArtistRegistration,
+  CompleteUserRegistration,
+  ForgotPasswordData,
+  LoginCredentials,
+  RegisterCredentials,
+  ResetPasswordData,
+  User,
 } from "../types/auth";
 import { UserRole } from "../types/auth";
 import { supabase } from "../utils/supabase";
@@ -57,9 +57,6 @@ export class AuthService {
       avatar: undefined,
       bio: undefined,
       phone: undefined,
-      country: undefined,
-      province: undefined,
-      municipality: undefined,
       instagram: undefined,
       tiktok: undefined,
       isActive: true,
@@ -146,9 +143,6 @@ export class AuthService {
         avatar: undefined,
         bio: undefined,
         phone: undefined,
-        country: undefined,
-        province: undefined,
-        municipality: undefined,
         instagram: undefined,
         tiktok: undefined,
         isActive: true,
@@ -393,6 +387,15 @@ export class AuthService {
         }
       }
     }
+
+    // Update user metadata to mark registration as complete
+    console.log("Updating displayName to DONE to mark registration complete");
+    await supabase.auth.updateUser({
+      data: {
+        displayName: 'DONE'
+      }
+    });
+    console.log('✅ Updated displayName to DONE');
 
     return this.transformDatabaseUser(updatedUser);
   }
@@ -986,6 +989,15 @@ export class AuthService {
 
     console.log("Portfolio posts and collection created");
 
+    // Update user metadata to mark registration as complete
+    console.log("Updating displayName to DONE to mark registration complete");
+    await supabase.auth.updateUser({
+      data: {
+        displayName: 'DONE'
+      }
+    });
+    console.log('✅ Updated displayName to DONE');
+
     return this.transformDatabaseUser(updatedUser);
   }
 
@@ -1134,9 +1146,6 @@ export class AuthService {
       avatar: dbUser.avatar,
       bio: dbUser.bio,
       phone: dbUser.phone,
-      country: dbUser.country,
-      province: dbUser.province,
-      municipality: dbUser.municipality,
       instagram: dbUser.instagram,
       tiktok: dbUser.tiktok,
       isActive: dbUser.isActive,
@@ -1156,11 +1165,6 @@ export class AuthService {
             specialties: dbUser.artist_profiles.specialties,
             businessName: dbUser.artist_profiles.businessName,
             studioAddress: dbUser.artist_profiles.studioAddress,
-            province: dbUser.artist_profiles.province,
-            municipality: dbUser.artist_profiles.municipality,
-            location: dbUser.artist_profiles.location,
-            city: dbUser.artist_profiles.city,
-            country: dbUser.artist_profiles.country,
             instagram: dbUser.artist_profiles.instagram,
             website: dbUser.artist_profiles.website,
             phone: dbUser.artist_profiles.phone,

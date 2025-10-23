@@ -57,17 +57,27 @@ export type ArtistSelfProfile = {
     instagram?: string;
     tiktok?: string;
     website?: string;
-    province?: string;
-    municipality?: string;
   };
   artistProfile: {
     id: string;
     businessName?: string;
-    province?: string;
-    municipality?: string;
     bio?: string;
     mainStyleId?: string | null;
     banner: { mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+  };
+  location?: {
+    id: string;
+    address?: string;
+    province: {
+      id: string;
+      name: string;
+      code?: string;
+    };
+    municipality: {
+      id: string;
+      name: string;
+    };
+    isPrimary: boolean;
   };
   favoriteStyles: { id: string; name: string; imageUrl?: string | null; isMain?: boolean }[];
   services: { id: string; name: string; description?: string | null }[];
@@ -111,8 +121,8 @@ export async function fetchArtistSelfProfile(
   const userQ = await supabase
     .from("users")
     .select(
-      `id,email,username,firstName,lastName,avatar,bio,instagram,tiktok,province,municipality,
-       artist_profiles(id,businessName,province,municipality,instagram,website,phone,mainStyleId)`
+      `id,email,username,firstName,lastName,avatar,bio,instagram,tiktok,
+       artist_profiles(id,businessName,instagram,website,phone,mainStyleId)`
     )
     .eq("id", userId)
     .single();
@@ -136,18 +146,15 @@ export async function fetchArtistSelfProfile(
         instagram: userRow.instagram,
         tiktok: userRow.tiktok,
         website: undefined,
-        province: userRow.province,
-        municipality: userRow.municipality,
       },
       artistProfile: {
         id: "",
         businessName: undefined,
-        province: userRow.province,
-        municipality: userRow.municipality,
         bio: undefined,
         mainStyleId: null,
         banner: [],
       },
+      location: undefined,
       favoriteStyles: [],
       services: [],
       collections: [],
@@ -158,7 +165,7 @@ export async function fetchArtistSelfProfile(
   const artistId = artistProfile.id as string;
 
   // Step 2: parallel dependent queries (treat errors as empty for resilience)
-  const [banner2, favStyles2, services2, collectionsQ, allBodyPartsQ, artistBodyParts2] = await Promise.all([
+  const [banner2, favStyles2, services2, collectionsQ, allBodyPartsQ, artistBodyParts2, locationQ] = await Promise.all([
     supabase
       .from("artist_banner_media")
       .select("mediaType,mediaUrl,order")
@@ -186,6 +193,18 @@ export async function fetchArtistSelfProfile(
       .from("artist_body_parts")
       .select("bodyPartId")
       .eq("artistId", artistId),
+    supabase
+      .from("user_locations")
+      .select(`
+        id,
+        address,
+        isPrimary,
+        provinces(id,name,code),
+        municipalities(id,name)
+      `)
+      .eq("userId", userId)
+      .eq("isPrimary", true)
+      .maybeSingle(),
   ]);
 
 
@@ -256,6 +275,24 @@ export async function fetchArtistSelfProfile(
     .map((c) => ({ id: c.id, name: c.name, isPortfolioCollection: c.isPortfolioCollection, thumbnails: (thumbsPerCollection[c.id] || []).slice(0, 4) }))
     .sort((a, b) => (a.isPortfolioCollection === b.isPortfolioCollection ? 0 : a.isPortfolioCollection ? -1 : 1));
 
+  // Process location data
+  const locationData = locationQ?.data as any;
+  const location = locationData
+    ? {
+        id: locationData.id,
+        address: locationData.address,
+        province: {
+          id: locationData.provinces?.id,
+          name: locationData.provinces?.name,
+          code: locationData.provinces?.code,
+        },
+        municipality: {
+          id: locationData.municipalities?.id,
+          name: locationData.municipalities?.name,
+        },
+        isPrimary: locationData.isPrimary,
+      }
+    : undefined;
 
   const profile: ArtistSelfProfile = {
     user: {
@@ -268,18 +305,15 @@ export async function fetchArtistSelfProfile(
       instagram: userRow.instagram,
       tiktok: userRow.tiktok,
       website: artistProfile.website,
-      province: userRow.province,
-      municipality: userRow.municipality,
     },
     artistProfile: {
       id: artistId,
       businessName: artistProfile.businessName,
-      province: artistProfile.province,
-      municipality: artistProfile.municipality,
       bio: userRow.bio,
       mainStyleId: artistProfile.mainStyleId || null,
       banner: (banner2?.data || []) as any[],
     },
+    location,
     favoriteStyles,
     services,
     collections: collectionsOut,

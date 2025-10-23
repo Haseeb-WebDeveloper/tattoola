@@ -1,22 +1,22 @@
 import {
-  Banner,
-  BodyPartsSection,
-  CollectionsSection,
-  ProfileHeader,
-  ProfileSkeleton,
-  ServicesSection,
-  SocialMediaIcons,
-  StylesSection,
+    Banner,
+    BodyPartsSection,
+    CollectionsSection,
+    ProfileHeader,
+    ProfileSkeleton,
+    ServicesSection,
+    SocialMediaIcons,
+    StylesSection,
 } from "@/components/profile";
 import { fetchArtistSelfProfile } from "@/services/profile.service";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Linking,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Linking,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function UserProfileScreen() {
@@ -77,10 +77,8 @@ export default function UserProfileScreen() {
           lastName={data?.user?.lastName}
           avatar={data?.user?.avatar}
           businessName={data?.artistProfile?.businessName}
-          municipality={
-            data?.artistProfile?.municipality || data?.user?.municipality
-          }
-          province={data?.artistProfile?.province || data?.user?.province}
+          municipality={data?.location?.municipality?.name}
+          province={data?.location?.province?.name}
         />
 
         {/* Social Media Icons */}

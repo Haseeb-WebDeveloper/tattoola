@@ -7,9 +7,6 @@ export interface User {
   avatar?: string;
   bio?: string;
   phone?: string;
-  country?: string;
-  province?: string;
-  municipality?: string;
   instagram?: string;
   tiktok?: string;
   isActive: boolean;
@@ -32,11 +29,6 @@ export interface ArtistProfile {
   specialties: string[];
   businessName?: string;
   studioAddress?: string;
-  province?: string;
-  municipality?: string;
-  location?: string;
-  city?: string;
-  country?: string;
   instagram?: string;
   website?: string;
   phone?: string;

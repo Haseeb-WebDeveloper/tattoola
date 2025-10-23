@@ -154,10 +154,9 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                   variant="11"
                   className="text-foreground"
                 >
-                  {profile?.artistProfile?.municipality ||
-                    profile?.user?.municipality}
-                  {profile?.artistProfile?.province || profile?.user?.province
-                    ? ` (${profile?.artistProfile?.province || profile?.user?.province})`
+                  {profile?.location?.municipality?.name}
+                  {profile?.location?.province?.name
+                    ? ` (${profile?.location?.province?.name})`
                     : ""}
                 </ScaledText>
               </View>

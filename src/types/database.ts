@@ -12,9 +12,9 @@ export interface Database {
           avatar: string | null;
           bio: string | null;
           phone: string | null;
-          country: string | null;
-          province: string | null;
-          municipality: string | null;
+          // country: string | null;
+          // province: string | null;
+          // municipality: string | null;
           instagram: string | null;
           tiktok: string | null;
           isActive: boolean;

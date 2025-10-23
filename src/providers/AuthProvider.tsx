@@ -51,31 +51,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.log('🔄 Auth state change details:', { event, role, isVerified, displayName });
             
             // IMPORTANT: For SIGNED_IN event after email verification,
-            // navigate immediately based on displayName (don't wait for DB check)
+            // navigate to registration ONLY if not yet completed
             if (event === 'SIGNED_IN') {
-              console.log('🎯 SIGNED_IN event detected → routing based on displayName');
+              console.log('🎯 SIGNED_IN event detected → checking registration status');
               console.log('🎯 displayName:', displayName);
               
-              // Navigate immediately
+              // Only route to registration if displayName is AR or TL (not yet completed)
               if (displayName === 'AR') {
-                console.log('🎯 Routing to artist registration step-3');
+                console.log('🎯 Artist registration not complete → routing to step-3');
                 router.replace('/(auth)/artist-registration/step-3');
-              } else {
-                console.log('🎯 Routing to user registration step-3');
+              } else if (displayName === 'TL') {
+                console.log('🎯 User registration not complete → routing to step-3');
                 router.replace('/(auth)/user-registration/step-3');
+              } else if (displayName === 'DONE') {
+                console.log('🎯 Registration complete (displayName: DONE), no routing needed');
+              } else {
+                console.log('🎯 Unknown displayName:', displayName, '- no routing');
               }
             }
             
             // Try to fetch full user profile from database
             try {
               console.log('🔄 Fetching user profile from database...');
-              const { data: dbUser } = await supabase
+              const { data: dbUser, error: dbError } = await supabase
                 .from('users')
                 .select('id, email, username, firstName, lastName, avatar, bio, phone, country, province, municipality, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
                 .eq('id', authUser.id)
                 .maybeSingle();
-                
-              console.log('🔄 User profile from database:', dbUser);
+              
+              console.log('🔄 Query result:', { dbUser, dbError });
 
               if (dbUser) {
                 console.log('🔄 Profile has firstName:', !!dbUser.firstName);

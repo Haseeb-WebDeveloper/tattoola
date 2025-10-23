@@ -151,10 +151,8 @@ export default function ProfileScreen() {
           lastName={data?.user?.lastName}
           avatar={data?.user?.avatar}
           businessName={data?.artistProfile?.businessName}
-          municipality={
-            data?.artistProfile?.municipality || data?.user?.municipality
-          }
-          province={data?.artistProfile?.province || data?.user?.province}
+          municipality={data?.location?.municipality?.name}
+          province={data?.location?.province?.name}
         />
 
         {/* Social Media Icons */}
