@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { AuthService } from '../services/auth.service';
 import { getPresenceChannel } from '../services/chat.service';
 import { usePresenceStore } from '../stores/presenceStore';
@@ -37,52 +38,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const stateChangeStart = Date.now();
-        console.log('🔄 ========== AUTH STATE CHANGE ==========');
-        console.log('🔄 Event:', event, 'User ID:', session?.user?.id);
+        console.log('Auth state changed:', event, session?.user?.id);
 
         if (session?.user) {
           try {
             const authUser: any = session.user;
             const isVerified = !!authUser.email_confirmed_at;
-            const displayName = authUser.user_metadata?.displayName;
-            const role = displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
-            
-            console.log('🔄 Auth state change details:', { event, role, isVerified, displayName });
-            
-            // IMPORTANT: For SIGNED_IN event after email verification,
-            // navigate to registration ONLY if not yet completed
-            if (event === 'SIGNED_IN') {
-              console.log('🎯 SIGNED_IN event detected → checking registration status');
-              console.log('🎯 displayName:', displayName);
-              
-              // Only route to registration if displayName is AR or TL (not yet completed)
-              if (displayName === 'AR') {
-                console.log('🎯 Artist registration not complete → routing to step-3');
-                router.replace('/(auth)/artist-registration/step-3');
-              } else if (displayName === 'TL') {
-                console.log('🎯 User registration not complete → routing to step-3');
-                router.replace('/(auth)/user-registration/step-3');
-              } else if (displayName === 'DONE') {
-                console.log('🎯 Registration complete (displayName: DONE), no routing needed');
-              } else {
-                console.log('🎯 Unknown displayName:', displayName, '- no routing');
-              }
-            }
+            const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
+
+            console.log('Auth user:', authUser);
+            console.log('Auth user is verified:', isVerified);
+            console.log('Auth user role:', role);
             
             // Try to fetch full user profile from database
             try {
-              console.log('🔄 Fetching user profile from database...');
-              const { data: dbUser, error: dbError } = await supabase
+              const { data: dbUser } = await supabase
                 .from('users')
-                .select('id, email, username, firstName, lastName, avatar, bio, phone, country, province, municipality, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
+                .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
                 .eq('id', authUser.id)
                 .maybeSingle();
-              
-              console.log('🔄 Query result:', { dbUser, dbError });
+
+                console.log('Database user:', dbUser);
 
               if (dbUser) {
-                console.log('🔄 Profile has firstName:', !!dbUser.firstName);
+                console.log('Auth state change: Loaded full user profile from database');
                 setUser(dbUser as any);
                 setSession({
                   user: dbUser as any,
@@ -90,9 +69,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   refreshToken: session.refresh_token,
                   expiresAt: session.expires_at || 0,
                 });
+                console.log('Session is set:', session);
               } else {
+                console.log('No database user found, falling back to minimal user');
                 // Fallback to minimal user
-                console.log(`🔄 No DB profile found, using minimal user`);
                 const minimalUser: any = {
                   id: authUser.id,
                   email: authUser.email,
@@ -113,7 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 });
               }
             } catch (dbError) {
-              console.warn('⚠️ Auth state change: Could not fetch user from database:', dbError);
+              console.warn('Auth state change: Could not fetch user from database:', dbError);
               // Fallback to minimal user
               const minimalUser: any = {
                 id: authUser.id,
@@ -136,24 +116,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
 
           } catch (error) {
-            console.error('❌ Error processing auth state change:', error);
+            console.error('Error initializing minimal auth user:', error);
             setUser(null);
             setSession(null);
           }
         } else {
-          console.log('🔄 No session in state change, clearing user');
           setUser(null);
           setSession(null);
         }
 
         if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out, clearing all auth state');
           setUser(null);
           setSession(null);
         }
-
-        const stateChangeDuration = Date.now() - stateChangeStart;
-        console.log(`✅ Auth state change processed in ${stateChangeDuration}ms`);
       }
     );
 
@@ -233,6 +208,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [user?.id, initialized]);
 
+  // Monitor app state changes and refresh session when app comes to foreground
+  useEffect(() => {
+    const appStateRef = { current: AppState.currentState };
+    
+    const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('🔄 AuthProvider: App returned to foreground, refreshing session...');
+        
+        try {
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          
+          if (currentSession?.user) {
+            console.log('✅ AuthProvider: Session is valid');
+            
+            // Optionally refresh user data from database
+            if (user?.id) {
+              try {
+                const { data: dbUser } = await supabase
+                  .from('users')
+                  .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
+                  .eq('id', user.id)
+                  .maybeSingle();
+                
+                if (dbUser) {
+                  console.log('✅ AuthProvider: User data refreshed');
+                  setUser(dbUser as any);
+                }
+              } catch (error) {
+                console.warn('⚠️ AuthProvider: Could not refresh user data:', error);
+              }
+            }
+          } else {
+            console.log('⚠️ AuthProvider: No valid session found');
+            if (user) {
+              console.log('🔓 AuthProvider: Clearing user state due to invalid session');
+              setUser(null);
+              setSession(null);
+            }
+          }
+        } catch (error) {
+          console.error('❌ AuthProvider: Error refreshing session:', error);
+        }
+      } else if (nextAppState.match(/inactive|background/)) {
+        console.log('⏸️ AuthProvider: App moved to background');
+      }
+      
+      appStateRef.current = nextAppState;
+    });
+
+    return () => {
+      appStateSubscription?.remove();
+    };
+  }, [user?.id]);
+
   const checkProfileCompletion = async (userId: string, role: string): Promise<boolean> => {
     try {
       // Simple check: if user exists in our custom users table, profile is complete
@@ -257,46 +286,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const initializeAuth = async () => {
-    const initStartTime = Date.now();
     try {
-      console.log('⚡ AuthProvider: Starting initializeAuth');
+      console.log('AuthProvider: Starting initializeAuth');
       setLoading(true);
-      
-      const sessionStartTime = Date.now();
       const { data: { session } } = await supabase.auth.getSession();
-      const sessionDuration = Date.now() - sessionStartTime;
-      
-      console.log(`⚡ AuthProvider: Got session in ${sessionDuration}ms:`, session?.user?.id || 'no session');
+      console.log('AuthProvider: Got session:', session?.user?.id || 'no session');
 
       if (session?.user) {
         const authUser: any = session.user;
         const isVerified = !!authUser.email_confirmed_at;
         const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
-        
-        console.log('⚡ AuthProvider: Session user metadata:', {
-          hasUsername: !!authUser.user_metadata?.username,
-          role,
-          isVerified
-        });
+
+        console.log('AuthProvider: Auth user:', authUser);
+        console.log('AuthProvider: Auth user is verified:', isVerified);
+        console.log('AuthProvider: Auth user role:', role);
         
         // Try to fetch full user profile from database to get avatar and other fields
         try {
-          console.log('⚡ AuthProvider: Fetching user profile from database...');
-          const dbFetchStart = Date.now();
-          const { data: dbUser } = await supabase
+          console.log('AuthProvider: Trying to fetch full user profile from database');
+          const { data: dbUser, error: dbError } = await supabase
             .from('users')
-            .select('id, email, username, firstName, lastName, avatar, bio, phone, country, province, municipality, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
+            .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
             .eq('id', authUser.id)
-            .single();
-          const dbFetchDuration = Date.now() - dbFetchStart;
+            .maybeSingle();
 
+          console.log('AuthProvider: Database user:', dbUser);
+          console.log('AuthProvider: Database error:', dbError);
+          
           if (dbUser) {
             // User exists in database, use full profile
-            console.log(`⚡ AuthProvider: Loaded full user profile from database in ${dbFetchDuration}ms`);
-            console.log('⚡ Profile status:', { 
-              hasFirstName: !!dbUser.firstName,
-              hasAvatar: !!dbUser.avatar 
-            });
+            console.log('AuthProvider: Loaded full user profile from database');
             setUser(dbUser as any);
             setSession({
               user: dbUser as any,
@@ -306,7 +325,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           } else {
             // User not in database yet, use minimal profile
-            console.log(`⚡ AuthProvider: No DB record found (${dbFetchDuration}ms), using minimal profile`);
             const minimalUser: any = {
               id: authUser.id,
               email: authUser.email,
@@ -327,7 +345,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           }
         } catch (dbError) {
-          console.warn('⚠️ AuthProvider: Could not fetch user from database, using minimal profile:', dbError);
+          console.warn('AuthProvider: Could not fetch user from database, using minimal profile:', dbError);
           // Fallback to minimal user if database fetch fails
           const minimalUser: any = {
             id: authUser.id,
@@ -350,26 +368,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Do NOT run checkProfileCompletion here, only after login
-        const totalInitTime = Date.now() - initStartTime;
-        console.log(`⚡ AuthProvider: Set user from session (total: ${totalInitTime}ms)`);
+        console.log('AuthProvider: Set user from session');
       } else {
         // No session, ensure user is null
-        const totalInitTime = Date.now() - initStartTime;
-        console.log(`⚡ AuthProvider: No session, setting user to null (total: ${totalInitTime}ms)`);
+        console.log('AuthProvider: No session, setting user to null');
         setUser(null);
         setSession(null);
       }
     } catch (error) {
-      const totalInitTime = Date.now() - initStartTime;
-      console.error(`❌ AuthProvider: Error initializing auth (${totalInitTime}ms):`, error);
+      console.error('Error initializing auth:', error);
       // On error, ensure user is null
-      console.log('❌ AuthProvider: Error occurred, setting user to null');
+      console.log('AuthProvider: Error occurred, setting user to null');
       setUser(null);
       setSession(null);
     } finally {
-      const totalInitTime = Date.now() - initStartTime;
-      console.log(`✅ AuthProvider: Initialization complete in ${totalInitTime}ms`);
-      console.log('✅ AuthProvider: Setting loading to false and initialized to true');
+      console.log('AuthProvider: Setting loading to false and initialized to true');
       setLoading(false);
       setInitialized(true);
     }

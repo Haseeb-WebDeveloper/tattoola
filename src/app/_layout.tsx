@@ -11,7 +11,8 @@ import {
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-get-random-values"; // Import polyfill for crypto functions
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +23,8 @@ import { initializeDeepLinking } from "../utils/deepLinking";
 
 
 export default function RootLayout() {
+  const appState = useRef(AppState.currentState);
+  
   const [fontsLoaded] = useFonts({
     // Register commonly used Montserrat weights under clear names
     "Montserrat-Light": Montserrat_300Light,
@@ -59,12 +62,25 @@ export default function RootLayout() {
 
     // Monitor app state changes
     console.log("📱 RootLayout: Setting up app state listener");
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log("🔄 RootLayout: App has come to the foreground!");
+        console.log("📱 RootLayout: Current app state:", nextAppState);
+        console.log("🔄 RootLayout: Checking for session changes...");
+      } else if (nextAppState.match(/inactive|background/)) {
+        console.log("⏸️ RootLayout: App has gone to the background");
+        console.log("📱 RootLayout: Current app state:", nextAppState);
+      }
+      appState.current = nextAppState;
+      console.log("📱 RootLayout: App state changed to:", appState.current);
+    });
 
     console.log("✅ RootLayout: All initialization complete");
 
     return () => {
       console.log("🧹 RootLayout: Cleaning up subscriptions");
       subscription?.remove();
+      appStateSubscription?.remove();
     };
   }, []);
 

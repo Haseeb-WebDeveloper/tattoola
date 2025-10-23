@@ -110,7 +110,7 @@ export default function ProfileScreen() {
         </ScaledText>
       </View>
     );
-  }
+    }
 
   return (
     <View className="flex-1 bg-background">

@@ -2,12 +2,32 @@ import type { ArtistSelfProfile } from "@/services/profile.service";
 import * as SQLite from "expo-sqlite";
 
 let db: SQLite.SQLiteDatabase | null = null;
+let isInitializing = false;
 
 /**
  * Initialize SQLite database and create tables
  */
 export async function initDatabase(): Promise<void> {
+  // Prevent multiple simultaneous initializations
+  if (db) {
+    console.log("✅ SQLite database already initialized");
+    return;
+  }
+  
+  if (isInitializing) {
+    console.log("⏳ SQLite database initialization already in progress...");
+    // Wait for initialization to complete
+    while (isInitializing) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    if (db) {
+      console.log("✅ SQLite database initialized by another process");
+      return;
+    }
+  }
+  
   try {
+    isInitializing = true;
     console.log("🗄️ Initializing SQLite database...");
     
     // Open or create database
@@ -26,7 +46,10 @@ export async function initDatabase(): Promise<void> {
     console.log("✅ SQLite database initialized successfully");
   } catch (error) {
     console.error("❌ Error initializing database:", error);
+    db = null; // Reset on error
     throw error;
+  } finally {
+    isInitializing = false;
   }
 }
 

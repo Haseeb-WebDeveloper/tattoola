@@ -20,28 +20,38 @@ export function initializeDeepLinking() {
         searchParams: Object.fromEntries(urlObj.searchParams.entries())
       });
 
-      // Case 1: Supabase direct verify URL (web → app)
-      if (url.includes('supabase.co/auth/v1/verify')) {
+      // Case 1: Supabase direct verify URL (web → app) or app verify route
+      if (url.includes('supabase.co/auth/v1/verify') || url.includes('auth/verify')) {
         console.log('📧 ========== EMAIL VERIFICATION DETECTED ==========');
         console.log('📧 Setting verification processing state...');
         
         const token = urlObj.searchParams.get('token');
         const type = urlObj.searchParams.get('type');
         const redirectTo = urlObj.searchParams.get('redirect_to');
+        const message = urlObj.searchParams.get('message');
 
         console.log('📧 Verification details:', { 
           hasToken: !!token, 
           type, 
           redirectTo,
+          message,
           tokenPrefix: token?.substring(0, 20) + '...'
         });
 
-        if (token && type === 'signup') {
-          console.log('📧 Navigating to verify-email screen with token');
+        // Check for email change intermediate step (old email confirmation)
+        if (message && message.toLowerCase().includes('proceed to confirm link sent to the other email')) {
+          console.log('📧 Email change intermediate step detected - showing confirmation screen');
+          router.replace('/settings/email-confirmation' as any);
+          return;
+        }
+
+        // Handle both signup and email_change verification types
+        if (token && (type === 'signup' || type === 'email_change' || type === 'emailChange')) {
+          console.log('📧 Navigating to verify-email screen with token and type');
           router.push(`/(auth)/verify-email?token=${token}&type=${type}`);
           return;
         } else {
-          console.warn('⚠️ Invalid verification parameters');
+          console.warn('⚠️ Invalid verification parameters', { hasToken: !!token, type });
         }
       }
 
@@ -51,8 +61,8 @@ export function initializeDeepLinking() {
         console.log('🔐 Email verification code detected, exchanging for session...');
         
         try {
-          // Simply exchange the code for a session
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          // Exchange the code for a session
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
             console.error('❌ Code exchange failed:', exchangeError.message);
@@ -61,10 +71,44 @@ export function initializeDeepLinking() {
           }
           
           console.log('✅ Code exchanged successfully');
-          console.log('🔄 Auth state change will trigger, letting AuthProvider + screens handle routing...');
           
-          // That's it! AuthProvider will detect the auth state change,
-          // set the user, and then index.tsx or welcome screen will handle routing
+          // Get user role from metadata
+          const authUser: any = data.user;
+          const role = authUser?.user_metadata?.displayName === "AR" ? "ARTIST" : "TATTOO_LOVER";
+          const userId = authUser?.id;
+          
+          console.log('👤 User authenticated via code exchange:', { userId, role });
+
+          // Check if profile exists in users table
+          console.log('📊 Checking if profile exists in users table...');
+          const { data: existingUser } = await supabase
+            .from('users')
+            .select('id, firstName')
+            .eq('id', userId)
+            .maybeSingle();
+
+          const hasCompletedProfile = !!(existingUser && existingUser.firstName);
+          console.log('📊 Profile check result:', { hasCompletedProfile, hasUser: !!existingUser });
+
+          // Small delay to allow auth state to settle before navigation
+          setTimeout(() => {
+            // Route based on profile completion and role
+            if (hasCompletedProfile) {
+              console.log('🏠 Redirecting to tabs (profile complete)');
+              router.replace('/(tabs)');
+            } else {
+              // Route to registration based on role
+              console.log('📝 Redirecting to registration (profile incomplete)');
+              if (role === "ARTIST") {
+                console.log('🎨 → Artist registration step 3');
+                router.replace('/(auth)/artist-registration/step-3');
+              } else {
+                console.log('💙 → User registration step 3');
+                router.replace('/(auth)/user-registration/step-3');
+              }
+            }
+          }, 300);
+
           
         } catch (error) {
           console.error('❌ Exception during code exchange:', error);

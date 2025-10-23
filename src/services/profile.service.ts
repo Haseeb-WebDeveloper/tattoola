@@ -207,8 +207,6 @@ export async function fetchArtistSelfProfile(
       .maybeSingle(),
   ]);
 
-
-
   // Build collections thumbnails (first 4 post media)
   const collections = (collectionsQ?.data || []) as { id: string; name: string; isPortfolioCollection: boolean }[];
   const thumbsPerCollection: Record<string, string[]> = {};

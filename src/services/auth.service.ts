@@ -104,7 +104,7 @@ export class AuthService {
             displayName: credentials.role === UserRole.ARTIST ? "AR" : "TL",
             username: credentials.username,
           },
-          emailRedirectTo: "tattoola://", // Use app scheme for deep linking
+          emailRedirectTo: "tattoola://auth/verify", // Valid route that exists
         },
       });
 
@@ -387,15 +387,6 @@ export class AuthService {
         }
       }
     }
-
-    // Update user metadata to mark registration as complete
-    console.log("Updating displayName to DONE to mark registration complete");
-    await supabase.auth.updateUser({
-      data: {
-        displayName: 'DONE'
-      }
-    });
-    console.log('✅ Updated displayName to DONE');
 
     return this.transformDatabaseUser(updatedUser);
   }
@@ -986,17 +977,6 @@ export class AuthService {
         postOrder++;
       }
     }
-
-    console.log("Portfolio posts and collection created");
-
-    // Update user metadata to mark registration as complete
-    console.log("Updating displayName to DONE to mark registration complete");
-    await supabase.auth.updateUser({
-      data: {
-        displayName: 'DONE'
-      }
-    });
-    console.log('✅ Updated displayName to DONE');
 
     return this.transformDatabaseUser(updatedUser);
   }

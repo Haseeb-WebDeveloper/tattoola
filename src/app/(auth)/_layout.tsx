@@ -16,7 +16,7 @@ export default function AuthLayout() {
         pointerEvents="none"
       />
       <Stack
-        initialRouteName="welcome"
+        // initialRouteName="welcome"
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: 'transparent' },
@@ -29,6 +29,7 @@ export default function AuthLayout() {
         <Stack.Screen name="reset-password" />
         <Stack.Screen name="email-confirmation" />
         <Stack.Screen name="verify-email" />
+        <Stack.Screen name="verify" />
         <Stack.Screen name="artist-register" />
         <Stack.Screen name="user-registration" />
         <Stack.Screen name="artist-registration" />

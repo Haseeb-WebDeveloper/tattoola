@@ -1,6 +1,4 @@
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useAuth } from "@/providers/AuthProvider";
-import { UserRole } from "@/types/auth";
 import { supabase } from "@/utils/supabase";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -9,7 +7,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 export default function VerifyEmailScreen() {
-  const { verifyEmail } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useLocalSearchParams();
@@ -41,7 +38,7 @@ export default function VerifyEmailScreen() {
         }
       );
 
-      if (!token || type !== "signup") {
+      if (!token) {
         console.error(
           "❌ VerifyEmailScreen.handleEmailVerification: Invalid verification link",
           {
@@ -56,62 +53,104 @@ export default function VerifyEmailScreen() {
         "✅ VerifyEmailScreen.handleEmailVerification: Token validation passed"
       );
 
-      // Verify the email with the token
-      console.log(
-        "📞 VerifyEmailScreen.handleEmailVerification: Calling verifyEmail"
-      );
-      await verifyEmail(token);
-      console.log(
-        "✅ VerifyEmailScreen.handleEmailVerification: Email verification successful"
-      );
+      // Handle different verification types
+      if (type === "email_change" || type === "emailChange") {
+        console.log(
+          "📧 VerifyEmailScreen.handleEmailVerification: Handling email change"
+        );
+        
+        // For email change, exchange the code for session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(token);
+        
+        if (error) {
+          console.error("❌ Email change verification failed:", error);
+          throw new Error(error.message || "Failed to verify email change");
+        }
 
-      // Get session to determine user info
-      const { data: sessionData } = await supabase.auth.getSession();
-      const authUser: any = sessionData?.session?.user;
+        console.log(
+          "✅ VerifyEmailScreen.handleEmailVerification: Email change successful"
+        );
+        
+        // Update the custom users table with new email
+        if (data.user?.email) {
+          const { error: updateError } = await supabase
+            .from("users")
+            .update({ email: data.user.email })
+            .eq("id", data.user.id);
 
-      if (!authUser) {
-        throw new Error("No session found after verification");
-      }
-
-      const userId = authUser.id;
-      const role = authUser.user_metadata?.displayName === 'AR' ? UserRole.ARTIST : UserRole.TATTOO_LOVER;
-
-      console.log("Checking if user has completed profile, userId:", userId, "role:", role);
-
-      // Check if user has completed their profile
-      const { data: existingUser, error: userCheckError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (userCheckError) {
-        console.error("Error checking user profile:", userCheckError);
-      }
-
-      const hasCompletedProfile = !!existingUser;
-      console.log("Has completed profile:", hasCompletedProfile);
-
-      // If we get here, verification was successful
-      console.log(
-        "🎉 VerifyEmailScreen.handleEmailVerification: Showing success toast"
-      );
-      toast.success("Your email has been successfully verified. You can now complete your profile.");
-      
-      setTimeout(() => {
-        if (hasCompletedProfile) {
-          console.log("User has completed profile, redirecting to app");
-          router.replace("/(tabs)");
-        } else {
-          console.log("User needs to complete registration, redirecting based on role:", role);
-          // Redirect to appropriate registration step based on role
-          if (role === UserRole.ARTIST) {
-            router.replace("/(auth)/artist-registration/step-3");
+          if (updateError) {
+            console.error("❌ Failed to update custom users table:", updateError);
           } else {
-            router.replace("/(auth)/user-registration/step-3");
+            console.log("✅ Custom users table updated successfully");
           }
         }
-      }, 1000);
+
+        toast.success("Your email has been successfully updated!");
+        setTimeout(() => {
+          router.replace("/settings" as any);
+        }, 1000);
+      } else if (type === "signup") {
+        // Handle signup verification with role-based routing
+        console.log(
+          "📧 VerifyEmailScreen.handleEmailVerification: Handling signup verification"
+        );
+        
+        // Exchange the code for session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(token);
+        
+        if (error) {
+          console.error("❌ Signup verification failed:", error);
+          throw new Error(error.message || "Failed to verify signup");
+        }
+
+        console.log(
+          "✅ VerifyEmailScreen.handleEmailVerification: Signup verification successful"
+        );
+        
+        // Get user role from metadata
+        const authUser: any = data.user;
+        const role = authUser?.user_metadata?.displayName === "AR" ? "ARTIST" : "TATTOO_LOVER";
+        const userId = authUser?.id;
+        
+        console.log("👤 User verified:", { userId, role });
+
+        // Check if profile exists in users table
+        console.log("📊 Checking if profile exists in users table...");
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("id, firstName")
+          .eq("id", userId)
+          .maybeSingle();
+
+        const hasCompletedProfile = !!(existingUser && existingUser.firstName);
+        console.log("📊 Profile check result:", { hasCompletedProfile, hasUser: !!existingUser });
+
+        toast.success("Your email has been successfully verified!");
+
+        // Route based on profile completion and role
+        setTimeout(() => {
+          if (hasCompletedProfile) {
+            console.log("🏠 Redirecting to tabs (profile complete)");
+            router.replace("/(tabs)");
+          } else {
+            // Route to registration based on role
+            console.log("📝 Redirecting to registration (profile incomplete)");
+            if (role === "ARTIST") {
+              console.log("🎨 → Artist registration step 3");
+              router.replace("/(auth)/artist-registration/step-3");
+            } else {
+              console.log("💙 → User registration step 3");
+              router.replace("/(auth)/user-registration/step-3");
+            }
+          }
+        }, 1000);
+      } else {
+        console.error(
+          "❌ VerifyEmailScreen.handleEmailVerification: Unknown verification type",
+          { type }
+        );
+        throw new Error("Unknown verification type");
+      }
     } catch (err) {
       console.error(
         "❌ VerifyEmailScreen.handleEmailVerification: Verification failed",
@@ -133,7 +172,7 @@ export default function VerifyEmailScreen() {
       );
       setLoading(false);
     }
-  }, [verifyEmail, searchParams]);
+  }, [searchParams]);
 
   if (loading) {
     return (

@@ -25,6 +25,7 @@ export default function ArtistRegisterScreen() {
     confirmPassword: "",
     role: UserRole.ARTIST,
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [focusedField, setFocusedField] = useState<
     keyof RegisterCredentials | null
@@ -39,7 +40,6 @@ export default function ArtistRegisterScreen() {
     []
   );
 
-  console.log('🎨 ArtistRegisterScreen');
   const handleInputChange = (
     field: keyof RegisterCredentials,
     value: string
@@ -73,11 +73,11 @@ export default function ArtistRegisterScreen() {
   };
 
   const handleRegister = async () => {
-    console.log("starting registration");
-
     if (!validateForm()) {
       return;
     }
+
+    console.log("formData starting registration", formData);
 
     // Navigate immediately to email confirmation and start background signup
     setInProgress();
@@ -86,10 +86,9 @@ export default function ArtistRegisterScreen() {
     try {
       const result = await signUp(formData);
       console.log("result from signUp", result);
-      // If sign up succeeds, mark success and remain on email-confirmation and redirect to the appropriate registration step
+      // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
-
-    } catch (error) {
+       } catch (error) {
       const message =
         error instanceof Error
           ? error.message
@@ -113,13 +112,13 @@ export default function ArtistRegisterScreen() {
     router.replace("/(auth)/welcome");
   };
 
-  // if (loading) {
-  //   return (
-  //     <SafeAreaView className="flex-1 bg-background">
-  //       <LoadingSpinner message="Creating your artist account..." overlay />
-  //     </SafeAreaView>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <LoadingSpinner message="Creating your artist account..." overlay />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <KeyboardAwareScrollView

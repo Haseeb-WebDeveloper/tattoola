@@ -15,9 +15,7 @@ import {
 } from "react-native";
 
 export default function WelcomeScreen() {
-  const { user, initialized } = useAuth();
 
-  // Removed navigation logic - AuthProvider handles routing after email verification
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
