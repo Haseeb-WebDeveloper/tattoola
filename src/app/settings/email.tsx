@@ -193,32 +193,38 @@ export default function EmailSettingsScreen() {
         {
           email: newEmail,
         },
-        {
-          emailRedirectTo: "tattoola://auth/verify", // Valid route for deep linking
-        }
+        // {
+        //   emailRedirectTo: "tattoola://(auth)/verify", // Valid route for deep linking
+        // }
       );
+
+      // const { data, error } = await supabase.auth.updateUser(
+      //   { email: newEmail },
+      //   { emailRedirectTo: "https://yourapp.com/verify" }
+      // );
+      
 
       console.log("UpdateUser Response:", { data, error });
 
       if (error) {
         console.log("Error updating email:", error);
         toast.error(error.message || "Failed to update email");
+        setIsUpdatingEmail(false); // Explicit clear on error
         return;
       }
 
       console.log("Email update initiated successfully");
-      toast.success("Verification email sent! Check both your old and new email addresses.");
+      setIsUpdatingEmail(false); // Clear BEFORE navigation
+      toast.success("Verification emails sent! Check both your old and new email addresses.");
 
-      // Navigate to confirmation screen after a short delay
+      // Small delay to ensure state updates
       setTimeout(() => {
         router.replace("/settings/email-confirmation" as any);
-      }, 500);
+      }, 100);
     } catch (err: any) {
       console.error("Error updating email:", err);
       toast.error(err.message || "Failed to update email");
-    } finally {
-      // Always clear loading state
-      setIsUpdatingEmail(false);
+      setIsUpdatingEmail(false); // Explicit clear on catch
     }
   };
 

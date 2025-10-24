@@ -21,9 +21,8 @@ export function initializeDeepLinking() {
       });
 
       // Case 1: Supabase direct verify URL (web → app) or app verify route
-      if (url.includes('supabase.co/auth/v1/verify') || url.includes('auth/verify')) {
+      if (url.includes('supabase.co/auth/v1/verify') || url.includes('auth/verify')  || url.includes('(auth)/verify')) {
         console.log('📧 ========== EMAIL VERIFICATION DETECTED ==========');
-        console.log('📧 Setting verification processing state...');
         
         const token = urlObj.searchParams.get('token');
         const type = urlObj.searchParams.get('type');
@@ -38,21 +37,28 @@ export function initializeDeepLinking() {
           tokenPrefix: token?.substring(0, 20) + '...'
         });
 
-        // Check for email change intermediate step (old email confirmation)
+        // Check for intermediate confirmation message (old email confirmation)
         if (message && message.toLowerCase().includes('proceed to confirm link sent to the other email')) {
           console.log('📧 Email change intermediate step detected - showing confirmation screen');
           router.replace('/settings/email-confirmation' as any);
           return;
         }
 
-        // Handle both signup and email_change verification types
-        if (token && (type === 'signup' || type === 'email_change' || type === 'emailChange')) {
+        // Handle email_change verification
+        if (token && (type === 'email_change' || type === 'emailChange')) {
+          console.log('📧 Email change verification detected - processing');
+          router.push(`/(auth)/verify-email?token=${token}&type=email_change`);
+          return;
+        }
+
+        // Handle signup verification
+        if (token && type === 'signup') {
           console.log('📧 Navigating to verify-email screen with token and type');
           router.push(`/(auth)/verify-email?token=${token}&type=${type}`);
           return;
-        } else {
-          console.warn('⚠️ Invalid verification parameters', { hasToken: !!token, type });
         }
+        
+        console.warn('⚠️ Invalid verification parameters', { hasToken: !!token, type });
       }
 
       // Case 2: App receives a code (PKCE) to exchange for a session

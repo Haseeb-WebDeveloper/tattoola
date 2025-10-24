@@ -176,75 +176,34 @@ export default function VerifyEmailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <LoadingSpinner message="Verifying your email..." overlay />
+      <SafeAreaView className="flex-1 bg-background items-center justify-center">
+        <LoadingSpinner message="Verifying your ... from verify-email.tsx" overlay />
+        <Text className="bg-red-500 text-white">Please wait while we verify your account</Text>
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Verification Failed</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
+      <SafeAreaView className="flex-1 bg-background items-center justify-center">
+        <View className="flex-1 items-center justify-center">
+          <Text className="bg-red-500 text-white">Verification Failed</Text>
+          <Text className="bg-red-500 text-white">{error}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.successContainer}>
-        <Text style={styles.successTitle}>Email Verified!</Text>
-        <Text style={styles.successMessage}>
+    <View className="flex-1 bg-background items-center justify-center">
+        <View className="flex-1 items-center justify-center">
+        <Text className="bg-green-500 text-white">Email Verified!</Text>
+        <Text className="bg-green-500 text-white">
           Your email has been successfully verified. You can now complete your
           profile.
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorContainer: {
-    padding: 24,
-    alignItems: "center",
-  },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#EF4444",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  errorMessage: {
-    fontSize: 16,
-    color: "#666666",
-    textAlign: "center",
-    lineHeight: 24,
-  },
-  successContainer: {
-    padding: 24,
-    alignItems: "center",
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#10B981",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  successMessage: {
-    fontSize: 16,
-    color: "#666666",
-    textAlign: "center",
-    lineHeight: 24,
-  },
-});
