@@ -17,9 +17,6 @@ model User {
   avatar                String?
   bio                   String?
   phone                 String?
-  country               String?
-  province              String?
-  municipality          String?
   instagram             String?
   tiktok                String?
   isActive              Boolean             @default(true)
@@ -61,6 +58,7 @@ model User {
   reviewedReports       Report[]            @relation("AdminReviews")
   blocking              BlockedUser[]       @relation("UserBlocking")
   blockedBy             BlockedUser[]       @relation("UserBlocked")
+  locations             UserLocation[]
 
   @@index([email])
   @@index([username])
@@ -78,11 +76,6 @@ model ArtistProfile {
   specialties       String[]
   businessName      String?
   studioAddress     String?
-  province          String?
-  municipality      String?
-  location          String?
-  city              String?
-  country           String?
   instagram         String?
   website           String?
   phone             String?
@@ -91,11 +84,10 @@ model ArtistProfile {
   isStudioOwner     Boolean               @default(false)
   minimumPrice      Float?
   hourlyRate        Float?
-  coverPhoto        String?
-  coverVideo        String?
   mainStyleId       String?
   acceptPrivateRequests Boolean           @default(true)
   rejectionMessage  String?
+  bannerType        BannerType?           @default(FOUR_IMAGES)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   bodyParts         ArtistBodyPart[]
@@ -110,8 +102,6 @@ model ArtistProfile {
 
   @@index([userId])
   @@index([portfolioComplete])
-  @@index([city])
-  @@index([province])
   @@index([workArrangement])
   @@index([artistType])
   @@index([mainStyleId])
@@ -662,6 +652,7 @@ model Province {
   isActive       Boolean        @default(true)
   createdAt      DateTime       @default(now())
   municipalities Municipality[]
+  userLocations  UserLocation[]
 
   @@index([name])
   @@index([code])
@@ -669,14 +660,15 @@ model Province {
 }
 
 model Municipality {
-  id         String   @id @default(uuid())
-  name       String
-  provinceId String
-  postalCode String?
-  imageUrl   String?
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  province   Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  id            String         @id @default(uuid())
+  name          String
+  provinceId    String
+  postalCode    String?
+  imageUrl      String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  province      Province       @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  userLocations UserLocation[]
 
   @@index([name])
   @@index([provinceId])
@@ -742,13 +734,14 @@ model ArtistService {
 }
 
 model ArtistBannerMedia {
-  id        String         @id @default(dbgenerated("uuid_generate_v4()"))
-  artistId  String
-  mediaType MediaType      @default(IMAGE)
-  mediaUrl  String
-  order     Int            @default(0)
-  createdAt DateTime       @default(now())
-  artist    ArtistProfile  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  id         String         @id @default(dbgenerated("uuid_generate_v4()"))
+  artistId   String
+  mediaType  MediaType      @default(IMAGE)
+  mediaUrl   String
+  bannerType BannerType     @default(FOUR_IMAGES)
+  order      Int            @default(0)
+  createdAt  DateTime       @default(now())
+  artist     ArtistProfile  @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
   @@index([artistId])
   @@index([order])
@@ -839,6 +832,26 @@ model BlockedUser {
   @@index([blockerId])
   @@index([blockedId])
   @@map("blocked_users")
+}
+
+model UserLocation {
+  id             String       @id @default(uuid())
+  userId         String
+  provinceId     String
+  municipalityId String
+  address        String?
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  province       Province     @relation(fields: [provinceId], references: [id])
+  municipality   Municipality @relation(fields: [municipalityId], references: [id])
+
+  @@index([userId])
+  @@index([provinceId])
+  @@index([municipalityId])
+  @@index([isPrimary])
+  @@map("user_locations")
 }
 
 enum UserRole {
@@ -955,4 +968,10 @@ enum ArtistType {
 enum PlanType {
   PREMIUM
   STUDIO
+}
+
+enum BannerType {
+  FOUR_IMAGES
+  ONE_IMAGE
+  ONE_VIDEO
 }

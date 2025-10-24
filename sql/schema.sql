@@ -52,6 +52,9 @@ CREATE TYPE "public"."ArtistType" AS ENUM ('FREELANCE', 'STUDIO_EMPLOYEE', 'STUD
 -- CreateEnum
 CREATE TYPE "public"."PlanType" AS ENUM ('PREMIUM', 'STUDIO');
 
+-- CreateEnum
+CREATE TYPE "public"."BannerType" AS ENUM ('FOUR_IMAGES', 'ONE_IMAGE', 'ONE_VIDEO');
+
 -- CreateTable
 CREATE TABLE "public"."users" (
     "id" TEXT NOT NULL,
@@ -93,11 +96,10 @@ CREATE TABLE "public"."artist_profiles" (
     "isStudioOwner" BOOLEAN NOT NULL DEFAULT false,
     "minimumPrice" DOUBLE PRECISION,
     "hourlyRate" DOUBLE PRECISION,
-    "coverPhoto" TEXT,
-    "coverVideo" TEXT,
     "mainStyleId" TEXT,
     "acceptPrivateRequests" BOOLEAN NOT NULL DEFAULT true,
     "rejectionMessage" TEXT,
+    "bannerType" "public"."BannerType" DEFAULT 'FOUR_IMAGES',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -576,6 +578,7 @@ CREATE TABLE "public"."artist_banner_media" (
     "artistId" TEXT NOT NULL,
     "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
     "mediaUrl" TEXT NOT NULL,
+    "bannerType" "public"."BannerType" NOT NULL DEFAULT 'FOUR_IMAGES',
     "order" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

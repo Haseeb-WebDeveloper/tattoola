@@ -16,8 +16,20 @@ import {
 import { toast } from "sonner-native";
 
 export default function EmailConfirmationScreen() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [isResending, setIsResending] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  // Check for pending email change
+  React.useEffect(() => {
+    const checkPendingEmail = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.new_email) {
+        setPendingEmail(authUser.new_email);
+      }
+    };
+    checkPendingEmail();
+  }, []);
 
   const handleClose = () => {
     router.replace("/settings" as any);
@@ -98,6 +110,25 @@ export default function EmailConfirmationScreen() {
           >
             Check BOTH your old and new email addresses for confirmation links
           </ScaledText>
+          
+          {/* Show pending email change info */}
+          {pendingEmail && (
+            <View style={{ marginTop: mvs(16), backgroundColor: 'rgba(173, 46, 46, 0.1)', padding: s(12), borderRadius: 8 }}>
+              <ScaledText
+                variant="sm"
+                className="text-foreground/60 font-montserratMedium text-center"
+              >
+                Current: {user?.email}
+              </ScaledText>
+              <ScaledText
+                variant="sm"
+                className="text-foreground font-montserratSemibold text-center"
+                style={{ marginTop: mvs(4) }}
+              >
+                Changing to: {pendingEmail}
+              </ScaledText>
+            </View>
+          )}
         </View>
 
         {/* Image */}
@@ -138,14 +169,13 @@ export default function EmailConfirmationScreen() {
         </View>
 
         {/* Note */}
-        <View style={{ paddingHorizontal: s(48), marginBottom: mvs(32) }}>
+        <View style={{ paddingHorizontal: s(16), marginBottom: mvs(32) }}>
           <ScaledText
-            variant="body2"
+            variant="md"
             className="text-foreground/80 font-montserratLight text-center"
           >
             Step 1: Click the confirmation link in your OLD email{"\n"}
             Step 2: Click the verification link in your NEW email{"\n"}
-            {"\n"}
             After completing both steps, your email will be updated.
           </ScaledText>
         </View>

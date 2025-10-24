@@ -1,12 +1,12 @@
 import type {
-  AuthSession,
-  CompleteArtistRegistration,
-  CompleteUserRegistration,
-  ForgotPasswordData,
-  LoginCredentials,
-  RegisterCredentials,
-  ResetPasswordData,
-  User,
+    AuthSession,
+    CompleteArtistRegistration,
+    CompleteUserRegistration,
+    ForgotPasswordData,
+    LoginCredentials,
+    RegisterCredentials,
+    ResetPasswordData,
+    User,
 } from "../types/auth";
 import { UserRole } from "../types/auth";
 import { supabase } from "../utils/supabase";
@@ -840,6 +840,7 @@ export class AuthService {
           artistId: artistProfile.id,
           mediaType: "IMAGE" as const,
           mediaUrl: url,
+          bannerType: 'FOUR_IMAGES',
           order: index,
         }));
 
@@ -852,6 +853,18 @@ export class AuthService {
           // Don't throw error, just log it as banner is not critical
         } else {
           console.log("Artist banner media created successfully");
+          
+          // Set bannerType to FOUR_IMAGES in artist_profiles
+          const { error: updateBannerTypeError } = await adminOrUserClient
+            .from("artist_profiles")
+            .update({ bannerType: 'FOUR_IMAGES' })
+            .eq("id", artistProfile.id);
+
+          if (updateBannerTypeError) {
+            console.error("Error setting bannerType:", updateBannerTypeError);
+          } else {
+            console.log("Banner type set to FOUR_IMAGES");
+          }
         }
       }
     }

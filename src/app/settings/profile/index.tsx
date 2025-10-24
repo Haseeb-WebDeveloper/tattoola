@@ -55,8 +55,8 @@ export default function ProfileSettingsScreen() {
     router.push("/settings/profile/social-media" as any);
   };
 
-  const handleActivityPress = () => {
-    router.push("/settings/profile/activity" as any);
+  const handleBusinessInfoPress = () => {
+    router.push("/settings/profile/business-info" as any);
   };
 
   const handleBioPress = () => {
@@ -87,8 +87,8 @@ export default function ProfileSettingsScreen() {
     router.push("/settings/profile/private-requests" as any);
   };
 
-  const handleCoverPress = () => {
-    router.push("/settings/profile/cover" as any);
+  const handleBannerPress = () => {
+    router.push("/settings/profile/banner" as any);
   };
 
   const handleExperiencePress = () => {
@@ -153,7 +153,7 @@ export default function ProfileSettingsScreen() {
           />
           <ProfileSettingsItem
             title="La tua attività"
-            onPress={handleActivityPress}
+            onPress={handleBusinessInfoPress}
           />
           <ProfileSettingsItem title="Bio" onPress={handleBioPress} />
           <ProfileSettingsItem
@@ -180,7 +180,7 @@ export default function ProfileSettingsScreen() {
             title="Richieste private"
             onPress={handlePrivateRequestsPress}
           />
-          <ProfileSettingsItem title="Cover" onPress={handleCoverPress} />
+          <ProfileSettingsItem title="Banner" onPress={handleBannerPress} />
           <ProfileSettingsItem
             title="Esperienza"
             onPress={handleExperiencePress}

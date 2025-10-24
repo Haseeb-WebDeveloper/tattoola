@@ -8,18 +8,36 @@ export function initializeDeepLinking() {
     console.log('');
     console.log('🔗 ==========================================');
     console.log('🔗 DEEP LINK HANDLER CALLED');
-    console.log('🔗 URL:', url);
+    console.log('🔗 Raw URL:', url);
+    console.log('🔗 URL Length:', url?.length);
+    console.log('🔗 Timestamp:', new Date().toISOString());
     console.log('🔗 ==========================================');
     console.log('');
 
     try {
+      // Log raw URL for debugging
+      console.log('🔗 URL Analysis:');
+      console.log('  - Contains supabase.co:', url.includes('supabase.co'));
+      console.log('  - Contains verify:', url.includes('verify'));
+      console.log('  - Contains token:', url.includes('token'));
+      console.log('  - Contains code:', url.includes('code'));
+      console.log('  - Contains email:', url.includes('email'));
+      
       const urlObj = new URL(url);
       console.log('🔗 Parsed URL details:', {
         href: urlObj.href,
         hostname: urlObj.hostname,
         pathname: urlObj.pathname,
         search: urlObj.search,
+        hash: urlObj.hash,
         searchParams: Object.fromEntries(urlObj.searchParams.entries())
+      });
+
+      // Log all URL parameters
+      const allParams: Record<string, string> = {};
+      urlObj.searchParams.forEach((value, key) => {
+        allParams[key] = value;
+        console.log(`  📋 Param: ${key} = ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`);
       });
 
       // Check for PKCE code first (most common case) 
@@ -98,7 +116,7 @@ export function initializeDeepLinking() {
         return;
       }
 
-      // Case 2: Token-based verification (legacy, for email change)
+      // Case 2: Token-based verification (for email change)
       if (url.includes('supabase.co/auth/v1/verify') || url.includes('verify')) {
         console.log('📧 ========== TOKEN-BASED VERIFICATION DETECTED ==========');
         
@@ -122,7 +140,72 @@ export function initializeDeepLinking() {
           return;
         }
 
-        console.warn('⚠️ Token-based verification detected but no valid token/type - PKCE should be used instead');
+        // Handle token-based verification (email changes)
+        if (token && type) {
+          console.log('🔐 Processing token-based verification...');
+          console.log('🔐 Type:', type);
+          
+          try {
+            // Verify the token
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash: token,
+              type: type as any,
+            });
+
+            console.log('🔐 Token verification response:', { 
+              hasData: !!data, 
+              hasError: !!error,
+              hasUser: !!data?.user,
+              errorMessage: error?.message 
+            });
+
+            if (error) {
+              console.error('❌ Token verification failed:', error);
+              
+              // Check if it's an expired or invalid token
+              if (error.message.includes('expired') || error.message.includes('invalid')) {
+                router.replace('/settings/email-confirmation' as any);
+                setTimeout(() => {
+                  alert('This link has expired. Please request a new one.');
+                }, 500);
+              } else {
+                router.replace('/settings' as any);
+              }
+              return;
+            }
+
+            if (data?.user) {
+              console.log('✅ Token verified successfully');
+              console.log('📧 User email:', data.user.email);
+              console.log('📧 User new_email:', (data.user as any).new_email);
+              
+              // Email change verification completed
+              if (type === 'email_change') {
+                console.log('📧 Email change confirmed!');
+                
+                // Small delay to allow Supabase to process the change
+                setTimeout(() => {
+                  router.replace('/settings' as any);
+                  setTimeout(() => {
+                    alert('Email successfully updated!');
+                  }, 500);
+                }, 300);
+                return;
+              }
+            }
+
+            console.log('✅ Token verification completed, redirecting...');
+            router.replace('/settings' as any);
+            
+          } catch (error) {
+            console.error('❌ Error during token verification:', error);
+            router.replace('/settings' as any);
+          }
+          
+          return;
+        }
+
+        console.warn('⚠️ Token-based verification URL detected but missing token or type parameters');
       }
 
       // Case 3: Just opened via deep link (no code/token) - check if user has session
@@ -184,10 +267,22 @@ export function initializeDeepLinking() {
     console.log('🔗 ========================================');
     console.log('🔗 EVENT LISTENER FIRED!');
     console.log('🔗 Received URL:', url);
+    console.log('🔗 URL Type:', typeof url);
+    console.log('🔗 Is URL a string?', typeof url === 'string');
+    console.log('🔗 Event timestamp:', new Date().toISOString());
     console.log('🔗 ========================================');
     console.log('');
+    
+    // Ensure URL is valid before processing
+    if (!url || typeof url !== 'string') {
+      console.error('❌ Invalid URL received:', url);
+      return;
+    }
+    
     // Fire and forget; no need to block
-    handleDeepLink(url);
+    handleDeepLink(url).catch((error) => {
+      console.error('❌ Error in handleDeepLink:', error);
+    });
   });
   console.log('✅ Deep link event listener attached');
 

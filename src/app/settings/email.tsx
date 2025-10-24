@@ -25,31 +25,36 @@ export default function EmailSettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  console.log('User is at email settings screen');
-  
+  console.log("User is at email settings screen");
+
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>("password");
-  
+
   // Password step
   const [currentPassword, setCurrentPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
-  
+
+  // NEW: Confirm Password State for Password Step
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Email step
   const [newEmail, setNewEmail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
   const [newEmailError, setNewEmailError] = useState("");
   const [confirmEmailError, setConfirmEmailError] = useState("");
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  
+
   // Modal
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
   // Check if there are unsaved changes
   const hasUnsavedChanges =
     currentStep === "password"
-      ? currentPassword.trim() !== ""
+      ? currentPassword.trim() !== "" || confirmPassword.trim() !== ""
       : newEmail.trim() !== "" || confirmEmail.trim() !== "";
 
   const handleBack = () => {
@@ -76,6 +81,11 @@ export default function EmailSettingsScreen() {
       setNewEmailError("");
       setConfirmEmailError("");
     } else {
+      // Also clear password step fields and errors
+      setCurrentPassword("");
+      setConfirmPassword("");
+      setPasswordError("");
+      setConfirmPasswordError("");
       router.back();
     }
   };
@@ -87,6 +97,21 @@ export default function EmailSettingsScreen() {
   const handlePasswordChange = (text: string) => {
     setCurrentPassword(text);
     if (passwordError) {
+      setPasswordError("");
+    }
+    // Also clear confirmPasswordError if previously set and fields now match
+    if (confirmPasswordError && text === confirmPassword) {
+      setConfirmPasswordError("");
+    }
+  };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    if (confirmPasswordError) {
+      setConfirmPasswordError("");
+    }
+    // Also clear passwordError if previously set and fields now match
+    if (passwordError && text === currentPassword) {
       setPasswordError("");
     }
   };
@@ -108,13 +133,30 @@ export default function EmailSettingsScreen() {
     }
   };
 
-  const verifyCurrentPassword = async (): Promise<boolean> => {
-    console.log('Verifying current password:', currentPassword);
+  // Add confirm password validation before verifying
+  const validatePasswordStep = (): boolean => {
+    let isValid = true;
+    setPasswordError("");
+    setConfirmPasswordError("");
+
     if (!currentPassword.trim()) {
       setPasswordError("Current password is required");
-      return false;
+      isValid = false;
     }
 
+    if (!confirmPassword.trim()) {
+      setConfirmPasswordError("Please confirm your password");
+      isValid = false;
+    } else if (currentPassword !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      isValid = false;
+    }
+    return isValid;
+  };
+
+  const verifyCurrentPassword = async (): Promise<boolean> => {
+    // confirmPassword validation will be handled before calling this
+    // so ONLY check currentPassword here as before
     setIsVerifyingPassword(true);
 
     try {
@@ -139,9 +181,18 @@ export default function EmailSettingsScreen() {
   };
 
   const handlePasswordNext = async () => {
+    // First validate password match
+    const fieldValid = validatePasswordStep();
+    if (!fieldValid) {
+      return;
+    }
+
     const isValid = await verifyCurrentPassword();
     if (isValid) {
       setCurrentStep("email");
+      // Optionally clear password fields for security
+      // setCurrentPassword("");
+      // setConfirmPassword("");
     }
   };
 
@@ -209,7 +260,9 @@ export default function EmailSettingsScreen() {
 
       console.log("Email update initiated successfully");
       setIsUpdatingEmail(false); // Clear BEFORE navigation
-      toast.success("Verification emails sent! Check both your old and new email addresses.");
+      toast.success(
+        "Verification emails sent! Check both your old and new email addresses."
+      );
 
       // Small delay to ensure state updates
       setTimeout(() => {
@@ -222,7 +275,12 @@ export default function EmailSettingsScreen() {
     }
   };
 
-  const isPasswordStepValid = currentPassword.trim() !== "";
+  // Update: password step is valid only if both fields are filled AND match
+  const isPasswordStepValid =
+    currentPassword.trim() !== "" &&
+    confirmPassword.trim() !== "" &&
+    currentPassword === confirmPassword;
+
   const isEmailStepValid = newEmail.trim() !== "" && confirmEmail.trim() !== "";
 
   return (
@@ -281,21 +339,22 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-gray font-montserratMedium text-center"
+                  className="text-foreground font-montserratMedium text-center"
                 >
-                  For security, please enter your current password to continue
+                  Per richiedere la modifica della mail devi inserire prima la
+                  tua password attuale.
                 </ScaledText>
               </View>
 
               {/* Current Password */}
-              <View style={{ marginBottom: mvs(24) }}>
+              <View style={{ marginBottom: mvs(16) }}>
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
+                  variant="sm"
                   className="text-gray font-montserratMedium"
-                  style={{ marginBottom: mvs(8) }}
+                  style={{ marginBottom: mvs(6) }}
                 >
-                  Current password
+                  Inserire la password
                 </ScaledText>
                 <View>
                   <ScaledTextInput
@@ -321,7 +380,9 @@ export default function EmailSettingsScreen() {
                     }}
                     rightAccessory={
                       <TouchableOpacity
-                        onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                        onPress={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
                         style={{
                           position: "absolute",
                           right: s(16),
@@ -350,6 +411,72 @@ export default function EmailSettingsScreen() {
                   </ScaledText>
                 ) : null}
               </View>
+
+              {/* Confirm Current Password */}
+              <View style={{ marginBottom: mvs(24) }}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-gray font-montserratMedium"
+                  style={{ marginBottom: mvs(6) }}
+                >
+                  Conferma Password
+                </ScaledText>
+                <View>
+                  <ScaledTextInput
+                    value={confirmPassword}
+                    onChangeText={handleConfirmPasswordChange}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor="#666"
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isVerifyingPassword}
+                    className="text-foreground font-medium"
+                    containerClassName="rounded-lg"
+                    containerStyle={{
+                      borderWidth: s(1),
+                      borderColor: confirmPasswordError ? "#DC3545" : "#A49A99",
+                      backgroundColor: "#100C0C",
+                    }}
+                    style={{
+                      fontSize: scaledFont(14),
+                      fontFamily: "Montserrat-Medium",
+                      paddingRight: s(48),
+                    }}
+                    rightAccessory={
+                      <TouchableOpacity
+                        onPress={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        style={{
+                          position: "absolute",
+                          right: s(16),
+                          top: 0,
+                          bottom: 0,
+                          justifyContent: "center",
+                        }}
+                      >
+                        {showConfirmPassword ? (
+                          <SVGIcons.EyeOpen width={s(20)} height={s(20)} />
+                        ) : (
+                          <SVGIcons.EyeClose width={s(20)} height={s(20)} />
+                        )}
+                      </TouchableOpacity>
+                    }
+                  />
+                </View>
+                {confirmPasswordError ? (
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-error"
+                    style={{ marginTop: mvs(8) }}
+                  >
+                    {confirmPasswordError}
+                  </ScaledText>
+                ) : null}
+              </View>
             </>
           ) : (
             /* Email Update Step */
@@ -359,15 +486,15 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-gray font-montserratMedium text-center"
+                  className="text-foreground font-montserratMedium text-center"
                 >
-                  Enter your new email address. You'll need to verify it before the
-                  change takes effect.
+                  Inserisci il nuovo indirizzo e-mail che desideri usare in
+                  Tattoola
                 </ScaledText>
               </View>
 
               {/* Current Email Info */}
-              <View style={{ marginBottom: mvs(24) }}>
+              {/* <View style={{ marginBottom: mvs(24) }}>
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
@@ -383,17 +510,17 @@ export default function EmailSettingsScreen() {
                 >
                   {user?.email}
                 </ScaledText>
-              </View>
+              </View> */}
 
               {/* New Email */}
-              <View style={{ marginBottom: mvs(24) }}>
+              <View style={{ marginBottom: mvs(16) }}>
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
+                  variant="sm"
                   className="text-gray font-montserratMedium"
-                  style={{ marginBottom: mvs(8) }}
+                  style={{ marginBottom: mvs(6) }}
                 >
-                  New email
+                  Inserire la nouve email
                 </ScaledText>
                 <ScaledTextInput
                   value={newEmail}
@@ -432,11 +559,11 @@ export default function EmailSettingsScreen() {
               <View style={{ marginBottom: mvs(24) }}>
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
+                  variant="sm"
                   className="text-gray font-montserratMedium"
-                  style={{ marginBottom: mvs(8) }}
+                  style={{ marginBottom: mvs(6) }}
                 >
-                  Confirm new email
+                  Conferma email
                 </ScaledText>
                 <ScaledTextInput
                   value={confirmEmail}
@@ -482,7 +609,11 @@ export default function EmailSettingsScreen() {
           }}
         >
           <TouchableOpacity
-            onPress={currentStep === "password" ? handlePasswordNext : handleEmailUpdate}
+            onPress={
+              currentStep === "password"
+                ? handlePasswordNext
+                : handleEmailUpdate
+            }
             disabled={
               currentStep === "password"
                 ? isVerifyingPassword || !isPasswordStepValid
@@ -503,13 +634,13 @@ export default function EmailSettingsScreen() {
               paddingRight: s(20),
             }}
           >
-            {(isVerifyingPassword || isUpdatingEmail) && (
+            {/* {(isVerifyingPassword || isUpdatingEmail) && (
               <ActivityIndicator
                 size="small"
                 color="#FFFFFF"
                 style={{ marginRight: s(8) }}
               />
-            )}
+            )} */}
             <ScaledText
               allowScaling={false}
               variant="md"
@@ -624,4 +755,3 @@ export default function EmailSettingsScreen() {
     </KeyboardAvoidingView>
   );
 }
-

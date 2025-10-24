@@ -1,6 +1,7 @@
+import { mvs } from '@/utils/scale';
+import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
 import { Image, View } from 'react-native';
-import { mvs } from '@/utils/scale';
 
 interface BannerMedia {
   mediaType: 'IMAGE' | 'VIDEO';
@@ -14,14 +15,25 @@ interface BannerProps {
 
 export const Banner: React.FC<BannerProps> = ({ banner }) => {
 
-  const hasVideo = banner.some((b) => b.mediaType === 'VIDEO');
+  const videoMedia = banner.find((b) => b.mediaType === 'VIDEO');
   const bannerImages = banner.filter((b) => b.mediaType === 'IMAGE');
 
-  if (hasVideo) {
-    // TODO: Implement video player when needed
-    return <View style={{ height: mvs(200) }} className="bg-gray/20" />;
+  // Video banner - autoplay, looping, no controls
+  if (videoMedia) {
+    return (
+      <Video
+        source={{ uri: videoMedia.mediaUrl }}
+        className="w-full"
+        style={{ height: mvs(200) }}
+        resizeMode={ResizeMode.COVER}
+        shouldPlay
+        isLooping
+        isMuted
+      />
+    );
   }
 
+  // Single image banner
   if (bannerImages.length === 1) {
     return (
       <Image
@@ -33,6 +45,7 @@ export const Banner: React.FC<BannerProps> = ({ banner }) => {
     );
   }
 
+  // Multiple images banner (4 images in a row)
   if (bannerImages.length > 1) {
     return (
       <View className="w-full flex-row" style={{ height: mvs(200) }}>

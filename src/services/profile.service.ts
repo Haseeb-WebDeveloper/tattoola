@@ -122,7 +122,7 @@ export async function fetchArtistSelfProfile(
     .from("users")
     .select(
       `id,email,username,firstName,lastName,avatar,bio,instagram,tiktok,
-       artist_profiles(id,businessName,instagram,website,phone,mainStyleId)`
+       artist_profiles(id,businessName,instagram,website,phone,mainStyleId,bannerType)`
     )
     .eq("id", userId)
     .single();
@@ -163,6 +163,7 @@ export async function fetchArtistSelfProfile(
   }
 
   const artistId = artistProfile.id as string;
+  const activeBannerType = artistProfile.bannerType || 'FOUR_IMAGES';
 
   // Step 2: parallel dependent queries (treat errors as empty for resilience)
   const [banner2, favStyles2, services2, collectionsQ, allBodyPartsQ, artistBodyParts2, locationQ] = await Promise.all([
@@ -170,6 +171,7 @@ export async function fetchArtistSelfProfile(
       .from("artist_banner_media")
       .select("mediaType,mediaUrl,order")
       .eq("artistId", artistId)
+      .eq("bannerType", activeBannerType)
       .order("order", { ascending: true }),
     supabase
       .from("artist_favorite_styles")

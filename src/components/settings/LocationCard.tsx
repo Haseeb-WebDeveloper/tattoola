@@ -51,7 +51,7 @@ export function LocationCard({
             </ScaledText>
           </View>
 
-          {location.address && (
+          {/* {location.address && (
             <ScaledText
               allowScaling={false}
               variant="sm"
@@ -60,7 +60,7 @@ export function LocationCard({
             >
               {location.address}
             </ScaledText>
-          )}
+          )} */}
         </View>
 
         <View className="flex-row items-center" style={{ gap: s(12) }}>

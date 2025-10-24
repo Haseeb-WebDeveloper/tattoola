@@ -12,7 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true, // Enable URL detection for deep linking
+    detectSessionInUrl: false, // Disable automatic URL detection - we handle it manually
     flowType: 'pkce',
   },
 });
