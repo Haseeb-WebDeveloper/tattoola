@@ -9,13 +9,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -193,16 +193,10 @@ export default function EmailSettingsScreen() {
         {
           email: newEmail,
         },
-        // {
-        //   emailRedirectTo: "tattoola://(auth)/verify", // Valid route for deep linking
-        // }
+        {
+          emailRedirectTo: "tattoola://verify", // Match expo-router route (groups don't create segments)
+        }
       );
-
-      // const { data, error } = await supabase.auth.updateUser(
-      //   { email: newEmail },
-      //   { emailRedirectTo: "https://yourapp.com/verify" }
-      // );
-      
 
       console.log("UpdateUser Response:", { data, error });
 

@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
 import { AuthService } from '../services/auth.service';
 import { getPresenceChannel } from '../services/chat.service';
 import { usePresenceStore } from '../stores/presenceStore';
@@ -50,70 +49,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.log('Auth user is verified:', isVerified);
             console.log('Auth user role:', role);
             
-            // Try to fetch full user profile from database
-            try {
-              const { data: dbUser } = await supabase
-                .from('users')
-                .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
-                .eq('id', authUser.id)
-                .maybeSingle();
-
-                console.log('Database user:', dbUser);
-
-              if (dbUser) {
-                console.log('Auth state change: Loaded full user profile from database');
-                setUser(dbUser as any);
-                setSession({
-                  user: dbUser as any,
-                  accessToken: session.access_token,
-                  refreshToken: session.refresh_token,
-                  expiresAt: session.expires_at || 0,
-                });
-                console.log('Session is set:', session);
-              } else {
-                console.log('No database user found, falling back to minimal user');
-                // Fallback to minimal user
-                const minimalUser: any = {
-                  id: authUser.id,
-                  email: authUser.email,
-                  username: authUser.user_metadata?.username || '',
-                  isActive: true,
-                  isVerified,
-                  isPublic: role === 'TATTOO_LOVER',
-                  role,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                };
-                setUser(minimalUser);
-                setSession({
-                  user: minimalUser,
-                  accessToken: session.access_token,
-                  refreshToken: session.refresh_token,
-                  expiresAt: session.expires_at || 0,
-                });
-              }
-            } catch (dbError) {
-              console.warn('Auth state change: Could not fetch user from database:', dbError);
-              // Fallback to minimal user
-              const minimalUser: any = {
-                id: authUser.id,
-                email: authUser.email,
-                username: authUser.user_metadata?.username || '',
-                isActive: true,
-                isVerified,
-                isPublic: role === 'TATTOO_LOVER',
-                role,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              };
-              setUser(minimalUser);
-              setSession({
-                user: minimalUser,
-                accessToken: session.access_token,
-                refreshToken: session.refresh_token,
-                expiresAt: session.expires_at || 0,
-              });
-            }
+            // Only fetch from database on meaningful auth events
+            // Skip on TOKEN_REFRESHED to avoid unnecessary queries
+            setSession({
+              user: user,
+              accessToken: session.access_token,
+              refreshToken: session.refresh_token,
+              expiresAt: session.expires_at || 0,
+            });
 
           } catch (error) {
             console.error('Error initializing minimal auth user:', error);
@@ -208,59 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [user?.id, initialized]);
 
-  // Monitor app state changes and refresh session when app comes to foreground
-  useEffect(() => {
-    const appStateRef = { current: AppState.currentState };
-    
-    const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
-      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        console.log('🔄 AuthProvider: App returned to foreground, refreshing session...');
-        
-        try {
-          const { data: { session: currentSession } } = await supabase.auth.getSession();
-          
-          if (currentSession?.user) {
-            console.log('✅ AuthProvider: Session is valid');
-            
-            // Optionally refresh user data from database
-            if (user?.id) {
-              try {
-                const { data: dbUser } = await supabase
-                  .from('users')
-                  .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
-                  .eq('id', user.id)
-                  .maybeSingle();
-                
-                if (dbUser) {
-                  console.log('✅ AuthProvider: User data refreshed');
-                  setUser(dbUser as any);
-                }
-              } catch (error) {
-                console.warn('⚠️ AuthProvider: Could not refresh user data:', error);
-              }
-            }
-          } else {
-            console.log('⚠️ AuthProvider: No valid session found');
-            if (user) {
-              console.log('🔓 AuthProvider: Clearing user state due to invalid session');
-              setUser(null);
-              setSession(null);
-            }
-          }
-        } catch (error) {
-          console.error('❌ AuthProvider: Error refreshing session:', error);
-        }
-      } else if (nextAppState.match(/inactive|background/)) {
-        console.log('⏸️ AuthProvider: App moved to background');
-      }
-      
-      appStateRef.current = nextAppState;
-    });
-
-    return () => {
-      appStateSubscription?.remove();
-    };
-  }, [user?.id]);
+  // App foreground auto-refresh REMOVED.
 
   const checkProfileCompletion = async (userId: string, role: string): Promise<boolean> => {
     try {
@@ -303,13 +194,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Try to fetch full user profile from database to get avatar and other fields
         try {
-          console.log('AuthProvider: Trying to fetch full user profile from database');
+          console.log('🔍 [INIT AUTH] Trying to fetch full user profile from database');
+          console.log('🔍 [INIT AUTH] User ID:', authUser.id);
           const { data: dbUser, error: dbError } = await supabase
             .from('users')
             .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
             .eq('id', authUser.id)
             .maybeSingle();
 
+          console.log('🔍 [INIT AUTH] Query completed. User:', !!dbUser, 'Error:', !!dbError);
+          if (dbError) {
+            console.log('🔍 [INIT AUTH] Database error details:', dbError);
+          }
           console.log('AuthProvider: Database user:', dbUser);
           console.log('AuthProvider: Database error:', dbError);
           
@@ -436,7 +332,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           // User is not verified, redirect to email verification
           console.log('User is not verified, redirecting to email verification');
-          router.replace('/(auth)/verify-email');
+          router.replace('/(auth)/verify');
         }
       }
 

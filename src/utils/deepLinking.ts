@@ -5,12 +5,14 @@ import { supabase } from './supabase';
 export function initializeDeepLinking() {
   // Handle deep links when app is already running
   const handleDeepLink = async (url: string) => {
-    console.log('🔗 ========================================');
-    console.log('🔗 handleDeepLink CALLED with URL:', url);
-    console.log('🔗 ========================================');
+    console.log('');
+    console.log('🔗 ==========================================');
+    console.log('🔗 DEEP LINK HANDLER CALLED');
+    console.log('🔗 URL:', url);
+    console.log('🔗 ==========================================');
+    console.log('');
 
     try {
-
       const urlObj = new URL(url);
       console.log('🔗 Parsed URL details:', {
         href: urlObj.href,
@@ -20,58 +22,27 @@ export function initializeDeepLinking() {
         searchParams: Object.fromEntries(urlObj.searchParams.entries())
       });
 
-      // Case 1: Supabase direct verify URL (web → app) or app verify route
-      if (url.includes('supabase.co/auth/v1/verify') || url.includes('auth/verify')  || url.includes('(auth)/verify')) {
-        console.log('📧 ========== EMAIL VERIFICATION DETECTED ==========');
-        
-        const token = urlObj.searchParams.get('token');
-        const type = urlObj.searchParams.get('type');
-        const redirectTo = urlObj.searchParams.get('redirect_to');
-        const message = urlObj.searchParams.get('message');
-
-        console.log('📧 Verification details:', { 
-          hasToken: !!token, 
-          type, 
-          redirectTo,
-          message,
-          tokenPrefix: token?.substring(0, 20) + '...'
-        });
-
-        // Check for intermediate confirmation message (old email confirmation)
-        if (message && message.toLowerCase().includes('proceed to confirm link sent to the other email')) {
-          console.log('📧 Email change intermediate step detected - showing confirmation screen');
-          router.replace('/settings/email-confirmation' as any);
-          return;
-        }
-
-        // Handle email_change verification
-        if (token && (type === 'email_change' || type === 'emailChange')) {
-          console.log('📧 Email change verification detected - processing');
-          router.push(`/(auth)/verify-email?token=${token}&type=email_change`);
-          return;
-        }
-
-        // Handle signup verification
-        if (token && type === 'signup') {
-          console.log('📧 Navigating to verify-email screen with token and type');
-          router.push(`/(auth)/verify-email?token=${token}&type=${type}`);
-          return;
-        }
-        
-        console.warn('⚠️ Invalid verification parameters', { hasToken: !!token, type });
-      }
-
-      // Case 2: App receives a code (PKCE) to exchange for a session
+      // Check for PKCE code first (most common case) 
       const code = urlObj.searchParams.get('code');
       if (code) {
         console.log('🔐 Email verification code detected, exchanging for session...');
+        console.log('🔐 Code value:', code);
         
         try {
           // Exchange the code for a session
+          console.log('🔐 Calling exchangeCodeForSession...');
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          console.log('🔐 Exchange completed. Error:', !!exchangeError, 'Data:', !!data, 'User:', !!data?.user);
           
           if (exchangeError) {
             console.error('❌ Code exchange failed:', exchangeError.message);
+            router.replace('/(auth)/welcome');
+            return;
+          }
+          
+          if (!data || !data.user) {
+            console.error('❌ Code exchange returned no user data');
             router.replace('/(auth)/welcome');
             return;
           }
@@ -97,7 +68,9 @@ export function initializeDeepLinking() {
           console.log('📊 Profile check result:', { hasCompletedProfile, hasUser: !!existingUser });
 
           // Small delay to allow auth state to settle before navigation
+          console.log('⏱️ Setting timeout for navigation...');
           setTimeout(() => {
+            console.log('⏱️ Timeout fired, navigating now...');
             // Route based on profile completion and role
             if (hasCompletedProfile) {
               console.log('🏠 Redirecting to tabs (profile complete)');
@@ -114,7 +87,8 @@ export function initializeDeepLinking() {
               }
             }
           }, 300);
-
+          
+          console.log('✅ Deep link handler completed successfully (waiting for timeout)');
           
         } catch (error) {
           console.error('❌ Exception during code exchange:', error);
@@ -122,6 +96,33 @@ export function initializeDeepLinking() {
         }
         
         return;
+      }
+
+      // Case 2: Token-based verification (legacy, for email change)
+      if (url.includes('supabase.co/auth/v1/verify') || url.includes('verify')) {
+        console.log('📧 ========== TOKEN-BASED VERIFICATION DETECTED ==========');
+        
+        const token = urlObj.searchParams.get('token');
+        const type = urlObj.searchParams.get('type');
+        const redirectTo = urlObj.searchParams.get('redirect_to');
+        const message = urlObj.searchParams.get('message');
+
+        console.log('📧 Verification details:', { 
+          hasToken: !!token, 
+          type, 
+          redirectTo,
+          message,
+          tokenPrefix: token?.substring(0, 20) + '...'
+        });
+
+        // Check for intermediate confirmation message (old email confirmation)
+        if (message && message.toLowerCase().includes('proceed to confirm link sent to the other email')) {
+          console.log('📧 Email change intermediate step detected - showing confirmation screen');
+          router.replace('/settings/email-confirmation' as any);
+          return;
+        }
+
+        console.warn('⚠️ Token-based verification detected but no valid token/type - PKCE should be used instead');
       }
 
       // Case 3: Just opened via deep link (no code/token) - check if user has session
@@ -168,17 +169,23 @@ export function initializeDeepLinking() {
     } catch (e) {
       console.error('❌ Error handling deep link:', e);
       console.error('❌ Error details:', e instanceof Error ? e.message : 'Unknown error');
-      
+      console.log('🔗 handleDeepLink caught error, will complete now');
     } finally {
-      console.log('🔗 handleDeepLink completed');
+      console.log('🔗 ========================================');
+      console.log('🔗 handleDeepLink COMPLETED');
+      console.log('🔗 ========================================');
     }
   };
 
   // Listen for deep links
   console.log('🔗 Setting up deep link event listener...');
   const subscription = Linking.addEventListener('url', ({ url }) => {
-    console.log('🔗 ========== DEEP LINK EVENT FIRED ==========');
-    console.log('🔗 Received URL from event listener:', url);
+    console.log('');
+    console.log('🔗 ========================================');
+    console.log('🔗 EVENT LISTENER FIRED!');
+    console.log('🔗 Received URL:', url);
+    console.log('🔗 ========================================');
+    console.log('');
     // Fire and forget; no need to block
     handleDeepLink(url);
   });

@@ -104,7 +104,7 @@ export class AuthService {
             displayName: credentials.role === UserRole.ARTIST ? "AR" : "TL",
             username: credentials.username,
           },
-          emailRedirectTo: "tattoola://(auth)/verify", // Valid route that exists
+          emailRedirectTo: "tattoola://verify", // Match expo-router route (groups don't create segments)
         },
       });
 
