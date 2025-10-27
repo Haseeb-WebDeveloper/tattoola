@@ -34,7 +34,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   >
     {/* Main row of setting item */}
     {!iconRight ? (
-      <View className="flex-row items-center flex-1">
+      <View className="flex-row items-center flex-1 ">
         {icon && <View style={{ marginRight: s(12) }}>{icon}</View>}
         <View className="flex-1 flex-row items-center" style={{ gap: s(24) }}>
           <ScaledText
@@ -67,7 +67,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
         {/* Only text with icon immediately after it when iconRight is true */}
         <ScaledText
           allowScaling={false}
-          variant="body1"
+          variant="md"
           className={`font-semibold ${isDanger ? "text-error" : "text-white"}`}
         >
           {title}
@@ -76,7 +76,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
         {value && (
           <ScaledText
             allowScaling={false}
-            variant="sm"
+            variant="11"
             className="text-gray-300"
             style={{ marginLeft: s(12) }}
           >
@@ -263,18 +263,22 @@ export default function SettingsScreen() {
             }
             iconRight={true}
           />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
-          <SettingsItem
-            title="Studio"
-            onPress={handleStudioPress}
-            icon={
-              <SVGIcons.DimondRed style={{ width: s(16), height: s(16) }} />
-            }
-            iconRight={true}
-          />
+          {user?.role === 'ARTIST' && (
+            <>
+              <View
+                className="bg-gray"
+                style={{ height: s(0.5)}}
+              />
+              <SettingsItem
+                title="Studio"
+                onPress={handleStudioPress}
+                icon={
+                  <SVGIcons.DimondRed style={{ width: s(16), height: s(16) }} />
+                }
+                iconRight={true}
+              />
+            </>
+          )}
         </SettingsSection>
 
         {/* Danger zone */}

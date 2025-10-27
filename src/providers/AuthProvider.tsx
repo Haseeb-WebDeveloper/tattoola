@@ -63,12 +63,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(null);
             setSession(null);
           }
-        } else {
-          setUser(null);
-          setSession(null);
-        }
-
-        if (event === 'SIGNED_OUT') {
+        } else if (event === 'SIGNED_OUT') {
+          // IMPORTANT: Only clear user on explicit sign out
+          // During signup, Supabase emits events without a session (email verification pending)
+          // We preserve the user set in signUp() to prevent redirect loops
           setUser(null);
           setSession(null);
         }
@@ -359,13 +357,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasUser: !!result.user 
       });
 
-      // Don't set user/session here if email verification is required
-      if (!result.needsVerification) {
-        console.log("👤 AuthProvider.signUp: Setting user (no verification needed)");
-        setUser(result.user);
-      } else {
-        console.log("📧 AuthProvider.signUp: Email verification required, not setting user");
-      }
+      // IMPORTANT: Always set the user, even if email verification is required
+      // This prevents redirect loops and allows the email-confirmation screen to display correctly
+      // The user object has isVerified: false, which guards can check to enforce verification
+      // Once the user verifies their email, onAuthStateChange will update with a session
+      console.log("👤 AuthProvider.signUp: Setting user (isVerified:", result.user.isVerified, ")");
+      setUser(result.user);
 
       console.log("✅ AuthProvider.signUp: Signup completed successfully");
       return result;

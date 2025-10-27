@@ -1,12 +1,12 @@
 import type {
-    AuthSession,
-    CompleteArtistRegistration,
-    CompleteUserRegistration,
-    ForgotPasswordData,
-    LoginCredentials,
-    RegisterCredentials,
-    ResetPasswordData,
-    User,
+  AuthSession,
+  CompleteArtistRegistration,
+  CompleteUserRegistration,
+  ForgotPasswordData,
+  LoginCredentials,
+  RegisterCredentials,
+  ResetPasswordData,
+  User,
 } from "../types/auth";
 import { UserRole } from "../types/auth";
 import { supabase } from "../utils/supabase";
@@ -539,13 +539,13 @@ export class AuthService {
     }
 
     // Create studio + membership if studio owner
+    let createdStudio: any = null;
     if (data.step4.workArrangement === "STUDIO_OWNER") {
       const slugBase = (data.step5.studioName || "studio")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
       let slug = slugBase;
-      let createdStudio: any = null;
       for (let i = 0; i < 3; i++) {
         const { data: studio, error: studioError } = await adminOrUserClient
           .from("studios")
@@ -865,6 +865,41 @@ export class AuthService {
           } else {
             console.log("Banner type set to FOUR_IMAGES");
           }
+        }
+      }
+    }
+
+    // Create studio banner from first images of each portfolio project
+    if (createdStudio && bannerMediaUrls.length > 0) {
+      console.log("Creating studio banner from portfolio projects");
+      
+      const studioBannerMediaData = bannerMediaUrls.map((url, index) => ({
+        studioId: createdStudio.id,
+        mediaType: "IMAGE" as const,
+        mediaUrl: url,
+        bannerType: 'FOUR_IMAGES',
+        order: index,
+      }));
+
+      const { error: studioBannerError } = await adminOrUserClient
+        .from("studio_banner_media")
+        .insert(studioBannerMediaData);
+
+      if (studioBannerError) {
+        console.error("Error creating studio banner media:", studioBannerError);
+      } else {
+        console.log("Studio banner media created successfully");
+        
+        // Set bannerType to FOUR_IMAGES in studios table
+        const { error: updateStudioBannerTypeError } = await adminOrUserClient
+          .from("studios")
+          .update({ bannerType: 'FOUR_IMAGES' })
+          .eq("id", createdStudio.id);
+
+        if (updateStudioBannerTypeError) {
+          console.error("Error setting studio bannerType:", updateStudioBannerTypeError);
+        } else {
+          console.log("Studio banner type set to FOUR_IMAGES");
         }
       }
     }

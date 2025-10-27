@@ -169,7 +169,6 @@ CREATE TABLE "public"."studios" (
     "slug" TEXT NOT NULL,
     "description" TEXT,
     "logo" TEXT,
-    "banner" TEXT,
     "address" TEXT NOT NULL,
     "city" TEXT NOT NULL,
     "country" TEXT NOT NULL,
@@ -179,8 +178,10 @@ CREATE TABLE "public"."studios" (
     "instagram" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "ownerId" TEXT NOT NULL,
+    "bannerType" "public"."BannerType" DEFAULT 'FOUR_IMAGES',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isCompleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "studios_pkey" PRIMARY KEY ("id")
 );
@@ -208,6 +209,57 @@ CREATE TABLE "public"."studio_photos" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "studio_photos_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studio_styles" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "studioId" TEXT NOT NULL,
+    "styleId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "studio_styles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studio_services" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "studioId" TEXT NOT NULL,
+    "serviceId" TEXT NOT NULL,
+    "price" DOUBLE PRECISION,
+    "duration" INTEGER,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "studio_services_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studio_faqs" (
+    "id" TEXT NOT NULL,
+    "studioId" TEXT NOT NULL,
+    "question" TEXT NOT NULL,
+    "answer" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "studio_faqs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."studio_banner_media" (
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    "studioId" TEXT NOT NULL,
+    "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
+    "bannerType" "public"."BannerType" NOT NULL DEFAULT 'FOUR_IMAGES',
+    "mediaUrl" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "studio_banner_media_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -577,8 +629,8 @@ CREATE TABLE "public"."artist_banner_media" (
     "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
     "artistId" TEXT NOT NULL,
     "mediaType" "public"."MediaType" NOT NULL DEFAULT 'IMAGE',
-    "mediaUrl" TEXT NOT NULL,
     "bannerType" "public"."BannerType" NOT NULL DEFAULT 'FOUR_IMAGES',
+    "mediaUrl" TEXT NOT NULL,
     "order" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -762,6 +814,36 @@ CREATE UNIQUE INDEX "studio_members_studioId_userId_key" ON "public"."studio_mem
 
 -- CreateIndex
 CREATE INDEX "studio_photos_studioId_idx" ON "public"."studio_photos"("studioId");
+
+-- CreateIndex
+CREATE INDEX "studio_styles_studioId_idx" ON "public"."studio_styles"("studioId");
+
+-- CreateIndex
+CREATE INDEX "studio_styles_styleId_idx" ON "public"."studio_styles"("styleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "studio_styles_studioId_styleId_key" ON "public"."studio_styles"("studioId", "styleId");
+
+-- CreateIndex
+CREATE INDEX "studio_services_studioId_idx" ON "public"."studio_services"("studioId");
+
+-- CreateIndex
+CREATE INDEX "studio_services_serviceId_idx" ON "public"."studio_services"("serviceId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "studio_services_studioId_serviceId_key" ON "public"."studio_services"("studioId", "serviceId");
+
+-- CreateIndex
+CREATE INDEX "studio_faqs_studioId_idx" ON "public"."studio_faqs"("studioId");
+
+-- CreateIndex
+CREATE INDEX "studio_faqs_order_idx" ON "public"."studio_faqs"("order");
+
+-- CreateIndex
+CREATE INDEX "studio_banner_media_studioId_idx" ON "public"."studio_banner_media"("studioId");
+
+-- CreateIndex
+CREATE INDEX "studio_banner_media_order_idx" ON "public"."studio_banner_media"("order");
 
 -- CreateIndex
 CREATE INDEX "posts_authorId_idx" ON "public"."posts"("authorId");
@@ -1122,6 +1204,24 @@ ALTER TABLE "public"."studio_members" ADD CONSTRAINT "studio_members_userId_fkey
 
 -- AddForeignKey
 ALTER TABLE "public"."studio_photos" ADD CONSTRAINT "studio_photos_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_styles" ADD CONSTRAINT "studio_styles_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_styles" ADD CONSTRAINT "studio_styles_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_services" ADD CONSTRAINT "studio_services_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_services" ADD CONSTRAINT "studio_services_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."services"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_faqs" ADD CONSTRAINT "studio_faqs_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_banner_media" ADD CONSTRAINT "studio_banner_media_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."posts" ADD CONSTRAINT "posts_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
