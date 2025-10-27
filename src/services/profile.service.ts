@@ -335,4 +335,116 @@ export async function syncProfileToCache(userId: string): Promise<ArtistSelfProf
   return fetchArtistSelfProfile(userId, true);
 }
 
+// Following list types
+export type FollowingUser = {
+  id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  role: "ARTIST" | "TATTOO_LOVER";
+  subscriptionPlanType?: "PREMIUM" | "STUDIO" | null;
+  location?: {
+    municipality?: string;
+    province?: string;
+  };
+};
+
+/**
+ * Fetch all users that the current user is following
+ * Returns separate arrays for artists and tattoo lovers
+ */
+export async function fetchFollowingUsers(userId: string): Promise<{
+  artists: FollowingUser[];
+  tattooLovers: FollowingUser[];
+}> {
+  // Fetch all follows for the user
+  const { data: follows, error: followsError } = await supabase
+    .from("follows")
+    .select(`
+      followingId,
+      following:users!follows_followingId_fkey(
+        id,
+        username,
+        firstName,
+        lastName,
+        avatar,
+        role
+      )
+    `)
+    .eq("followerId", userId);
+
+  if (followsError) throw new Error(followsError.message);
+  if (!follows || follows.length === 0) {
+    return { artists: [], tattooLovers: [] };
+  }
+
+  // Extract user IDs
+  const followingUserIds = follows.map((f: any) => f.followingId);
+
+  // Fetch primary locations for all following users
+  const { data: locations } = await supabase
+    .from("user_locations")
+    .select(`
+      userId,
+      municipalities(name),
+      provinces(name,code)
+    `)
+    .in("userId", followingUserIds)
+    .eq("isPrimary", true);
+
+  // Fetch subscriptions for all following users
+  const { data: subscriptions } = await supabase
+    .from("user_subscriptions")
+    .select(`
+      userId,
+      subscription_plans(type)
+    `)
+    .in("userId", followingUserIds)
+    .eq("status", "ACTIVE");
+
+  // Create lookup maps
+  const locationMap = new Map();
+  if (locations) {
+    locations.forEach((loc: any) => {
+      locationMap.set(loc.userId, {
+        municipality: loc.municipalities?.name,
+        province: loc.provinces?.code || loc.provinces?.name,
+      });
+    });
+  }
+
+  const subscriptionMap = new Map();
+  if (subscriptions) {
+    subscriptions.forEach((sub: any) => {
+      subscriptionMap.set(sub.userId, sub.subscription_plans?.type);
+    });
+  }
+
+  // Map follows to FollowingUser type
+  const followingUsers: FollowingUser[] = follows
+    .map((f: any) => {
+      const user = f.following;
+      if (!user) return null;
+
+      return {
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar,
+        role: user.role,
+        subscriptionPlanType: subscriptionMap.get(user.id) || null,
+        location: locationMap.get(user.id) || undefined,
+      };
+    })
+    .filter(Boolean) as FollowingUser[];
+
+  // Separate artists and tattoo lovers
+  const artists = followingUsers.filter(u => u.role === "ARTIST");
+  const tattooLovers = followingUsers.filter(u => u.role === "TATTOO_LOVER");
+
+  return { artists, tattooLovers };
+}
+
 

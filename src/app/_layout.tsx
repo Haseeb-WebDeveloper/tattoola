@@ -155,7 +155,7 @@ export default function RootLayout() {
               },
             }}
             icons={{
-              success: <SVGIcons.CheckedCheckbox width={s(18)} height={s(18)} />,
+              success: <SVGIcons.Success width={s(18)} height={s(18)} />,
               error: <SVGIcons.Error width={s(18)} height={s(18)} />,
               loading: <SVGIcons.Loading width={s(18)} height={s(18)} />,
             }}

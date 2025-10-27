@@ -29,6 +29,10 @@ import Like from "@/assets/icons/like.svg";
 // @ts-ignore
 import LikeFilled from "@/assets/icons/like-filled.svg";
 // @ts-ignore
+import LikeOutline from "@/assets/icons/like-outline.svg";
+// @ts-ignore
+import LikeFilledOutline from "@/assets/icons/like-filled-outline.svg";
+// @ts-ignore
 import StartCircle from "@/assets/icons/star-circle.svg";
 // @ts-ignore
 import StartCircleFilled from "@/assets/icons/star-circle-filled.svg";
@@ -75,6 +79,8 @@ import VarifiedGreen from "@/assets/icons/varified.svg";
 // @ts-ignore
 import Location from "@/assets/icons/location.svg";
 // @ts-ignore
+import LocationsGray from "@/assets/icons/locations-gray.svg";
+// @ts-ignore
 import Instagram from "@/assets/icons/instagram.svg";
 // @ts-ignore
 import Tiktok from "@/assets/icons/tiktok.svg";
@@ -96,6 +102,8 @@ import Trash from "@/assets/icons/trash.svg";
 import Delete from "@/assets/icons/delete.svg";
 // @ts-ignore
 import EditUser from "@/assets/icons/edit-user.svg";
+// @ts-ignore
+import EditBrush from "@/assets/icons/edit-brush.svg";
 // @ts-ignore
 import Subscription from "@/assets/icons/subscription.svg";
 // @ts-ignore
@@ -203,6 +211,7 @@ export const SVGIcons = {
   Settings,
   VarifiedGreen,
   Location,
+  LocationsGray,
   Instagram,
   Tiktok,
   Website,
@@ -214,6 +223,7 @@ export const SVGIcons = {
   Trash,
   Delete,
   EditUser,
+  EditBrush,
   Subscription,
   DimondYellow,
   DimondRed,
@@ -222,6 +232,8 @@ export const SVGIcons = {
   PostPreview,
   Like,
   LikeFilled,
+  LikeOutline,
+  LikeFilledOutline,
   UploadCollectionSelection,
   UploadCollectionSelected,
   Flash,

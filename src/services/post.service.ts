@@ -356,3 +356,65 @@ export async function createPostWithMediaAndCollection(args: {
     throw e;
   }
 }
+
+export type LikedPost = {
+  id: string;
+  caption?: string;
+  thumbnailUrl?: string;
+  createdAt: string;
+  media: {
+    id: string;
+    mediaType: "IMAGE" | "VIDEO";
+    mediaUrl: string;
+    order: number;
+  }[];
+};
+
+/**
+ * Fetch all posts liked by the user
+ */
+export async function fetchLikedPosts(userId: string, styleId?: string | null): Promise<LikedPost[]> {
+  // Build query
+  let query = supabase
+    .from("post_likes")
+    .select(`
+      postId,
+      createdAt,
+      posts!post_likes_postId_fkey(
+        id,
+        caption,
+        thumbnailUrl,
+        createdAt,
+        styleId,
+        post_media(id,mediaType,mediaUrl,order)
+      )
+    `)
+    .eq("userId", userId)
+    .order("createdAt", { ascending: false });
+
+  const { data: likes, error: likesError } = await query;
+
+  if (likesError) throw new Error(likesError.message);
+  if (!likes || likes.length === 0) return [];
+
+  // Transform the data and filter by styleId if provided
+  const likedPosts: LikedPost[] = likes
+    .map((like: any) => {
+      const post = like.posts;
+      if (!post) return null;
+
+      // Filter by styleId if provided
+      if (styleId && post.styleId !== styleId) return null;
+
+      return {
+        id: post.id,
+        caption: post.caption,
+        thumbnailUrl: post.thumbnailUrl,
+        createdAt: post.createdAt,
+        media: (post.post_media || []).sort((a: any, b: any) => a.order - b.order),
+      };
+    })
+    .filter(Boolean) as LikedPost[];
+
+  return likedPosts;
+}
