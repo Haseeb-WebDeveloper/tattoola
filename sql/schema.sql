@@ -176,6 +176,7 @@ CREATE TABLE "public"."studios" (
     "email" TEXT,
     "website" TEXT,
     "instagram" TEXT,
+    "tiktok" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "ownerId" TEXT NOT NULL,
     "bannerType" "public"."BannerType" DEFAULT 'FOUR_IMAGES',

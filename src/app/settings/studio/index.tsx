@@ -52,67 +52,225 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
   <View
     style={{
       marginHorizontal: s(16),
+      marginTop: mvs(10),
       marginBottom: mvs(24),
       borderRadius: s(20),
       overflow: "hidden",
       borderWidth: s(0.5),
       borderColor: "#FFFFFF",
+      backgroundColor: "#191516", // subtle bg under image edges
+      // minHeight: mvs(325),
+      position: "relative",
     }}
   >
-    <ImageBackground
-      source={require("@/assets/auth/welcome-screen.jpg")}
-      style={{
-        width: "100%",
-        paddingHorizontal: s(24),
-        paddingVertical: mvs(32),
-      }}
-      resizeMode="cover"
-    >
-      <LinearGradient
-        colors={["rgba(17,17,17,0)", "rgba(17,17,17,0.8)"]}
+    <View style={{ flexDirection: "column" }}>
+      {/* Top row: image */}
+      <ImageBackground
+        source={require("@/assets/images/studio-start.png")}
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          width: "100%",
+          minHeight: mvs(143),
+          // aspectRatio: 16 / 9,
+          justifyContent: "flex-start",
         }}
-      />
-      <View style={{ zIndex: 1 }}>
-        <ScaledText
-          allowScaling={false}
-          variant="2xl"
-          className="text-white font-bold"
-          style={{ marginBottom: mvs(12) }}
-        >
-          Setup your Studio Page ✨
-        </ScaledText>
-        <ScaledText
-          allowScaling={false}
-          variant="md"
-          className="text-white font-light"
-          style={{ marginBottom: mvs(24), lineHeight: mvs(22) }}
-        >
-          Add details, photos, and style to build your studio's presence.
-        </ScaledText>
-        <TouchableOpacity
-          onPress={onPress}
-          className="bg-primary rounded-full items-center justify-center"
+        resizeMode="cover"
+        imageStyle={{ borderTopLeftRadius: s(20), borderTopRightRadius: s(20) }}
+      >
+        <LinearGradient
+          colors={["rgba(17,17,17,0)", "rgba(17,17,17,0.75)"]}
           style={{
-            paddingVertical: mvs(14),
-            paddingHorizontal: s(32),
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderTopLeftRadius: s(20),
+            borderTopRightRadius: s(20),
           }}
-        >
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-white font-bold"
-          >
-            Get started
-          </ScaledText>
-        </TouchableOpacity>
-      </View>
-    </ImageBackground>
+        />
+        {/* Empty: strictly image area */}
+      </ImageBackground>
+
+      {/* Bottom row: for spacing - just to create space for abs content */}
+      <View style={{ minHeight: mvs(120) }} />
+    </View>
+    {/* Absolute overlayed content (centered & bottom) */}
+    <View
+      style={{
+        position: "absolute",
+        left: s(0),
+        right: s(0),
+        top: mvs(100),
+        paddingHorizontal: s(24),
+        zIndex: 2,
+      }}
+    >
+      <ScaledText
+        allowScaling={false}
+        variant="2xl"
+        className="text-white font-semibold"
+        style={{
+          marginBottom: mvs(6),
+        }}
+      >
+        Setup your Studio Page 🪄
+      </ScaledText>
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="text-foreground font-light"
+        style={{
+          marginBottom: mvs(14),
+          width: "100%",
+        }}
+      >
+        Add details, photos, and style to build{"\n"}your studio’s presence.
+      </ScaledText>
+    </View>
+    {/* Button absolute near the bottom */}
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={{
+        position: "absolute",
+        left: s(20),
+        right: s(20),
+        bottom: mvs(20),
+        borderRadius: s(100),
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: mvs(10.5),
+        paddingLeft: s(18),
+        paddingRight: s(20),
+        elevation: 2,
+        shadowColor: "#CA2323",
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+      }}
+      className="bg-primary"
+    >
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="font-semibold text-white"
+      >
+        Get started
+      </ScaledText>
+    </TouchableOpacity>
+  </View>
+);
+
+const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
+  <View
+    style={{
+      marginHorizontal: s(16),
+      marginTop: mvs(10),
+      marginBottom: mvs(24),
+      borderRadius: s(20),
+      overflow: "hidden",
+      borderWidth: s(0.5),
+      borderColor: "#FFFFFF",
+      backgroundColor: "#191516", // subtle bg under image edges
+      // minHeight: mvs(325),
+      position: "relative",
+    }}
+  >
+    <View style={{ flexDirection: "column" }}>
+      {/* Top row: image */}
+      <ImageBackground
+        source={require("@/assets/images/studio-live.png")}
+        style={{
+          width: "100%",
+          minHeight: mvs(143),
+          // aspectRatio: 16 / 9,
+          justifyContent: "flex-start",
+        }}
+        resizeMode="cover"
+        imageStyle={{ borderTopLeftRadius: s(20), borderTopRightRadius: s(20) }}
+      >
+        <LinearGradient
+          colors={["rgba(17,17,17,0)", "rgba(17,17,17,0.75)"]}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderTopLeftRadius: s(20),
+            borderTopRightRadius: s(20),
+          }}
+        />
+        {/* Empty: strictly image area */}
+      </ImageBackground>
+
+      {/* Bottom row: for spacing - just to create space for abs content */}
+      <View style={{ minHeight: mvs(120) }} />
+    </View>
+    {/* Absolute overlayed content (centered & bottom) */}
+    <View
+      style={{
+        position: "absolute",
+        left: s(0),
+        right: s(0),
+        top: mvs(100),
+        paddingHorizontal: s(24),
+        zIndex: 2,
+      }}
+    >
+      <ScaledText
+        allowScaling={false}
+        variant="2xl"
+        className="text-white font-semibold"
+        style={{
+          marginBottom: mvs(6),
+        }}
+      >
+        Your Studio Page is Live ✨
+      </ScaledText>
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="text-foreground font-light"
+        style={{
+          marginBottom: mvs(14),
+          width: "100%",
+        }}
+      >
+        See how your profile looks to others.
+      </ScaledText>
+    </View>
+    {/* Button absolute near the bottom */}
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={{
+        position: "absolute",
+        left: s(20),
+        right: s(20),
+        bottom: mvs(20),
+        borderRadius: s(100),
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: mvs(10.5),
+        paddingLeft: s(18),
+        paddingRight: s(20),
+        elevation: 2,
+        shadowColor: "#CA2323",
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+      }}
+      className="bg-primary"
+    >
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="font-semibold text-white"
+      >
+        View Studio Page
+      </ScaledText>
+    </TouchableOpacity>
   </View>
 );
 
@@ -215,7 +373,7 @@ export default function StudioSettingsScreen() {
   };
 
   const handleSetupPress = () => {
-    router.push("/settings/studio/step-1" as any);
+    router.push("/settings/studio/step-0" as any);
   };
 
   const showSetupCard =
@@ -255,13 +413,16 @@ export default function StudioSettingsScreen() {
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
           </TouchableOpacity>
-          <ScaledText
-            allowScaling={false}
-            variant="lg"
-            className="text-white font-bold"
-          >
-            Studio
-          </ScaledText>
+          <View className="flex-row items-center gap-2">
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-white font-bold"
+            >
+              Studio
+            </ScaledText>
+            <SVGIcons.DimondRed width={s(20)} height={s(20)} />
+          </View>
         </View>
 
         {/* Content */}
@@ -270,36 +431,31 @@ export default function StudioSettingsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: mvs(32) }}
         >
-          {loading ? (
-            <SkeletonLoader />
+          <View
+            style={{
+              marginBottom: mvs(32),
+            }}
+          >
+            <StudioSettingsItem
+              title="Studio page"
+              onPress={handleStudioPagePress}
+            />
+            <StudioSettingsItem
+              title="Artisti Collegati"
+              onPress={handleArtistsPress}
+            />
+            <StudioSettingsItem
+              title="Foto dello studio"
+              onPress={handlePhotosPress}
+            />
+          </View>
+          {/* Setup Card - Show when no studio OR incomplete studio for OWNER/MANAGER */}
+          {showSetupCard ? (
+            <SetupCard onPress={handleSetupPress} />
           ) : (
-            <>
-              {/* Studio Settings Items - Only visible when studio exists */}
-              {showStudioItems && (
-                <View
-                style={{
-                  marginBottom: mvs(32),
-                }}
-                >
-                  <StudioSettingsItem
-                    title="Studio page"
-                    onPress={handleStudioPagePress}
-                  />
-                  <StudioSettingsItem
-                    title="Artisti Collegati"
-                    onPress={handleArtistsPress}
-                  />
-                  <StudioSettingsItem
-                    title="Foto dello studio"
-                    onPress={handlePhotosPress}
-                  />
-                </View>
-              )}
-
-              {/* Setup Card - Show when no studio OR incomplete studio for OWNER/MANAGER */}
-              {showSetupCard && <SetupCard onPress={handleSetupPress} />}
-            </>
+            <LiveCard onPress={handleSetupPress} />
           )}
+          {/* handleStudioPagePress */}
         </ScrollView>
       </LinearGradient>
     </View>

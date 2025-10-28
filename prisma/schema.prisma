@@ -188,6 +188,7 @@ model Studio {
   email       String?
   website     String?
   instagram   String?
+  tiktok      String?
   isActive    Boolean             @default(true)
   ownerId     String
   bannerType  BannerType?         @default(FOUR_IMAGES)

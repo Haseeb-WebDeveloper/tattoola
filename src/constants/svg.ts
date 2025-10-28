@@ -115,6 +115,8 @@ import Logout from "@/assets/icons/logout.svg";
 // @ts-ignore
 import Edit from "@/assets/icons/edit.svg";
 // @ts-ignore
+import EditRed from "@/assets/icons/edit-red.svg";
+// @ts-ignore
 import PostPreview from "@/assets/icons/post-preview.svg";
 // @ts-ignore
 import UploadCollectionSelection from "@/assets/icons/upload-collection-selection.svg";
@@ -174,6 +176,10 @@ import Success from "@/assets/icons/success.svg";
 import Warning from "@/assets/icons/warning.svg";
 // @ts-ignore
 import WarningYellow from "@/assets/icons/warning-yellow.svg";
+// @ts-ignore
+import Faq from "@/assets/icons/faq.svg";
+// @ts-ignore
+import SafeAlert from "@/assets/icons/safe-alert.svg";
 
 export const SVGIcons = {
   Close,
@@ -229,6 +235,7 @@ export const SVGIcons = {
   DimondRed,
   Logout,
   Edit,
+  EditRed,
   PostPreview,
   Like,
   LikeFilled,
@@ -264,6 +271,8 @@ export const SVGIcons = {
   Success,
   Warning,
   WarningYellow,
+  Faq,
+  SafeAlert,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;
