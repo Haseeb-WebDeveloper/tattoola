@@ -2,12 +2,12 @@ import { SVGIcons } from "@/constants/svg";
 import "@/global.css";
 import { mvs, s } from "@/utils/scale";
 import {
-  Montserrat_300Light,
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  Montserrat_600SemiBold,
-  Montserrat_700Bold,
-  Montserrat_900Black,
+    Montserrat_300Light,
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    Montserrat_900Black,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -17,9 +17,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-get-random-values"; // Import polyfill for crypto functions
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { AuthProvider } from "../providers/AuthProvider";
 import { initDatabase } from "../utils/database";
 import { initializeDeepLinking } from "../utils/deepLinking";
+import { logger } from "../utils/logger";
 
 
 export default function RootLayout() {
@@ -48,37 +50,33 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    console.log("🏁 RootLayout: Starting initialization");
+    logger.log("RootLayout: Starting initialization");
     
     // Initialize SQLite database first
     initDatabase().catch((error) => {
-      console.error("❌ Failed to initialize database:", error);
+      logger.error("Failed to initialize database:", error);
     });
 
     // Initialize deep linking
-    console.log("🔗 RootLayout: Initializing deep linking...");
+    logger.log("RootLayout: Initializing deep linking...");
     const subscription = initializeDeepLinking();
-    console.log("✅ RootLayout: Deep linking initialized");
+    logger.log("RootLayout: Deep linking initialized");
 
     // Monitor app state changes
-    console.log("📱 RootLayout: Setting up app state listener");
+    logger.log("RootLayout: Setting up app state listener");
     const appStateSubscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        console.log("🔄 RootLayout: App has come to the foreground!");
-        console.log("📱 RootLayout: Current app state:", nextAppState);
-        console.log("🔄 RootLayout: Checking for session changes...");
+        logger.log("RootLayout: App has come to the foreground!");
       } else if (nextAppState.match(/inactive|background/)) {
-        console.log("⏸️ RootLayout: App has gone to the background");
-        console.log("📱 RootLayout: Current app state:", nextAppState);
+        logger.log("RootLayout: App has gone to the background");
       }
       appState.current = nextAppState;
-      console.log("📱 RootLayout: App state changed to:", appState.current);
     });
 
-    console.log("✅ RootLayout: All initialization complete");
+    logger.log("RootLayout: All initialization complete");
 
     return () => {
-      console.log("🧹 RootLayout: Cleaning up subscriptions");
+      logger.log("RootLayout: Cleaning up subscriptions");
       subscription?.remove();
       appStateSubscription?.remove();
     };
@@ -89,19 +87,20 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <SafeAreaView className="flex-1 text-foreground bg-background">
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="modal" />
-          </Stack>
-          <Toaster
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AuthProvider>
+          <SafeAreaView className="flex-1 text-foreground bg-background">
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="modal" />
+            </Stack>
+            <Toaster
             position="top-center"
             offset={60}
             swipeToDismissDirection="up"
@@ -163,5 +162,6 @@ export default function RootLayout() {
         </SafeAreaView>
       </AuthProvider>
     </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }

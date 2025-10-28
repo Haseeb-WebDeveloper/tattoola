@@ -1,0 +1,112 @@
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
+import { mvs, s } from "@/utils/scale";
+import React, { useState } from "react";
+import { LayoutAnimation, Platform, TouchableOpacity, UIManager, View } from "react-native";
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  order: number;
+}
+
+interface StudioFAQsProps {
+  faqs: FAQ[];
+}
+
+export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  if (!faqs || faqs.length === 0) {
+    return null;
+  }
+
+  const toggleFAQ = (id: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  return (
+    <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+      <ScaledText
+        allowScaling={false}
+        variant="md"
+        className="text-foreground font-montserratSemibold"
+        style={{ marginBottom: mvs(12) }}
+      >
+        FAQs
+      </ScaledText>
+
+      <View style={{ gap: mvs(12) }}>
+        {faqs.map((faq) => {
+          const isExpanded = expandedIds.has(faq.id);
+
+          return (
+            <View key={faq.id}>
+              <TouchableOpacity
+                onPress={() => toggleFAQ(faq.id)}
+                className="flex-row items-center justify-between border border-gray"
+                style={{
+                  height: mvs(48),
+                  paddingHorizontal: s(16),
+                  borderRadius: s(8),
+                  borderColor: "#a49a99",
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="body3Button"
+                  className="text-white font-montserratSemibold flex-1"
+                >
+                  {faq.question}
+                </ScaledText>
+                
+                <View
+                  style={{
+                    transform: [{ rotate: isExpanded ? "90deg" : "270deg" }],
+                    marginLeft: s(8),
+                  }}
+                >
+                  <SVGIcons.ChevronLeft style={{ width: s(12), height: s(12) }} />
+                </View>
+              </TouchableOpacity>
+
+              {isExpanded && (
+                <View
+                  style={{
+                    paddingHorizontal: s(16),
+                    paddingTop: mvs(12),
+                    paddingBottom: mvs(8),
+                  }}
+                >
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-white font-neueLight"
+                  >
+                    {faq.answer}
+                  </ScaledText>
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+

@@ -1,26 +1,44 @@
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useLocalSearchParams } from "expo-router";
+import { logger } from "@/utils/logger";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, Text, TouchableOpacity, View } from "react-native";
 
 export default function VerifyScreen() {
   const params = useLocalSearchParams();
   
   useEffect(() => {
-    console.log('');
-    console.log('📧 ==========================================');
-    console.log('📧 VERIFY SCREEN MOUNTED');
-    console.log('📧 Params:', params);
-    console.log('📧 All params:', JSON.stringify(params, null, 2));
-    console.log('📧 Timestamp:', new Date().toISOString());
-    console.log('📧 ==========================================');
-    console.log('');
+    try {
+      logger.log('Verify screen mounted with params:', params);
+    } catch (error) {
+      // Silently fail if logging doesn't work
+    }
   }, [params]);
+  
+  const handleGoBack = () => {
+    try {
+      router.replace("/(auth)/welcome");
+    } catch (error) {
+      logger.error("Error navigating to welcome:", error);
+    }
+  };
   
   // No logic - just show loading while deepLinking.ts handles verification
   return (
     <SafeAreaView className="flex-1 bg-background items-center justify-center">
       <LoadingSpinner message="Verifying your email..." overlay />
+      
+      {/* Fallback button in case verification takes too long */}
+      <View className="absolute bottom-10 px-6 w-full">
+        <TouchableOpacity
+          onPress={handleGoBack}
+          className="bg-foreground/10 py-3 rounded-full items-center"
+        >
+          <Text className="text-foreground text-sm">
+            Taking too long? Go back
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }

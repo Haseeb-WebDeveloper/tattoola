@@ -2,21 +2,27 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
+import { logger } from "@/utils/logger";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Image, ScrollView, TouchableOpacity, View } from "react-native";
 
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
   const { status } = useSignupStore();
+  const [imageError, setImageError] = useState(false);
 
   const isLoading = status === "in_progress";
 
   const handleClose = () => {
-    router.replace("/(auth)/welcome");
+    try {
+      router.replace("/(auth)/welcome");
+    } catch (error) {
+      logger.error("Error navigating to welcome:", error);
+    }
   };
 
-  console.log("status", status);
+  logger.log("Email confirmation screen - status:", status);
 
   return (
     <ScrollView
@@ -74,11 +80,19 @@ export default function EmailConfirmationScreen() {
       <View className="items-center my-8">
         {isLoading ? (
           <View className="w-20 h-20 rounded-full border-8 border-warning border-r-gray animate-spin-slow" />
+        ) : imageError ? (
+          <View className="w-[320px] h-[220px] rounded-xl bg-foreground/10 items-center justify-center">
+            <SVGIcons.MailSent className="w-20 h-20" />
+          </View>
         ) : (
           <Image
             source={require("@/assets/auth/email-sent.png")}
             className="w-[320px] h-[220px] rounded-xl"
             resizeMode="contain"
+            onError={() => {
+              logger.warn("Failed to load email-sent image");
+              setImageError(true);
+            }}
           />
         )}
       </View>
@@ -93,7 +107,13 @@ export default function EmailConfirmationScreen() {
         </ScaledText>
         <TouchableOpacity
           className="px-6 py-3 rounded-full border border-foreground/60 flex-row gap-2 items-center"
-          onPress={resendVerificationEmail}
+          onPress={() => {
+            try {
+              resendVerificationEmail();
+            } catch (error) {
+              logger.error("Error resending verification email:", error);
+            }
+          }}
         >
           <SVGIcons.Reload className="w-5 h-5" />
           <ScaledText

@@ -737,3 +737,176 @@ export async function updateStudioFAQs(
   }
 }
 
+/**
+ * Fetch public studio profile for display
+ */
+export async function fetchStudioPublicProfile(studioId: string) {
+  try {
+    // Get studio basic info with owner details
+    const { data: studio, error: studioError } = await supabase
+      .from('studios')
+      .select(`
+        id,
+        name,
+        logo,
+        bannerType,
+        address,
+        city,
+        country,
+        website,
+        instagram,
+        tiktok,
+        description,
+        ownerId,
+        owner:users!studios_ownerId_fkey(firstName, lastName, avatar)
+      `)
+      .eq('id', studioId)
+      .single();
+
+    if (studioError || !studio) {
+      throw new Error('Studio not found');
+    }
+
+    // Get banner media
+    const { data: bannerMedia } = await supabase
+      .from('studio_banner_media')
+      .select('mediaUrl, mediaType, order')
+      .eq('studioId', studioId)
+      .order('order');
+
+    // Get styles with style details
+    const { data: styles } = await supabase
+      .from('studio_styles')
+      .select(`
+        styleId,
+        style:tattoo_styles(id, name, imageUrl)
+      `)
+      .eq('studioId', studioId);
+
+    // Get services with service details
+    const { data: services } = await supabase
+      .from('studio_services')
+      .select(`
+        serviceId,
+        service:services(id, name, category)
+      `)
+      .eq('studioId', studioId);
+
+    // Get studio photos
+    const { data: photos } = await supabase
+      .from('studio_photos')
+      .select('id, photoUrl, order')
+      .eq('studioId', studioId)
+      .order('order');
+
+    // Get connected artists (studio members)
+    const { data: members } = await supabase
+      .from('studio_members')
+      .select(`
+        artistId,
+        role,
+        artist:artist_profiles!studio_members_artistId_fkey(
+          id,
+          userId,
+          bio,
+          experienceYears,
+          user:users!artist_profiles_userId_fkey(
+            id,
+            firstName,
+            lastName,
+            avatar
+          )
+        )
+      `)
+      .eq('studioId', studioId);
+
+    // For each artist, get their location, styles, and studio info
+    const artistsWithDetails = await Promise.all(
+      (members || []).map(async (member: any) => {
+        if (!member.artist) return null;
+
+        const userId = member.artist.user?.id;
+        if (!userId) return null;
+
+        // Get artist location
+        const { data: location } = await supabase
+          .from('artist_locations')
+          .select(`
+            locationId,
+            location:locations(
+              id,
+              municipality:municipalities(name),
+              province:provinces(name)
+            )
+          `)
+          .eq('artistId', member.artist.id)
+          .single();
+
+        // Get artist styles
+        const { data: artistStyles } = await supabase
+          .from('artist_styles')
+          .select(`
+            styleId,
+            style:tattoo_styles(id, name, imageUrl)
+          `)
+          .eq('artistId', member.artist.id)
+          .limit(2);
+
+        // Check if artist owns a studio
+        const { data: ownedStudio } = await supabase
+          .from('studios')
+          .select('id, name')
+          .eq('ownerId', member.artist.id)
+          .maybeSingle();
+
+        // Get artist banner
+        const { data: artistBanner } = await supabase
+          .from('artist_banner_media')
+          .select('mediaUrl, mediaType, order')
+          .eq('artistId', member.artist.id)
+          .order('order')
+          .limit(2);
+
+        return {
+          id: member.artist.id,
+          userId: userId,
+          firstName: member.artist.user?.firstName,
+          lastName: member.artist.user?.lastName,
+          avatar: member.artist.user?.avatar,
+          experienceYears: member.artist.experienceYears,
+          location: location?.location || null,
+          styles: artistStyles?.map((s: any) => s.style) || [],
+          ownedStudio: ownedStudio,
+          banner: artistBanner || [],
+          role: member.role,
+        };
+      })
+    );
+
+    // Get FAQs
+    const { data: faqs } = await supabase
+      .from('studio_faqs')
+      .select('id, question, answer, order')
+      .eq('studioId', studioId)
+      .order('order');
+
+    return {
+      ...studio,
+      owner: studio.owner,
+      banner: bannerMedia?.map((m: any) => ({
+        mediaType: m.mediaType,
+        mediaUrl: m.mediaUrl,
+        order: m.order,
+      })) || [],
+      styles: styles?.map((s: any) => s.style).filter(Boolean) || [],
+      services: services?.map((s: any) => s.service).filter(Boolean) || [],
+      photos: photos || [],
+      artists: artistsWithDetails.filter(Boolean) || [],
+      faqs: faqs || [],
+    };
+  } catch (error: any) {
+    console.error('Error in fetchStudioPublicProfile:', error);
+    throw error;
+  }
+}
+
