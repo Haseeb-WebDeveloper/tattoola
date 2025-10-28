@@ -237,7 +237,6 @@ export default function LikesScreen() {
       try {
         setLoading(true);
         const data = await fetchLikedPosts(user.id, selectedStyleId);
-        console.log("data", data);
         setPosts(data);
       } catch (error) {
         console.error("Error fetching liked posts:", error);

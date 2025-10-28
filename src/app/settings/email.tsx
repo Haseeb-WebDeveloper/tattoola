@@ -25,7 +25,6 @@ export default function EmailSettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  console.log("User is at email settings screen");
 
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>("password");
@@ -237,7 +236,6 @@ export default function EmailSettingsScreen() {
     setIsUpdatingEmail(true);
 
     try {
-      console.log("Updating email to:", newEmail);
 
       // Update email in Supabase Auth
       const { data, error } = await supabase.auth.updateUser(
@@ -249,16 +247,13 @@ export default function EmailSettingsScreen() {
         }
       );
 
-      console.log("UpdateUser Response:", { data, error });
 
       if (error) {
-        console.log("Error updating email:", error);
         toast.error(error.message || "Failed to update email");
         setIsUpdatingEmail(false); // Explicit clear on error
         return;
       }
 
-      console.log("Email update initiated successfully");
       setIsUpdatingEmail(false); // Clear BEFORE navigation
       toast.success(
         "Verification emails sent! Check both your old and new email addresses."

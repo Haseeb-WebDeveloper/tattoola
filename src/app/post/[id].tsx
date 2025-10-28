@@ -86,7 +86,6 @@ export default function PostDetailScreen() {
   };
 
   const handleLike = async () => {
-    console.log("handleLike tiggerd");
     if (!post || !user) return;
 
 

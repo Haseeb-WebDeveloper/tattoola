@@ -147,9 +147,9 @@ export default function PrivateRequestsSettingsScreen() {
     try {
       const finalMessage = getFinalRejectionMessage();
 
-      console.log("finalMessage", finalMessage);
-      console.log("acceptRequests", acceptRequests);
-      console.log("artistId", artistId);
+      // console.log("finalMessage", finalMessage);
+      // console.log("acceptRequests", acceptRequests);
+      // console.log("artistId", artistId);
       
       const { error } = await supabase
         .from("artist_profiles")

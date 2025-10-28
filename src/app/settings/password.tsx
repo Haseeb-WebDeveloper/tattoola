@@ -156,16 +156,13 @@ export default function PasswordSettingsScreen() {
         return;
       }
 
-      console.log("saving password", newPassword);
 
       // Update password
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword,
       });
-      console.log("UpdateUser Response:", { data, error });
 
       if (data) {
-        console.log("password updated successfully");
         
         // Clear profile cache (though password doesn't affect profile data)
         // This ensures any auth-related caching is fresh
@@ -173,7 +170,6 @@ export default function PasswordSettingsScreen() {
         
         toast.success("Password updated successfully");
       } else {
-        console.log("error", error);
         toast.error(error.message || "Failed to update password");
       }
 

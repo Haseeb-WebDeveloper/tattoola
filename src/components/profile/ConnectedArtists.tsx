@@ -53,12 +53,12 @@ export const ConnectedArtists: React.FC<ConnectedArtistsProps> = ({
 
   const handleFollowPress = (userId: string) => {
     // TODO: Implement follow functionality
-    console.log("Follow artist:", userId);
+    // console.log("Follow artist:", userId);
   };
 
   const handleGreetPress = (userId: string) => {
     // TODO: Implement greet/message functionality
-    console.log("Greet artist:", userId);
+    // console.log("Greet artist:", userId);
   };
 
   return (

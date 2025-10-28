@@ -34,7 +34,6 @@ const tattooStyles = [
 ];
 
 async function seedTattooStyles() {
-  console.log('🎨 Seeding tattoo styles to Supabase...');
   
   try {
     // Check if styles already exist
@@ -49,7 +48,6 @@ async function seedTattooStyles() {
     }
     
     if (existingStyles && existingStyles.length > 0) {
-      console.log('✅ Tattoo styles already exist in database');
       return;
     }
     
@@ -70,7 +68,6 @@ async function seedTattooStyles() {
       return;
     }
     
-    console.log(`✅ Successfully seeded ${tattooStyles.length} tattoo styles`);
   } catch (error) {
     console.error('Error seeding tattoo styles:', error);
   }

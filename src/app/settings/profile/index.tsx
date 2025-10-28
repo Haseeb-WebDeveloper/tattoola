@@ -16,6 +16,7 @@ const ProfileSettingsItem: React.FC<ProfileSettingsItemProps> = ({
   onPress,
 }) => (
   <TouchableOpacity
+    activeOpacity={1}
     onPress={onPress}
     className="flex-row items-center justify-between bg-[#100C0C] border-gray"
     style={{

@@ -152,8 +152,8 @@ export const useFileUpload = () => {
 
     setUploading(true);
     try {
-      console.log('Starting Cloudinary upload for files:', files.length);
-      console.log('Cloudinary options:', cloudinaryOptions);
+      // console.log('Starting Cloudinary upload for files:', files.length);
+      // console.log('Cloudinary options:', cloudinaryOptions);
       
       const uploadPromises = files.map(async (file) => {
         try {

@@ -80,25 +80,20 @@ export default function ChatThreadScreen() {
 
   useEffect(() => {
     if (!conversationId || !user?.id) return;
-    console.log("ui: mount thread", conversationId);
 
     // Load messages first, THEN subscribe to prevent race condition
     (async () => {
       try {
         await loadLatest(conversationId, user.id);
-        console.log("ui: messages loaded, now subscribing");
         subscribe(conversationId, user.id);
       } catch (e) {
-        console.log("ui: load/subscribe error", e);
       }
     })();
 
     return () => {
-      console.log("ui: unmount thread", conversationId);
       try {
         unsubscribe(conversationId);
       } catch (e) {
-        console.log("ui: unsubscribe error", e);
       }
     };
   }, [conversationId, user?.id]);
@@ -257,7 +252,6 @@ export default function ChatThreadScreen() {
   const handleBlock = React.useCallback(async () => {
     if (!user?.id || !peer?.id || !conversationId) return;
     try {
-      console.log("ui: blocking user", user.id, peer.id, conversationId);
       await blockUser(user.id, peer.id, conversationId);
       toast.success("User Blocked");
     } catch (error) {

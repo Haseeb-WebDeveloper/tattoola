@@ -105,6 +105,9 @@ model ArtistProfile {
   @@index([workArrangement])
   @@index([artistType])
   @@index([mainStyleId])
+  @@index([yearsExperience])
+  @@index([minimumPrice])
+  @@index([hourlyRate])
   @@map("artist_profiles")
 }
 
@@ -172,6 +175,9 @@ model UserSubscription {
   @@index([endDate])
   @@index([isAdminAssigned])
   @@index([isFree])
+  @@index([userId, status])
+  @@index([userId, endDate])
+  @@index([status, endDate])
   @@map("user_subscriptions")
 }
 
@@ -181,9 +187,7 @@ model Studio {
   slug        String              @unique
   description String?
   logo        String?
-  address     String
-  city        String
-  country     String
+  address     String?
   phone       String?
   email       String?
   website     String?
@@ -201,12 +205,13 @@ model Studio {
   services    StudioService[]
   faqs        StudioFAQ[]
   bannerMedia StudioBannerMedia[]
+  locations   StudioLocation[]
   owner       ArtistProfile       @relation("StudioOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
   @@index([slug])
-  @@index([city])
   @@index([isActive])
+  @@index([isCompleted])
   @@map("studios")
 }
 
@@ -253,6 +258,7 @@ model StudioStyle {
   @@unique([studioId, styleId])
   @@index([studioId])
   @@index([styleId])
+  @@index([studioId, styleId])
   @@map("studio_styles")
 }
 
@@ -270,6 +276,8 @@ model StudioService {
   @@unique([studioId, serviceId])
   @@index([studioId])
   @@index([serviceId])
+  @@index([studioId, serviceId])
+  @@index([studioId, isActive])
   @@map("studio_services")
 }
 
@@ -623,6 +631,7 @@ model UserFavoriteStyle {
   @@unique([userId, styleId])
   @@index([userId])
   @@index([styleId])
+  @@index([userId, styleId])
   @@map("user_favorite_styles")
 }
 
@@ -637,6 +646,7 @@ model ArtistFavoriteStyle {
   @@unique([artistId, styleId])
   @@index([artistId])
   @@index([styleId])
+  @@index([artistId, styleId])
   @@map("artist_favorite_styles")
 }
 
@@ -713,15 +723,16 @@ model PortfolioProjectStyle {
 }
 
 model Province {
-  id             String         @id @default(uuid())
-  name           String         @unique
-  code           String?        @unique
-  country        String         @default("Italy")
-  imageUrl       String?
-  isActive       Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-  municipalities Municipality[]
-  userLocations  UserLocation[]
+  id              String           @id @default(uuid())
+  name            String           @unique
+  code            String?          @unique
+  country         String           @default("Italy")
+  imageUrl        String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  municipalities  Municipality[]
+  userLocations   UserLocation[]
+  studioLocations StudioLocation[]
 
   @@index([name])
   @@index([code])
@@ -729,15 +740,16 @@ model Province {
 }
 
 model Municipality {
-  id            String         @id @default(uuid())
-  name          String
-  provinceId    String
-  postalCode    String?
-  imageUrl      String?
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  province      Province       @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  userLocations UserLocation[]
+  id              String           @id @default(uuid())
+  name            String
+  provinceId      String
+  postalCode      String?
+  imageUrl        String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  province        Province         @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  userLocations   UserLocation[]
+  studioLocations StudioLocation[]
 
   @@index([name])
   @@index([provinceId])
@@ -801,6 +813,8 @@ model ArtistService {
   @@unique([artistId, serviceId])
   @@index([artistId])
   @@index([serviceId])
+  @@index([artistId, serviceId])
+  @@index([artistId, isActive])
   @@map("artist_services")
 }
 
@@ -922,7 +936,29 @@ model UserLocation {
   @@index([provinceId])
   @@index([municipalityId])
   @@index([isPrimary])
+  @@index([userId, provinceId])
   @@map("user_locations")
+}
+
+model StudioLocation {
+  id             String       @id @default(uuid())
+  studioId       String
+  provinceId     String
+  municipalityId String
+  address        String?
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  studio         Studio       @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  province       Province     @relation(fields: [provinceId], references: [id])
+  municipality   Municipality @relation(fields: [municipalityId], references: [id])
+
+  @@index([studioId])
+  @@index([provinceId])
+  @@index([municipalityId])
+  @@index([isPrimary])
+  @@index([studioId, provinceId])
+  @@map("studio_locations")
 }
 
 enum UserRole {

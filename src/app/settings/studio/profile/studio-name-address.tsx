@@ -3,8 +3,8 @@ import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    fetchStudioDetails,
-    updateStudioNameAddress,
+  fetchStudioDetails,
+  updateStudioNameAddress,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -12,14 +12,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    TouchableOpacity,
-    View
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -77,27 +77,12 @@ export default function StudioNameAddressScreen() {
         setIsFetching(true);
         const studio = await fetchStudioDetails(user.id);
 
-        // Fetch location data
-        const { data: locationData } = await supabase
-          .from("municipalities")
-          .select(
-            `
-            id,
-            name,
-            province:provinces!inner(id, name)
-          `
-          )
-          .eq("name", studio.city)
-          .maybeSingle();
-
-        const province = locationData?.province as any;
-
         const data = {
           name: studio.name || "",
-          province: province?.name || "",
-          provinceId: province?.id || "",
-          municipality: studio.city || "",
-          municipalityId: locationData?.id || "",
+          province: studio.province || "",
+          provinceId: studio.provinceId || "",
+          municipality: studio.municipality || "",
+          municipalityId: studio.municipalityId || "",
           address: studio.address || "",
         };
 
@@ -244,7 +229,7 @@ export default function StudioNameAddressScreen() {
         user.id,
         formData.name,
         formData.address,
-        formData.municipality
+        formData.municipalityId
       );
 
       if (result.success) {

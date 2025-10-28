@@ -5,7 +5,7 @@ import { Image, TouchableOpacity, View } from "react-native";
 
 interface StudioPhoto {
   id: string;
-  photoUrl: string;
+  imageUrl: string;
   order: number;
 }
 
@@ -33,11 +33,11 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
         Foto dello studio
       </ScaledText>
       
-      <View className="flex-row" style={{ gap: s(6) }}>
+      <View className="flex-row">
         {/* Large main photo */}
-        <TouchableOpacity activeOpacity={0.8}>
+        <TouchableOpacity activeOpacity={0.8} style={{ marginRight: s(6) }}>
           <Image
-            source={{ uri: mainPhoto.photoUrl }}
+            source={{ uri: mainPhoto.imageUrl }}
             style={{
               width: s(282),
               height: mvs(173),
@@ -48,15 +48,19 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
         </TouchableOpacity>
 
         {/* Three small thumbnails */}
-        <View style={{ gap: mvs(10) }}>
+        <View>
           {thumbnails.map((photo, index) => {
             const isLast = index === 2 && remainingCount > 0;
             
             return (
-              <TouchableOpacity key={photo.id} activeOpacity={0.8}>
+              <TouchableOpacity 
+                key={photo.id} 
+                activeOpacity={0.8}
+                style={{ marginBottom: index < thumbnails.length - 1 ? mvs(10) : 0 }}
+              >
                 <View>
                   <Image
-                    source={{ uri: photo.photoUrl }}
+                    source={{ uri: photo.imageUrl }}
                     style={{
                       width: s(62),
                       height: mvs(51),

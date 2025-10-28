@@ -81,10 +81,10 @@ class CloudinaryService {
       }
 
       const result = await response.json();
-      console.log('Cloudinary upload successful:', {
-        publicId: result.public_id,
-        secureUrl: result.secure_url,
-      });
+      // console.log('Cloudinary upload successful:', {
+      //   publicId: result.public_id,
+      //   secureUrl: result.secure_url,
+      // });
       
       return {
         publicId: result.public_id,

@@ -2,10 +2,19 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
-import { LayoutAnimation, Platform, TouchableOpacity, UIManager, View } from "react-native";
+import {
+  LayoutAnimation,
+  Platform,
+  TouchableOpacity,
+  UIManager,
+  View,
+} from "react-native";
 
 // Enable LayoutAnimation on Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
@@ -59,44 +68,49 @@ export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
             <View key={faq.id}>
               <TouchableOpacity
                 onPress={() => toggleFAQ(faq.id)}
-                className="flex-row items-center justify-between border border-gray"
+                className="flex-row items-center justify-between  border-gray"
                 style={{
-                  height: mvs(48),
+                  paddingVertical: mvs(12),
                   paddingHorizontal: s(16),
                   borderRadius: s(8),
-                  borderColor: "#a49a99",
+                  borderWidth: s(0.5),
                 }}
               >
                 <ScaledText
                   allowScaling={false}
-                  variant="body3Button"
-                  className="text-white font-montserratSemibold flex-1"
+                  variant="md"
+                  className="text-foreground font-montserratSemibold flex-1"
                 >
                   {faq.question}
                 </ScaledText>
-                
+
                 <View
                   style={{
-                    transform: [{ rotate: isExpanded ? "90deg" : "270deg" }],
+                    transform: [{ rotate: isExpanded ? "270deg" : "180deg" }],
                     marginLeft: s(8),
                   }}
                 >
-                  <SVGIcons.ChevronLeft style={{ width: s(12), height: s(12) }} />
+                  <SVGIcons.ChevronLeft
+                    style={{ width: s(11), height: s(11) }}
+                  />
                 </View>
               </TouchableOpacity>
 
               {isExpanded && (
                 <View
+                  className="border-gray"
                   style={{
+                    paddingVertical: mvs(12),
                     paddingHorizontal: s(16),
-                    paddingTop: mvs(12),
-                    paddingBottom: mvs(8),
+                    borderRadius: s(8),
+                    borderWidth: s(0.5),
+                    marginTop: mvs(6),
                   }}
                 >
                   <ScaledText
                     allowScaling={false}
-                    variant="md"
-                    className="text-white font-neueLight"
+                    variant="11"
+                    className="text-foreground font-light"
                   >
                     {faq.answer}
                   </ScaledText>
@@ -109,4 +123,3 @@ export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
     </View>
   );
 };
-

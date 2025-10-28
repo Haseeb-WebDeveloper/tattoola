@@ -4,16 +4,17 @@ import { AuthService } from '../services/auth.service';
 import { getPresenceChannel } from '../services/chat.service';
 import { usePresenceStore } from '../stores/presenceStore';
 import type {
-  AuthContextType,
-  AuthSession,
-  CompleteArtistRegistration,
-  CompleteUserRegistration,
-  ForgotPasswordData,
-  LoginCredentials,
-  RegisterCredentials,
-  ResetPasswordData,
-  User,
+    AuthContextType,
+    AuthSession,
+    CompleteArtistRegistration,
+    CompleteUserRegistration,
+    ForgotPasswordData,
+    LoginCredentials,
+    RegisterCredentials,
+    ResetPasswordData,
+    User,
 } from '../types/auth';
+import { logger } from '../utils/logger';
 import { supabase } from '../utils/supabase';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        logger.log('Auth state changed:', event, session?.user?.id);
 
         if (session?.user) {
           try {
@@ -45,9 +46,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const isVerified = !!authUser.email_confirmed_at;
             const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
 
-            console.log('Auth user:', authUser);
-            console.log('Auth user is verified:', isVerified);
-            console.log('Auth user role:', role);
+            logger.log('Auth user:', authUser);
+            logger.log('Auth user is verified:', isVerified);
+            logger.log('Auth user role:', role);
             
             // Only fetch from database on meaningful auth events
             // Skip on TOKEN_REFRESHED to avoid unnecessary queries
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
 
           } catch (error) {
-            console.error('Error initializing minimal auth user:', error);
+            logger.error('Error initializing minimal auth user:', error);
             setUser(null);
             setSession(null);
           }
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    console.log('🌐 [GLOBAL PRESENCE] Starting global presence tracking for user:', user.id);
+    logger.log('GLOBAL PRESENCE: Starting global presence tracking for user:', user.id);
 
     // Create and subscribe to presence channel
     const channel = getPresenceChannel();
@@ -90,7 +91,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     channel
       .on('presence', { event: 'sync' }, () => {
-        // console.log('🌐 [GLOBAL PRESENCE] Presence sync event');
         const state = channel.presenceState() as Record<string, any[]>;
         const online: Record<string, boolean> = {};
         Object.values(state).forEach((arr: any[]) => {
@@ -100,46 +100,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
           }
         });
-        console.log('🌐 [GLOBAL PRESENCE] Online users:', Object.keys(online).length);
+        logger.log('GLOBAL PRESENCE: Online users:', Object.keys(online).length);
         // Update global presence store
         usePresenceStore.getState().setOnlineUsers(online);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('🌐 [GLOBAL PRESENCE] User joined:', newPresences);
+        logger.log('GLOBAL PRESENCE: User joined:', newPresences);
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('🌐 [GLOBAL PRESENCE] User left:', leftPresences);
+        logger.log('GLOBAL PRESENCE: User left:', leftPresences);
       })
       .subscribe(async (status: any) => {
-        console.log('🌐 [GLOBAL PRESENCE] Channel status:', status);
+        logger.log('GLOBAL PRESENCE: Channel status:', status);
         if (status === 'SUBSCRIBED' && !presenceTrackedRef.current) {
           try {
             const trackPayload = { online_at: new Date().toISOString(), userId: user.id };
-            // console.log('🌐 [GLOBAL PRESENCE] Tracking user:', trackPayload);
             await channel.track(trackPayload);
             presenceTrackedRef.current = true;
-            console.log('🌐 [GLOBAL PRESENCE] ✅ User tracked successfully');
+            logger.log('GLOBAL PRESENCE: User tracked successfully');
           } catch (error) {
-            console.error('🌐 [GLOBAL PRESENCE] ❌ Error tracking user:', error);
+            logger.error('GLOBAL PRESENCE: Error tracking user:', error);
           }
         }
       });
 
     // Cleanup on unmount or user change
     return () => {
-      console.log('🌐 [GLOBAL PRESENCE] Cleaning up global presence');
+      logger.log('GLOBAL PRESENCE: Cleaning up global presence');
       if (presenceChannelRef.current) {
         try {
           presenceChannelRef.current.untrack();
-          console.log('🌐 [GLOBAL PRESENCE] Untracked user');
+          logger.log('GLOBAL PRESENCE: Untracked user');
         } catch (e) {
-          console.error('🌐 [GLOBAL PRESENCE] Error untracking:', e);
+          logger.error('GLOBAL PRESENCE: Error untracking:', e);
         }
         try {
           supabase.removeChannel(presenceChannelRef.current);
-          console.log('🌐 [GLOBAL PRESENCE] Channel removed');
+          logger.log('GLOBAL PRESENCE: Channel removed');
         } catch (e) {
-          console.error('🌐 [GLOBAL PRESENCE] Error removing channel:', e);
+          logger.error('GLOBAL PRESENCE: Error removing channel:', e);
         }
         presenceChannelRef.current = null;
         presenceTrackedRef.current = false;
@@ -154,62 +153,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const checkProfileCompletion = async (userId: string, role: string): Promise<boolean> => {
     try {
       // Simple check: if user exists in our custom users table, profile is complete
-      console.log('Checking if user exists in users table for userId:', userId);
+      logger.log('Checking if user exists in users table for userId:', userId);
       const { data: userProfile, error } = await supabase
         .from('users')
         .select('id')
         .eq('id', userId)
         .single();
 
-      console.log('User existence check result:', { data: userProfile, error });
+      logger.log('User existence check result:', { data: userProfile, error });
 
       // If user exists in users table, profile is complete
       // If user doesn't exist or there's an error, profile is not complete
       const exists = !error && !!userProfile;
-      console.log('User exists in users table:', exists);
+      logger.log('User exists in users table:', exists);
       return exists;
     } catch (error) {
-      console.error('Error checking profile completion:', error);
+      logger.error('Error checking profile completion:', error);
       return false;
     }
   };
 
   const initializeAuth = async () => {
     try {
-      console.log('AuthProvider: Starting initializeAuth');
+      logger.log('AuthProvider: Starting initializeAuth');
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('AuthProvider: Got session:', session?.user?.id || 'no session');
+      logger.log('AuthProvider: Got session:', session?.user?.id || 'no session');
 
       if (session?.user) {
         const authUser: any = session.user;
         const isVerified = !!authUser.email_confirmed_at;
         const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
 
-        console.log('AuthProvider: Auth user:', authUser);
-        console.log('AuthProvider: Auth user is verified:', isVerified);
-        console.log('AuthProvider: Auth user role:', role);
+        logger.log('AuthProvider: Auth user:', authUser);
+        logger.log('AuthProvider: Auth user is verified:', isVerified);
+        logger.log('AuthProvider: Auth user role:', role);
         
         // Try to fetch full user profile from database to get avatar and other fields
         try {
-          console.log('🔍 [INIT AUTH] Trying to fetch full user profile from database');
-          console.log('🔍 [INIT AUTH] User ID:', authUser.id);
+          logger.log('INIT AUTH: Trying to fetch full user profile from database');
+          logger.log('INIT AUTH: User ID:', authUser.id);
           const { data: dbUser, error: dbError } = await supabase
             .from('users')
             .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
             .eq('id', authUser.id)
             .maybeSingle();
 
-          console.log('🔍 [INIT AUTH] Query completed. User:', !!dbUser, 'Error:', !!dbError);
+          logger.log('INIT AUTH: Query completed. User:', !!dbUser, 'Error:', !!dbError);
           if (dbError) {
-            console.log('🔍 [INIT AUTH] Database error details:', dbError);
+            logger.log('INIT AUTH: Database error details:', dbError);
           }
-          console.log('AuthProvider: Database user:', dbUser);
-          console.log('AuthProvider: Database error:', dbError);
+          logger.log('AuthProvider: Database user:', dbUser);
+          logger.log('AuthProvider: Database error:', dbError);
           
           if (dbUser) {
             // User exists in database, use full profile
-            console.log('AuthProvider: Loaded full user profile from database');
+            logger.log('AuthProvider: Loaded full user profile from database');
             setUser(dbUser as any);
             setSession({
               user: dbUser as any,
@@ -239,7 +238,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           }
         } catch (dbError) {
-          console.warn('AuthProvider: Could not fetch user from database, using minimal profile:', dbError);
+          logger.warn('AuthProvider: Could not fetch user from database, using minimal profile:', dbError);
           // Fallback to minimal user if database fetch fails
           const minimalUser: any = {
             id: authUser.id,
@@ -262,21 +261,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Do NOT run checkProfileCompletion here, only after login
-        console.log('AuthProvider: Set user from session');
+        logger.log('AuthProvider: Set user from session');
       } else {
         // No session, ensure user is null
-        console.log('AuthProvider: No session, setting user to null');
+        logger.log('AuthProvider: No session, setting user to null');
         setUser(null);
         setSession(null);
       }
     } catch (error) {
-      console.error('Error initializing auth:', error);
+      logger.error('Error initializing auth:', error);
       // On error, ensure user is null
-      console.log('AuthProvider: Error occurred, setting user to null');
+      logger.log('AuthProvider: Error occurred, setting user to null');
       setUser(null);
       setSession(null);
     } finally {
-      console.log('AuthProvider: Setting loading to false and initialized to true');
+      logger.log('AuthProvider: Setting loading to false and initialized to true');
       setLoading(false);
       setInitialized(true);
     }
@@ -292,24 +291,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSession(result.session);
       // After login, check profile completion and redirect accordingly
       if (result.user && result.user.id && result.user.role) {
-        console.log('Sign in result user role:', result.user.role);
+        logger.log('Sign in result user role:', result.user.role);
         const isVerified = result.user.isVerified;
-        console.log('Sign in result user is verified:', isVerified);
+        logger.log('Sign in result user is verified:', isVerified);
         
         if (isVerified) {
           const hasCompletedProfile = await checkProfileCompletion(result.user.id, result.user.role);
-          console.log('Sign in result user has completed profile:', hasCompletedProfile);
+          logger.log('Sign in result user has completed profile:', hasCompletedProfile);
           
           // If user does NOT exist in users table, redirect to registration steps
           if (!hasCompletedProfile) {
             if (result.user.role === 'ARTIST') {
-              console.log('Sign in result user role is artist, redirecting to artist management/registration steps');
+              logger.log('Sign in result user role is artist, redirecting to artist management/registration steps');
               // Redirect to artist management/registration steps
               setTimeout(() => {
                 router.replace('/(auth)/artist-registration/step-3');
               }, 100);
             } else if (result.user.role === 'TATTOO_LOVER') {
-              console.log('Sign in result user role is tattoo lover, redirecting to user management/registration steps starting at step-3');
+              logger.log('Sign in result user role is tattoo lover, redirecting to user management/registration steps starting at step-3');
               // Redirect to user management/registration steps (V2 starts at step-3)
               setTimeout(() => {
                 router.replace('/(auth)/user-registration/step-3');
@@ -324,19 +323,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return result;
           } else {
             // Profile is complete, redirect to home
-            console.log('Profile is complete, redirecting to home');
+            logger.log('Profile is complete, redirecting to home');
             router.replace('/(tabs)');
           }
         } else {
           // User is not verified, redirect to email verification
-          console.log('User is not verified, redirecting to email verification');
+          logger.log('User is not verified, redirecting to email verification');
           router.replace('/(auth)/verify');
         }
       }
 
       return result;
     } catch (error) {
-      console.error('Sign in error:', error);
+      logger.error('Sign in error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -344,15 +343,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signUp = async (credentials: RegisterCredentials) => {
-    console.log("🚀 AuthProvider.signUp: Starting signup process", { 
+    logger.log("AuthProvider.signUp: Starting signup process", { 
       email: credentials.email, 
       role: credentials.role 
     });
     setLoading(true);
     try {
-      console.log("📞 AuthProvider.signUp: Calling AuthService.signUp");
+      logger.log("AuthProvider.signUp: Calling AuthService.signUp");
       const result = await AuthService.signUp(credentials);
-      console.log("📞 AuthProvider.signUp: AuthService.signUp completed", { 
+      logger.log("AuthProvider.signUp: AuthService.signUp completed", { 
         needsVerification: result.needsVerification,
         hasUser: !!result.user 
       });
@@ -361,16 +360,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // This prevents redirect loops and allows the email-confirmation screen to display correctly
       // The user object has isVerified: false, which guards can check to enforce verification
       // Once the user verifies their email, onAuthStateChange will update with a session
-      console.log("👤 AuthProvider.signUp: Setting user (isVerified:", result.user.isVerified, ")");
+      logger.log("AuthProvider.signUp: Setting user (isVerified:", result.user.isVerified, ")");
       setUser(result.user);
 
-      console.log("✅ AuthProvider.signUp: Signup completed successfully");
+      logger.log("AuthProvider.signUp: Signup completed successfully");
       return result;
     } catch (error) {
-      console.error('❌ AuthProvider.signUp: Signup failed', error);
+      logger.error('AuthProvider.signUp: Signup failed', error);
       throw error;
     } finally {
-      console.log("🏁 AuthProvider.signUp: Setting loading to false");
+      logger.log("AuthProvider.signUp: Setting loading to false");
       setLoading(false);
     }
   };
@@ -380,7 +379,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await AuthService.signOut();
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error:', error);
       // Even if sign out fails, we should clear the local state
     } finally {
       // Always clear local state regardless of sign out success
@@ -395,7 +394,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await AuthService.forgotPassword(data);
     } catch (error) {
-      console.error('Forgot password error:', error);
+      logger.error('Forgot password error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -407,7 +406,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await AuthService.resetPassword(data);
     } catch (error) {
-      console.error('Reset password error:', error);
+      logger.error('Reset password error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -421,7 +420,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(updatedUser);
       return updatedUser;
     } catch (error) {
-      console.error('Complete user registration error:', error);
+      logger.error('Complete user registration error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -435,7 +434,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(updatedUser);
       return updatedUser;
     } catch (error) {
-      console.error('Complete artist registration error:', error);
+      logger.error('Complete artist registration error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -451,7 +450,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(updatedUser);
       return updatedUser;
     } catch (error) {
-      console.error('Update profile error:', error);
+      logger.error('Update profile error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -466,7 +465,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(refreshedUser);
       return refreshedUser;
     } catch (error) {
-      console.error('Refresh user error:', error);
+      logger.error('Refresh user error:', error);
       return null;
     }
   };
@@ -476,7 +475,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await AuthService.resendVerificationEmail();
     } catch (error) {
-      console.error('Resend verification email error:', error);
+      logger.error('Resend verification email error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -484,30 +483,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const verifyEmail = async (token: string) => {
-    console.log("🔐 AuthProvider.verifyEmail: Starting email verification", { 
+    logger.log("AuthProvider.verifyEmail: Starting email verification", { 
       tokenLength: token?.length,
       hasUser: !!user 
     });
     setLoading(true);
     try {
-      console.log("📞 AuthProvider.verifyEmail: Calling AuthService.verifyEmail");
+      logger.log("AuthProvider.verifyEmail: Calling AuthService.verifyEmail");
       await AuthService.verifyEmail(token);
-      console.log("✅ AuthProvider.verifyEmail: Email verification successful");
+      logger.log("AuthProvider.verifyEmail: Email verification successful");
 
       // Refresh user to get updated verification status
       if (user) {
-        console.log("👤 AuthProvider.verifyEmail: Refreshing user profile", { userId: user.id });
+        logger.log("AuthProvider.verifyEmail: Refreshing user profile", { userId: user.id });
         const refreshedUser = await AuthService.getUserProfile(user.id);
         setUser(refreshedUser);
-        console.log("✅ AuthProvider.verifyEmail: User profile refreshed");
+        logger.log("AuthProvider.verifyEmail: User profile refreshed");
       } else {
-        console.warn("⚠️ AuthProvider.verifyEmail: No user to refresh");
+        logger.warn("AuthProvider.verifyEmail: No user to refresh");
       }
     } catch (error) {
-      console.error('❌ AuthProvider.verifyEmail: Email verification failed', error);
+      logger.error('AuthProvider.verifyEmail: Email verification failed', error);
       throw error;
     } finally {
-      console.log("🏁 AuthProvider.verifyEmail: Setting loading to false");
+      logger.log("AuthProvider.verifyEmail: Setting loading to false");
       setLoading(false);
     }
   };

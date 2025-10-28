@@ -5,13 +5,14 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    SubscriptionPlan,
-    SubscriptionService,
+  SubscriptionPlan,
+  SubscriptionService,
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import type { CompleteArtistRegistration } from "@/types/auth";
 import { WorkArrangement } from "@/types/auth";
 import { isValid, step13Schema } from "@/utils/artistRegistrationValidation";
+import { logger } from "@/utils/logger";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { router } from "expo-router";
@@ -77,7 +78,7 @@ export default function ArtistStep13V2() {
         updateStep13({ selectedPlanId: premiumPlan.id });
       }
     } catch (error) {
-      console.error("Error fetching plans:", error);
+      logger.error("Error fetching plans:", error);
       toast.error("Failed to load subscription plans");
     } finally {
       setLoading(false);
@@ -193,7 +194,7 @@ export default function ArtistStep13V2() {
       // reset();
       router.replace("/(tabs)");
     } catch (error) {
-      console.error("Registration error:", error);
+      logger.error("Registration error:", error);
       toast.error("Failed to complete registration. Please try again.");
     } finally {
       setSubmitting(false);

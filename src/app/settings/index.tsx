@@ -26,6 +26,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   iconRight = false, // DEFAULT is left side for backward compatibility
 }) => (
   <TouchableOpacity
+    activeOpacity={1}
     onPress={onPress}
     className={`flex-row items-center justify-between 
       ${isDanger ? "bg-tat-darkMaroon" : "bg-[#100C0C]"}
@@ -212,19 +213,13 @@ export default function SettingsScreen() {
             value={user?.username || ""}
             onPress={handleUsernamePress}
           />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem
             title="Email"
             value={user?.email || "johndoe@gmail.com"}
             onPress={handleEmailPress}
           />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem title="Password" onPress={handlePasswordPress} />
         </SettingsSection>
 
@@ -236,25 +231,16 @@ export default function SettingsScreen() {
           }
         >
           <SettingsItem title="Abbonamento" onPress={handleSubscriptionPress} />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem title="Fatturazione" onPress={handleBillingPress} />
         </SettingsSection>
 
         {/* Advanced settings */}
         <SettingsSection title="Advanced settings">
           <SettingsItem title="Profilo" onPress={handleProfilePress} />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem title="Community" onPress={handleCommunityPress} />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem
             title="Premium"
             onPress={handlePremiumPress}
@@ -263,12 +249,9 @@ export default function SettingsScreen() {
             }
             iconRight={true}
           />
-          {user?.role === 'ARTIST' && (
+          {user?.role === "ARTIST" && (
             <>
-              <View
-                className="bg-gray"
-                style={{ height: s(0.5)}}
-              />
+              <View className="bg-gray" style={{ height: s(0.5) }} />
               <SettingsItem
                 title="Studio"
                 onPress={handleStudioPress}
@@ -288,10 +271,7 @@ export default function SettingsScreen() {
             onPress={handleAccountDeletionPress}
             isDanger={true}
           />
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5)}}
-          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem
             title="Logout"
             onPress={handleLogout}

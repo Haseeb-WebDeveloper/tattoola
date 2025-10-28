@@ -25,6 +25,7 @@ const StudioSettingsItem: React.FC<StudioSettingsItemProps> = ({
   onPress,
 }) => (
   <TouchableOpacity
+    activeOpacity={1}
     onPress={onPress}
     className="flex-row items-center justify-between bg-[#100C0C] border-gray"
     style={{
@@ -376,13 +377,10 @@ export default function StudioSettingsScreen() {
     router.push("/settings/studio/step-0" as any);
   };
   const handleStudioPageViewPress = (id: string | undefined) => {
-    console.log('🎯 Navigating to studio page with ID:', id);
     if (!id) {
-      console.log('⚠️ No studio ID, redirecting to profile');
       router.push("/settings/studio/profile" as any);
       return;
     }
-    console.log('✅ Navigating to studio:', id);
     router.push(`/studio/${id}` as any);
   };
 

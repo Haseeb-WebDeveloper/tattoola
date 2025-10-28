@@ -62,7 +62,7 @@ export default function StudioScreen() {
       <ScrollView
         className="relative"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: mvs(10) }}
+        contentContainerStyle={{ paddingBottom: mvs(50) }}
       >
         {/* Banner */}
         <Banner banner={data?.banner || []} />

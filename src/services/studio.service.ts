@@ -123,8 +123,6 @@ export async function saveStudioSetup(
           logo: step2.logoUrl,
           bannerType: step1.bannerType,
           address: step3.address,
-          city: step3.municipality, // Use municipality as city
-          country: 'Italy',
           website: step4.website,
           instagram: step4.instagram,
           description: step5.description,
@@ -134,6 +132,41 @@ export async function saveStudioSetup(
         .eq('id', studioId);
 
       if (updateError) throw new Error(`Failed to update studio: ${updateError.message}`);
+
+      // Update studio location
+      const { data: existingLocation } = await supabase
+        .from('studio_locations')
+        .select('id')
+        .eq('studioId', studioId)
+        .eq('isPrimary', true)
+        .maybeSingle();
+
+      if (existingLocation) {
+        // Update existing location
+        await supabase
+          .from('studio_locations')
+          .update({
+            provinceId: step3.provinceId,
+            municipalityId: step3.municipalityId,
+            address: step3.address,
+            updatedAt: new Date().toISOString(),
+          })
+          .eq('id', existingLocation.id);
+      } else {
+        // Create new location
+        await supabase
+          .from('studio_locations')
+          .insert({
+            id: generateUUID(),
+            studioId,
+            provinceId: step3.provinceId,
+            municipalityId: step3.municipalityId,
+            address: step3.address,
+            isPrimary: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+      }
     } else {
       // Create new studio
       // Generate slug from studio name with random suffix for uniqueness
@@ -157,8 +190,6 @@ export async function saveStudioSetup(
           logo: step2.logoUrl,
           bannerType: step1.bannerType,
           address: step3.address,
-          city: step3.municipality, // Use municipality as city
-          country: 'Italy',
           website: step4.website,
           instagram: step4.instagram,
           tiktok: step4.tiktok,
@@ -169,6 +200,24 @@ export async function saveStudioSetup(
 
       if (createError) {
         throw new Error(`Failed to create studio: ${createError?.message}`);
+      }
+
+      // Create studio location
+      const { error: locationError } = await supabase
+        .from('studio_locations')
+        .insert({
+          id: generateUUID(),
+          studioId,
+          provinceId: step3.provinceId,
+          municipalityId: step3.municipalityId,
+          address: step3.address,
+          isPrimary: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+      if (locationError) {
+        console.error('Failed to create studio location:', locationError);
       }
 
       // Add owner as studio member
@@ -323,8 +372,6 @@ export async function fetchStudioDetails(userId: string) {
         logo,
         bannerType,
         address,
-        city,
-        country,
         website,
         instagram,
         tiktok,
@@ -336,6 +383,20 @@ export async function fetchStudioDetails(userId: string) {
     if (studioError || !studio) {
       throw new Error('Studio not found');
     }
+
+    // Get studio location
+    const { data: location } = await supabase
+      .from('studio_locations')
+      .select(`
+        provinceId,
+        municipalityId,
+        address,
+        province:provinces(id, name),
+        municipality:municipalities(id, name)
+      `)
+      .eq('studioId', studio.id)
+      .eq('isPrimary', true)
+      .maybeSingle();
 
     // Get banner media
     const { data: bannerMedia } = await supabase
@@ -371,6 +432,11 @@ export async function fetchStudioDetails(userId: string) {
 
     return {
       ...studio,
+      city: (location?.municipality as any)?.name || '',
+      provinceId: location?.provinceId || '',
+      municipalityId: location?.municipalityId || '',
+      province: (location?.province as any)?.name || '',
+      municipality: (location?.municipality as any)?.name || '',
       bannerImages: bannerMedia?.map(m => m.mediaUrl) || [],
       styles: styles || [],
       services: services || [],
@@ -419,7 +485,7 @@ export async function updateStudioNameAddress(
   userId: string,
   name: string,
   address: string,
-  city: string
+  municipalityId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { data: artistProfile } = await supabase
@@ -430,17 +496,74 @@ export async function updateStudioNameAddress(
 
     if (!artistProfile) throw new Error('Artist profile not found');
 
-    const { error } = await supabase
+    // Get studio ID
+    const { data: studio } = await supabase
+      .from('studios')
+      .select('id')
+      .eq('ownerId', artistProfile.id)
+      .single();
+
+    if (!studio) throw new Error('Studio not found');
+
+    // Update studio name and address
+    const { error: studioError } = await supabase
       .from('studios')
       .update({
         name,
         address,
-        city,
         updatedAt: new Date().toISOString(),
       })
-      .eq('ownerId', artistProfile.id);
+      .eq('id', studio.id);
 
-    if (error) throw error;
+    if (studioError) throw studioError;
+
+    // Get municipality to find provinceId
+    const { data: municipality } = await supabase
+      .from('municipalities')
+      .select('id, provinceId')
+      .eq('id', municipalityId)
+      .single();
+
+    if (!municipality) throw new Error('Municipality not found');
+
+    // Update or create studio location
+    const { data: existingLocation } = await supabase
+      .from('studio_locations')
+      .select('id')
+      .eq('studioId', studio.id)
+      .eq('isPrimary', true)
+      .maybeSingle();
+
+    if (existingLocation) {
+      // Update existing location
+      const { error: locationError } = await supabase
+        .from('studio_locations')
+        .update({
+          provinceId: municipality.provinceId,
+          municipalityId: municipalityId,
+          address: address,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', existingLocation.id);
+
+      if (locationError) throw locationError;
+    } else {
+      // Create new location
+      const { error: locationError } = await supabase
+        .from('studio_locations')
+        .insert({
+          id: generateUUID(),
+          studioId: studio.id,
+          provinceId: municipality.provinceId,
+          municipalityId: municipalityId,
+          address: address,
+          isPrimary: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+      if (locationError) throw locationError;
+    }
 
     return { success: true };
   } catch (error: any) {
@@ -753,8 +876,6 @@ export async function fetchStudioPublicProfile(studioId: string) {
         logo,
         bannerType,
         address,
-        city,
-        country,
         website,
         instagram,
         tiktok,
@@ -776,6 +897,20 @@ export async function fetchStudioPublicProfile(studioId: string) {
     }
 
     console.log('✅ Studio found:', studio.name);
+
+    // Get studio location
+    const { data: studioLocation } = await supabase
+      .from('studio_locations')
+      .select(`
+        provinceId,
+        municipalityId,
+        address,
+        province:provinces(id, name),
+        municipality:municipalities(id, name)
+      `)
+      .eq('studioId', studioId)
+      .eq('isPrimary', true)
+      .maybeSingle();
 
     // Get owner details through artist_profiles
     const { data: ownerProfile } = await supabase
@@ -915,6 +1050,9 @@ export async function fetchStudioPublicProfile(studioId: string) {
 
     return {
       ...studio,
+      city: (studioLocation?.municipality as any)?.name || '',
+      province: (studioLocation?.province as any)?.name || '',
+      country: 'Italy',
       owner: owner,
       banner: bannerMedia?.map((m: any) => ({
         mediaType: m.mediaType,

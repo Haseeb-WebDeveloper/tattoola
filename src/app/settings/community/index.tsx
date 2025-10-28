@@ -16,6 +16,7 @@ const CommunitySettingsItem: React.FC<CommunitySettingsItemProps> = ({
   onPress,
 }) => (
   <TouchableOpacity
+    activeOpacity={1}
     onPress={onPress}
     className="flex-row items-center justify-between bg-[#100C0C] border-gray"
     style={{
@@ -107,4 +108,3 @@ export default function CommunitySettingsScreen() {
     </View>
   );
 }
-

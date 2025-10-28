@@ -77,7 +77,6 @@ export default function ArtistRegisterScreen() {
       return;
     }
 
-    console.log("formData starting registration", formData);
 
     // Navigate immediately to email confirmation and start background signup
     setInProgress();
@@ -85,7 +84,6 @@ export default function ArtistRegisterScreen() {
 
     try {
       const result = await signUp(formData);
-      console.log("result from signUp", result);
       // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
        } catch (error) {

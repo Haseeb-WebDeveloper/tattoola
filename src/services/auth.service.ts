@@ -1,14 +1,15 @@
 import type {
-  AuthSession,
-  CompleteArtistRegistration,
-  CompleteUserRegistration,
-  ForgotPasswordData,
-  LoginCredentials,
-  RegisterCredentials,
-  ResetPasswordData,
-  User,
+    AuthSession,
+    CompleteArtistRegistration,
+    CompleteUserRegistration,
+    ForgotPasswordData,
+    LoginCredentials,
+    RegisterCredentials,
+    ResetPasswordData,
+    User,
 } from "../types/auth";
 import { UserRole } from "../types/auth";
+import { logger } from "../utils/logger";
 import { supabase } from "../utils/supabase";
 import { buildGoogleMapsUrl } from "./location.service";
 
@@ -87,7 +88,7 @@ export class AuthService {
   static async signUp(
     credentials: RegisterCredentials
   ): Promise<{ user: User; needsVerification: boolean }> {
-    console.log("🚀 AuthService.signUp: Starting signup process", {
+    logger.log("AuthService.signUp: Starting signup process", {
       email: credentials.email,
       username: credentials.username,
       role: credentials.role,
@@ -95,7 +96,7 @@ export class AuthService {
 
     try {
       // Create Supabase auth user only, tagging metadata for onboarding flow (TL/AR)
-      console.log("📧 AuthService.signUp: Calling supabase.auth.signUp");
+      logger.log("AuthService.signUp: Calling supabase.auth.signUp");
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -108,7 +109,7 @@ export class AuthService {
         },
       });
 
-      console.log("📧 AuthService.signUp: Supabase response", {
+      logger.log("AuthService.signUp: Supabase response", {
         hasData: !!data,
         hasError: !!error,
         hasUser: !!data?.user,
@@ -117,23 +118,23 @@ export class AuthService {
       });
 
       if (error) {
-        console.error("❌ AuthService.signUp: Supabase error", error);
+        logger.error("AuthService.signUp: Supabase error", error);
         throw new Error(error.message);
       }
 
       if (!data.user) {
-        console.error("❌ AuthService.signUp: No user returned from Supabase");
+        logger.error("AuthService.signUp: No user returned from Supabase");
         throw new Error("User creation failed");
       }
 
-      console.log("✅ AuthService.signUp: User created successfully", {
+      logger.log("AuthService.signUp: User created successfully", {
         userId: data.user.id,
         email: data.user.email,
         needsVerification: !data.session,
       });
 
       // Build a minimal user object for the UI; full DB profile will be created after setup
-      console.log("👤 AuthService.signUp: Building minimal user object");
+      logger.log("AuthService.signUp: Building minimal user object");
       const minimalUser: User = {
         id: data.user.id,
         email: credentials.email,
@@ -156,7 +157,7 @@ export class AuthService {
         adminProfile: undefined,
       };
 
-      console.log("✅ AuthService.signUp: Signup completed successfully", {
+      logger.log("AuthService.signUp: Signup completed successfully", {
         userId: minimalUser.id,
         needsVerification: !data.session,
       });
@@ -166,7 +167,7 @@ export class AuthService {
         needsVerification: !data.session,
       };
     } catch (error) {
-      console.error("❌ AuthService.signUp: Signup failed", error);
+      logger.error("AuthService.signUp: Signup failed", error);
       throw error;
     }
   }
@@ -180,7 +181,7 @@ export class AuthService {
       if (error) {
         // If there's no active session, that's actually fine for sign out
         if (error.message.includes("Auth session missing")) {
-          console.log("No active session to sign out from");
+          logger.log("No active session to sign out from");
           return;
         }
         throw new Error(error.message);
@@ -188,7 +189,7 @@ export class AuthService {
     } catch (error: any) {
       // If there's no active session, that's actually fine for sign out
       if (error.message && error.message.includes("Auth session missing")) {
-        console.log("No active session to sign out from");
+        logger.log("No active session to sign out from");
         return;
       }
       throw error;
@@ -232,11 +233,11 @@ export class AuthService {
       throw new Error("No authenticated user found");
     }
 
-    console.log("complete user registration data:", data);
+    logger.log("complete user registration data:", data);
 
     const userId = session.session.user.id;
 
-    console.log("user id:", userId);
+    logger.log("user id:", userId);
 
     // Ensure a row exists in users; insert if missing, otherwise update
     const { data: existingUser, error: existError } = await supabase
@@ -245,7 +246,7 @@ export class AuthService {
       .eq("id", userId)
       .maybeSingle();
 
-    console.log("existing user:", existingUser);
+    logger.log("existing user:", existingUser);
 
     if (existError) {
       throw new Error(existError.message);
@@ -253,7 +254,7 @@ export class AuthService {
 
     let updatedUser: any = null;
     if (!existingUser) {
-      console.log("inserting new user");
+      logger.log("inserting new user");
       // Insert new user row
       const { data: inserted, error: insertError } = await supabase
         .from("users")
@@ -287,7 +288,7 @@ export class AuthService {
       }
       updatedUser = inserted;
     } else {
-      console.log("updating existing user");
+      logger.log("updating existing user");
       // Update existing user row
       const { data: updated, error: updateError } = await supabase
         .from("users")
@@ -308,7 +309,7 @@ export class AuthService {
         .select()
         .single();
 
-      console.log("updated user:", updated);
+      logger.log("updated user:", updated);
 
       if (updateError) {
         throw new Error(updateError.message);
@@ -316,16 +317,16 @@ export class AuthService {
       updatedUser = updated;
     }
 
-    console.log("Now adding locations");
+    logger.log("Now adding locations");
     // Create primary user location
     if ((data as any).step4?.provinceId && (data as any).step4?.municipalityId) {
       const locationAddress = buildGoogleMapsUrl(
         (data as any).step4.municipality,
         (data as any).step4.province
       );
-      console.log("location address:", locationAddress);
-      console.log("province id:", (data as any).step4.provinceId);
-      console.log("municipality id:", (data as any).step4.municipalityId);
+      logger.log("location address:", locationAddress);
+      logger.log("province id:", (data as any).step4.provinceId);
+      logger.log("municipality id:", (data as any).step4.municipalityId);
       await supabase.from('user_locations').insert({
         id: generateUUID(),
         userId: userId,
@@ -338,7 +339,7 @@ export class AuthService {
       });
     }
 
-    console.log("Now adding favorite styles");
+    logger.log("Now adding favorite styles");
 
     // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
     const favoriteStyles: string[] =
@@ -379,8 +380,8 @@ export class AuthService {
           .from("user_favorite_styles")
           .insert(favoriteStylesData);
 
-        console.log("stylesError:", stylesError);
-        console.log("favoriteStylesData:", favoriteStylesData);
+        logger.log("stylesError:", stylesError);
+        logger.log("favoriteStylesData:", favoriteStylesData);
 
         if (stylesError) {
           throw new Error(stylesError.message);
@@ -402,11 +403,11 @@ export class AuthService {
       throw new Error("No authenticated user found");
     }
 
-    console.log("saving artist profile with this data:", data);
+    logger.log("saving artist profile with this data:", data);
 
     const userId = session.session.user.id;
 
-    console.log("user id:", userId);
+    logger.log("user id:", userId);
 
     // Ensure a users row exists for this auth user
     const { data: existingUser, error: existUserError } = await supabase
@@ -415,7 +416,7 @@ export class AuthService {
       .eq("id", userId)
       .maybeSingle();
 
-    console.log("existing user:", existingUser);
+    logger.log("existing user:", existingUser);
 
     if (existUserError) {
       throw new Error(existUserError.message);
@@ -457,8 +458,8 @@ export class AuthService {
       baseUserRow = insertedUser;
     }
 
-    console.log("base user row:", baseUserRow);
-    console.log("Updating user profile with this data:", data);
+    logger.log("base user row:", baseUserRow);
+    logger.log("Updating user profile with this data:", data);
 
     // Update user profile
     const { data: updatedUser, error: userError } = await supabase
@@ -480,7 +481,7 @@ export class AuthService {
       throw new Error(userError.message);
     }
 
-    console.log("updated user:", updatedUser);
+    logger.log("updated user:", updatedUser);
 
     // Create artist profile
     const adminOrUserClient = supabase;
@@ -517,7 +518,7 @@ export class AuthService {
       throw new Error(artistError.message);
     }
 
-    console.log("artist profile creatd");
+    logger.log("artist profile created");
 
     // Create primary location for artist using studio location
     if (data.step5.provinceId && data.step5.municipalityId) {
@@ -584,11 +585,11 @@ export class AuthService {
       }
     }
 
-    console.log("creating favourite style");
+    logger.log("creating favourite style");
 
     // Validate mainStyleId exists before using it
     let validMainStyleId = null;
-    console.log("Validating mainStyleId:", data.step8.mainStyleId);
+    logger.log("Validating mainStyleId:", data.step8.mainStyleId);
     if (data.step8.mainStyleId) {
       const { data: mainStyle, error: mainStyleError } = await supabase
         .from("tattoo_styles")
@@ -596,18 +597,18 @@ export class AuthService {
         .eq("id", data.step8.mainStyleId)
         .single();
 
-      console.log("Main style validation result:", {
+      logger.log("Main style validation result:", {
         mainStyle,
         mainStyleError,
       });
       if (mainStyleError || !mainStyle) {
-        console.warn(
+        logger.warn(
           "Main style ID not found, skipping mainStyleId:",
           data.step8.mainStyleId
         );
       } else {
         validMainStyleId = data.step8.mainStyleId;
-        console.log("Valid mainStyleId found:", validMainStyleId);
+        logger.log("Valid mainStyleId found:", validMainStyleId);
       }
     }
 
@@ -620,19 +621,19 @@ export class AuthService {
     }
 
     // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
-    console.log("Processing favorite styles:", data.step8.favoriteStyles);
+    logger.log("Processing favorite styles:", data.step8.favoriteStyles);
     if (data.step8.favoriteStyles.length > 0) {
       const uniqueRequestedStyleIds = Array.from(
         new Set(data.step8.favoriteStyles.filter(Boolean))
       );
-      console.log("Unique requested style IDs:", uniqueRequestedStyleIds);
+      logger.log("Unique requested style IDs:", uniqueRequestedStyleIds);
 
       const { data: validStyles, error: validStylesError } = await supabase
         .from("tattoo_styles")
         .select("id")
         .in("id", uniqueRequestedStyleIds);
 
-      console.log("Valid styles query result:", {
+      logger.log("Valid styles query result:", {
         validStyles,
         validStylesError,
       });
@@ -641,7 +642,7 @@ export class AuthService {
       }
 
       const validStyleIds = (validStyles || []).map((s) => s.id);
-      console.log("Valid style IDs to insert:", validStyleIds);
+      logger.log("Valid style IDs to insert:", validStyleIds);
 
       if (validStyleIds.length > 0) {
         // Optional: clear existing to avoid unique violations on re-run
@@ -666,7 +667,7 @@ export class AuthService {
       }
     }
 
-    console.log("adding services");
+    logger.log("adding services");
 
     // Add services - let Supabase generate UUIDs
     if (data.step9.servicesOffered && data.step9.servicesOffered.length > 0) {
@@ -684,7 +685,7 @@ export class AuthService {
       }
     }
 
-    console.log("adding services");
+    logger.log("adding body parts");
 
     // Add body parts - let Supabase generate UUIDs
     if (data.step10.bodyParts && data.step10.bodyParts.length > 0) {
@@ -702,27 +703,27 @@ export class AuthService {
       }
     }
 
-    console.log("adding body parts");
+    logger.log("adding portfolio projects");
 
     // Add portfolio projects from step12
-    console.log("step12 projects:", data.step12?.projects);
+    logger.log("step12 projects:", data.step12?.projects);
 
     const projects = data.step12?.projects || [];
     const createdProjectRefs: { id: string; project: any }[] = [];
 
-    console.log("filtered projects:", projects);
+    logger.log("filtered projects:", projects);
 
     if (projects.length > 0) {
       let projectOrder = 1;
       for (const project of projects) {
-        console.log("Processing project:", {
+        logger.log("Processing project:", {
           title: project.title,
           description: project.description,
         });
 
         // Skip if no title and no description
         if (!project.title && !project.description) {
-          console.log("Skipping project - no title or description");
+          logger.log("Skipping project - no title or description");
           continue;
         }
 
@@ -731,7 +732,7 @@ export class AuthService {
           project.title ||
           project.description ||
           `Portfolio Project ${projectOrder}`;
-        console.log("Using project title:", projectTitle);
+        logger.log("Using project title:", projectTitle);
 
         const { data: portfolioProject, error: projectError } =
           await adminOrUserClient
@@ -752,7 +753,7 @@ export class AuthService {
           throw new Error(projectError.message);
         }
 
-        console.log(
+        logger.log(
           "Portfolio project created successfully:",
           portfolioProject.id
         );
@@ -819,10 +820,10 @@ export class AuthService {
       }
     }
 
-    console.log("portfolio projects added");
+    logger.log("portfolio projects added");
 
     // Create artist banner from first images of each portfolio project
-    console.log("Creating artist banner from portfolio projects");
+    logger.log("Creating artist banner from portfolio projects");
     const bannerMediaUrls: string[] = [];
 
     if (projects.length > 0) {
@@ -849,10 +850,10 @@ export class AuthService {
           .insert(bannerMediaData);
 
         if (bannerError) {
-          console.error("Error creating banner media:", bannerError);
+          logger.error("Error creating banner media:", bannerError);
           // Don't throw error, just log it as banner is not critical
         } else {
-          console.log("Artist banner media created successfully");
+          logger.log("Artist banner media created successfully");
           
           // Set bannerType to FOUR_IMAGES in artist_profiles
           const { error: updateBannerTypeError } = await adminOrUserClient
@@ -861,9 +862,9 @@ export class AuthService {
             .eq("id", artistProfile.id);
 
           if (updateBannerTypeError) {
-            console.error("Error setting bannerType:", updateBannerTypeError);
+            logger.error("Error setting bannerType:", updateBannerTypeError);
           } else {
-            console.log("Banner type set to FOUR_IMAGES");
+            logger.log("Banner type set to FOUR_IMAGES");
           }
         }
       }
@@ -871,7 +872,7 @@ export class AuthService {
 
     // Create studio banner from first images of each portfolio project
     if (createdStudio && bannerMediaUrls.length > 0) {
-      console.log("Creating studio banner from portfolio projects");
+      logger.log("Creating studio banner from portfolio projects");
       
       const studioBannerMediaData = bannerMediaUrls.map((url, index) => ({
         studioId: createdStudio.id,
@@ -886,9 +887,9 @@ export class AuthService {
         .insert(studioBannerMediaData);
 
       if (studioBannerError) {
-        console.error("Error creating studio banner media:", studioBannerError);
+        logger.error("Error creating studio banner media:", studioBannerError);
       } else {
-        console.log("Studio banner media created successfully");
+        logger.log("Studio banner media created successfully");
         
         // Set bannerType to FOUR_IMAGES in studios table
         const { error: updateStudioBannerTypeError } = await adminOrUserClient
@@ -897,15 +898,15 @@ export class AuthService {
           .eq("id", createdStudio.id);
 
         if (updateStudioBannerTypeError) {
-          console.error("Error setting studio bannerType:", updateStudioBannerTypeError);
+          logger.error("Error setting studio bannerType:", updateStudioBannerTypeError);
         } else {
-          console.log("Studio banner type set to FOUR_IMAGES");
+          logger.log("Studio banner type set to FOUR_IMAGES");
         }
       }
     }
 
     // Create portfolio collection
-    console.log("Creating portfolio collection");
+    logger.log("Creating portfolio collection");
     const { data: portfolioCollection, error: collectionError } =
       await adminOrUserClient
         .from("collections")
@@ -923,14 +924,14 @@ export class AuthService {
         .single();
 
     if (collectionError) {
-      console.error("Error creating portfolio collection:", collectionError);
+      logger.error("Error creating portfolio collection:", collectionError);
       // Don't throw error, just log it as collection is not critical
     } else {
-      console.log("Portfolio collection created successfully");
+      logger.log("Portfolio collection created successfully");
     }
 
     // Create posts for each portfolio project
-    console.log("Creating portfolio posts");
+    logger.log("Creating portfolio posts");
     if (projects.length > 0 && portfolioCollection) {
       let postOrder = 1;
       // Use createdProjectRefs so we have the DB projectId for each post
@@ -941,7 +942,7 @@ export class AuthService {
           (project.photos && project.photos.length > 0) ||
           (project.videos && project.videos.length > 0);
         if (!hasMedia) {
-          console.log("Skipping project - no media");
+          logger.log("Skipping project - no media");
           continue;
         }
 
@@ -970,11 +971,11 @@ export class AuthService {
           .single();
 
         if (postError) {
-          console.error("Error creating post:", postError);
+          logger.error("Error creating post:", postError);
           continue; // Skip this post but continue with others
         }
 
-        console.log("Post created successfully:", post.id);
+        logger.log("Post created successfully:", post.id);
 
         // Add post media
         const allMedia = [
@@ -1001,7 +1002,7 @@ export class AuthService {
             .insert(postMediaData);
 
           if (postMediaError) {
-            console.error("Error creating post media:", postMediaError);
+            logger.error("Error creating post media:", postMediaError);
           }
         }
 
@@ -1016,7 +1017,7 @@ export class AuthService {
           });
 
         if (collectionPostError) {
-          console.error(
+          logger.error(
             "Error adding post to collection:",
             collectionPostError
           );
@@ -1101,7 +1102,7 @@ export class AuthService {
    * Verify email with token
    */
   static async verifyEmail(token: string): Promise<void> {
-    console.log("🔐 AuthService.verifyEmail: Starting email verification", {
+    logger.log("AuthService.verifyEmail: Starting email verification", {
       tokenLength: token?.length,
       tokenPrefix: token?.substring(0, 10) + "...",
     });
@@ -1109,33 +1110,33 @@ export class AuthService {
     try {
       // For email verification, we need to use the token directly
       // The token from Supabase email contains all necessary information
-      console.log(
-        "🔐 AuthService.verifyEmail: Calling supabase.auth.verifyOtp"
+      logger.log(
+        "AuthService.verifyEmail: Calling supabase.auth.verifyOtp"
       );
       const { error } = await supabase.auth.verifyOtp({
         token_hash: token,
         type: "email",
       });
 
-      console.log("🔐 AuthService.verifyEmail: Supabase verifyOtp response", {
+      logger.log("AuthService.verifyEmail: Supabase verifyOtp response", {
         hasError: !!error,
         errorMessage: error?.message,
       });
 
       if (error) {
-        console.error("❌ AuthService.verifyEmail: Verification failed", error);
+        logger.error("AuthService.verifyEmail: Verification failed", error);
         throw new Error(error.message);
       }
 
-      console.log("✅ AuthService.verifyEmail: Email verified successfully");
+      logger.log("AuthService.verifyEmail: Email verified successfully");
 
       // Update user verification status
-      console.log("👤 AuthService.verifyEmail: Getting current session");
+      logger.log("AuthService.verifyEmail: Getting current session");
       const { data: session } = await supabase.auth.getSession();
 
       if (session?.session?.user) {
-        console.log(
-          "👤 AuthService.verifyEmail: Updating user verification status",
+        logger.log(
+          "AuthService.verifyEmail: Updating user verification status",
           {
             userId: session.session.user.id,
           }
@@ -1144,17 +1145,17 @@ export class AuthService {
           .from("users")
           .update({ isVerified: true })
           .eq("id", session.session.user.id);
-        console.log(
-          "✅ AuthService.verifyEmail: User verification status updated"
+        logger.log(
+          "AuthService.verifyEmail: User verification status updated"
         );
       } else {
-        console.warn(
-          "⚠️ AuthService.verifyEmail: No session found after verification"
+        logger.warn(
+          "AuthService.verifyEmail: No session found after verification"
         );
       }
     } catch (error) {
-      console.error(
-        "❌ AuthService.verifyEmail: Email verification failed",
+      logger.error(
+        "AuthService.verifyEmail: Email verification failed",
         error
       );
       throw error;

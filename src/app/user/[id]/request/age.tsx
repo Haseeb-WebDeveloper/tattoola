@@ -34,11 +34,6 @@ export default function AgeStep() {
     setSubmitting(true);
     try {
       const { size, color, description, referenceMedia, isAdult } = answers as any;
-      console.log("answers", answers);
-      console.log("Creating conversation with:", {
-        loverId: user.id,
-        artistId: String(id),
-      });
       
       const conversation = await createPrivateRequestConversation(user.id, String(id), {
         size,
@@ -48,7 +43,6 @@ export default function AgeStep() {
         references: (referenceMedia || []).map((m: any) => m.cloud || m.uri),
       });
       
-      console.log("conversation created", conversation);
       toast.success("Request sent successfully");
       router.replace(`/(tabs)/inbox?conversationId=${conversation.conversationId}` as any);
     } catch (e: any) {

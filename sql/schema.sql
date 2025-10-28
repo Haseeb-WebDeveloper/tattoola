@@ -169,9 +169,7 @@ CREATE TABLE "public"."studios" (
     "slug" TEXT NOT NULL,
     "description" TEXT,
     "logo" TEXT,
-    "address" TEXT NOT NULL,
-    "city" TEXT NOT NULL,
-    "country" TEXT NOT NULL,
+    "address" TEXT,
     "phone" TEXT,
     "email" TEXT,
     "website" TEXT,
@@ -717,6 +715,20 @@ CREATE TABLE "public"."user_locations" (
     CONSTRAINT "user_locations_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."studio_locations" (
+    "id" TEXT NOT NULL,
+    "studioId" TEXT NOT NULL,
+    "provinceId" TEXT NOT NULL,
+    "municipalityId" TEXT NOT NULL,
+    "address" TEXT,
+    "isPrimary" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "studio_locations_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 
@@ -752,6 +764,15 @@ CREATE INDEX "artist_profiles_artistType_idx" ON "public"."artist_profiles"("art
 
 -- CreateIndex
 CREATE INDEX "artist_profiles_mainStyleId_idx" ON "public"."artist_profiles"("mainStyleId");
+
+-- CreateIndex
+CREATE INDEX "artist_profiles_yearsExperience_idx" ON "public"."artist_profiles"("yearsExperience");
+
+-- CreateIndex
+CREATE INDEX "artist_profiles_minimumPrice_idx" ON "public"."artist_profiles"("minimumPrice");
+
+-- CreateIndex
+CREATE INDEX "artist_profiles_hourlyRate_idx" ON "public"."artist_profiles"("hourlyRate");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "admin_profiles_userId_key" ON "public"."admin_profiles"("userId");
@@ -790,6 +811,15 @@ CREATE INDEX "user_subscriptions_isAdminAssigned_idx" ON "public"."user_subscrip
 CREATE INDEX "user_subscriptions_isFree_idx" ON "public"."user_subscriptions"("isFree");
 
 -- CreateIndex
+CREATE INDEX "user_subscriptions_userId_status_idx" ON "public"."user_subscriptions"("userId", "status");
+
+-- CreateIndex
+CREATE INDEX "user_subscriptions_userId_endDate_idx" ON "public"."user_subscriptions"("userId", "endDate");
+
+-- CreateIndex
+CREATE INDEX "user_subscriptions_status_endDate_idx" ON "public"."user_subscriptions"("status", "endDate");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "studios_slug_key" ON "public"."studios"("slug");
 
 -- CreateIndex
@@ -799,10 +829,10 @@ CREATE INDEX "studios_ownerId_idx" ON "public"."studios"("ownerId");
 CREATE INDEX "studios_slug_idx" ON "public"."studios"("slug");
 
 -- CreateIndex
-CREATE INDEX "studios_city_idx" ON "public"."studios"("city");
+CREATE INDEX "studios_isActive_idx" ON "public"."studios"("isActive");
 
 -- CreateIndex
-CREATE INDEX "studios_isActive_idx" ON "public"."studios"("isActive");
+CREATE INDEX "studios_isCompleted_idx" ON "public"."studios"("isCompleted");
 
 -- CreateIndex
 CREATE INDEX "studio_members_studioId_idx" ON "public"."studio_members"("studioId");
@@ -823,6 +853,9 @@ CREATE INDEX "studio_styles_studioId_idx" ON "public"."studio_styles"("studioId"
 CREATE INDEX "studio_styles_styleId_idx" ON "public"."studio_styles"("styleId");
 
 -- CreateIndex
+CREATE INDEX "studio_styles_studioId_styleId_idx" ON "public"."studio_styles"("studioId", "styleId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "studio_styles_studioId_styleId_key" ON "public"."studio_styles"("studioId", "styleId");
 
 -- CreateIndex
@@ -830,6 +863,12 @@ CREATE INDEX "studio_services_studioId_idx" ON "public"."studio_services"("studi
 
 -- CreateIndex
 CREATE INDEX "studio_services_serviceId_idx" ON "public"."studio_services"("serviceId");
+
+-- CreateIndex
+CREATE INDEX "studio_services_studioId_serviceId_idx" ON "public"."studio_services"("studioId", "serviceId");
+
+-- CreateIndex
+CREATE INDEX "studio_services_studioId_isActive_idx" ON "public"."studio_services"("studioId", "isActive");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "studio_services_studioId_serviceId_key" ON "public"."studio_services"("studioId", "serviceId");
@@ -1006,6 +1045,9 @@ CREATE INDEX "user_favorite_styles_userId_idx" ON "public"."user_favorite_styles
 CREATE INDEX "user_favorite_styles_styleId_idx" ON "public"."user_favorite_styles"("styleId");
 
 -- CreateIndex
+CREATE INDEX "user_favorite_styles_userId_styleId_idx" ON "public"."user_favorite_styles"("userId", "styleId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "user_favorite_styles_userId_styleId_key" ON "public"."user_favorite_styles"("userId", "styleId");
 
 -- CreateIndex
@@ -1013,6 +1055,9 @@ CREATE INDEX "artist_favorite_styles_artistId_idx" ON "public"."artist_favorite_
 
 -- CreateIndex
 CREATE INDEX "artist_favorite_styles_styleId_idx" ON "public"."artist_favorite_styles"("styleId");
+
+-- CreateIndex
+CREATE INDEX "artist_favorite_styles_artistId_styleId_idx" ON "public"."artist_favorite_styles"("artistId", "styleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "artist_favorite_styles_artistId_styleId_key" ON "public"."artist_favorite_styles"("artistId", "styleId");
@@ -1108,6 +1153,12 @@ CREATE INDEX "artist_services_artistId_idx" ON "public"."artist_services"("artis
 CREATE INDEX "artist_services_serviceId_idx" ON "public"."artist_services"("serviceId");
 
 -- CreateIndex
+CREATE INDEX "artist_services_artistId_serviceId_idx" ON "public"."artist_services"("artistId", "serviceId");
+
+-- CreateIndex
+CREATE INDEX "artist_services_artistId_isActive_idx" ON "public"."artist_services"("artistId", "isActive");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "artist_services_artistId_serviceId_key" ON "public"."artist_services"("artistId", "serviceId");
 
 -- CreateIndex
@@ -1172,6 +1223,24 @@ CREATE INDEX "user_locations_municipalityId_idx" ON "public"."user_locations"("m
 
 -- CreateIndex
 CREATE INDEX "user_locations_isPrimary_idx" ON "public"."user_locations"("isPrimary");
+
+-- CreateIndex
+CREATE INDEX "user_locations_userId_provinceId_idx" ON "public"."user_locations"("userId", "provinceId");
+
+-- CreateIndex
+CREATE INDEX "studio_locations_studioId_idx" ON "public"."studio_locations"("studioId");
+
+-- CreateIndex
+CREATE INDEX "studio_locations_provinceId_idx" ON "public"."studio_locations"("provinceId");
+
+-- CreateIndex
+CREATE INDEX "studio_locations_municipalityId_idx" ON "public"."studio_locations"("municipalityId");
+
+-- CreateIndex
+CREATE INDEX "studio_locations_isPrimary_idx" ON "public"."studio_locations"("isPrimary");
+
+-- CreateIndex
+CREATE INDEX "studio_locations_studioId_provinceId_idx" ON "public"."studio_locations"("studioId", "provinceId");
 
 -- AddForeignKey
 ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_mainStyleId_fkey" FOREIGN KEY ("mainStyleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1415,4 +1484,13 @@ ALTER TABLE "public"."user_locations" ADD CONSTRAINT "user_locations_provinceId_
 
 -- AddForeignKey
 ALTER TABLE "public"."user_locations" ADD CONSTRAINT "user_locations_municipalityId_fkey" FOREIGN KEY ("municipalityId") REFERENCES "public"."municipalities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_locations" ADD CONSTRAINT "studio_locations_studioId_fkey" FOREIGN KEY ("studioId") REFERENCES "public"."studios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_locations" ADD CONSTRAINT "studio_locations_provinceId_fkey" FOREIGN KEY ("provinceId") REFERENCES "public"."provinces"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."studio_locations" ADD CONSTRAINT "studio_locations_municipalityId_fkey" FOREIGN KEY ("municipalityId") REFERENCES "public"."municipalities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

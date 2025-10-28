@@ -30,7 +30,7 @@ export async function createPrivateRequestConversation(
 ): Promise<{ conversationId: string }> {
   const conversationId = uuidv4();
 
-  console.log("createPrivateRequestConversation", loverId, artistId, intake);
+  // console.log("createPrivateRequestConversation", loverId, artistId, intake);
 
   // Verify both users exist in public.users table
   const { data: loverExists } = await supabase
@@ -87,7 +87,7 @@ export async function createPrivateRequestConversation(
     throw new Error(convErr.message);
   }
 
-  console.log("conversation inserted");
+  // console.log("conversation inserted");
 
   // Conversation users
   const { error: cuErr } = await supabase.from("conversation_users").insert([
@@ -108,7 +108,7 @@ export async function createPrivateRequestConversation(
   ]);
   if (cuErr) throw new Error(cuErr.message);
 
-  console.log("conversation users inserted");
+  // console.log("conversation users inserted");
 
   // Intake record
   const { error: intakeErr } = await supabase
@@ -136,7 +136,7 @@ export async function createPrivateRequestConversation(
     });
   if (intakeErr) throw new Error(intakeErr.message);
 
-  console.log("intake record inserted");
+  // console.log("intake record inserted");
 
   // Synthesize intake messages for continuity
   const msgs: any[] = [];
@@ -208,7 +208,7 @@ export async function createPrivateRequestConversation(
     intake.isAdult ? "+18" : "-18"
   );
 
-  console.log("intake messages inserted");
+  // console.log("intake messages inserted");
 
   let lastMessageId: string | null = null;
   if (msgs.length) {
@@ -224,7 +224,7 @@ export async function createPrivateRequestConversation(
     .eq("id", conversationId);
   if (aggErr) throw new Error(aggErr.message);
 
-  console.log("messages inserted");
+  // console.log("messages inserted");
 
   return { conversationId };
 }
@@ -233,7 +233,7 @@ export async function acceptConversation(
   artistId: string,
   conversationId: string
 ) {
-  console.log("acceptConversation starting", artistId, conversationId);
+  // console.log("acceptConversation starting", artistId, conversationId);
   
   // Get conversation to find the loverId (receiverId for system message)
   const { data: conv, error: convFetchErr } = await supabase
@@ -257,7 +257,7 @@ export async function acceptConversation(
     throw new Error(error.message);
   }
 
-  console.log("conversation updated now accepting lover");
+  // console.log("conversation updated now accepting lover");
 
   // enable lover canSend, keep artist row as-is
   const { error: cuErr } = await supabase
@@ -269,7 +269,7 @@ export async function acceptConversation(
     console.error("Conversation user update error:", cuErr);
     throw new Error(cuErr.message);
   }
-  console.log("conversation user updated now accepting lover");
+  // console.log("conversation user updated now accepting lover");
 
   // system message (need to include receiverId and timestamps)
   const now = new Date().toISOString();
@@ -287,7 +287,7 @@ export async function acceptConversation(
     console.error("Message insert error:", mErr);
     throw new Error(mErr.message);
   }
-  console.log("system message inserted");
+  //  console.log("system message inserted");
 }
 
 export async function rejectConversation(
@@ -441,7 +441,7 @@ export async function sendMessage(m: {
       receiverId = m.senderId === conv.artistId ? conv.loverId : conv.artistId;
     }
   } catch (e) {
-    console.log("sendMessage resolve receiver failed", e);
+    // console.log("sendMessage resolve receiver failed", e);
     throw e;
   }
   const payload: any = {
@@ -458,7 +458,7 @@ export async function sendMessage(m: {
   };
   const { error } = await supabase.from("messages").insert(payload);
   if (error) {
-    console.log("sendMessage insert failed", error);
+    // console.log("sendMessage insert failed", error);
     throw new Error(error.message);
   }
 
@@ -472,7 +472,7 @@ export async function sendMessage(m: {
       createdAt: now,
     } as any);
   } catch (e) {
-    console.log("sendMessage receipt insert failed", e);
+    // console.log("sendMessage receipt insert failed", e);
   }
   try {
     await supabase
@@ -480,7 +480,7 @@ export async function sendMessage(m: {
       .update({ lastMessageAt: now, lastMessageId: payload.id, updatedAt: now })
       .eq("id", m.conversationId);
   } catch (e) {
-    console.log("sendMessage conversation aggregate failed", e);
+    // console.log("sendMessage conversation aggregate failed", e);
   }
   // Increment unread count for the receiver
   try {
@@ -501,7 +501,7 @@ export async function sendMessage(m: {
       .eq("conversationId", m.conversationId)
       .eq("userId", receiverId);
   } catch (e) {
-    console.log("sendMessage unreadCount increment failed", e);
+    // console.log("sendMessage unreadCount increment failed", e);
   }
 }
 
@@ -556,7 +556,7 @@ export function subscribeConversations(
         filter: `artistId=eq.${userId}`,
       },
       async (payload) => {
-        console.log("📥 Conversation INSERT (artist)", payload.new.id);
+        // console.log("📥 Conversation INSERT (artist)", payload.new.id);
         const row = await enrichConversationRow(payload.new, userId);
         handlers.onInsert?.(row);
       }
@@ -570,7 +570,7 @@ export function subscribeConversations(
         filter: `loverId=eq.${userId}`,
       },
       async (payload) => {
-        console.log("📥 Conversation INSERT (lover)", payload.new.id);
+        // console.log("📥 Conversation INSERT (lover)", payload.new.id);
         const row = await enrichConversationRow(payload.new, userId);
         handlers.onInsert?.(row);
       }
@@ -584,7 +584,7 @@ export function subscribeConversations(
         filter: `artistId=eq.${userId}`,
       },
       async (p) => {
-        console.log("🔄 Conversation UPDATE (artist)", p.new.id, "lastMessageId:", p.new.lastMessageId);
+        // console.log("🔄 Conversation UPDATE (artist)", p.new.id, "lastMessageId:", p.new.lastMessageId);
         const row = await enrichConversationRow(p.new, userId);
         handlers.onUpdate?.(row);
       }
@@ -598,7 +598,7 @@ export function subscribeConversations(
         filter: `loverId=eq.${userId}`,
       },
       async (p) => {
-        console.log("🔄 Conversation UPDATE (lover)", p.new.id, "lastMessageId:", p.new.lastMessageId);
+        // console.log("🔄 Conversation UPDATE (lover)", p.new.id, "lastMessageId:", p.new.lastMessageId);
         const row = await enrichConversationRow(p.new, userId);
         handlers.onUpdate?.(row);
       }
@@ -694,7 +694,7 @@ async function enrichConversationRow(row: any, userId: string) {
     return enrichConversationForUser(row, userId);
   }
   
-  console.log("🔄 Enriching conversation row:", row.id);
+  // console.log("🔄 Enriching conversation row:", row.id);
   
   // fetch peer user to enrich minimal row
   const peerId = row.artistId === userId ? row.loverId : row.artistId;
@@ -798,7 +798,7 @@ export function subscribeMessages(
       (payload) => {
         // The Realtime server can deliver the same WAL event twice during brief reconnects.
         // We do a thin client-side de-dupe by keying on message id in the store layer too.
-        console.log("realtime: message INSERT", payload.new?.id);
+        // console.log("realtime: message INSERT", payload.new?.id);
         handlers.onInsert?.(payload.new);
       }
     )
@@ -838,11 +838,11 @@ export function getTypingChannel(conversationId: string) {
 
 // Presence: a single global channel to track who is online by userId
 export function getPresenceChannel() {
-  console.log("🔧 [SERVICE] Creating presence channel: 'presence:users'");
+  // console.log("🔧 [SERVICE] Creating presence channel: 'presence:users'");
   const channel = supabase.channel("presence:users", {
     config: { presence: { key: "user-presence" } },
   });
-  console.dir("🔧 [SERVICE] Presence channel created:", channel);
+  // console.dir("🔧 [SERVICE] Presence channel created:", channel);
   return channel;
 }
 
@@ -894,7 +894,7 @@ export async function blockUser(
   blockedId: string,
   conversationId: string
 ) {
-  console.log("Starting blockUser", blockerId, blockedId, conversationId);
+  // console.log("Starting blockUser", blockerId, blockedId, conversationId);
   // Create blocked_users record
   const { error: blockError } = await supabase.from("blocked_users").insert({
     id: uuidv4(),
@@ -903,17 +903,17 @@ export async function blockUser(
     createdAt: new Date().toISOString(),
   });
 
-  console.log("blockError", blockError);  
+  // console.log("blockError", blockError);  
   if (blockError) throw new Error(blockError.message);
   
-  console.log("starting to update conversation status to BLOCKED", conversationId);
+  //  console.log("starting to update conversation status to BLOCKED", conversationId);
   // Update conversation status to BLOCKED
   const { error: convError } = await supabase
     .from("conversations")
     .update({ status: "BLOCKED", updatedAt: new Date().toISOString() })
     .eq("id", conversationId);
   
-  console.log("convError", convError);
+  // console.log("convError", convError);
   if (convError) throw new Error(convError.message);
 }
 

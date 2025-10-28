@@ -95,6 +95,8 @@ import ChevronLeft from "@/assets/icons/chevron-left.svg";
 // @ts-ignore
 import ChevronRight from "@/assets/icons/chevron-right.svg";
 // @ts-ignore
+import ChevronDown from "@/assets/icons/chevron-downward.svg";
+// @ts-ignore
 import HeartFilled from "@/assets/icons/heart-filled.svg";
 // @ts-ignore
 import Trash from "@/assets/icons/trash.svg";
@@ -180,6 +182,8 @@ import WarningYellow from "@/assets/icons/warning-yellow.svg";
 import Faq from "@/assets/icons/faq.svg";
 // @ts-ignore
 import SafeAlert from "@/assets/icons/safe-alert.svg";
+// @ts-ignore
+import LocationRed from "@/assets/icons/location-red.svg";
 
 export const SVGIcons = {
   Close,
@@ -225,6 +229,7 @@ export const SVGIcons = {
   Stop,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   HeartFilled,
   Trash,
   Delete,
@@ -273,6 +278,7 @@ export const SVGIcons = {
   WarningYellow,
   Faq,
   SafeAlert,
+  LocationRed,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

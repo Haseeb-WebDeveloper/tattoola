@@ -23,15 +23,8 @@ export default function UploadPreviewStep() {
   const { width: windowWidth } = useWindowDimensions();
 
   const onSubmit = async () => {
-    console.log("onSubmit tiggerd");
     try {
       setSubmitting(true);
-      console.log("onSubmit", {
-        caption,
-        styleId,
-        mediaCount: media.length,
-        collectionId,
-      });
       const { postId } = await createPostWithMediaAndCollection({
         caption,
         styleId,

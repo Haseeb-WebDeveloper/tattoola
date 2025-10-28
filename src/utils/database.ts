@@ -10,25 +10,25 @@ let isInitializing = false;
 export async function initDatabase(): Promise<void> {
   // Prevent multiple simultaneous initializations
   if (db) {
-    console.log("✅ SQLite database already initialized");
+    // console.log("✅ SQLite database already initialized");
     return;
   }
   
   if (isInitializing) {
-    console.log("⏳ SQLite database initialization already in progress...");
+    // console.log("⏳ SQLite database initialization already in progress...");
     // Wait for initialization to complete
     while (isInitializing) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     if (db) {
-      console.log("✅ SQLite database initialized by another process");
+      // console.log("✅ SQLite database initialized by another process");
       return;
     }
   }
   
   try {
     isInitializing = true;
-    console.log("🗄️ Initializing SQLite database...");
+    // console.log("🗄️ Initializing SQLite database...");
     
     // Open or create database
     db = await SQLite.openDatabaseAsync("tattoola.db");

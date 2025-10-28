@@ -676,16 +676,10 @@ function LocationEditModal({
 
   useEffect(() => {
     if (modalStep === "municipality" && selectedProvince) {
-      console.log(
-        "Fetching municipalities for province:",
-        selectedProvince.id,
-        selectedProvince.name
-      );
       setLoadingMunicipalities(true);
       setMunicipalities([]); // Clear previous municipalities
       getMunicipalities(selectedProvince.id)
         .then((data) => {
-          console.log("Municipalities loaded:", data.length, data.slice(0, 3));
           setMunicipalities(data);
         })
         .catch((err) => {
@@ -704,19 +698,12 @@ function LocationEditModal({
   const isSearching = search.trim().length > 0;
 
   const sourceList = modalStep === "province" ? provinces : municipalities;
-  console.log(
-    `Current step: ${modalStep}, Source list length: ${sourceList.length}`
-  );
 
   const listFiltered = sourceList
     .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
     .filter((r) =>
       modalStep === "province" && !isSearching ? !topSixIds.has(r.id) : true
     );
-
-  console.log(
-    `Filtered list length: ${listFiltered.length}, Search: "${search}"`
-  );
 
   const displayValue =
     selectedProvince && selectedMunicipality
@@ -937,10 +924,6 @@ function LocationEditModal({
                             <TouchableOpacity
                               key={p.id}
                               onPress={() => {
-                                console.log(
-                                  "Province selected from popular cities:",
-                                  p
-                                );
                                 setSelectedProvince(p);
                                 setSearch("");
                               }}
@@ -1041,11 +1024,9 @@ function LocationEditModal({
                         className={`py-4 border-b border-gray/20 ${selectedMunicipality?.id === item.id && selectedProvince?.id === selectedProvince?.id ? "bg-primary" : "bg-[#100C0C]"}`}
                         onPress={() => {
                           if (modalStep === "province") {
-                            console.log("Province selected from list:", item);
                             setSelectedProvince(item);
                             setSearch("");
                           } else {
-                            console.log("Municipality selected:", item);
                             setSelectedMunicipality(item);
                             setModalStep(null);
                             setSearch("");
@@ -1131,17 +1112,10 @@ function LocationEditModal({
                   onPress={() => {
                     if (modalStep === "province") {
                       if (selectedProvince) {
-                        console.log(
-                          "Moving to municipality step with province:",
-                          selectedProvince
-                        );
                         setModalStep("municipality");
                         setSearch("");
-                      } else {
-                        console.log("No province selected");
                       }
                     } else {
-                      console.log("Closing municipality selection");
                       setModalStep(null);
                       setSearch("");
                     }
