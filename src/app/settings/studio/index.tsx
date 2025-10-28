@@ -375,6 +375,16 @@ export default function StudioSettingsScreen() {
   const handleSetupPress = () => {
     router.push("/settings/studio/step-0" as any);
   };
+  const handleStudioPageViewPress = (id: string | undefined) => {
+    console.log('🎯 Navigating to studio page with ID:', id);
+    if (!id) {
+      console.log('⚠️ No studio ID, redirecting to profile');
+      router.push("/settings/studio/profile" as any);
+      return;
+    }
+    console.log('✅ Navigating to studio:', id);
+    router.push(`/studio/${id}` as any);
+  };
 
   const showSetupCard =
     !loading &&
@@ -453,7 +463,7 @@ export default function StudioSettingsScreen() {
           {showSetupCard ? (
             <SetupCard onPress={handleSetupPress} />
           ) : (
-            <LiveCard onPress={handleSetupPress} />
+            <LiveCard onPress={() => handleStudioPageViewPress(studio?.id)} />
           )}
           {/* handleStudioPagePress */}
         </ScrollView>

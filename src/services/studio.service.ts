@@ -742,7 +742,9 @@ export async function updateStudioFAQs(
  */
 export async function fetchStudioPublicProfile(studioId: string) {
   try {
-    // Get studio basic info with owner details
+    console.log('🔍 Fetching studio profile for ID:', studioId);
+    
+    // Get studio basic info
     const { data: studio, error: studioError } = await supabase
       .from('studios')
       .select(`
@@ -757,15 +759,36 @@ export async function fetchStudioPublicProfile(studioId: string) {
         instagram,
         tiktok,
         description,
-        ownerId,
-        owner:users!studios_ownerId_fkey(firstName, lastName, avatar)
+        ownerId
       `)
       .eq('id', studioId)
       .single();
 
-    if (studioError || !studio) {
+    if (studioError) {
+      console.error('❌ Studio fetch error:', studioError);
+      console.error('Studio ID that failed:', studioId);
+      throw new Error(`Studio not found: ${studioError.message}`);
+    }
+
+    if (!studio) {
+      console.error('❌ No studio data returned for ID:', studioId);
       throw new Error('Studio not found');
     }
+
+    console.log('✅ Studio found:', studio.name);
+
+    // Get owner details through artist_profiles
+    const { data: ownerProfile } = await supabase
+      .from('artist_profiles')
+      .select(`
+        id,
+        userId,
+        user:users!artist_profiles_userId_fkey(firstName, lastName, avatar)
+      `)
+      .eq('id', studio.ownerId)
+      .single();
+
+    const owner = ownerProfile?.user || null;
 
     // Get banner media
     const { data: bannerMedia } = await supabase
@@ -795,7 +818,7 @@ export async function fetchStudioPublicProfile(studioId: string) {
     // Get studio photos
     const { data: photos } = await supabase
       .from('studio_photos')
-      .select('id, photoUrl, order')
+      .select('id, imageUrl, order')
       .eq('studioId', studioId)
       .order('order');
 
@@ -892,7 +915,7 @@ export async function fetchStudioPublicProfile(studioId: string) {
 
     return {
       ...studio,
-      owner: studio.owner,
+      owner: owner,
       banner: bannerMedia?.map((m: any) => ({
         mediaType: m.mediaType,
         mediaUrl: m.mediaUrl,
@@ -907,6 +930,140 @@ export async function fetchStudioPublicProfile(studioId: string) {
   } catch (error: any) {
     console.error('Error in fetchStudioPublicProfile:', error);
     throw error;
+  }
+}
+
+/**
+ * Fetch studio photos for editing
+ */
+export async function fetchStudioPhotos(userId: string) {
+  try {
+    const { data: artistProfile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('userId', userId)
+      .single();
+
+    if (!artistProfile) throw new Error('Artist profile not found');
+
+    const { data: studio } = await supabase
+      .from('studios')
+      .select('id')
+      .eq('ownerId', artistProfile.id)
+      .single();
+
+    if (!studio) throw new Error('Studio not found');
+
+    const { data: photos } = await supabase
+      .from('studio_photos')
+      .select('*')
+      .eq('studioId', studio.id)
+      .order('order');
+
+    return { photos: photos || [], studioId: studio.id };
+  } catch (error: any) {
+    console.error('Error fetching studio photos:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add a new studio photo
+ */
+export async function addStudioPhoto(
+  userId: string,
+  imageUrl: string,
+  caption?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data: artistProfile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('userId', userId)
+      .single();
+
+    if (!artistProfile) throw new Error('Artist profile not found');
+
+    const { data: studio } = await supabase
+      .from('studios')
+      .select('id')
+      .eq('ownerId', artistProfile.id)
+      .single();
+
+    if (!studio) throw new Error('Studio not found');
+
+    // Get current max order
+    const { data: maxPhoto } = await supabase
+      .from('studio_photos')
+      .select('order')
+      .eq('studioId', studio.id)
+      .order('order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const newOrder = (maxPhoto?.order ?? -1) + 1;
+
+    const { error } = await supabase
+      .from('studio_photos')
+      .insert({
+        id: generateUUID(),
+        studioId: studio.id,
+        imageUrl,
+        caption,
+        order: newOrder,
+      });
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error adding studio photo:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Delete a studio photo
+ */
+export async function deleteStudioPhoto(
+  photoId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('studio_photos')
+      .delete()
+      .eq('id', photoId);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting studio photo:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Reorder studio photos
+ */
+export async function reorderStudioPhotos(
+  photos: Array<{ id: string; order: number }>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Update order for each photo
+    const updates = photos.map((photo) =>
+      supabase
+        .from('studio_photos')
+        .update({ order: photo.order })
+        .eq('id', photo.id)
+    );
+
+    await Promise.all(updates);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error reordering studio photos:', error);
+    return { success: false, error: error.message };
   }
 }
 
