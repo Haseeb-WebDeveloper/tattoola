@@ -1,6 +1,8 @@
 import ArtistCard from "@/components/search/ArtistCard";
+import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
 import FilterModal from "@/components/search/FilterModal";
 import StudioCard from "@/components/search/StudioCard";
+import StudioCardSkeleton from "@/components/search/StudioCardSkeleton";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
@@ -9,11 +11,10 @@ import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -100,11 +101,12 @@ export default function SearchScreen() {
   const renderFooter = () => {
     if (!isLoadingMore) return null;
 
-    return (
-      <View style={{ paddingVertical: mvs(20) }}>
-        <ActivityIndicator size="large" color="#AE0E0E" />
-      </View>
-    );
+    // Show skeleton based on active tab
+    if (activeTab === "artists" || activeTab === "all") {
+      return <ArtistCardSkeleton />;
+    } else {
+      return <StudioCardSkeleton />;
+    }
   };
 
   const totalResults =
@@ -263,8 +265,22 @@ export default function SearchScreen() {
 
         {/* Results List */}
         {isLoading && combinedResults.length === 0 ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#AE0E0E" />
+          <View className="flex-1">
+            {/* Show skeletons based on active tab */}
+            {activeTab === "artists" || activeTab === "all" ? (
+              <>
+                <ArtistCardSkeleton />
+                <ArtistCardSkeleton />
+                <ArtistCardSkeleton />
+              </>
+            ) : null}
+            {activeTab === "studios" || activeTab === "all" ? (
+              <>
+                <StudioCardSkeleton />
+                <StudioCardSkeleton />
+                <StudioCardSkeleton />
+              </>
+            ) : null}
           </View>
         ) : (
           <FlatList

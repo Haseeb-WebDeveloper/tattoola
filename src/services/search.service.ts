@@ -66,6 +66,7 @@ export async function searchArtists({
         ),
         bannerMedia:artist_banner_media(
           mediaUrl,
+          mediaType,
           order
         )
       `
@@ -148,6 +149,7 @@ export async function searchArtists({
             .slice(0, 4)
             .map((bm: any) => ({
               mediaUrl: bm.mediaUrl,
+              mediaType: bm.mediaType,
               order: bm.order,
             })) || [],
         subscription: activeSubscription
@@ -210,6 +212,7 @@ export async function searchStudios({
         ),
         bannerMedia:studio_banner_media(
           mediaUrl,
+          mediaType,
           order
         ),
         owner:artist_profiles(
@@ -292,6 +295,7 @@ export async function searchStudios({
             .slice(0, 4)
             .map((bm: any) => ({
               mediaUrl: bm.mediaUrl,
+              mediaType: bm.mediaType,
               order: bm.order,
             })) || [],
         subscription: activeSubscription

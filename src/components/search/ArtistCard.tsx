@@ -2,6 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { ArtistSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
+import { ResizeMode, Video } from "expo-av";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
@@ -17,15 +18,17 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
     router.push(`/user/${artist.userId}`);
   };
 
+  console.log(artist);
+
   return (
     <TouchableOpacity
       activeOpacity={1}
       onPress={handlePress}
-      className="bg-background border border-gray/50 rounded-[35px] overflow-hidden"
+      className="bg-background border border-gray/50  overflow-hidden"
       style={{
-        width: s(330),
         marginHorizontal: s(16),
         marginBottom: mvs(16),
+        borderRadius: s(20),
       }}
     >
       {/* Top Section - Avatar, Name, Experience, Location */}
@@ -33,13 +36,13 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
         {/* Subscription Badge */}
         {artist.subscription && (
           <View
-            className="absolute right-0 top-1 rounded-full items-center justify-center"
+            className="absolute rounded-full items-center justify-center"
             style={{
-              paddingHorizontal: s(8),
-              paddingVertical: mvs(4),
+              right: s(16),
+              top: s(16),
             }}
           >
-            <SVGIcons.DimondYellow width={s(12)} height={s(12)} />
+            <SVGIcons.DimondYellow width={s(16)} height={s(16)} />
           </View>
         )}
 
@@ -67,13 +70,13 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <View className="flex-row items-center gap-1">
               <ScaledText
                 allowScaling={false}
-                variant="md"
-                className="text-white font-neueMedium"
+                variant="20"
+                className="text-foreground font-neueBold leading-none "
               >
                 {artist.user.username}
               </ScaledText>
               {artist.isVerified && (
-                <SVGIcons.VarifiedGreen width={s(14)} height={s(14)} />
+                <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} />
               )}
             </View>
           </View>
@@ -88,7 +91,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <SVGIcons.Star width={s(14)} height={s(14)} />
             <ScaledText
               allowScaling={false}
-              variant="body2"
+              variant="md"
               className="text-white font-neueLight ml-1"
             >
               {artist.yearsExperience} anni di esperienza
@@ -105,19 +108,19 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <SVGIcons.Studio width={s(14)} height={s(14)} />
             <ScaledText
               allowScaling={false}
-              variant="body2"
+              variant="md"
               className="text-white font-neueLight ml-1"
             >
               <ScaledText
                 allowScaling={false}
-                variant="body2"
+                variant="md"
                 className="text-white font-neueLight"
               >
                 Titolare di{" "}
               </ScaledText>
               <ScaledText
                 allowScaling={false}
-                variant="body2"
+                variant="md"
                 className="text-white font-neueBold"
               >
                 {artist.businessName}
@@ -132,12 +135,12 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <SVGIcons.Location width={s(14)} height={s(14)} />
             <ScaledText
               allowScaling={false}
-              variant="body2"
+              variant="md"
               className="text-white font-neueLight ml-1"
               numberOfLines={1}
             >
-              {artist.location.address
-                ? `${artist.location.address}, ${artist.location.municipality} (${artist.location.province})`
+              {artist.location.province
+                ? `${artist.location.municipality} (${artist.location.province})`
                 : `${artist.location.municipality}, ${artist.location.province}`}
             </ScaledText>
           </View>
@@ -167,7 +170,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
         )}
 
         {/* Studio Profile Label */}
-        {artist.isStudioOwner && (
+        {/* {artist.isStudioOwner && (
           <ScaledText
             allowScaling={false}
             variant="body4"
@@ -176,70 +179,63 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
           >
             Studio profile
           </ScaledText>
-        )}
+        )} */}
       </View>
 
-      {/* Banner Images Grid */}
-      {artist.bannerMedia.length > 0 && (
-        <View className="flex-row" style={{ height: mvs(226) }}>
-          {artist.bannerMedia.length === 1 && (
+      {/* Banner - Video or Images */}
+      {(() => {
+        const videoMedia = artist.bannerMedia.find(
+          (b) => b.mediaType === "VIDEO"
+        );
+        const imageMedia = artist.bannerMedia.filter(
+          (b) => b.mediaType === "IMAGE"
+        );
+
+        // Video banner - autoplay, looping, no controls
+        if (videoMedia) {
+          return (
+            <Video
+              source={{ uri: videoMedia.mediaUrl }}
+              style={{ width: "100%", height: mvs(180) }}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay
+              isLooping
+              isMuted
+            />
+          );
+        }
+
+        // Single image banner
+        if (imageMedia.length === 1) {
+          return (
             <Image
-              source={{ uri: artist.bannerMedia[0].mediaUrl }}
-              style={{ width: "100%", height: "100%" }}
+              source={{ uri: imageMedia[0].mediaUrl }}
+              style={{ width: "100%", height: mvs(180) }}
               resizeMode="cover"
             />
-          )}
-          {artist.bannerMedia.length === 2 && (
-            <>
-              <Image
-                source={{ uri: artist.bannerMedia[0].mediaUrl }}
-                style={{ width: "50%", height: "100%" }}
-                resizeMode="cover"
-              />
-              <Image
-                source={{ uri: artist.bannerMedia[1].mediaUrl }}
-                style={{ width: "50%", height: "100%" }}
-                resizeMode="cover"
-              />
-            </>
-          )}
-          {artist.bannerMedia.length >= 3 && (
-            <>
-              <View style={{ width: "50%", height: "100%" }}>
+          );
+        }
+
+        // Multiple images banner (all in a row)
+        if (imageMedia.length > 1) {
+          return (
+            <View className="flex-row" style={{ height: mvs(180) }}>
+              {imageMedia.slice(0, 4).map((img, idx) => (
                 <Image
-                  source={{ uri: artist.bannerMedia[0].mediaUrl }}
-                  style={{ width: "100%", height: "50%" }}
+                  key={idx}
+                  source={{ uri: img.mediaUrl }}
+                  className="flex-1"
+                  style={{ height: mvs(180) }}
                   resizeMode="cover"
                 />
-                <Image
-                  source={{ uri: artist.bannerMedia[1].mediaUrl }}
-                  style={{ width: "100%", height: "50%" }}
-                  resizeMode="cover"
-                />
-              </View>
-              <View style={{ width: "50%", height: "100%" }}>
-                {artist.bannerMedia[2] && (
-                  <Image
-                    source={{ uri: artist.bannerMedia[2].mediaUrl }}
-                    style={{
-                      width: "100%",
-                      height: artist.bannerMedia[3] ? "50%" : "100%",
-                    }}
-                    resizeMode="cover"
-                  />
-                )}
-                {artist.bannerMedia[3] && (
-                  <Image
-                    source={{ uri: artist.bannerMedia[3].mediaUrl }}
-                    style={{ width: "100%", height: "50%" }}
-                    resizeMode="cover"
-                  />
-                )}
-              </View>
-            </>
-          )}
-        </View>
-      )}
+              ))}
+            </View>
+          );
+        }
+
+        // No banner media
+        return null;
+      })()}
     </TouchableOpacity>
   );
 }

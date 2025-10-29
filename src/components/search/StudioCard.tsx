@@ -2,6 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
+import { ResizeMode, Video } from "expo-av";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
@@ -17,15 +18,16 @@ export default function StudioCard({ studio }: StudioCardProps) {
     router.push(`/studio/${studio.id}`);
   };
 
+
   return (
     <TouchableOpacity
     activeOpacity={1}
       onPress={handlePress}
-      className="bg-background border border-gray/50 rounded-[35px] overflow-hidden"
+      className="bg-background border border-gray/50  overflow-hidden"
       style={{
-        width: s(330),
         marginHorizontal: s(16),
         marginBottom: mvs(16),
+        borderRadius: s(20),
       }}
     >
       {/* Top Section - Logo, Name, Locations */}
@@ -121,67 +123,56 @@ export default function StudioCard({ studio }: StudioCardProps) {
         )}
       </View>
 
-      {/* Banner Images Grid */}
-      {studio.bannerMedia.length > 0 && (
-        <View className="flex-row" style={{ height: mvs(226) }}>
-          {studio.bannerMedia.length === 1 && (
+      {/* Banner - Video or Images */}
+      {(() => {
+        const videoMedia = studio.bannerMedia.find((b) => b.mediaType === "VIDEO");
+        const imageMedia = studio.bannerMedia.filter((b) => b.mediaType === "IMAGE");
+
+        // Video banner - autoplay, looping, no controls
+        if (videoMedia) {
+          return (
+            <Video
+              source={{ uri: videoMedia.mediaUrl }}
+              style={{ width: "100%", height: mvs(180) }}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay
+              isLooping
+              isMuted
+            />
+          );
+        }
+
+        // Single image banner
+        if (imageMedia.length === 1) {
+          return (
             <Image
-              source={{ uri: studio.bannerMedia[0].mediaUrl }}
-              style={{ width: "100%", height: "100%" }}
+              source={{ uri: imageMedia[0].mediaUrl }}
+              style={{ width: "100%", height: mvs(180) }}
               resizeMode="cover"
             />
-          )}
-          {studio.bannerMedia.length === 2 && (
-            <>
-              <Image
-                source={{ uri: studio.bannerMedia[0].mediaUrl }}
-                style={{ width: "50%", height: "100%" }}
-                resizeMode="cover"
-              />
-              <Image
-                source={{ uri: studio.bannerMedia[1].mediaUrl }}
-                style={{ width: "50%", height: "100%" }}
-                resizeMode="cover"
-              />
-            </>
-          )}
-          {studio.bannerMedia.length >= 3 && (
-            <>
-              <View style={{ width: "50%", height: "100%" }}>
+          );
+        }
+
+        // Multiple images banner (all in a row)
+        if (imageMedia.length > 1) {
+          return (
+            <View className="flex-row" style={{ height: mvs(180) }}>
+              {imageMedia.slice(0, 4).map((img, idx) => (
                 <Image
-                  source={{ uri: studio.bannerMedia[0].mediaUrl }}
-                  style={{ width: "100%", height: "50%" }}
+                  key={idx}
+                  source={{ uri: img.mediaUrl }}
+                  className="flex-1"
+                  style={{ height: mvs(180) }}
                   resizeMode="cover"
                 />
-                <Image
-                  source={{ uri: studio.bannerMedia[1].mediaUrl }}
-                  style={{ width: "100%", height: "50%" }}
-                  resizeMode="cover"
-                />
-              </View>
-              <View style={{ width: "50%", height: "100%" }}>
-                {studio.bannerMedia[2] && (
-                  <Image
-                    source={{ uri: studio.bannerMedia[2].mediaUrl }}
-                    style={{
-                      width: "100%",
-                      height: studio.bannerMedia[3] ? "50%" : "100%",
-                    }}
-                    resizeMode="cover"
-                  />
-                )}
-                {studio.bannerMedia[3] && (
-                  <Image
-                    source={{ uri: studio.bannerMedia[3].mediaUrl }}
-                    style={{ width: "100%", height: "50%" }}
-                    resizeMode="cover"
-                  />
-                )}
-              </View>
-            </>
-          )}
-        </View>
-      )}
+              ))}
+            </View>
+          );
+        }
+
+        // No banner media
+        return null;
+      })()}
     </TouchableOpacity>
   );
 }

@@ -14,7 +14,7 @@ export type ArtistSearchResult = {
     address: string | null;
   } | null;
   styles: { id: string; name: string }[];
-  bannerMedia: { mediaUrl: string; order: number }[];
+  bannerMedia: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; order: number }[];
   subscription: {
     plan: { name: string; type: string };
   } | null;
@@ -32,7 +32,7 @@ export type StudioSearchResult = {
     address: string | null;
   }[];
   styles: { id: string; name: string }[];
-  bannerMedia: { mediaUrl: string; order: number }[];
+  bannerMedia: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; order: number }[];
   subscription: {
     plan: { name: string; type: string };
   } | null;
