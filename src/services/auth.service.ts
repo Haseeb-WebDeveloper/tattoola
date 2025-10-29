@@ -1,12 +1,12 @@
 import type {
-    AuthSession,
-    CompleteArtistRegistration,
-    CompleteUserRegistration,
-    ForgotPasswordData,
-    LoginCredentials,
-    RegisterCredentials,
-    ResetPasswordData,
-    User,
+  AuthSession,
+  CompleteArtistRegistration,
+  CompleteUserRegistration,
+  ForgotPasswordData,
+  LoginCredentials,
+  RegisterCredentials,
+  ResetPasswordData,
+  User,
 } from "../types/auth";
 import { UserRole } from "../types/auth";
 import { logger } from "../utils/logger";
@@ -483,42 +483,96 @@ export class AuthService {
 
     logger.log("updated user:", updatedUser);
 
-    // Create artist profile
-    const adminOrUserClient = supabase;
-    const now2 = new Date().toISOString();
-    const { data: artistProfile, error: artistError } = await adminOrUserClient
+    // Check if artist profile already exists
+    const { data: existingArtistProfile, error: existArtistError } = await supabase
       .from("artist_profiles")
-      .insert({
-        id: generateUUID(), // Generate UUID for the artist profile
-        userId: userId,
-        workArrangement: data.step4.workArrangement,
-        artistType:
-          data.step4.workArrangement === "STUDIO_OWNER"
-            ? "STUDIO_OWNER"
-            : data.step4.workArrangement === "STUDIO_EMPLOYEE"
-              ? "STUDIO_EMPLOYEE"
-              : "FREELANCE",
-        businessName: data.step5.studioName,
-        studioAddress: data.step5.studioAddress,
-        website: data.step5.website,
-        phone: data.step5.phone,
-        certificateUrl: data.step6.certificateUrl,
-        instagram: data.step7.instagram,
-        minimumPrice: data.step11.minimumPrice,
-        hourlyRate: data.step11.hourlyRate,
-        isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
-        portfolioComplete: false, // Will be set to true after portfolio projects are added
-        createdAt: now2,
-        updatedAt: now2,
-      })
-      .select()
-      .single();
+      .select("id")
+      .eq("userId", userId)
+      .maybeSingle();
 
-    if (artistError) {
-      throw new Error(artistError.message);
+    logger.log("existing artist profile:", existingArtistProfile);
+
+    if (existArtistError) {
+      throw new Error(existArtistError.message);
     }
 
-    logger.log("artist profile created");
+    // Create or update artist profile
+    const adminOrUserClient = supabase;
+    const now2 = new Date().toISOString();
+    
+    let artistProfile: any = null;
+    if (!existingArtistProfile) {
+      // Insert new artist profile
+      logger.log("inserting new artist profile");
+      const { data: insertedProfile, error: artistError } = await adminOrUserClient
+        .from("artist_profiles")
+        .insert({
+          id: generateUUID(), // Generate UUID for the artist profile
+          userId: userId,
+          workArrangement: data.step4.workArrangement,
+          artistType:
+            data.step4.workArrangement === "STUDIO_OWNER"
+              ? "STUDIO_OWNER"
+              : data.step4.workArrangement === "STUDIO_EMPLOYEE"
+                ? "STUDIO_EMPLOYEE"
+                : "FREELANCE",
+          businessName: data.step5.studioName,
+          studioAddress: data.step5.studioAddress,
+          website: data.step5.website,
+          phone: data.step5.phone,
+          certificateUrl: data.step6.certificateUrl,
+          instagram: data.step7.instagram,
+          minimumPrice: data.step11.minimumPrice,
+          hourlyRate: data.step11.hourlyRate,
+          isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
+          portfolioComplete: false, // Will be set to true after portfolio projects are added
+          createdAt: now2,
+          updatedAt: now2,
+        })
+        .select()
+        .single();
+
+      if (artistError) {
+        throw new Error(artistError.message);
+      }
+      
+      artistProfile = insertedProfile;
+      logger.log("artist profile created");
+    } else {
+      // Update existing artist profile
+      logger.log("updating existing artist profile");
+      const { data: updatedProfile, error: artistError } = await adminOrUserClient
+        .from("artist_profiles")
+        .update({
+          workArrangement: data.step4.workArrangement,
+          artistType:
+            data.step4.workArrangement === "STUDIO_OWNER"
+              ? "STUDIO_OWNER"
+              : data.step4.workArrangement === "STUDIO_EMPLOYEE"
+                ? "STUDIO_EMPLOYEE"
+                : "FREELANCE",
+          businessName: data.step5.studioName,
+          studioAddress: data.step5.studioAddress,
+          website: data.step5.website,
+          phone: data.step5.phone,
+          certificateUrl: data.step6.certificateUrl,
+          instagram: data.step7.instagram,
+          minimumPrice: data.step11.minimumPrice,
+          hourlyRate: data.step11.hourlyRate,
+          isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
+          updatedAt: now2,
+        })
+        .eq("id", existingArtistProfile.id)
+        .select()
+        .single();
+
+      if (artistError) {
+        throw new Error(artistError.message);
+      }
+      
+      artistProfile = updatedProfile;
+      logger.log("artist profile updated");
+    }
 
     // Create primary location for artist using studio location
     if (data.step5.provinceId && data.step5.municipalityId) {
@@ -539,49 +593,111 @@ export class AuthService {
       });
     }
 
-    // Create studio + membership if studio owner
+    // Create or update studio + membership if studio owner
     let createdStudio: any = null;
     if (data.step4.workArrangement === "STUDIO_OWNER") {
-      const slugBase = (data.step5.studioName || "studio")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      let slug = slugBase;
-      for (let i = 0; i < 3; i++) {
-        const { data: studio, error: studioError } = await adminOrUserClient
+      // Check if studio already exists for this artist
+      const { data: existingStudio, error: existStudioError } = await adminOrUserClient
+        .from("studios")
+        .select("id, slug")
+        .eq("ownerId", artistProfile.id)
+        .maybeSingle();
+
+      logger.log("existing studio:", existingStudio);
+
+      if (existStudioError) {
+        throw new Error(existStudioError.message);
+      }
+
+      if (existingStudio) {
+        // Update existing studio
+        logger.log("updating existing studio");
+        const { data: updatedStudio, error: updateStudioError } = await adminOrUserClient
           .from("studios")
-          .insert({
-            id: generateUUID(),
+          .update({
             name: data.step5.studioName,
-            slug,
             address: data.step5.studioAddress,
-            city: data.step5.municipality,
-            country: "Italy",
             phone: data.step5.phone,
             website: data.step5.website,
-            ownerId: artistProfile.id,
-            createdAt: now2,
             updatedAt: now2,
           })
+          .eq("id", existingStudio.id)
           .select()
           .single();
-        if (!studioError) {
-          createdStudio = studio;
-          break;
+
+        if (updateStudioError) {
+          throw new Error(updateStudioError.message);
         }
-        if ((studioError.message || "").toLowerCase().includes("duplicate"))
-          slug = `${slugBase}-${Math.random().toString(36).slice(2, 6)}`;
-        else throw new Error(studioError.message);
-      }
-      if (createdStudio) {
-        await adminOrUserClient.from("studio_members").insert({
-          id: generateUUID(),
-          studioId: createdStudio.id,
-          userId: userId,
-          artistId: artistProfile.id,
-          role: "OWNER",
-          isActive: true,
-        });
+
+        createdStudio = updatedStudio;
+        logger.log("studio updated");
+
+        // Check if studio member already exists
+        const { data: existingMember } = await adminOrUserClient
+          .from("studio_members")
+          .select("id")
+          .eq("studioId", createdStudio.id)
+          .eq("userId", userId)
+          .maybeSingle();
+
+        if (!existingMember) {
+          // Create studio member if doesn't exist
+          await adminOrUserClient.from("studio_members").insert({
+            id: generateUUID(),
+            studioId: createdStudio.id,
+            userId: userId,
+            artistId: artistProfile.id,
+            role: "OWNER",
+            isActive: true,
+          });
+          logger.log("studio member created");
+        } else {
+          logger.log("studio member already exists");
+        }
+      } else {
+        // Create new studio
+        logger.log("creating new studio");
+        const slugBase = (data.step5.studioName || "studio")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        let slug = slugBase;
+        for (let i = 0; i < 3; i++) {
+          const { data: studio, error: studioError } = await adminOrUserClient
+            .from("studios")
+            .insert({
+              id: generateUUID(),
+              name: data.step5.studioName,
+              slug,
+              address: data.step5.studioAddress,
+              phone: data.step5.phone,
+              website: data.step5.website,
+              ownerId: artistProfile.id,
+              createdAt: now2,
+              updatedAt: now2,
+            })
+            .select()
+            .single();
+          if (!studioError) {
+            createdStudio = studio;
+            break;
+          }
+          if ((studioError.message || "").toLowerCase().includes("duplicate"))
+            slug = `${slugBase}-${Math.random().toString(36).slice(2, 6)}`;
+          else throw new Error(studioError.message);
+        }
+        
+        if (createdStudio) {
+          await adminOrUserClient.from("studio_members").insert({
+            id: generateUUID(),
+            studioId: createdStudio.id,
+            userId: userId,
+            artistId: artistProfile.id,
+            role: "OWNER",
+            isActive: true,
+          });
+          logger.log("studio and member created");
+        }
       }
     }
 

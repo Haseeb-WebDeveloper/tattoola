@@ -195,7 +195,33 @@ export default function ArtistStep13V2() {
       router.replace("/(tabs)");
     } catch (error) {
       logger.error("Registration error:", error);
-      toast.error("Failed to complete registration. Please try again.");
+      
+      // Extract meaningful error message
+      let errorMessage = "Failed to complete registration. Please try again.";
+      
+      if (error instanceof Error) {
+        // Check for specific error patterns
+        if (error.message.includes("duplicate") || error.message.includes("already exists")) {
+          errorMessage = "Some information already exists. Your profile has been updated.";
+        } else if (error.message.includes("foreign key") || error.message.includes("violates")) {
+          errorMessage = "Invalid data provided. Please check your entries.";
+        } else if (error.message.includes("network") || error.message.includes("fetch")) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else if (error.message.includes("column") && error.message.includes("does not exist")) {
+          errorMessage = "Database configuration error. Please contact support.";
+          logger.error("Database schema mismatch:", error.message);
+        } else if (error.message.includes("cache") || error.message.includes("schema")) {
+          errorMessage = "Database sync error. Please try again in a moment.";
+          logger.error("Database cache/schema error:", error.message);
+        } else if (error.message) {
+          // Use the actual error message if it's user-friendly (max 100 chars)
+          errorMessage = error.message.length > 100 
+            ? error.message.substring(0, 100) + "..."
+            : error.message;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
