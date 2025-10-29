@@ -39,6 +39,8 @@ import StartCircleFilled from "@/assets/icons/star-circle-filled.svg";
 // @ts-ignore
 import Magic from "@/assets/icons/magic.svg";
 // @ts-ignore
+import MagicStick from "@/assets/icons/magic-stick.svg";
+// @ts-ignore
 import Pricing from "@/assets/icons/pricing.svg";
 // @ts-ignore
 import Work from "@/assets/icons/work.svg";
@@ -202,6 +204,7 @@ export const SVGIcons = {
   StartCircle,
   StartCircleFilled,
   Magic,
+  MagicStick,
   Pricing,
   Work,
   Add,

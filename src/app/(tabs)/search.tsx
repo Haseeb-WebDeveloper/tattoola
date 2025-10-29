@@ -1,6 +1,7 @@
 import ArtistCard from "@/components/search/ArtistCard";
 import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
 import FilterModal from "@/components/search/FilterModal";
+import LocationModal from "@/components/search/LocationModal";
 import StudioCard from "@/components/search/StudioCard";
 import StudioCardSkeleton from "@/components/search/StudioCardSkeleton";
 import ScaledText from "@/components/ui/ScaledText";
@@ -10,12 +11,7 @@ import type { SearchTab } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
-import {
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchScreen() {
@@ -30,13 +26,16 @@ export default function SearchScreen() {
     search,
     loadMore,
     locationDisplay,
+    filters,
+    initializeWithUserLocation,
   } = useSearchStore();
 
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    search();
+    initializeWithUserLocation();
   }, []);
 
   const handleRefresh = async () => {
@@ -53,6 +52,25 @@ export default function SearchScreen() {
 
   const handleTabPress = (tab: SearchTab) => {
     setActiveTab(tab);
+  };
+
+  const handleLocationSelect = (data: {
+    province: string;
+    provinceId: string;
+    municipality: string;
+    municipalityId: string;
+  }) => {
+    const {
+      updateFilters,
+      setLocation,
+      search: searchStore,
+    } = useSearchStore.getState();
+    updateFilters({
+      provinceId: data.provinceId,
+      municipalityId: data.municipalityId,
+    });
+    setLocation(data.province, data.municipality);
+    searchStore();
   };
 
   // Combine results based on active tab
@@ -163,8 +181,8 @@ export default function SearchScreen() {
         >
           <TouchableOpacity
             onPress={() => handleTabPress("all")}
-            className={`rounded-full items-center justify-center ${
-              activeTab === "all" ? "bg-primary" : "border border-gray"
+            className={`rounded-full items-center justify-center border border-gray ${
+              activeTab === "all" ? "bg-primary border-primary" : ""
             }`}
             style={{
               paddingVertical: mvs(3),
@@ -184,8 +202,8 @@ export default function SearchScreen() {
 
           <TouchableOpacity
             onPress={() => handleTabPress("artists")}
-            className={`rounded-full items-center justify-center ${
-              activeTab === "artists" ? "bg-primary" : "border border-gray"
+            className={`rounded-full items-center justify-center border border-gray ${
+              activeTab === "artists" ? "bg-primary border-primary" : ""
             }`}
             style={{
               paddingVertical: mvs(3),
@@ -205,8 +223,8 @@ export default function SearchScreen() {
 
           <TouchableOpacity
             onPress={() => handleTabPress("studios")}
-            className={`rounded-full items-center justify-center ${
-              activeTab === "studios" ? "bg-primary" : "border border-gray"
+            className={`rounded-full items-center justify-center border border-gray ${
+              activeTab === "studios" ? "bg-primary border-primary" : ""
             }`}
             style={{
               paddingVertical: mvs(3),
@@ -226,42 +244,44 @@ export default function SearchScreen() {
         </View>
 
         {/* Location Display */}
-        <View
-          className="flex-row items-center justify-center"
-          style={{
-            paddingHorizontal: s(16),
-            marginBottom: mvs(16),
-            gap: s(2),
-          }}
-        >
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-white font-semibold"
+        {locationText && (
+          <View
+            className="flex-row items-center justify-center"
+            style={{
+              paddingHorizontal: s(16),
+              marginBottom: mvs(16),
+              gap: s(2),
+            }}
           >
-            {locationText}{" "}
-          </ScaledText>
-          {locationDisplay && (
-            <TouchableOpacity
-              onPress={() => setShowFilterModal(true)}
-              className="border border-gray rounded-full flex-row items-center"
-              style={{
-                paddingVertical: mvs(3),
-                paddingHorizontal: s(8),
-                gap: s(4),
-              }}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-white font-semibold"
             >
-              <SVGIcons.LocationRed width={s(11)} height={s(11)} />
-              <ScaledText
-                allowScaling={false}
-                variant="11"
-                className="text-primary font-semibold"
+              {locationText}{" "}
+            </ScaledText>
+            {locationDisplay && (
+              <TouchableOpacity
+                onPress={() => setShowLocationModal(true)}
+                className="border border-gray rounded-full flex-row items-center"
+                style={{
+                  paddingVertical: mvs(3),
+                  paddingHorizontal: s(8),
+                  gap: s(4),
+                }}
               >
-                {locationDisplay.province.toUpperCase()}
-              </ScaledText>
-            </TouchableOpacity>
-          )}
-        </View>
+                <SVGIcons.LocationRed width={s(11)} height={s(11)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-primary font-semibold"
+                >
+                  {locationDisplay.province.toUpperCase()}
+                </ScaledText>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {/* Results List */}
         {isLoading && combinedResults.length === 0 ? (
@@ -286,7 +306,11 @@ export default function SearchScreen() {
           <FlatList
             data={combinedResults}
             renderItem={renderItem}
-            keyExtractor={(item: any) => item.id}
+            keyExtractor={(item: any) => {
+              // Add type prefix to ensure unique keys when combining artists and studios
+              const type = "businessName" in item ? "artist" : "studio";
+              return `${type}-${item.id}`;
+            }}
             contentContainerStyle={{
               paddingBottom: mvs(100),
             }}
@@ -310,6 +334,15 @@ export default function SearchScreen() {
       <FilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
+      />
+
+      {/* Location Picker Bottom Sheet */}
+      <LocationModal
+        visible={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onSelect={handleLocationSelect}
+        initialProvinceId={locationDisplay ? filters.provinceId : null}
+        initialMunicipalityId={locationDisplay ? filters.municipalityId : null}
       />
     </View>
   );

@@ -3,11 +3,19 @@ import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import React, { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type Style = {
   id: string;
   name: string;
+  imageUrl: string | null;
 };
 
 type StyleFilterProps = {
@@ -21,22 +29,15 @@ export default function StyleFilter({
 }: StyleFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [styles, setStyles] = useState<Style[]>([]);
-  const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(selectedIds);
 
   useEffect(() => {
     loadStyles();
   }, []);
 
-  useEffect(() => {
-    if (isExpanded) {
-      setTempSelectedIds(selectedIds);
-    }
-  }, [isExpanded, selectedIds]);
-
   const loadStyles = async () => {
     const { data, error } = await supabase
       .from("tattoo_styles")
-      .select("id, name")
+      .select("id, name, imageUrl")
       .eq("isActive", true)
       .order("name");
 
@@ -48,20 +49,11 @@ export default function StyleFilter({
   };
 
   const toggleStyle = (styleId: string) => {
-    setTempSelectedIds((prev) =>
-      prev.includes(styleId)
-        ? prev.filter((id) => id !== styleId)
-        : [...prev, styleId]
-    );
-  };
+    const newSelectedIds = selectedIds.includes(styleId)
+      ? selectedIds.filter((id) => id !== styleId)
+      : [...selectedIds, styleId];
 
-  const handleApply = () => {
-    onSelectionChange(tempSelectedIds);
-    setIsExpanded(false);
-  };
-
-  const handleReset = () => {
-    setTempSelectedIds([]);
+    onSelectionChange(newSelectedIds);
   };
 
   const displayText =
@@ -75,19 +67,20 @@ export default function StyleFilter({
     <>
       {/* Collapsed State */}
       <TouchableOpacity
-       activeOpacity={1}
+        activeOpacity={1}
         onPress={() => setIsExpanded(true)}
-        className="bg-tat-foreground  border-gray rounded-lg flex-row items-center justify-between"
+        className="bg-tat-foreground border-gray flex-row items-center justify-between"
         style={{
-          paddingVertical: mvs(12),
+          paddingVertical: mvs(10),
           paddingHorizontal: s(16),
           borderWidth: s(1),
+          borderRadius: s(8),
         }}
       >
         <ScaledText
           allowScaling={false}
           variant="md"
-          className="text-foreground font-montserratSemiBold"
+          className="text-gray font-montserratMedium"
         >
           {displayText}
         </ScaledText>
@@ -106,118 +99,91 @@ export default function StyleFilter({
             className="flex-1 bg-background rounded-t-3xl"
             style={{ marginTop: "auto", maxHeight: "80%" }}
           >
-            {/* Modal Header */}
-            <View
-              className="border-b border-gray"
+            {/* Dropdown Header (Collapsed State in Modal) */}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => setIsExpanded(false)}
+              className="bg-background border-gray flex-row items-center justify-between"
               style={{
-                paddingVertical: mvs(16),
-                paddingHorizontal: s(20),
+                marginTop: mvs(16),
+                marginHorizontal: s(20),
+                paddingVertical: mvs(12),
+                paddingHorizontal: s(16),
+                borderWidth: s(1),
+                borderRadius: s(8),
               }}
             >
-              <View className="flex-row items-center justify-between">
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-foreground font-neueBold"
-                >
-                  Seleziona stili
-                </ScaledText>
-                <TouchableOpacity onPress={handleReset}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-gray font-neueLight"
-                  >
-                    Reset
-                  </ScaledText>
-                </TouchableOpacity>
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-gray font-montserratMedium"
+              >
+                {displayText}
+              </ScaledText>
+              <View style={{ transform: [{ rotate: "180deg" }] }}>
+                <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
               </View>
-            </View>
+            </TouchableOpacity>
 
             {/* Styles List */}
             <ScrollView
               className="flex-1"
-              style={{ paddingTop: mvs(8) }}
+              style={{ paddingTop: mvs(16) }}
+              contentContainerStyle={{ paddingBottom: mvs(32) }}
               showsVerticalScrollIndicator={false}
             >
               {styles.map((style) => {
-                const isSelected = tempSelectedIds.includes(style.id);
+                const isSelected = selectedIds.includes(style.id);
                 return (
                   <Pressable
                     key={style.id}
                     onPress={() => toggleStyle(style.id)}
                     className="border-b border-gray/20"
                     style={{
-                      paddingVertical: mvs(16),
+                      paddingVertical: mvs(8),
                       paddingHorizontal: s(20),
                     }}
                   >
                     <View className="flex-row items-center justify-between">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="body2"
-                        className="text-foreground font-neueMedium"
-                      >
-                        {style.name}
-                      </ScaledText>
-                      <View
-                        className={`w-6 h-6 rounded border-2 items-center justify-center ${
-                          isSelected
-                            ? "border-primary bg-primary"
-                            : "border-gray"
-                        }`}
-                      >
-                        {isSelected && (
-                          <SVGIcons.CheckedCheckbox width={s(16)} height={s(16)} />
+                      <View className="flex-row items-center gap-3">
+                        {style.imageUrl && (
+                          <Image
+                            source={{ uri: style.imageUrl }}
+                            style={{
+                              width: s(43),
+                              height: s(46),
+                              borderRadius: s(8),
+                            }}
+                            resizeMode="cover"
+                          />
                         )}
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-gray font-montserratSemibold"
+                        >
+                          {style.name}
+                        </ScaledText>
                       </View>
+                      {isSelected ? (
+                        <SVGIcons.CheckedCheckbox
+                          width={s(17)}
+                          height={s(17)}
+                        />
+                      ) : (
+                        <SVGIcons.UncheckedCheckbox
+                          width={s(17)}
+                          height={s(17)}
+                        />
+                      )}
                     </View>
                   </Pressable>
                 );
               })}
             </ScrollView>
-
-            {/* Action Buttons */}
-            <View
-              className="border-t border-gray"
-              style={{
-                paddingVertical: mvs(16),
-                paddingHorizontal: s(20),
-              }}
-            >
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={() => setIsExpanded(false)}
-                  className="flex-1 border border-foreground rounded-full items-center justify-center"
-                  style={{ paddingVertical: mvs(12) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-foreground font-neueMedium"
-                  >
-                    Cancel
-                  </ScaledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleApply}
-                  className="flex-1 bg-primary rounded-full items-center justify-center"
-                  style={{ paddingVertical: mvs(12) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-white font-neueMedium"
-                  >
-                    Apply
-                  </ScaledText>
-                </TouchableOpacity>
-              </View>
-            </View>
           </View>
         </View>
       </Modal>
     </>
   );
 }
-

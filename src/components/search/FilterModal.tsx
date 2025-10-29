@@ -2,8 +2,16 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
 import { mvs, s } from "@/utils/scale";
-import React, { useEffect, useState } from "react";
-import { Modal, ScrollView, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Modal,
+  PanResponder,
+  ScrollView,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LocationPicker from "../shared/LocationPicker";
 import ServiceFilter from "./ServiceFilter";
@@ -16,17 +24,84 @@ type FilterModalProps = {
 
 export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const insets = useSafeAreaInsets();
-  const { filters, updateFilters, locationDisplay, setLocation, search } =
-    useSearchStore();
+  const { filters, updateFilters, search } = useSearchStore();
 
   const [tempFilters, setTempFilters] = useState(filters);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [locationNames, setLocationNames] = useState<{
+    province: string;
+    municipality: string;
+  } | null>(null);
 
   useEffect(() => {
     if (visible) {
       setTempFilters(filters);
+      // Get location names from store if they exist
+      const { locationDisplay } = useSearchStore.getState();
+      if (locationDisplay && filters.provinceId && filters.municipalityId) {
+        setLocationNames(locationDisplay);
+      } else {
+        setLocationNames(null);
+      }
     }
   }, [visible, filters]);
+
+  // --- Animated sliding mechanics ---
+  const translateY = useRef(new Animated.Value(0)).current;
+  const dragOffset = useRef(0);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: (_evt, gestureState) => {
+        // Only vertical gestures
+        return true;
+      },
+      onMoveShouldSetPanResponder: (_evt, gestureState) => {
+        return Math.abs(gestureState.dy) > 5;
+      },
+      onPanResponderGrant: () => {
+        dragOffset.current = 0;
+      },
+      onPanResponderMove: (_evt, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_evt, gestureState) => {
+        dragOffset.current = 0;
+        if (gestureState.dy > 85) {
+          // If dragged sufficiently downward, close the modal
+          Animated.timing(translateY, {
+            toValue: 600,
+            duration: 140,
+            useNativeDriver: true,
+          }).start(() => {
+            translateY.setValue(0);
+            onClose();
+          });
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(0);
+    }
+  }, [visible, translateY]);
+
+  // --- End animated sliding mechanics ---
 
   const handleStyleChange = (styleIds: string[]) => {
     setTempFilters((prev) => ({ ...prev, styleIds }));
@@ -35,7 +110,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const handleServiceChange = (serviceIds: string[]) => {
     setTempFilters((prev) => ({ ...prev, serviceIds }));
   };
-
   const handleLocationSelect = (data: {
     province: string;
     provinceId: string;
@@ -47,9 +121,12 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       provinceId: data.provinceId,
       municipalityId: data.municipalityId,
     }));
-    setLocation(data.province, data.municipality);
+    setLocationNames({
+      province: data.province,
+      municipality: data.municipality,
+    });
+    setShowLocationPicker(false);
   };
-
   const handleResetAll = () => {
     setTempFilters({
       styleIds: [],
@@ -57,7 +134,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       provinceId: null,
       municipalityId: null,
     });
-    setLocation("", "");
+    setLocationNames(null);
   };
 
   const handleResetStyle = () => {
@@ -68,8 +145,27 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     setTempFilters((prev) => ({ ...prev, serviceIds: [] }));
   };
 
+  const handleResetLocation = () => {
+    setTempFilters((prev) => ({
+      ...prev,
+      provinceId: null,
+      municipalityId: null,
+    }));
+    setLocationNames(null);
+  };
+
   const handleApply = () => {
     updateFilters(tempFilters);
+    
+    // Update location display in search store (without triggering search)
+    if (locationNames && tempFilters.provinceId && tempFilters.municipalityId) {
+      // Set location display without triggering search
+      useSearchStore.setState({ locationDisplay: locationNames });
+    } else {
+      // Clear location display without triggering search
+      useSearchStore.setState({ locationDisplay: null });
+    }
+    
     search();
     onClose();
   };
@@ -80,20 +176,43 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     tempFilters.provinceId !== null ||
     tempFilters.municipalityId !== null;
 
+  // Close on tap-outside
+  const handleBackdropPress = () => {
+    onClose();
+  };
+
   return (
     <>
       <Modal
         visible={visible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={onClose}
       >
-        <View className="flex-1 bg-background/50">
-          <View
-            className="bg-background border border-gray rounded-t-2xl"
+        <View className="flex-1">
+          {/* Backdrop */}
+          <TouchableWithoutFeedback onPress={handleBackdropPress}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(24,18,18,0.5)",
+                // ('background/50' may not work outside tailwind context, set rgba directly)
+              }}
+            />
+          </TouchableWithoutFeedback>
+
+          <Animated.View
+            className="bg-background"
+            {...panResponder.panHandlers}
             style={{
               marginTop: "auto",
+              transform: [{ translateY }],
               paddingBottom: Math.max(insets.bottom, mvs(20)),
+              borderTopWidth: s(1),
+              borderLeftWidth: s(1),
+              borderRightWidth: s(1),
+              borderColor: "#908D8F",
+              borderRadius: s(24),
             }}
           >
             {/* Handle */}
@@ -112,20 +231,22 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               contentContainerStyle={{
                 paddingHorizontal: s(20),
                 paddingBottom: mvs(24),
+                paddingTop: mvs(10),
               }}
+              keyboardShouldPersistTaps="handled"
             >
               {/* Style Filter Section */}
-              <View style={{ marginBottom: mvs(24) }}>
+              <View style={{ marginBottom: mvs(18) }}>
                 <View
                   className="flex-row items-center justify-between"
-                  style={{ marginBottom: mvs(16) }}
+                  style={{ marginBottom: mvs(10) }}
                 >
                   <View className="flex-row items-center gap-2">
                     <SVGIcons.EditBrush width={s(14)} height={s(14)} />
                     <ScaledText
                       allowScaling={false}
-                      variant="body2"
-                      className="text-white font-montserratSemiBold"
+                      variant="md"
+                      className="text-foreground font-montserratSemibold"
                     >
                       Filtra per stile
                     </ScaledText>
@@ -133,8 +254,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   <TouchableOpacity onPress={handleResetStyle}>
                     <ScaledText
                       allowScaling={false}
-                      variant="body2"
-                      className="text-gray font-neueLight"
+                      variant="md"
+                      className="text-gray font-light"
                     >
                       Reset
                     </ScaledText>
@@ -153,26 +274,29 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               />
 
               {/* Service Filter Section */}
-              <View style={{ marginBottom: mvs(24) }}>
+              <View style={{ marginBottom: mvs(18) }}>
                 <View
                   className="flex-row items-center justify-between"
-                  style={{ marginBottom: mvs(16) }}
+                  style={{ marginBottom: mvs(10) }}
                 >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-white font-montserratSemiBold"
-                  >
-                    Filtra per servizio
-                  </ScaledText>
+                  <View className="flex-row items-center gap-2">
+                    <SVGIcons.MagicStick width={s(14)} height={s(14)} />
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-montserratSemibold"
+                    >
+                      Filtra per servizio
+                    </ScaledText>
+                  </View>
                   <TouchableOpacity
                     activeOpacity={1}
                     onPress={handleResetService}
                   >
                     <ScaledText
                       allowScaling={false}
-                      variant="body2"
-                      className="text-gray font-neueLight"
+                      variant="md"
+                      className="text-gray font-light"
                     >
                       Reset
                     </ScaledText>
@@ -187,52 +311,72 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               {/* Divider */}
               <View
                 className="bg-gray"
-                style={{ height: s(0.5), marginBottom: mvs(24) }}
+                style={{ height: s(0.5), marginBottom: mvs(20) }}
               />
 
-              {/* Location Section */}
-              <View style={{ marginBottom: mvs(24) }}>
-                <ScaledText
-                  allowScaling={false}
-                  variant="body2"
-                  className="text-white font-montserratSemiBold"
-                  style={{ marginBottom: mvs(16) }}
+              {/* Location Filter Section */}
+              <View style={{ marginBottom: mvs(18) }}>
+                <View
+                  className="flex-row items-center justify-between"
+                  style={{ marginBottom: mvs(10) }}
                 >
-                  Filtra per posizione
-                </ScaledText>
+                  <View className="flex-row items-center gap-2">
+                    <SVGIcons.Location width={s(14)} height={s(14)} />
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-montserratSemibold"
+                    >
+                      Filtra per posizione
+                    </ScaledText>
+                  </View>
+                  {(tempFilters.provinceId || tempFilters.municipalityId) && (
+                    <TouchableOpacity onPress={handleResetLocation}>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-gray font-light"
+                      >
+                        Reset
+                      </ScaledText>
+                    </TouchableOpacity>
+                  )}
+                </View>
                 <TouchableOpacity
+                  activeOpacity={1}
                   onPress={() => setShowLocationPicker(true)}
-                  className="bg-tat-foreground border border-gray rounded-lg flex-row items-center justify-between"
+                  className="bg-tat-foreground border-gray flex-row items-center justify-between"
                   style={{
-                    paddingVertical: mvs(12),
+                    paddingVertical: mvs(10),
                     paddingHorizontal: s(16),
                     borderWidth: s(1),
+                    borderRadius: s(8),
                   }}
                 >
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className={`font-montserratSemiBold text-foreground`}
+                    className="text-gray font-montserratMedium"
                   >
-                    {locationDisplay
-                      ? `${locationDisplay.province}, ${locationDisplay.municipality}`
+                    {locationNames && tempFilters.provinceId && tempFilters.municipalityId
+                      ? `${locationNames.municipality}, ${locationNames.province}`
                       : "Seleziona posizione"}
                   </ScaledText>
-                  <SVGIcons.Location width={s(18)} height={s(18)} />
+                  <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
                 </TouchableOpacity>
               </View>
 
               {/* Action Buttons */}
-              <View className="flex-row gap-4">
+              <View className="flex-row gap-4" style={{ marginTop: mvs(12) }}>
                 <TouchableOpacity
                   onPress={handleResetAll}
-                  className="flex-1 border border-white rounded-full items-center justify-center"
+                  className="flex-1 border border-gray rounded-full items-center justify-center"
                   style={{ paddingVertical: mvs(12) }}
                 >
                   <ScaledText
                     allowScaling={false}
-                    variant="body2"
-                    className="text-white font-neueMedium"
+                    variant="md"
+                    className="text-foreground font-semibold"
                   >
                     Reset
                   </ScaledText>
@@ -246,25 +390,21 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                 >
                   <ScaledText
                     allowScaling={false}
-                    variant="body2"
-                    className="text-white font-neueMedium"
+                    variant="md"
+                    className="text-white font-semibold"
                   >
                     Apply Filters
                   </ScaledText>
                 </TouchableOpacity>
               </View>
             </ScrollView>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
-
-      {/* Location Picker Modal */}
       <LocationPicker
         visible={showLocationPicker}
         onClose={() => setShowLocationPicker(false)}
         onSelect={handleLocationSelect}
-        initialProvinceId={tempFilters.provinceId}
-        initialMunicipalityId={tempFilters.municipalityId}
       />
     </>
   );

@@ -26,6 +26,7 @@ export type StudioSearchResult = {
   name: string;
   slug: string;
   logo: string | null;
+  description: string | null;
   locations: {
     province: string;
     municipality: string;

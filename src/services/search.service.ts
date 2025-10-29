@@ -1,7 +1,7 @@
 import type {
-    ArtistSearchResult,
-    SearchFilters,
-    StudioSearchResult,
+  ArtistSearchResult,
+  SearchFilters,
+  StudioSearchResult,
 } from "@/types/search";
 import { supabase } from "@/utils/supabase";
 
@@ -87,12 +87,27 @@ export async function searchArtists({
         .eq("services.isActive", true);
     }
 
-    // Apply location filter
-    if (filters.provinceId) {
-      query = query.eq("user.locations.provinceId", filters.provinceId);
-    }
-    if (filters.municipalityId) {
-      query = query.eq("user.locations.municipalityId", filters.municipalityId);
+    // Apply location filter using inner join to filter parent artists
+    if (filters.provinceId || filters.municipalityId) {
+      let locationQuery = supabase
+        .from("user_locations")
+        .select("userId");
+      
+      if (filters.provinceId) {
+        locationQuery = locationQuery.eq("provinceId", filters.provinceId);
+      }
+      if (filters.municipalityId) {
+        locationQuery = locationQuery.eq("municipalityId", filters.municipalityId);
+      }
+      
+      const { data: userIds } = await locationQuery;
+      
+      if (userIds && userIds.length > 0) {
+        query = query.in("userId", userIds.map(ul => ul.userId));
+      } else {
+        // No artists match the location filter, return empty
+        return { data: [], hasMore: false };
+      }
     }
 
     // Apply pagination
@@ -192,6 +207,7 @@ export async function searchStudios({
         name,
         slug,
         logo,
+        description,
         isActive,
         isCompleted,
         locations:studio_locations(
@@ -242,12 +258,27 @@ export async function searchStudios({
         .eq("services.isActive", true);
     }
 
-    // Apply location filter
-    if (filters.provinceId) {
-      query = query.eq("locations.provinceId", filters.provinceId);
-    }
-    if (filters.municipalityId) {
-      query = query.eq("locations.municipalityId", filters.municipalityId);
+    // Apply location filter using inner join to filter parent studios
+    if (filters.provinceId || filters.municipalityId) {
+      let locationQuery = supabase
+        .from("studio_locations")
+        .select("studioId");
+      
+      if (filters.provinceId) {
+        locationQuery = locationQuery.eq("provinceId", filters.provinceId);
+      }
+      if (filters.municipalityId) {
+        locationQuery = locationQuery.eq("municipalityId", filters.municipalityId);
+      }
+      
+      const { data: studioIds } = await locationQuery;
+      
+      if (studioIds && studioIds.length > 0) {
+        query = query.in("id", studioIds.map(sl => sl.studioId));
+      } else {
+        // No studios match the location filter, return empty
+        return { data: [], hasMore: false };
+      }
     }
 
     // Apply pagination
@@ -275,6 +306,7 @@ export async function searchStudios({
         name: studio.name,
         slug: studio.slug,
         logo: studio.logo,
+        description: studio.description,
         locations:
           studio.locations?.map((loc: any) => ({
             province: loc.province?.name || "",

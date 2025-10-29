@@ -1,12 +1,11 @@
-import { create } from "zustand";
-import type {
-  ArtistSearchResult,
-  SearchFilters,
-  SearchResults,
-  SearchTab,
-  StudioSearchResult,
-} from "@/types/search";
+import { getCurrentUserLocation } from "@/services/profile.service";
 import { searchAll, searchArtists, searchStudios } from "@/services/search.service";
+import type {
+    SearchFilters,
+    SearchResults,
+    SearchTab
+} from "@/types/search";
+import { create } from "zustand";
 
 type SearchState = {
   activeTab: SearchTab;
@@ -31,6 +30,7 @@ type SearchState = {
   search: () => Promise<void>;
   loadMore: () => Promise<void>;
   resetSearch: () => void;
+  initializeWithUserLocation: () => Promise<void>;
 };
 
 const initialFilters: SearchFilters = {
@@ -205,6 +205,34 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       error: null,
       locationDisplay: null,
     });
+  },
+
+  initializeWithUserLocation: async () => {
+    try {
+      const userLocation = await getCurrentUserLocation();
+      
+      if (userLocation) {
+        // Pre-fill filters with user location
+        set({
+          filters: {
+            ...get().filters,
+            provinceId: userLocation.provinceId,
+            municipalityId: userLocation.municipalityId,
+          },
+          locationDisplay: {
+            province: userLocation.province,
+            municipality: userLocation.municipality,
+          },
+        });
+      }
+      
+      // Trigger search with or without location
+      await get().search();
+    } catch (error) {
+      console.error("Error initializing with user location:", error);
+      // Fallback to regular search on error
+      await get().search();
+    }
   },
 }));
 

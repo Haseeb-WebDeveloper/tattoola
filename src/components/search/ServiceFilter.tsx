@@ -3,7 +3,13 @@ import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import React, { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type Service = {
   id: string;
@@ -22,24 +28,16 @@ export default function ServiceFilter({
 }: ServiceFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
-  const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(selectedIds);
 
   useEffect(() => {
     loadServices();
   }, []);
-
-  useEffect(() => {
-    if (isExpanded) {
-      setTempSelectedIds(selectedIds);
-    }
-  }, [isExpanded, selectedIds]);
 
   const loadServices = async () => {
     const { data, error } = await supabase
       .from("services")
       .select("id, name, category")
       .eq("isActive", true)
-      .order("category")
       .order("name");
 
     if (error) {
@@ -50,20 +48,11 @@ export default function ServiceFilter({
   };
 
   const toggleService = (serviceId: string) => {
-    setTempSelectedIds((prev) =>
-      prev.includes(serviceId)
-        ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId]
-    );
-  };
+    const newSelectedIds = selectedIds.includes(serviceId)
+      ? selectedIds.filter((id) => id !== serviceId)
+      : [...selectedIds, serviceId];
 
-  const handleApply = () => {
-    onSelectionChange(tempSelectedIds);
-    setIsExpanded(false);
-  };
-
-  const handleReset = () => {
-    setTempSelectedIds([]);
+    onSelectionChange(newSelectedIds);
   };
 
   const displayText =
@@ -73,35 +62,24 @@ export default function ServiceFilter({
         ? services.find((s) => s.id === selectedIds[0])?.name || "1 selected"
         : `${selectedIds.length} selected`;
 
-  // Group services by category
-  const servicesByCategory = services.reduce(
-    (acc, service) => {
-      if (!acc[service.category]) {
-        acc[service.category] = [];
-      }
-      acc[service.category].push(service);
-      return acc;
-    },
-    {} as Record<string, Service[]>
-  );
-
   return (
     <>
       {/* Collapsed State */}
       <TouchableOpacity
-       activeOpacity={1}
+        activeOpacity={1}
         onPress={() => setIsExpanded(true)}
-        className="bg-tat-foreground  border-gray rounded-lg flex-row items-center justify-between"
+        className="bg-tat-foreground border-gray flex-row items-center justify-between"
         style={{
-          paddingVertical: mvs(12),
+          paddingVertical: mvs(10),
           paddingHorizontal: s(16),
           borderWidth: s(1),
+          borderRadius: s(8),
         }}
       >
         <ScaledText
           allowScaling={false}
           variant="md"
-          className="text-foreground font-montserratSemiBold"
+          className="text-gray font-montserratMedium"
         >
           {displayText}
         </ScaledText>
@@ -120,133 +98,78 @@ export default function ServiceFilter({
             className="flex-1 bg-background rounded-t-3xl"
             style={{ marginTop: "auto", maxHeight: "80%" }}
           >
-            {/* Modal Header */}
-            <View
-              className="border-b border-gray"
+            {/* Dropdown Header (Collapsed State in Modal) */}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => setIsExpanded(false)}
+              className="bg-background border-gray flex-row items-center justify-between"
               style={{
-                paddingVertical: mvs(16),
-                paddingHorizontal: s(20),
+                marginTop: mvs(16),
+                marginHorizontal: s(20),
+                paddingVertical: mvs(12),
+                paddingHorizontal: s(16),
+                borderWidth: s(1),
+                borderRadius: s(8),
               }}
             >
-              <View className="flex-row items-center justify-between">
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-foreground font-neueBold"
-                >
-                  Seleziona servizi
-                </ScaledText>
-                <TouchableOpacity onPress={handleReset}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-gray font-neueLight"
-                  >
-                    Reset
-                  </ScaledText>
-                </TouchableOpacity>
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-gray font-montserratMedium"
+              >
+                {displayText}
+              </ScaledText>
+              <View style={{ transform: [{ rotate: "180deg" }] }}>
+                <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
               </View>
-            </View>
+            </TouchableOpacity>
 
-            {/* Services List by Category */}
+            {/* Services List */}
             <ScrollView
               className="flex-1"
-              style={{ paddingTop: mvs(8) }}
+              style={{ paddingTop: mvs(16) }}
+              contentContainerStyle={{ paddingBottom: mvs(32) }}
               showsVerticalScrollIndicator={false}
             >
-              {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                <View key={category} style={{ marginBottom: mvs(16) }}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-gray font-neueBold"
+              {services.map((service) => {
+                const isSelected = selectedIds.includes(service.id);
+                return (
+                  <Pressable
+                    key={service.id}
+                    onPress={() => toggleService(service.id)}
+                    className="border-b border-gray/20"
                     style={{
+                      paddingVertical: mvs(14),
                       paddingHorizontal: s(20),
-                      paddingVertical: mvs(8),
                     }}
                   >
-                    {category}
-                  </ScaledText>
-                  {categoryServices.map((service) => {
-                    const isSelected = tempSelectedIds.includes(service.id);
-                    return (
-                      <Pressable
-                        key={service.id}
-                        onPress={() => toggleService(service.id)}
-                        className="border-b border-gray/20"
-                        style={{
-                          paddingVertical: mvs(12),
-                          paddingHorizontal: s(20),
-                        }}
+                    <View className="flex-row items-center justify-between">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-gray font-montserratMedium"
                       >
-                        <View className="flex-row items-center justify-between">
-                          <ScaledText
-                            allowScaling={false}
-                            variant="body2"
-                            className="text-foreground font-neueMedium"
-                          >
-                            {service.name}
-                          </ScaledText>
-                          <View
-                            className={`w-6 h-6 rounded border-2 items-center justify-center ${
-                              isSelected
-                                ? "border-primary bg-primary"
-                                : "border-gray"
-                            }`}
-                          >
-                            {isSelected && (
-                              <SVGIcons.CheckedCheckbox width={s(16)} height={s(16)} />
-                            )}
-                          </View>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ))}
+                        {service.name}
+                      </ScaledText>
+                      {isSelected ? (
+                        <SVGIcons.CheckedCheckbox
+                          width={s(17)}
+                          height={s(17)}
+                        />
+                      ) : (
+                        <SVGIcons.UncheckedCheckbox
+                          width={s(17)}
+                          height={s(17)}
+                        />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
-
-            {/* Action Buttons */}
-            <View
-              className="border-t border-gray"
-              style={{
-                paddingVertical: mvs(16),
-                paddingHorizontal: s(20),
-              }}
-            >
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={() => setIsExpanded(false)}
-                  className="flex-1 border border-foreground rounded-full items-center justify-center"
-                  style={{ paddingVertical: mvs(12) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-foreground font-neueMedium"
-                  >
-                    Cancel
-                  </ScaledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleApply}
-                  className="flex-1 bg-primary rounded-full items-center justify-center"
-                  style={{ paddingVertical: mvs(12) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-white font-neueMedium"
-                  >
-                    Apply
-                  </ScaledText>
-                </TouchableOpacity>
-              </View>
-            </View>
           </View>
         </View>
       </Modal>
     </>
   );
 }
-

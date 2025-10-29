@@ -20,7 +20,7 @@ module.exports = {
     extend: {
       colors: {
         // Theme colors based on the SVG design system
-        background: "#000000",
+        background: "##0A0101",
         foreground: "#FFFFFF",
         primary: {
           DEFAULT: "#AE0E0E", // Black background from SVG

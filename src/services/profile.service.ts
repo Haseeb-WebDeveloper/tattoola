@@ -6,6 +6,48 @@ import {
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 
+// Get current user's primary location for personalized search
+export async function getCurrentUserLocation(): Promise<{
+  provinceId: string;
+  municipalityId: string;
+  province: string;
+  municipality: string;
+} | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user?.id) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("user_locations")
+      .select(`
+        provinceId,
+        municipalityId,
+        province:provinces(id, name),
+        municipality:municipalities(id, name)
+      `)
+      .eq("userId", session.user.id)
+      .eq("isPrimary", true)
+      .maybeSingle();
+
+    if (error || !data || !data.province || !data.municipality) {
+      return null;
+    }
+
+    return {
+      provinceId: data.provinceId,
+      municipalityId: data.municipalityId,
+      province: (data.province as any).name,
+      municipality: (data.municipality as any).name,
+    };
+  } catch (error) {
+    console.error("Error fetching user location:", error);
+    return null;
+  }
+}
+
 // Follow helpers co-located for now to avoid a new file import churn
 export async function isFollowing(userId: string, targetUserId: string): Promise<boolean> {
   const { data } = await supabase

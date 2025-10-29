@@ -18,8 +18,6 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
     router.push(`/user/${artist.userId}`);
   };
 
-  console.log(artist);
-
   return (
     <TouchableOpacity
       activeOpacity={1}
@@ -34,15 +32,25 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
       {/* Top Section - Avatar, Name, Experience, Location */}
       <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
         {/* Subscription Badge */}
-        {artist.subscription && (
+        {artist.isStudioOwner && (
           <View
-            className="absolute rounded-full items-center justify-center"
+            className="absolute right-0 top-0 bg-gray flex-row items-center justify-center"
             style={{
-              right: s(16),
-              top: s(16),
+              paddingLeft: s(8),
+              paddingRight: s(25),
+              paddingVertical: mvs(5),
+              gap: s(4),
+              borderBottomLeftRadius: s(9),
             }}
           >
-            <SVGIcons.DimondYellow width={s(16)} height={s(16)} />
+            <SVGIcons.DimondRed width={s(12)} height={s(12)} />
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-primary font-medium"
+            >
+              Artist profile
+            </ScaledText>
           </View>
         )}
 

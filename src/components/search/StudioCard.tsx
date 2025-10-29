@@ -18,16 +18,18 @@ export default function StudioCard({ studio }: StudioCardProps) {
     router.push(`/studio/${studio.id}`);
   };
 
+  console.log(studio);
 
   return (
     <TouchableOpacity
-    activeOpacity={1}
+      activeOpacity={1}
       onPress={handlePress}
-      className="bg-background border border-gray/50  overflow-hidden"
+      className="bg-background  border-gray/50  overflow-hidden"
       style={{
         marginHorizontal: s(16),
         marginBottom: mvs(16),
-        borderRadius: s(20),
+        borderRadius: s(35),
+        borderWidth: s(0.5),
       }}
     >
       {/* Top Section - Logo, Name, Locations */}
@@ -35,18 +37,31 @@ export default function StudioCard({ studio }: StudioCardProps) {
         {/* Subscription Badge */}
         {studio.subscription && (
           <View
-            className="absolute right-0 top-1 rounded-full items-center justify-center"
+            className="absolute right-0 top-0 bg-gray flex-row items-center justify-center"
             style={{
-              paddingHorizontal: s(8),
-              paddingVertical: mvs(4),
+              paddingLeft: s(8),
+              paddingRight: s(25),
+              paddingVertical: mvs(5),
+              gap: s(4),
+              borderBottomLeftRadius: s(9),
             }}
           >
-            <SVGIcons.DimondYellow width={s(12)} height={s(12)} />
+            <SVGIcons.DimondRed width={s(12)} height={s(12)} />
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-primary font-medium"
+            >
+              Studio profile
+            </ScaledText>
           </View>
         )}
 
         {/* Logo and Name Row */}
-        <View className="flex-row items-center" style={{ marginBottom: mvs(8) }}>
+        <View
+          className="flex-row items-center"
+          style={{ marginBottom: mvs(8) }}
+        >
           <View
             className="rounded-full border border-black overflow-hidden"
             style={{ width: s(58), height: s(58), marginRight: s(12) }}
@@ -63,16 +78,34 @@ export default function StudioCard({ studio }: StudioCardProps) {
           </View>
 
           <View className="flex-1">
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-white font-neueMedium"
-              numberOfLines={1}
-            >
-              {studio.name}
-            </ScaledText>
+            <View className="flex-row items-center gap-1">
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-white font-semibold"
+                numberOfLines={1}
+              >
+                {studio.name}
+              </ScaledText>
+              <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} />
+            </View>
           </View>
         </View>
+
+        {/* Description */}
+        {studio.description && (
+          <View className="flex-row items-center" style={{ marginVertical: mvs(2) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-gray font-montserratMedium ml-1"
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {studio.description}
+            </ScaledText>
+          </View>
+        )}
 
         {/* Locations */}
         {studio.locations.length > 0 && (
@@ -81,7 +114,10 @@ export default function StudioCard({ studio }: StudioCardProps) {
               <View
                 key={index}
                 className="flex-row items-center"
-                style={{ marginBottom: index < studio.locations.length - 1 ? mvs(2) : 0 }}
+                style={{
+                  marginBottom:
+                    index < studio.locations.length - 1 ? mvs(2) : 0,
+                }}
               >
                 <SVGIcons.Location width={s(14)} height={s(14)} />
                 <ScaledText
@@ -90,9 +126,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
                   className="text-white font-neueLight ml-1"
                   numberOfLines={1}
                 >
-                  {location.address
-                    ? `${location.address}, ${location.municipality} (${location.province})`
-                    : `${location.municipality}, ${location.province}`}
+                  {location?.province}, {location?.municipality}
                 </ScaledText>
               </View>
             ))}
@@ -125,8 +159,12 @@ export default function StudioCard({ studio }: StudioCardProps) {
 
       {/* Banner - Video or Images */}
       {(() => {
-        const videoMedia = studio.bannerMedia.find((b) => b.mediaType === "VIDEO");
-        const imageMedia = studio.bannerMedia.filter((b) => b.mediaType === "IMAGE");
+        const videoMedia = studio.bannerMedia.find(
+          (b) => b.mediaType === "VIDEO"
+        );
+        const imageMedia = studio.bannerMedia.filter(
+          (b) => b.mediaType === "IMAGE"
+        );
 
         // Video banner - autoplay, looping, no controls
         if (videoMedia) {
@@ -176,4 +214,3 @@ export default function StudioCard({ studio }: StudioCardProps) {
     </TouchableOpacity>
   );
 }
-
