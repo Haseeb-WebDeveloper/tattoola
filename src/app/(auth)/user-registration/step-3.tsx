@@ -87,22 +87,22 @@ export default function UserRegistrationStep3() {
 
   return (
     <View className="flex-1 bg-black">
-      {/* Header */}
-      <AuthStepHeader />
-
       <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={150}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: mvs(20),
-        }}
       >
+        {/* Header */}
+        <AuthStepHeader />
+
         {/* Progress */}
         <RegistrationProgress
           currentStep={3}
-          totalSteps={5}
-          name="Informazioni personali"
-          description="Queste informazioni servono solo per registrare il tuo account e non saranno mai pubblicate."
-          icon={<SVGIcons.User width={22} height={22} />}
+          totalSteps={7}
+          name="Create your profile"
+          icon={<SVGIcons.Person width={25} height={25} />}
         />
 
         {/* Inputs */}
@@ -110,13 +110,16 @@ export default function UserRegistrationStep3() {
           <View>
             <ScaledText
               allowScaling={false}
-              variant="body2"
-              className="text-foreground mb-2"
+              variant="sm"
+              className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              Nome<ScaledText variant="body2" className="text-error">*</ScaledText>
+              Nome
+              <ScaledText variant="sm" className="text-error">
+                *
+              </ScaledText>
             </ScaledText>
             <ScaledTextInput
-              containerClassName="rounded-xl border border-gray"
+              containerClassName={`flex-row items-center rounded-xl border border-gray`}
               className="text-foreground rounded-xl"
               placeholder="Mario"
               placeholderTextColor="#A49A99"
@@ -133,13 +136,16 @@ export default function UserRegistrationStep3() {
           <View style={{ marginTop: mvs(24) }}>
             <ScaledText
               allowScaling={false}
-              variant="body2"
-              className="text-foreground mb-2"
+              variant="sm"
+              className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              Cognome<ScaledText variant="body2" className="text-error">*</ScaledText>
+              Cognome
+              <ScaledText variant="sm" className="text-error">
+                *
+              </ScaledText>
             </ScaledText>
             <ScaledTextInput
-              containerClassName="rounded-xl border border-gray"
+              containerClassName={`flex-row items-center rounded-xl border border-gray`}
               className="text-foreground rounded-xl"
               placeholder="Rossi"
               placeholderTextColor="#A49A99"
@@ -156,12 +162,15 @@ export default function UserRegistrationStep3() {
           <View style={{ marginTop: mvs(24) }}>
             <ScaledText
               allowScaling={false}
-              variant="body2"
-              className="text-foreground mb-2"
+              variant="sm"
+              className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              Telefono<ScaledText variant="body2" className="text-error">*</ScaledText>
+              Telefono
+              <ScaledText variant="sm" className="text-error">
+                *
+              </ScaledText>
             </ScaledText>
-            <View className="flex-row items-center rounded-xl border border-gray">
+            <View className="flex-row items-center rounded-xl">
               <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
                 <ScaledText
                   allowScaling={false}
@@ -172,7 +181,7 @@ export default function UserRegistrationStep3() {
                 </ScaledText>
               </View>
               <ScaledTextInput
-                containerClassName="flex-1"
+                containerClassName="flex-1 border border-gray"
                 className="text-foreground rounded-xl"
                 placeholder="3XXXXXXXXX"
                 placeholderTextColor="#A49A99"

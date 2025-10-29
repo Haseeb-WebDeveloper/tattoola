@@ -92,28 +92,28 @@ export default function SearchScreen() {
   const renderEmpty = () => {
     if (isLoading) return null;
 
-    return (
-      <View
-        className="flex-1 items-center justify-center"
-        style={{ paddingTop: mvs(100) }}
-      >
-        <ScaledText
-          allowScaling={false}
-          variant="lg"
-          className="text-gray font-neueBold text-center"
-        >
-          No results found
-        </ScaledText>
-        <ScaledText
-          allowScaling={false}
-          variant="body2"
-          className="text-gray font-neueLight text-center"
-          style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
-        >
-          Try adjusting your filters to find what you're looking for
-        </ScaledText>
-      </View>
-    );
+    // return (
+    //   <View
+    //     className="flex-1 items-center justify-center"
+    //     style={{ paddingTop: mvs(100) }}
+    //   >
+    //     <ScaledText
+    //       allowScaling={false}
+    //       variant="lg"
+    //       className="text-gray font-neueBold text-center"
+    //     >
+    //       No results found
+    //     </ScaledText>
+    //     <ScaledText
+    //       allowScaling={false}
+    //       variant="body2"
+    //       className="text-gray font-neueLight text-center"
+    //       style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
+    //     >
+    //       Try adjusting your filters to find what you're looking for
+    //     </ScaledText>
+    //   </View>
+    // );
   };
 
   const renderFooter = () => {

@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface ProfileSettingsItemProps {
   title: string;
@@ -38,6 +39,7 @@ const ProfileSettingsItem: React.FC<ProfileSettingsItemProps> = ({
 
 export default function ProfileSettingsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleBack = () => {
     router.back();
@@ -96,6 +98,41 @@ export default function ProfileSettingsScreen() {
     router.push("/settings/profile/experience" as any);
   };
 
+  // Items according to role and screenshot.
+  // Screenshot items for TATTOO_LOVER (in order): 
+  // - Foto profilo
+  // - Dove ti trovi
+  // - Social media
+  // - Stili preferiti
+  // - Tipo di profilo
+
+  const tattooLoverItems = [
+    { title: "Foto profilo", onPress: handlePhotoPress },
+    { title: "Dove ti trovi", onPress: handleLocationPress },
+    { title: "Social media", onPress: handleSocialMediaPress },
+    { title: "Stili preferiti", onPress: handleStylesPress },
+    { title: "Tipo di profilo", onPress: handleBusinessInfoPress },
+  ];
+
+  const artistItems = [
+    { title: "Foto profilo", onPress: handlePhotoPress },
+    { title: "Dove ti trovi", onPress: handleLocationPress },
+    { title: "Social media", onPress: handleSocialMediaPress },
+    { title: "La tua attività", onPress: handleBusinessInfoPress },
+    { title: "Bio", onPress: handleBioPress },
+    { title: "Stili preferiti", onPress: handleStylesPress },
+    { title: "Services offered", onPress: handleServicesPress },
+    { title: "Parti del corpo su cui lavori", onPress: handleBodyPartsPress },
+    { title: "Tariffa minima", onPress: handleRatesPress },
+    { title: "Modalita di lavoro", onPress: handleWorkModalityPress },
+    { title: "Richieste private", onPress: handlePrivateRequestsPress },
+    { title: "Banner", onPress: handleBannerPress },
+    { title: "Esperienza", onPress: handleExperiencePress },
+  ];
+
+  const itemsToShow =
+    user?.role === "ARTIST" ? artistItems : tattooLoverItems;
+
   return (
     <View className="flex-1 bg-background">
       <LinearGradient
@@ -140,52 +177,13 @@ export default function ProfileSettingsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: mvs(32) }}
         >
-          <ProfileSettingsItem
-            title="Foto profilo"
-            onPress={handlePhotoPress}
-          />
-          <ProfileSettingsItem
-            title="Dove ti trovi"
-            onPress={handleLocationPress}
-          />
-          <ProfileSettingsItem
-            title="Social media"
-            onPress={handleSocialMediaPress}
-          />
-          <ProfileSettingsItem
-            title="La tua attività"
-            onPress={handleBusinessInfoPress}
-          />
-          <ProfileSettingsItem title="Bio" onPress={handleBioPress} />
-          <ProfileSettingsItem
-            title="Stili preferiti"
-            onPress={handleStylesPress}
-          />
-          <ProfileSettingsItem
-            title="Services offered"
-            onPress={handleServicesPress}
-          />
-          <ProfileSettingsItem
-            title="Parti del corpo su cui lavori"
-            onPress={handleBodyPartsPress}
-          />
-          <ProfileSettingsItem
-            title="Tariffa minima"
-            onPress={handleRatesPress}
-          />
-          <ProfileSettingsItem
-            title="Modalita di lavoro"
-            onPress={handleWorkModalityPress}
-          />
-          <ProfileSettingsItem
-            title="Richieste private"
-            onPress={handlePrivateRequestsPress}
-          />
-          <ProfileSettingsItem title="Banner" onPress={handleBannerPress} />
-          <ProfileSettingsItem
-            title="Esperienza"
-            onPress={handleExperiencePress}
-          />
+          {itemsToShow.map((item, idx) => (
+            <ProfileSettingsItem
+              key={item.title}
+              title={item.title}
+              onPress={item.onPress}
+            />
+          ))}
         </ScrollView>
       </LinearGradient>
     </View>

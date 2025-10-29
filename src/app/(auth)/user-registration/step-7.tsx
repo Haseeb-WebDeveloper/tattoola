@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function UserRegistrationStep7() {
   const { step6, updateStep, clearRegistration, setCurrentStep } =
@@ -63,6 +64,8 @@ export default function UserRegistrationStep7() {
         step4: {
           province: step4?.province || "",
           municipality: step4?.municipality || "",
+          provinceId: step4?.provinceId || "",
+          municipalityId: step4?.municipalityId || "",
         },
         step5: {
           instagram: step5?.instagram,
@@ -96,17 +99,22 @@ export default function UserRegistrationStep7() {
 
   return (
     <View className="flex-1 bg-black">
-      {/* Header */}
-      <AuthStepHeader />
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={150}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <AuthStepHeader />
 
-      <View className="flex-1">
         {/* Progress */}
         <RegistrationProgress
-          currentStep={7}
+          currentStep={3}
           totalSteps={7}
-          name="Profile Type"
-          description="Choose how much of your profile you want to share"
-          icon={<SVGIcons.User width={22} height={22} />}
+          name="Create your profile"
+          icon={<SVGIcons.Person width={25} height={25} />}
         />
 
         {/* Options */}
@@ -173,7 +181,7 @@ export default function UserRegistrationStep7() {
             </View>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAwareScrollView>
 
       {/* Complete Registration Button fixed at the bottom */}
       <View

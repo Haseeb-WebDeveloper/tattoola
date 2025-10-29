@@ -107,13 +107,6 @@ export default function RegisterScreen() {
     router.push("/(auth)/artist-register");
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-background">
-        <LoadingSpinner message="Creating your account..." overlay />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <KeyboardAwareScrollView
@@ -143,7 +136,7 @@ export default function RegisterScreen() {
       </View>
 
       {/* Steps indicator */}
-      <View className="items-center" style={{ marginBottom: mvs(24) }}>
+      <View className="items-center" style={{ marginBottom: mvs(16) }}>
         <View className="flex-row items-center relative gap-1">
           <View
             className="absolute left-0 right-0 top-1/2"
@@ -170,13 +163,13 @@ export default function RegisterScreen() {
         className="px-6 flex-row gap-2 items-center justify-center"
         style={{ marginBottom: mvs(24) }}
       >
-        <SVGIcons.Pen3 className="w-7 h-7" />
+        <SVGIcons.User2 width={s(18)} height={s(18)} />
         <ScaledText
-          variant="sectionTitle"
+          variant="2xl"
           allowScaling={false}
-          className="text-foreground"
+          className="text-foreground font-semibold"
         >
-          Registrati
+          Registrati come user
         </ScaledText>
       </View>
 
@@ -204,7 +197,10 @@ export default function RegisterScreen() {
         )}
 
         <View style={{ marginTop: mvs(15) }}>
-          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
+          <ScaledText
+            variant="sm"
+            className="text-tat mb-2 font-montserratSemibold"
+          >
             Email
           </ScaledText>
           <ScaledTextInput
@@ -226,7 +222,10 @@ export default function RegisterScreen() {
         </View>
 
         <View style={{ marginTop: mvs(15) }}>
-          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
+          <ScaledText
+            variant="sm"
+            className="text-tat mb-2 font-montserratSemibold"
+          >
             Password (min. 8 caratteri, di cui almeno un numero)
           </ScaledText>
           <ScaledTextInput
@@ -260,7 +259,10 @@ export default function RegisterScreen() {
         </View>
 
         <View style={{ marginTop: mvs(15) }}>
-          <ScaledText variant="sm" className="text-tat mb-2 font-montserratSemibold">
+          <ScaledText
+            variant="sm"
+            className="text-tat mb-2 font-montserratSemibold"
+          >
             Conferma Password
           </ScaledText>
           <ScaledTextInput
@@ -310,13 +312,13 @@ export default function RegisterScreen() {
               variant="body1"
               className="text-foreground font-neueBold"
             >
-              Register
+              Submit
             </ScaledText>
           </TouchableOpacity>
         </View>
 
         {/* Footer link */}
-        <View className="items-center mt-8 mb-8">
+        {/* <View className="items-center mt-8 mb-8">
           <ScaledText
             variant="sm"
             className="text-[#A49A99] text-center font-montserratMedium"
@@ -338,7 +340,7 @@ export default function RegisterScreen() {
           >
             Are you an Artist?
           </ScaledText>
-        </View>
+        </View> */}
       </View>
     </KeyboardAwareScrollView>
   );

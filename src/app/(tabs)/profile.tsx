@@ -7,11 +7,17 @@ import {
   ServicesSection,
   SocialMediaIcons,
   StylesSection,
+  TattooLoverProfileView,
 } from "@/components/profile";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { fetchArtistSelfProfile } from "@/services/profile.service";
+import {
+  ArtistSelfProfile,
+  fetchArtistSelfProfile,
+  fetchTattooLoverSelfProfile,
+  TattooLoverSelfProfile,
+} from "@/services/profile.service";
 import { mvs, s } from "@/utils/scale";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -29,16 +35,23 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ArtistSelfProfile | TattooLoverSelfProfile | null>(null);
 
-  // Load profile with cache-first approach
+  // Load profile with cache-first approach - role aware
   const loadProfile = useCallback(
     async (forceRefresh = false) => {
       try {
         if (!user) return;
         
-        const profile = await fetchArtistSelfProfile(user.id, forceRefresh);
-        setData(profile);
+        // Fetch profile based on user role
+        if (user.role === "ARTIST") {
+          const profile = await fetchArtistSelfProfile(user.id, forceRefresh);
+          setData(profile);
+        } else if (user.role === "TATTOO_LOVER") {
+          const profile = await fetchTattooLoverSelfProfile(user.id, forceRefresh);
+          setData(profile);
+        }
+        
         setError(null);
       } catch (e: any) {
         setError(e?.message || "Failed to load profile");
@@ -46,7 +59,7 @@ export default function ProfileScreen() {
         setLoading(false);
       }
     },
-    [user?.id]
+    [user?.id, user?.role]
   );
 
   // Initial load - use cache for instant display
@@ -110,8 +123,37 @@ export default function ProfileScreen() {
         </ScaledText>
       </View>
     );
-    }
+  }
 
+  // Render Tattoo Lover Profile
+  if (user?.role === "TATTOO_LOVER") {
+    return (
+      <View className="flex-1 bg-background">
+        {/* Settings button */}
+        <View
+          className="absolute top-2 right-0 z-10"
+          style={{ paddingHorizontal: s(16) }}
+        >
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => router.push("/settings" as any)}
+            className="rounded-full bg-primary items-center justify-center"
+            style={{ width: s(36), height: s(36) }}
+          >
+            <SVGIcons.Settings style={{ width: s(20), height: s(20) }} />
+          </TouchableOpacity>
+        </View>
+
+        <TattooLoverProfileView
+          data={data as TattooLoverSelfProfile}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+      </View>
+    );
+  }
+
+  // Render Artist Profile (default)
   return (
     <View className="flex-1 bg-background">
       <ScrollView
@@ -142,56 +184,56 @@ export default function ProfileScreen() {
         </View>
 
         {/* Banner */}
-        <Banner banner={data?.artistProfile?.banner || []} />
+        <Banner banner={(data as ArtistSelfProfile)?.artistProfile?.banner || []} />
 
         {/* Profile Header */}
         <ProfileHeader
-          username={data?.user?.username || ""}
-          firstName={data?.user?.firstName}
-          lastName={data?.user?.lastName}
-          avatar={data?.user?.avatar}
-          businessName={data?.artistProfile?.businessName}
-          municipality={data?.location?.municipality?.name}
-          province={data?.location?.province?.name}
+          username={(data as ArtistSelfProfile)?.user?.username || ""}
+          firstName={(data as ArtistSelfProfile)?.user?.firstName}
+          lastName={(data as ArtistSelfProfile)?.user?.lastName}
+          avatar={(data as ArtistSelfProfile)?.user?.avatar}
+          businessName={(data as ArtistSelfProfile)?.artistProfile?.businessName}
+          municipality={(data as ArtistSelfProfile)?.location?.municipality?.name}
+          province={(data as ArtistSelfProfile)?.location?.province?.name}
         />
 
         {/* Social Media Icons */}
         <SocialMediaIcons
-          instagram={data?.user?.instagram}
-          tiktok={data?.user?.tiktok}
-          website={data?.user?.website}
+          instagram={(data as ArtistSelfProfile)?.user?.instagram}
+          tiktok={(data as ArtistSelfProfile)?.user?.tiktok}
+          website={(data as ArtistSelfProfile)?.user?.website}
           onInstagramPress={handleSocialMediaPress}
           onTiktokPress={handleSocialMediaPress}
           onWebsitePress={handleSocialMediaPress}
         />
 
         {/* Bio */}
-        {!!data?.artistProfile?.bio && (
+        {!!(data as ArtistSelfProfile)?.artistProfile?.bio && (
           <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
             <ScaledText
               allowScaling={false}
               variant="md"
               className="text-foreground font-neueLight"
             >
-              {data.artistProfile.bio}
+              {(data as ArtistSelfProfile).artistProfile.bio}
             </ScaledText>
           </View>
         )}
 
         {/* Styles Section */}
-        <StylesSection styles={data?.favoriteStyles || []} />
+        <StylesSection styles={(data as ArtistSelfProfile)?.favoriteStyles || []} />
 
         {/* Services Section */}
-        <ServicesSection services={data?.services || []} />
+        <ServicesSection services={(data as ArtistSelfProfile)?.services || []} />
 
         {/* Collections Section */}
         <CollectionsSection
-          collections={data?.collections || []}
+          collections={(data as ArtistSelfProfile)?.collections || []}
           onCreateNewCollection={handleCreateNewCollection}
         />
 
         {/* Body Parts Section */}
-        <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
+        <BodyPartsSection bodyParts={(data as ArtistSelfProfile)?.bodyPartsNotWorkedOn || []} />
         <View style={{ height: mvs(90) }} />
       </ScrollView>
     </View>

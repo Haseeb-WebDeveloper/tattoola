@@ -188,21 +188,22 @@ export default function UserRegistrationStep4() {
 
   return (
     <View className="flex-1 bg-black">
-      {/* Header */}
-      <AuthStepHeader />
-
       <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={150}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: mvs(20),
-        }}
       >
+        {/* Header */}
+        <AuthStepHeader />
+
         {/* Progress */}
         <RegistrationProgress
-          currentStep={4}
-          totalSteps={5}
-          name="Where are you located?"
-          icon={<SVGIcons.Studio width={22} height={22} />}
+          currentStep={3}
+          totalSteps={7}
+          name="Create your profile"
+          icon={<SVGIcons.Studio width={25} height={25} />}
         />
 
         {/* Province & Municipality */}

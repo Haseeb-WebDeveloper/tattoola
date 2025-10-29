@@ -11,8 +11,15 @@ import { supabase } from "@/utils/supabase";
 import { ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Image, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 function StyleSkeleton() {
   return (
@@ -189,16 +196,22 @@ export default function UserRegistrationStep6() {
 
   return (
     <View className="flex-1 bg-black">
-      <View className="flex-1 bg-black">
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={150}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <AuthStepHeader />
 
         {/* Progress */}
         <RegistrationProgress
-          currentStep={6}
+          currentStep={3}
           totalSteps={7}
-          name="Favorite Styles"
-          icon={<SVGIcons.Style width={22} height={22} />}
+          name="Create your profile"
+          icon={<SVGIcons.Person width={25} height={25} />}
         />
 
         {/* Helper Text */}
@@ -245,7 +258,7 @@ export default function UserRegistrationStep6() {
           backLabel="Back"
           onBack={handleBack}
         />
-      </View>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

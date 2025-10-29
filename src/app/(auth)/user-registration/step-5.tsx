@@ -28,12 +28,6 @@ export default function UserRegistrationStep5() {
     }
   }, [step5]);
 
-  const handleSkip = () => {
-    updateStep5(formData);
-    setCurrentStepDisplay(5);
-    router.push("/(auth)/user-registration/step-6");
-  };
-
   const handleNext = () => {
     updateStep5(formData);
     setCurrentStepDisplay(5);
@@ -46,21 +40,22 @@ export default function UserRegistrationStep5() {
 
   return (
     <View className="flex-1 bg-black">
-      {/* Header */}
-      <AuthStepHeader />
-
       <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={150}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: mvs(20),
-        }}
       >
+        {/* Header */}
+        <AuthStepHeader />
+
         {/* Progress */}
         <RegistrationProgress
-          currentStep={5}
-          totalSteps={5}
-          name="Social Media"
-          icon={<SVGIcons.Heart width={22} height={22} />}
+          currentStep={3}
+          totalSteps={7}
+          name="Create your profile"
+          icon={<SVGIcons.Heart width={25} height={25} />}
         />
 
         {/* Inputs */}
@@ -68,8 +63,8 @@ export default function UserRegistrationStep5() {
           <View>
             <ScaledText
               allowScaling={false}
-              variant="body2"
-              className="text-foreground mb-2"
+              variant="sm"
+              className="text-tat textcenter mb-2 font-montserratSemibold"
             >
               Instagram (optional)
             </ScaledText>
@@ -84,7 +79,7 @@ export default function UserRegistrationStep5() {
                 </ScaledText>
               </View>
               <ScaledTextInput
-                containerClassName="flex-1"
+                containerClassName="flex-1 rounded-xl border border-gray"
                 className="text-foreground rounded-xl"
                 placeholder="username"
                 placeholderTextColor="#A49A99"
@@ -106,8 +101,8 @@ export default function UserRegistrationStep5() {
           <View>
             <ScaledText
               allowScaling={false}
-              variant="body2"
-              className="text-foreground mb-2"
+              variant="sm"
+              className="text-tat textcenter mb-2 font-montserratSemibold"
             >
               TikTok (optional)
             </ScaledText>
@@ -122,7 +117,7 @@ export default function UserRegistrationStep5() {
                 </ScaledText>
               </View>
               <ScaledTextInput
-                containerClassName="flex-1"
+                containerClassName="flex-1 rounded-xl border border-gray"
                 className="text-foreground rounded-xl"
                 placeholder="username"
                 placeholderTextColor="#A49A99"
@@ -146,9 +141,9 @@ export default function UserRegistrationStep5() {
       {/* Footer */}
       <NextBackFooter
         onNext={handleNext}
-        nextLabel="Continue"
-        backLabel="Skip for now"
-        onBack={handleSkip}
+        nextLabel="Next"
+        backLabel="Back"
+        onBack={handleBack}
       />
     </View>
   );

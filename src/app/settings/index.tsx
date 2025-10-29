@@ -224,33 +224,41 @@ export default function SettingsScreen() {
         </SettingsSection>
 
         {/* Subscription & Billing */}
-        <SettingsSection
-          title="Subscription & Billing"
-          icon={
-            <SVGIcons.Subscription style={{ width: s(16), height: s(16) }} />
-          }
-        >
-          <SettingsItem title="Abbonamento" onPress={handleSubscriptionPress} />
-          <View className="bg-gray" style={{ height: s(0.5) }} />
-          <SettingsItem title="Fatturazione" onPress={handleBillingPress} />
-        </SettingsSection>
+        {user?.role === "ARTIST" && (
+          <SettingsSection
+            title="Subscription & Billing"
+            icon={
+              <SVGIcons.Subscription style={{ width: s(16), height: s(16) }} />
+            }
+          >
+            <SettingsItem
+              title="Abbonamento"
+              onPress={handleSubscriptionPress}
+            />
+            <View className="bg-gray" style={{ height: s(0.5) }} />
+            <SettingsItem title="Fatturazione" onPress={handleBillingPress} />
+          </SettingsSection>
+        )}
 
         {/* Advanced settings */}
         <SettingsSection title="Advanced settings">
           <SettingsItem title="Profilo" onPress={handleProfilePress} />
           <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem title="Community" onPress={handleCommunityPress} />
-          <View className="bg-gray" style={{ height: s(0.5) }} />
-          <SettingsItem
-            title="Premium"
-            onPress={handlePremiumPress}
-            icon={
-              <SVGIcons.DimondYellow style={{ width: s(16), height: s(16) }} />
-            }
-            iconRight={true}
-          />
+
           {user?.role === "ARTIST" && (
             <>
+              <View className="bg-gray" style={{ height: s(0.5) }} />
+              <SettingsItem
+                title="Premium"
+                onPress={handlePremiumPress}
+                icon={
+                  <SVGIcons.DimondYellow
+                    style={{ width: s(16), height: s(16) }}
+                  />
+                }
+                iconRight={true}
+              />
               <View className="bg-gray" style={{ height: s(0.5) }} />
               <SettingsItem
                 title="Studio"

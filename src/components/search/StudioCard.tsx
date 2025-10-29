@@ -195,7 +195,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
         if (imageMedia.length > 1) {
           return (
             <View className="flex-row" style={{ height: mvs(180) }}>
-              {imageMedia.slice(0, 4).map((img, idx) => (
+              {imageMedia.slice(0, 2).map((img, idx) => (
                 <Image
                   key={idx}
                   source={{ uri: img.mediaUrl }}

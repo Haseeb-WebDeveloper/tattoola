@@ -1,9 +1,14 @@
+export { ArtistCard } from './ArtistCard';
 export { Banner } from './Banner';
 export { BodyPartsSection } from './BodyPartsSection';
 export { CollectionsSection } from './CollectionsSection';
 export { ConnectedArtists } from './ConnectedArtists';
+export { FollowedArtistsList } from './FollowedArtistsList';
+export { FollowedTattooLoversList } from './FollowedTattooLoversList';
+export { PreferredStylesSection } from './PreferredStylesSection';
 export { ProfileHeader } from './ProfileHeader';
 export { ProfileSkeleton } from './ProfileSkeleton';
+export { ProfileTabNavigation } from './ProfileTabNavigation';
 export { ServicesSection } from './ServicesSection';
 export { SocialMediaIcons } from './SocialMediaIcons';
 export { StudioFAQs } from './StudioFAQs';
@@ -11,4 +16,7 @@ export { StudioHeader } from './StudioHeader';
 export { StudioPhotos } from './StudioPhotos';
 export { StudioSkeleton } from './StudioSkeleton';
 export { StylesSection } from './StylesSection';
+export { TattooLoverProfileHeader } from './TattooLoverProfileHeader';
+export { TattooLoverProfileView } from './TattooLoverProfileView';
+export { TattooPostsGrid } from './TattooPostsGrid';
 

@@ -1,7 +1,7 @@
 import {
-    getProfileFromCache,
-    saveProfileToCache,
-    shouldRefreshCache,
+  getProfileFromCache,
+  saveProfileToCache,
+  shouldRefreshCache,
 } from "@/utils/database";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -487,6 +487,303 @@ export async function fetchFollowingUsers(userId: string): Promise<{
   const tattooLovers = followingUsers.filter(u => u.role === "TATTOO_LOVER");
 
   return { artists, tattooLovers };
+}
+
+// ===== TATTOO LOVER PROFILE =====
+
+export type TattooLoverSelfProfile = {
+  user: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    instagram?: string;
+    tiktok?: string;
+  };
+  location?: {
+    province: {
+      name: string;
+    };
+    municipality: {
+      name: string;
+    };
+  };
+  favoriteStyles: { id: string; name: string }[];
+  posts: {
+    id: string;
+    thumbnailUrl?: string;
+    caption?: string;
+    createdAt: string;
+    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+  }[];
+  likedPosts: {
+    id: string;
+    thumbnailUrl?: string;
+    caption?: string;
+    createdAt: string;
+    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+  }[];
+  followedArtists: FollowingUser[];
+  followedTattooLovers: FollowingUser[];
+};
+
+/**
+ * Fetch tattoo lover's own profile
+ * Includes basic user info, location, favorite styles, and their posts
+ */
+export async function fetchTattooLoverSelfProfile(
+  userId: string,
+  forceRefresh = false
+): Promise<TattooLoverSelfProfile> {
+  console.log("🌐 Fetching tattoo lover profile from Supabase for user:", userId);
+
+  // Fetch user basic info
+  const userQ = await supabase
+    .from("users")
+    .select("id, username, firstName, lastName, avatar, instagram, tiktok")
+    .eq("id", userId)
+    .single();
+
+  if (userQ.error) throw new Error(userQ.error.message);
+  const userRow: any = userQ.data;
+
+  // Fetch location, favorite styles, posts, liked posts, and followed artists in parallel
+  const [locationQ, favStylesQ, postsQ, likedPostsQ, followsQ] = await Promise.all([
+    supabase
+      .from("user_locations")
+      .select(`
+        id,
+        provinces(name),
+        municipalities(name)
+      `)
+      .eq("userId", userId)
+      .eq("isPrimary", true)
+      .maybeSingle(),
+    supabase
+      .from("user_favorite_styles")
+      .select("styleId, order, tattoo_styles(id, name)")
+      .eq("userId", userId)
+      .order("order", { ascending: true }),
+    supabase
+      .from("posts")
+      .select("id, caption, thumbnailUrl, createdAt")
+      .eq("authorId", userId)
+      .eq("isActive", true)
+      .order("createdAt", { ascending: false }),
+    supabase
+      .from("post_likes")
+      .select(`
+        postId,
+        createdAt,
+        posts(id, caption, thumbnailUrl, createdAt, isActive)
+      `)
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false }),
+    supabase
+      .from("follows")
+      .select(`
+        followingId,
+        users:followingId (
+          id,
+          username,
+          firstName,
+          lastName,
+          avatar,
+          role
+        )
+      `)
+      .eq("followerId", userId)
+      .order("createdAt", { ascending: false }),
+  ]);
+
+  // Process location
+  const locationData = locationQ?.data as any;
+  const location = locationData
+    ? {
+        province: {
+          name: locationData.provinces?.name || "",
+        },
+        municipality: {
+          name: locationData.municipalities?.name || "",
+        },
+      }
+    : undefined;
+
+  // Process favorite styles
+  const favoriteStyles = (favStylesQ?.data || []).map((r: any) => ({
+    id: r.tattoo_styles?.id,
+    name: r.tattoo_styles?.name,
+  }));
+
+  // Process posts and fetch their media
+  const posts = postsQ?.data || [];
+  let postsWithMedia: TattooLoverSelfProfile["posts"] = [];
+
+  if (posts.length > 0) {
+    const postIds = posts.map((p: any) => p.id);
+    const mediaQ = await supabase
+      .from("post_media")
+      .select("id, postId, mediaType, mediaUrl, order")
+      .in("postId", postIds)
+      .order("order", { ascending: true });
+
+    const mediaByPost: Record<string, any[]> = {};
+    if (!mediaQ.error && mediaQ.data) {
+      for (const m of mediaQ.data as any[]) {
+        mediaByPost[m.postId] = mediaByPost[m.postId] || [];
+        mediaByPost[m.postId].push({
+          id: m.id,
+          mediaType: m.mediaType,
+          mediaUrl: m.mediaUrl,
+          order: m.order,
+        });
+      }
+    }
+
+    postsWithMedia = posts.map((p: any) => ({
+      id: p.id,
+      thumbnailUrl: p.thumbnailUrl,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      media: mediaByPost[p.id] || [],
+    }));
+  }
+
+  // Process liked posts and fetch their media
+  const likedPostsData = (likedPostsQ?.data || [])
+    .map((like: any) => like.posts)
+    .filter((post: any) => post && post.isActive); // Only include active posts
+
+  let likedPostsWithMedia: TattooLoverSelfProfile["likedPosts"] = [];
+
+  if (likedPostsData.length > 0) {
+    const likedPostIds = likedPostsData.map((p: any) => p.id);
+    const likedMediaQ = await supabase
+      .from("post_media")
+      .select("id, postId, mediaType, mediaUrl, order")
+      .in("postId", likedPostIds)
+      .order("order", { ascending: true });
+
+    const likedMediaByPost: Record<string, any[]> = {};
+    if (!likedMediaQ.error && likedMediaQ.data) {
+      for (const m of likedMediaQ.data as any[]) {
+        likedMediaByPost[m.postId] = likedMediaByPost[m.postId] || [];
+        likedMediaByPost[m.postId].push({
+          id: m.id,
+          mediaType: m.mediaType,
+          mediaUrl: m.mediaUrl,
+          order: m.order,
+        });
+      }
+    }
+
+    likedPostsWithMedia = likedPostsData.map((p: any) => ({
+      id: p.id,
+      thumbnailUrl: p.thumbnailUrl,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      media: likedMediaByPost[p.id] || [],
+    }));
+  }
+
+  // Process followed users - separate artists and tattoo lovers
+  const followedUsersData = (followsQ?.data || [])
+    .map((follow: any) => follow.users)
+    .filter((user: any) => user);
+
+  const followedArtistsData = followedUsersData.filter((user: any) => user.role === "ARTIST");
+  const followedTattooLoversData = followedUsersData.filter((user: any) => user.role === "TATTOO_LOVER");
+
+  // Get full user details with location and subscription
+  let followedArtists: FollowingUser[] = [];
+  let followedTattooLovers: FollowingUser[] = [];
+
+  const allFollowedIds = followedUsersData.map((u: any) => u.id);
+  
+  if (allFollowedIds.length > 0) {
+    // Fetch locations and subscriptions for all followed users
+    const [locationsQ, subscriptionsQ] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          userId,
+          provinces(name),
+          municipalities(name)
+        `)
+        .in("userId", allFollowedIds)
+        .eq("isPrimary", true),
+      supabase
+        .from("user_subscriptions")
+        .select(`
+          userId,
+          planId,
+          status,
+          subscription_plans(type)
+        `)
+        .in("userId", allFollowedIds)
+        .eq("status", "ACTIVE"),
+    ]);
+
+    const locationsByUserId: Record<string, any> = {};
+    if (locationsQ.data) {
+      for (const loc of locationsQ.data as any[]) {
+        locationsByUserId[loc.userId] = {
+          province: loc.provinces?.name,
+          municipality: loc.municipalities?.name,
+        };
+      }
+    }
+
+    const subscriptionsByUserId: Record<string, string> = {};
+    if (subscriptionsQ.data) {
+      for (const sub of subscriptionsQ.data as any[]) {
+        subscriptionsByUserId[sub.userId] = sub.subscription_plans?.type;
+      }
+    }
+
+    // Map artists
+    followedArtists = followedArtistsData.map((user: any) => ({
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      role: user.role,
+      location: locationsByUserId[user.id],
+      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+    }));
+
+    // Map tattoo lovers
+    followedTattooLovers = followedTattooLoversData.map((user: any) => ({
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      role: user.role,
+      location: locationsByUserId[user.id],
+      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+    }));
+  }
+
+  return {
+    user: {
+      id: userRow.id,
+      username: userRow.username,
+      firstName: userRow.firstName,
+      lastName: userRow.lastName,
+      avatar: userRow.avatar,
+      instagram: userRow.instagram,
+      tiktok: userRow.tiktok,
+    },
+    location,
+    favoriteStyles,
+    posts: postsWithMedia,
+    likedPosts: likedPostsWithMedia,
+    followedArtists,
+    followedTattooLovers,
+  };
 }
 
 

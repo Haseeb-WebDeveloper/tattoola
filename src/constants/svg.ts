@@ -13,6 +13,10 @@ import User from "@/assets/icons/user.svg";
 // @ts-ignore
 import UserFilled from "@/assets/icons/user-filled.svg";
 // @ts-ignore
+import Users from "@/assets/icons/users.svg";
+// @ts-ignore
+import UserArt from "@/assets/icons/user-art.svg";
+// @ts-ignore
 import Studio from "@/assets/icons/studio.svg";
 // @ts-ignore
 import Certificate from "@/assets/icons/certificate.svg";
@@ -186,6 +190,8 @@ import Faq from "@/assets/icons/faq.svg";
 import SafeAlert from "@/assets/icons/safe-alert.svg";
 // @ts-ignore
 import LocationRed from "@/assets/icons/location-red.svg";
+// @ts-ignore
+import User2 from "@/assets/icons/user-2.svg";
 
 export const SVGIcons = {
   Close,
@@ -282,6 +288,9 @@ export const SVGIcons = {
   Faq,
   SafeAlert,
   LocationRed,
+  User2,
+  Users,
+  UserArt,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;
