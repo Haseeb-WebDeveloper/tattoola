@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { useAuth } from '../providers/AuthProvider';
+import { useSignupStore } from '../stores/signupStore';
 import type { UserRole } from '../types/auth';
 import { LoadingSpinner } from './ui/LoadingSpinner';
 
@@ -21,11 +22,18 @@ export function AuthGuard({
   redirectTo = '/(auth)/welcome',
 }: AuthGuardProps) {
   const { user, loading, initialized } = useAuth();
+  const { pendingVerificationEmail } = useSignupStore();
 
   useEffect(() => {
     if (!initialized || loading) {
       // console.log('AuthGuard: waiting - initialized:', initialized, 'loading:', loading);
       return; // Still loading, don't redirect yet
+    }
+
+    // Don't redirect if we're waiting for email verification
+    if (pendingVerificationEmail) {
+      // console.log('AuthGuard: pending email verification, staying on current screen');
+      return;
     }
 
     // Check authentication requirement
@@ -57,7 +65,7 @@ export function AuthGuard({
       router.replace('/(auth)/email-confirmation');
       return;
     }
-  }, [user, loading, initialized, requireAuth, requireRoles, requireVerified, redirectTo]);
+  }, [user, loading, initialized, requireAuth, requireRoles, requireVerified, redirectTo, pendingVerificationEmail]);
 
   // Show loading while checking authentication
   if (!initialized || loading) {
@@ -66,6 +74,11 @@ export function AuthGuard({
         <LoadingSpinner message="Loading..." overlay />
       </View>
     );
+  }
+
+  // Allow rendering if we're waiting for email verification (even without user)
+  if (pendingVerificationEmail) {
+    return <>{children}</>;
   }
 
   // Don't render children if auth requirements aren't met

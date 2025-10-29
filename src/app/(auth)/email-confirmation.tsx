@@ -9,13 +9,14 @@ import { Image, ScrollView, TouchableOpacity, View } from "react-native";
 
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
-  const { status } = useSignupStore();
+  const { status, reset } = useSignupStore();
   const [imageError, setImageError] = useState(false);
 
   const isLoading = status === "in_progress";
 
   const handleClose = () => {
     try {
+      reset(); // Clear signup state
       router.replace("/(auth)/welcome");
     } catch (error) {
       logger.error("Error navigating to welcome:", error);
@@ -139,7 +140,10 @@ export default function EmailConfirmationScreen() {
             style={{
               textDecorationLine: "underline",
             }}
-            onPress={() => router.replace("/(auth)/artist-register")}
+            onPress={() => {
+              reset(); // Clear signup state
+              router.replace("/(auth)/artist-register");
+            }}
           >
             edit email.
           </ScaledText>

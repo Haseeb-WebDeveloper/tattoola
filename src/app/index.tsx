@@ -1,13 +1,15 @@
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import { useAuth } from "../providers/AuthProvider";
-import ScaledText from "@/components/ui/ScaledText";
-import { SVGIcons } from "@/constants/svg";
-import { mvs, s } from "@/utils/scale";
+import { useSignupStore } from "../stores/signupStore";
 
 export default function IndexScreen() {
   const { user, initialized, loading } = useAuth();
+  const { pendingVerificationEmail } = useSignupStore();
 
   useEffect(() => {
     // console.log('IndexScreen useEffect - user:', user, 'initialized:', initialized, 'loading:', loading);
@@ -15,6 +17,12 @@ export default function IndexScreen() {
     if (!initialized || loading) {
       // console.log("Still initializing or loading, not redirecting yet");
       return; // Still initializing
+    }
+
+    // Don't redirect if we're waiting for email verification
+    if (pendingVerificationEmail) {
+      // console.log("Pending email verification, staying on current screen");
+      return;
     }
 
     if (user) {
@@ -26,7 +34,7 @@ export default function IndexScreen() {
       // User is not authenticated, redirect to welcome
       router.replace("/(auth)/welcome");
     }
-  }, [user, initialized, loading]);
+  }, [user, initialized, loading, pendingVerificationEmail]);
 
   return (
     <View

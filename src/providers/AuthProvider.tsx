@@ -4,15 +4,15 @@ import { AuthService } from '../services/auth.service';
 import { getPresenceChannel } from '../services/chat.service';
 import { usePresenceStore } from '../stores/presenceStore';
 import type {
-    AuthContextType,
-    AuthSession,
-    CompleteArtistRegistration,
-    CompleteUserRegistration,
-    ForgotPasswordData,
-    LoginCredentials,
-    RegisterCredentials,
-    ResetPasswordData,
-    User,
+  AuthContextType,
+  AuthSession,
+  CompleteArtistRegistration,
+  CompleteUserRegistration,
+  ForgotPasswordData,
+  LoginCredentials,
+  RegisterCredentials,
+  ResetPasswordData,
+  User,
 } from '../types/auth';
 import { logger } from '../utils/logger';
 import { supabase } from '../utils/supabase';
@@ -64,10 +64,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(null);
             setSession(null);
           }
-        } else if (event === 'SIGNED_OUT') {
-          // IMPORTANT: Only clear user on explicit sign out
-          // During signup, Supabase emits events without a session (email verification pending)
-          // We preserve the user set in signUp() to prevent redirect loops
+        } else {
+          setUser(null);
+          setSession(null);
+        }
+
+        if (event === 'SIGNED_OUT') {
           setUser(null);
           setSession(null);
         }
@@ -356,12 +358,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasUser: !!result.user 
       });
 
-      // IMPORTANT: Always set the user, even if email verification is required
-      // This prevents redirect loops and allows the email-confirmation screen to display correctly
-      // The user object has isVerified: false, which guards can check to enforce verification
-      // Once the user verifies their email, onAuthStateChange will update with a session
-      logger.log("AuthProvider.signUp: Setting user (isVerified:", result.user.isVerified, ")");
-      setUser(result.user);
+      // Don't set user/session here if email verification is required
+      if (!result.needsVerification) {
+        logger.log("AuthProvider.signUp: Setting user (no verification needed)");
+        setUser(result.user);
+      } else {
+        logger.log("AuthProvider.signUp: Email verification required, not setting user");
+      }
 
       logger.log("AuthProvider.signUp: Signup completed successfully");
       return result;

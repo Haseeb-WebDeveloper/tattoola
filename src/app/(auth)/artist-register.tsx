@@ -1,4 +1,3 @@
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
@@ -12,7 +11,6 @@ import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 export default function ArtistRegisterScreen() {
@@ -79,14 +77,14 @@ export default function ArtistRegisterScreen() {
 
 
     // Navigate immediately to email confirmation and start background signup
-    setInProgress();
+    setInProgress(formData.email);
     router.push("/(auth)/email-confirmation");
 
     try {
       const result = await signUp(formData);
       // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
-       } catch (error) {
+    } catch (error) {
       const message =
         error instanceof Error
           ? error.message
@@ -110,13 +108,6 @@ export default function ArtistRegisterScreen() {
     router.replace("/(auth)/welcome");
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-background">
-        <LoadingSpinner message="Creating your artist account..." overlay />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <KeyboardAwareScrollView

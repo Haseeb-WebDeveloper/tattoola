@@ -1,5 +1,6 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
+import { useSignupStore } from '../stores/signupStore';
 import { logger } from './logger';
 import { supabase } from './supabase';
 
@@ -77,6 +78,10 @@ export function initializeDeepLinking() {
 
           const hasCompletedProfile = !!(existingUser && existingUser.firstName);
           logger.log('Profile check result:', { hasCompletedProfile, hasUser: !!existingUser });
+
+          // Clear signup state since email is now verified
+          logger.log('Clearing signup state...');
+          useSignupStore.getState().reset();
 
           // Small delay to allow auth state to settle before navigation
           logger.log('Setting timeout for navigation...');

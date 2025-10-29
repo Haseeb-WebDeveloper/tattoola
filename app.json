@@ -7,7 +7,7 @@
       "policy": "appVersion"
     },
     "orientation": "portrait",
-    "icon": "./src/assets/logo.png",
+    "icon": "./src/assets/images/icon.png",
     "scheme": "tattoola",
     "userInterfaceStyle": "dark",
     "platforms": [
@@ -50,7 +50,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./src/assets/logo.png"
+      "favicon": "./src/assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
@@ -64,7 +64,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/logo.png",
+          "image": "./src/assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000"
