@@ -1,7 +1,64 @@
-# User Profile Views Implementation - Complete
+# User Profile Views Implementation - Complete ✅
 
 ## Overview
 Successfully separated artist and tattoo lover profile views in the user profile screen (`src/app/user/[id].tsx`). Users now see role-specific layouts when viewing other users' profiles, with privacy controls for tattoo lovers and follow functionality with optimistic updates.
+
+**Latest Update**: Updated UI layout to match the new design from `profile.tsx`, including header with username, back button, and heart icon follow button. Added role-specific skeleton loaders for better UX.
+
+---
+
+## Latest Updates (UI Refinement) ✅
+
+### Updated Layout for Tattoo Lover Profiles
+
+**File:** `src/components/profile/TattooLoverOtherProfileView.tsx`
+
+**New Layout Structure:**
+```
+- Header Bar (height: 80px)
+  - Back Button (left) - rounded, semi-transparent
+  - Username @username (center) - bold
+  - Follow Button (right) - heart icon, 32x32
+- Profile Header
+  - Avatar (centered)
+  - Name & Location
+  - Social media icons
+- Preferred Styles Section
+- Tab Navigation (conditional - public only)
+- Tab Content (conditional - public only)
+```
+
+**Key Changes:**
+1. **Header Bar**: Added consistent header with username display
+2. **Follow Button**: Changed from text button to heart icon (32x32)
+   - Filled heart when following
+   - Outline heart when not following
+3. **Back Button**: Added back navigation button
+4. **ScrollView**: Changed from View wrapper to ScrollView root for consistency
+5. **Spacing**: Updated to match self-profile view
+
+### Role-Specific Skeleton Loaders
+
+**New Component:** `src/components/profile/TattooLoverSkeleton.tsx`
+
+Creates a skeleton loader that matches the tattoo lover profile layout:
+- Header bar with back/username/action button placeholders
+- Avatar circle skeleton
+- Name and location text skeletons
+- Social media icon skeletons
+- Preferred styles section skeleton
+- Tab navigation skeleton
+- Content grid skeleton (6 items in 2 columns)
+
+**Implementation:**
+- `src/app/user/[id].tsx`: Shows `TattooLoverSkeleton` for tattoo lovers, `ProfileSkeleton` for artists
+- `src/app/(tabs)/profile.tsx`: Shows appropriate skeleton based on `user.role`
+
+**Benefits:**
+- Better perceived performance
+- Role-specific loading states
+- Matches actual content layout
+- Reduces content layout shift
 
 ---
 

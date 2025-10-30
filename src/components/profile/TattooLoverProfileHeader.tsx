@@ -1,8 +1,9 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { toggleFollow } from "@/services/profile.service";
 import { mvs, s } from "@/utils/scale";
-import React from "react";
-import { Image, View } from "react-native";
+import React, { useState } from "react";
+import { Image, TouchableOpacity, View } from "react-native";
 
 interface TattooLoverProfileHeaderProps {
   firstName?: string;
@@ -13,6 +14,10 @@ interface TattooLoverProfileHeaderProps {
   province?: string;
   instagram?: string;
   tiktok?: string;
+  isOtherProfile?: boolean;
+  currentUserId?: string;
+  targetUserId?: string;
+  initialIsFollowing?: boolean;
 }
 
 export const TattooLoverProfileHeader: React.FC<
@@ -26,7 +31,33 @@ export const TattooLoverProfileHeader: React.FC<
   province,
   instagram,
   tiktok,
+  isOtherProfile = false,
+  currentUserId,
+  targetUserId,
+  initialIsFollowing = false,
 }) => {
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isTogglingFollow, setIsTogglingFollow] = useState(false);
+
+  const handleFollowToggle = async () => {
+    if (isTogglingFollow || !currentUserId || !targetUserId) return;
+
+    // Optimistic update
+    const previousState = isFollowing;
+    setIsFollowing(!isFollowing);
+    setIsTogglingFollow(true);
+
+    try {
+      const result = await toggleFollow(currentUserId, targetUserId);
+      setIsFollowing(result.isFollowing);
+    } catch (error) {
+      // Revert on error
+      setIsFollowing(previousState);
+      console.error("Failed to toggle follow:", error);
+    } finally {
+      setIsTogglingFollow(false);
+    }
+  };
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   const location = `${municipality || ""} (${province || ""})`.replace(
     /\(\s*\)$/,
@@ -80,7 +111,7 @@ export const TattooLoverProfileHeader: React.FC<
             )}
 
             {/* Username */}
-            {!!username && (
+            {!!username && !isOtherProfile && (
               <View>
                 <ScaledText
                   allowScaling={false}
@@ -90,6 +121,33 @@ export const TattooLoverProfileHeader: React.FC<
                   @{username}
                 </ScaledText>
               </View>
+            )}
+
+            {/* Follow button */}
+            {isOtherProfile && currentUserId && (
+              <TouchableOpacity
+                onPress={handleFollowToggle}
+                disabled={isTogglingFollow}
+                className={`rounded-full items-center flex-row ${
+                  isFollowing ? "border-error" : "border-gray"
+                }`}
+                style={{
+                  alignSelf: "flex-start",
+                  paddingHorizontal: s(16),
+                  paddingVertical: mvs(6),
+                  gap: s(6),
+                  borderWidth: s(1.1),
+                }}
+              >
+                <SVGIcons.Follow width={s(14)} height={s(14)}/>
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-foreground font-medium"
+                >
+                  {isFollowing ? "Seguito" : "Segui"}
+                </ScaledText>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -119,7 +177,12 @@ export const TattooLoverProfileHeader: React.FC<
           {instagram && (
             <View
               className="items-center justify-center"
-              style={{ width: s(41.5), height: s(41.5), backgroundColor: "#AE0E0E80", borderRadius: s(100) }}
+              style={{
+                width: s(41.5),
+                height: s(41.5),
+                backgroundColor: "#AE0E0E80",
+                borderRadius: s(100),
+              }}
             >
               <SVGIcons.Instagram style={{ width: s(20), height: s(20) }} />
             </View>

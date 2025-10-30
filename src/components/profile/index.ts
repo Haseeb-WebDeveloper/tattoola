@@ -20,5 +20,6 @@ export { StylesSection } from './StylesSection';
 export { TattooLoverOtherProfileView } from './TattooLoverOtherProfileView';
 export { TattooLoverProfileHeader } from './TattooLoverProfileHeader';
 export { TattooLoverProfileView } from './TattooLoverProfileView';
+export { TattooLoverSkeleton } from './TattooLoverSkeleton';
 export { TattooPostsGrid } from './TattooPostsGrid';
 

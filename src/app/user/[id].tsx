@@ -2,6 +2,7 @@ import {
     ArtistProfileView,
     ProfileSkeleton,
     TattooLoverOtherProfileView,
+    TattooLoverSkeleton,
 } from "@/components/profile";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -25,9 +26,9 @@ export default function UserProfileScreen() {
     | TattooLoverProfile
     | null
   >(null);
-  const [userRole, setUserRole] = useState<
-    "ARTIST" | "TATTOO_LOVER" | null
-  >(null);
+  const [userRole, setUserRole] = useState<"ARTIST" | "TATTOO_LOVER" | null>(
+    null
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   const loadProfile = async () => {
@@ -73,6 +74,10 @@ export default function UserProfileScreen() {
   };
 
   if (loading) {
+    // Show appropriate skeleton based on user role (if known)
+    if (userRole === "TATTOO_LOVER") {
+      return <TattooLoverSkeleton />;
+    }
     return <ProfileSkeleton />;
   }
 

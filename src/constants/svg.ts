@@ -9,6 +9,8 @@ import LogoLight from "@/assets/icons/logo-light.svg";
 // @ts-ignore
 import Person from "@/assets/icons/person.svg";
 // @ts-ignore
+import Follow from "@/assets/icons/follow.svg";
+// @ts-ignore
 import User from "@/assets/icons/user.svg";
 // @ts-ignore
 import UserFilled from "@/assets/icons/user-filled.svg";
@@ -291,6 +293,7 @@ export const SVGIcons = {
   User2,
   Users,
   UserArt,
+  Follow,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

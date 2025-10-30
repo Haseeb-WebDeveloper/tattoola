@@ -8,6 +8,7 @@ import {
   SocialMediaIcons,
   StylesSection,
   TattooLoverProfileView,
+  TattooLoverSkeleton,
 } from "@/components/profile";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -107,6 +108,10 @@ export default function ProfileScreen() {
   };
 
   if (loading) {
+    // Show appropriate skeleton based on user role
+    if (user?.role === "TATTOO_LOVER") {
+      return <TattooLoverSkeleton />;
+    }
     return <ProfileSkeleton />;
   }
 
@@ -129,8 +134,6 @@ export default function ProfileScreen() {
   if (user?.role === "TATTOO_LOVER") {
     return (
       <View className="flex-1 bg-background">
-       
-
         <TattooLoverProfileView
           data={data as TattooLoverSelfProfile}
           refreshing={refreshing}
