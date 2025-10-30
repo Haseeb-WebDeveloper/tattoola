@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import ScaledText from "./ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { TypographyVariant } from "@/theme/typography";
 
 interface RegistrationProgressProps {
   currentStep: number;
@@ -12,6 +13,10 @@ interface RegistrationProgressProps {
   icon: React.ReactNode;
   isIconPressable?: boolean;
   onIconPress?: () => void;
+  nameVariant?: TypographyVariant;
+  descriptionVariant?: TypographyVariant;
+  NameFont?: string;
+  DescriptionFont?: string;
 }
 
 export default function RegistrationProgress({
@@ -21,6 +26,10 @@ export default function RegistrationProgress({
   description,
   icon,
   isIconPressable = false,
+  nameVariant = "xl",
+  descriptionVariant = "md",
+  NameFont = "font-neueBold",
+  DescriptionFont = "font-neueLight",
   onIconPress = () => {},
 }: RegistrationProgressProps) {
   const barRef = useRef(null);
@@ -108,20 +117,18 @@ export default function RegistrationProgress({
       </View>
 
       {/* Name and description */}
-      <View 
-       style={{ marginBottom: mvs(24) }}
-      >
+      <View style={{ marginBottom: mvs(24) }}>
         {isIconPressable ? (
           <TouchableOpacity
             onPress={onIconPress}
             className="flex-row gap-2 items-center justify-center"
-            style={{ paddingHorizontal: s(24), }}
+            style={{ paddingHorizontal: s(24) }}
           >
             {icon}
             <ScaledText
               allowScaling={false}
-              variant="xl"
-              className="text-foreground font-neueBold text-center"
+              variant={nameVariant}
+              className={`text-foreground text-center ${NameFont}`}
             >
               {name}
             </ScaledText>
@@ -129,24 +136,24 @@ export default function RegistrationProgress({
         ) : (
           <View
             className="flex-row gap-2 items-center justify-center"
-            style={{ paddingHorizontal: s(24), }}
+            style={{ paddingHorizontal: s(24) }}
           >
             {icon}
             <ScaledText
               allowScaling={false}
-              variant="xl"
-              className="text-foreground font-neueBold text-center"
+              variant={nameVariant}
+              className={`text-foreground  text-center ${NameFont}`}
             >
               {name}
             </ScaledText>
           </View>
         )}
         {description && (
-          <View style={{ paddingHorizontal: s(24), marginTop: mvs(10), }}>
+          <View style={{ paddingHorizontal: s(24), marginTop: mvs(10) }}>
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-[#FFF] text-center font-neueLight"
+              variant={descriptionVariant}
+              className={`text-[#FFF] text-center ${DescriptionFont}`}
             >
               {description}
             </ScaledText>

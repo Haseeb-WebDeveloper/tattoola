@@ -54,8 +54,9 @@ export default function UserRegistrationStep5() {
         <RegistrationProgress
           currentStep={3}
           totalSteps={7}
-          name="Create your profile"
-          icon={<SVGIcons.Heart width={25} height={25} />}
+          name="Socials"
+          nameVariant="2xl"
+          icon={<SVGIcons.Heart width={20} height={20} />}
         />
 
         {/* Inputs */}
@@ -66,7 +67,7 @@ export default function UserRegistrationStep5() {
               variant="sm"
               className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              Instagram (optional)
+             Inserisci il link al tuo account Instagram (facoltativo)
             </ScaledText>
             <View className="flex-row items-center rounded-xl border border-gray">
               <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
@@ -79,7 +80,7 @@ export default function UserRegistrationStep5() {
                 </ScaledText>
               </View>
               <ScaledTextInput
-                containerClassName="flex-1 rounded-xl border border-gray"
+                containerClassName="flex-1 rounded-xl"
                 className="text-foreground rounded-xl"
                 placeholder="username"
                 placeholderTextColor="#A49A99"
@@ -104,7 +105,7 @@ export default function UserRegistrationStep5() {
               variant="sm"
               className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              TikTok (optional)
+              Inserisci il link al tuo account TikTok (facoltativo)
             </ScaledText>
             <View className="flex-row items-center rounded-xl border border-gray">
               <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
@@ -117,7 +118,7 @@ export default function UserRegistrationStep5() {
                 </ScaledText>
               </View>
               <ScaledTextInput
-                containerClassName="flex-1 rounded-xl border border-gray"
+                containerClassName="flex-1 rounded-xl "
                 className="text-foreground rounded-xl"
                 placeholder="username"
                 placeholderTextColor="#A49A99"

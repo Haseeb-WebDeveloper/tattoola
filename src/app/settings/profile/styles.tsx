@@ -1,12 +1,14 @@
 import ScaledText from "@/components/ui/ScaledText";
-import { AR_MAX_FAVORITE_STYLES } from "@/constants/limits";
+import { AR_MAX_FAVORITE_STYLES, TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
     fetchArtistFavoriteStyles,
     fetchTattooStyles,
+    fetchUserFavoriteStyles,
     TattooStyleItem,
     updateArtistFavoriteStyles,
+    updateUserFavoriteStyles,
 } from "@/services/style.service";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
@@ -73,6 +75,10 @@ export default function StylesSettingsScreen() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [artistId, setArtistId] = useState<string | null>(null);
 
+  const isArtist = user?.role === "ARTIST";
+  const maxStyles = isArtist ? AR_MAX_FAVORITE_STYLES : TL_MAX_FAVORITE_STYLES;
+  const minStyles = isArtist ? 2 : 1;
+
   useEffect(() => {
     let mounted = true;
 
@@ -80,32 +86,49 @@ export default function StylesSettingsScreen() {
       try {
         if (!user?.id) return;
 
-        // Fetch artist profile to get artistId and mainStyleId
-        const { data: profileData, error: profileError } = await supabase
-          .from("artist_profiles")
-          .select("id, mainStyleId")
-          .eq("userId", user.id)
-          .single();
+        if (isArtist) {
+          // Fetch artist profile to get artistId and mainStyleId
+          const { data: profileData, error: profileError } = await supabase
+            .from("artist_profiles")
+            .select("id, mainStyleId")
+            .eq("userId", user.id)
+            .single();
 
-        if (profileError || !profileData) {
-          throw new Error("Artist profile not found");
-        }
+          if (profileError || !profileData) {
+            throw new Error("Artist profile not found");
+          }
 
-        const artistProfileId = profileData.id;
-        setArtistId(artistProfileId);
+          const artistProfileId = profileData.id;
+          setArtistId(artistProfileId);
 
-        // Fetch all styles and artist's favorite styles in parallel
-        const [allStyles, favoriteStyleIds] = await Promise.all([
-          fetchTattooStyles(),
-          fetchArtistFavoriteStyles(artistProfileId),
-        ]);
+          // Fetch all styles and artist's favorite styles in parallel
+          const [allStyles, favoriteStyleIds] = await Promise.all([
+            fetchTattooStyles(),
+            fetchArtistFavoriteStyles(artistProfileId),
+          ]);
 
-        if (mounted) {
-          setStyles(allStyles);
-          setSelectedStyles(favoriteStyleIds);
-          setInitialSelectedStyles(favoriteStyleIds);
-          setMainStyleId(profileData.mainStyleId);
-          setInitialMainStyleId(profileData.mainStyleId);
+          if (mounted) {
+            setStyles(allStyles);
+            setSelectedStyles(favoriteStyleIds);
+            setInitialSelectedStyles(favoriteStyleIds);
+            setMainStyleId(profileData.mainStyleId);
+            setInitialMainStyleId(profileData.mainStyleId);
+          }
+        } else {
+          // Tattoo lover - fetch user's favorite styles
+          const [allStyles, favoriteStyleIds] = await Promise.all([
+            fetchTattooStyles(),
+            fetchUserFavoriteStyles(user.id),
+          ]);
+
+          if (mounted) {
+            setStyles(allStyles);
+            setSelectedStyles(favoriteStyleIds);
+            setInitialSelectedStyles(favoriteStyleIds);
+            // No main style for tattoo lovers
+            setMainStyleId(null);
+            setInitialMainStyleId(null);
+          }
         }
       } catch (error: any) {
         console.error("Error loading styles:", error);
@@ -122,13 +145,15 @@ export default function StylesSettingsScreen() {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, isArtist]);
 
   // Check if there are unsaved changes
-  const hasUnsavedChanges =
-    JSON.stringify([...selectedStyles].sort()) !==
-      JSON.stringify([...initialSelectedStyles].sort()) ||
-    mainStyleId !== initialMainStyleId;
+  const hasUnsavedChanges = isArtist
+    ? JSON.stringify([...selectedStyles].sort()) !==
+        JSON.stringify([...initialSelectedStyles].sort()) ||
+      mainStyleId !== initialMainStyleId
+    : JSON.stringify([...selectedStyles].sort()) !==
+        JSON.stringify([...initialSelectedStyles].sort());
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -151,14 +176,14 @@ export default function StylesSettingsScreen() {
     setSelectedStyles((prev) => {
       if (prev.includes(styleId)) {
         // Deselecting - if it's the main style, clear main style
-        if (mainStyleId === styleId) {
+        if (isArtist && mainStyleId === styleId) {
           setMainStyleId(null);
         }
         return prev.filter((id) => id !== styleId);
       } else {
         // Selecting - check if we can select more
-        if (prev.length >= AR_MAX_FAVORITE_STYLES) {
-          toast.error(`You can select up to ${AR_MAX_FAVORITE_STYLES} styles`);
+        if (prev.length >= maxStyles) {
+          toast.error(`You can select up to ${maxStyles} styles`);
           return prev;
         }
         return [...prev, styleId];
@@ -167,27 +192,43 @@ export default function StylesSettingsScreen() {
   };
 
   const handleSetPrimary = (styleId: string) => {
-    if (selectedStyles.includes(styleId)) {
+    if (isArtist && selectedStyles.includes(styleId)) {
       setMainStyleId(styleId);
     }
   };
 
-  const canProceed = selectedStyles.length >= 2 && mainStyleId !== null;
+  const canProceed = isArtist
+    ? selectedStyles.length >= minStyles && mainStyleId !== null
+    : selectedStyles.length >= minStyles;
 
   const handleSave = async () => {
-    if (!artistId || !canProceed || !hasUnsavedChanges) {
-      if (!canProceed) {
+    if (!canProceed) {
+      if (isArtist) {
         toast.error("Please select at least 2 styles and mark one as primary");
       } else {
-        router.back();
+        toast.error("Please select at least 1 style");
       }
+      return;
+    }
+
+    if (!hasUnsavedChanges) {
+      router.back();
+      return;
+    }
+
+    if (isArtist && !artistId) {
+      toast.error("Artist profile not found");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await updateArtistFavoriteStyles(artistId, selectedStyles, mainStyleId);
+      if (isArtist && artistId) {
+        await updateArtistFavoriteStyles(artistId, selectedStyles, mainStyleId);
+      } else {
+        await updateUserFavoriteStyles(user!.id, selectedStyles);
+      }
 
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
@@ -223,7 +264,7 @@ export default function StylesSettingsScreen() {
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = selectedStyles.includes(item.id);
-    const isPrimary = mainStyleId === item.id;
+    const isPrimary = isArtist && mainStyleId === item.id;
     const img = resolveImageUrl(item.imageUrl);
 
     return (
@@ -271,20 +312,22 @@ export default function StylesSettingsScreen() {
           </ScaledText>
         </View>
 
-        {/* Primary star */}
-        <TouchableOpacity
-          onPress={() => handleSetPrimary(item.id)}
-          style={{ paddingRight: s(16) }}
-          disabled={!isSelected}
-        >
-          {isPrimary ? (
-            <SVGIcons.StartCircleFilled
-              style={{ width: s(24), height: s(24) }}
-            />
-          ) : (
-            <SVGIcons.StartCircle style={{ width: s(24), height: s(24) }} />
-          )}
-        </TouchableOpacity>
+        {/* Primary star - only for artists */}
+        {isArtist && (
+          <TouchableOpacity
+            onPress={() => handleSetPrimary(item.id)}
+            style={{ paddingRight: s(16) }}
+            disabled={!isSelected}
+          >
+            {isPrimary ? (
+              <SVGIcons.StartCircleFilled
+                style={{ width: s(24), height: s(24) }}
+              />
+            ) : (
+              <SVGIcons.StartCircle style={{ width: s(24), height: s(24) }} />
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -347,7 +390,9 @@ export default function StylesSettingsScreen() {
             variant="md"
             className="text-white font-montserratMedium"
           >
-            Choose at least 2 styles. Then mark one as your primary style (★)
+            {isArtist
+              ? "Choose at least 2 styles. Then mark one as your primary style (★)"
+              : "Choose your favorite tattoo styles (at least 1)"}
           </ScaledText>
         </View>
 

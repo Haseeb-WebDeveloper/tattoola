@@ -166,8 +166,8 @@ export default function ProfileScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => router.push("/settings" as any)}
-            className="rounded-full bg-primary items-center justify-center"
-            style={{ width: s(36), height: s(36) }}
+            className="rounded-full items-center justify-center"
+            style={{ width: s(36), height: s(36), backgroundColor: "#AD2E2E" }}
           >
             <SVGIcons.Settings style={{ width: s(20), height: s(20) }} />
           </TouchableOpacity>

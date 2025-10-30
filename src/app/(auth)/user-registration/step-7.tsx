@@ -1,71 +1,87 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
-import type {
-  CompleteUserRegistration,
-  FormErrors,
-  UserV2Step7,
-} from "@/types/auth";
+import type { CompleteUserRegistration, UserV2Step7 } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Modal, ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+
+// Circle checkboxes for profile type selection
+const CircleUncheckedCheckbox = SVGIcons.CircleUncheckedCheckbox;
+const CircleCheckedCheckbox = SVGIcons.CircleCheckedCheckbox;
 
 export default function UserRegistrationStep7() {
-  const { step6, updateStep, clearRegistration, setCurrentStep } =
-    useUserRegistrationV2Store();
+  const { step7, updateStep, clearRegistration } = useUserRegistrationV2Store();
 
   const { completeUserRegistration, loading } = useAuth();
   const [formData, setFormData] = useState<UserV2Step7>({
     isPublic: true,
   });
-  const [errors, setLocalErrors] = useState<FormErrors>({});
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [initialValue, setInitialValue] = useState(true);
 
   // Load existing data if available
   useEffect(() => {
-    if (step6 && Object.keys(step6).length > 0) {
-      setFormData(step6 as any as UserV2Step7);
+    if (step7 && Object.keys(step7).length > 0) {
+      const isPublic = (step7 as any).isPublic ?? true;
+      setFormData({ isPublic });
+      setInitialValue(isPublic);
     }
-  }, [step6]);
+  }, [step7]);
+
+  const hasUnsavedChanges = formData.isPublic !== initialValue;
 
   const handleProfileTypeChange = (isPublic: boolean) => {
     setFormData((prev) => ({ ...prev, isPublic }));
   };
 
-  const validateForm = (): boolean => {
-    // No validation needed for this step
-    return true;
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedModal(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    setShowUnsavedModal(false);
+    router.back();
+  };
+
+  const handleContinueEditing = () => {
+    setShowUnsavedModal(false);
   };
 
   const handleComplete = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
     try {
       // Store final step data
       updateStep("step7", formData);
 
       // Build payload from current store steps (step3..step6)
-      const { step3, step4, step5, step6 } = useUserRegistrationV2Store.getState() as any;
+      const { step3, step4, step5, step6 } =
+        useUserRegistrationV2Store.getState() as any;
 
       const completeData: CompleteUserRegistration = {
         step3: {
           firstName: step3?.firstName || "",
           lastName: step3?.lastName || "",
           phone: step3?.phone || "",
-          avatar: step3?.avatar,
+          countryCode: step3?.countryCode,
+          callingCode: step3?.callingCode,
+          province: step3?.province || "",
+          provinceId: step3?.provinceId || "",
+          municipality: step3?.municipality || "",
+          municipalityId: step3?.municipalityId || "",
         },
         step4: {
-          province: step4?.province || "",
-          municipality: step4?.municipality || "",
-          provinceId: step4?.provinceId || "",
-          municipalityId: step4?.municipalityId || "",
+          avatar: step4?.avatar,
         },
         step5: {
           instagram: step5?.instagram,
@@ -98,116 +114,243 @@ export default function UserRegistrationStep7() {
   };
 
   return (
-    <View className="flex-1 bg-black">
-      <KeyboardAwareScrollView
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        extraScrollHeight={150}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-background">
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        start={{ x: 0.4, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        className="flex-1"
       >
-        {/* Header */}
-        <AuthStepHeader />
-
-        {/* Progress */}
-        <RegistrationProgress
-          currentStep={3}
-          totalSteps={7}
-          name="Create your profile"
-          icon={<SVGIcons.Person width={25} height={25} />}
-        />
-
-        {/* Options */}
-        <View style={{ paddingHorizontal: s(24) }}>
-          <TouchableOpacity
-            className={`rounded-xl p-5 mb-4 border-2 ${formData.isPublic ? "bg-primary/20 border-primary" : "border-gray"}`}
-            onPress={() => handleProfileTypeChange(true)}
-            style={{ paddingVertical: mvs(20), paddingHorizontal: s(20) }}
-          >
-            <View className="flex-row items-start relative">
-              <View className="flex-1">
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-foreground font-neueBold mb-2"
-                >
-                  Public Profile
-                </ScaledText>
-                <ScaledText
-                  allowScaling={false}
-                  variant="body2"
-                  className="text-foreground/70"
-                >
-                  Your tattoos and followed artists will be visible on your page
-                </ScaledText>
-              </View>
-              {formData.isPublic && (
-                <View
-                  className="absolute top-0 right-0 w-6 h-6 rounded-full bg-success items-center justify-center"
-                  style={{ width: mvs(24), height: mvs(24) }}
-                />
-              )}
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className={`rounded-xl p-5 mb-4 border-2 ${!formData.isPublic ? "bg-primary/20 border-primary" : "border-gray"}`}
-            onPress={() => handleProfileTypeChange(false)}
-            style={{ paddingVertical: mvs(20), paddingHorizontal: s(20) }}
-          >
-            <View className="flex-row items-start relative">
-              <View className="flex-1">
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-foreground font-neueBold mb-2"
-                >
-                  Private Profile
-                </ScaledText>
-                <ScaledText
-                  allowScaling={false}
-                  variant="body2"
-                  className="text-foreground/70"
-                >
-                  Your tattoos and followed artists are visible only to you
-                </ScaledText>
-              </View>
-              {!formData.isPublic && (
-                <View
-                  className="absolute top-0 right-0 w-6 h-6 rounded-full bg-success items-center justify-center"
-                  style={{ width: mvs(24), height: mvs(24) }}
-                />
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAwareScrollView>
-
-      {/* Complete Registration Button fixed at the bottom */}
-      <View
-        className="px-6 bg-background flex justify-center items-center w-full"
-        style={{
-          paddingVertical: mvs(16),
-          paddingHorizontal: s(24),
-        }}
-      >
-        <TouchableOpacity
-          onPress={handleComplete}
-          disabled={loading}
-          className={`rounded-full items-center w-full ${loading ? "bg-gray/40" : "bg-success"}`}
-          style={{
-            paddingVertical: mvs(14),
-          }}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: mvs(32) }}
         >
-          <ScaledText
-            allowScaling={false}
-            variant="body1"
-            className="text-foreground font-neueBold"
+          {/* Header */}
+          <AuthStepHeader />
+
+          {/* Progress */}
+          <RegistrationProgress
+            currentStep={7}
+            totalSteps={7}
+            name="Profile visibility"
+            icon={<SVGIcons.SecurePerson width={20} height={20} />}
+            nameVariant="2xl"
+          />
+
+          {/* Options */}
+          <View style={{ paddingHorizontal: s(32) }}>
+            {/* Public Profile Option */}
+            <TouchableOpacity
+              onPress={() => handleProfileTypeChange(true)}
+              activeOpacity={0.7}
+              className="border-gray"
+              style={{
+                borderWidth: formData.isPublic ? s(1) : s(0.5),
+                backgroundColor: "#100C0C",
+                paddingHorizontal: s(11),
+                paddingVertical: mvs(20),
+                marginBottom: mvs(16),
+                borderRadius: s(12),
+              }}
+            >
+              <View className="flex-row items-start">
+                {/* Use checked/unchecked circle */}
+                <View
+                  className="items-center justify-center"
+                  style={{
+                    width: s(17),
+                    height: s(17),
+                    marginRight: s(9),
+                  }}
+                >
+                  {formData.isPublic ? (
+                    <CircleCheckedCheckbox width={s(17)} height={s(17)} />
+                  ) : (
+                    <CircleUncheckedCheckbox width={s(17)} height={s(17)} />
+                  )}
+                </View>
+
+                {/* Text Content */}
+                <View className="flex-1">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-montserratSemibold"
+                    style={{ marginBottom: mvs(4) }}
+                  >
+                    Public profile
+                  </ScaledText>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="11"
+                    className="text-foreground font-neueRoman"
+                  >
+                    Your tattoos, the artists you follow will be visible on your
+                    page
+                  </ScaledText>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Private Profile Option */}
+            <TouchableOpacity
+              onPress={() => handleProfileTypeChange(false)}
+              activeOpacity={0.7}
+              className="border-gray"
+              style={{
+                borderWidth: !formData.isPublic ? s(1) : s(0.5),
+                backgroundColor: "#100C0C",
+                paddingHorizontal: s(11),
+                paddingVertical: mvs(20),
+                marginBottom: mvs(24),
+                borderRadius: s(12),
+              }}
+            >
+              <View className="flex-row items-start">
+                {/* Use checked/unchecked circle */}
+                <View
+                  className="items-center justify-center"
+                  style={{
+                    width: s(17),
+                    height: s(17),
+                    marginRight: s(9),
+                  }}
+                >
+                  {!formData.isPublic ? (
+                    <CircleCheckedCheckbox width={s(17)} height={s(17)} />
+                  ) : (
+                    <CircleUncheckedCheckbox width={s(17)} height={s(17)} />
+                  )}
+                </View>
+
+                {/* Text Content */}
+                <View className="flex-1">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-montserratSemibold"
+                    style={{ marginBottom: mvs(4) }}
+                  >
+                    Private profile
+                  </ScaledText>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="11"
+                    className="text-foreground font-neueRoman"
+                  >
+                    Your tattoos and the artists you follow are visible only to
+                    you
+                  </ScaledText>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Complete Registration Button fixed at the bottom */}
+        <NextBackFooter
+          onNext={handleComplete}
+          nextDisabled={loading}
+          nextLabel="Almost there!"
+          backLabel="Back"
+          onBack={handleBack}
+        />
+      </LinearGradient>
+
+      {/* Unsaved Changes Modal */}
+      <Modal
+        visible={showUnsavedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleContinueEditing}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
           >
-            {loading ? "Completing..." : "Complete Registration"}
-          </ScaledText>
-        </TouchableOpacity>
-      </View>
+            {/* Warning Icon */}
+            <View className="items-center" style={{ marginBottom: mvs(20) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+
+            {/* Title */}
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              You have unsaved changes in profile visibility
+            </ScaledText>
+
+            {/* Subtitle */}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(32) }}
+            >
+              Do you want to discard them?
+            </ScaledText>
+
+            {/* Action Buttons */}
+            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+              {/* Continue Editing Button */}
+              <TouchableOpacity
+                onPress={handleContinueEditing}
+                className="rounded-full border-2 items-center justify-center flex-row"
+                style={{
+                  borderColor: "#AD2E2E",
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                  gap: s(8),
+                }}
+              >
+                <SVGIcons.PenRed
+                  style={{ width: s(14), height: s(14) }}
+                  fill="#AD2E2E"
+                />
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="font-montserratMedium"
+                  style={{ color: "#AD2E2E" }}
+                >
+                  Continue Editing
+                </ScaledText>
+              </TouchableOpacity>
+
+              {/* Discard Changes Button */}
+              <TouchableOpacity
+                onPress={handleDiscardChanges}
+                className="rounded-full items-center justify-center"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-montserratMedium"
+                >
+                  Discard changes
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

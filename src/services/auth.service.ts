@@ -267,7 +267,7 @@ export class AuthService {
           firstName: (data as any).step3.firstName,
           lastName: (data as any).step3.lastName,
           phone: (data as any).step3.phone,
-          avatar: (data as any).step3.avatar,
+          avatar: (data as any).step4.avatar,
           instagram: (data as any).step5.instagram,
           tiktok: (data as any).step5.tiktok,
           isPublic:
@@ -296,7 +296,7 @@ export class AuthService {
           firstName: (data as any).step3.firstName,
           lastName: (data as any).step3.lastName,
           phone: (data as any).step3.phone,
-          avatar: (data as any).step3.avatar,
+          avatar: (data as any).step4.avatar,
           instagram: (data as any).step5.instagram,
           tiktok: (data as any).step5.tiktok,
           isPublic:
@@ -319,19 +319,19 @@ export class AuthService {
 
     logger.log("Now adding locations");
     // Create primary user location
-    if ((data as any).step4?.provinceId && (data as any).step4?.municipalityId) {
+    if ((data as any).step3?.provinceId && (data as any).step3?.municipalityId) {
       const locationAddress = buildGoogleMapsUrl(
-        (data as any).step4.municipality,
-        (data as any).step4.province
+        (data as any).step3.municipality,
+        (data as any).step3.province
       );
       logger.log("location address:", locationAddress);
-      logger.log("province id:", (data as any).step4.provinceId);
-      logger.log("municipality id:", (data as any).step4.municipalityId);
+      logger.log("province id:", (data as any).step3.provinceId);
+      logger.log("municipality id:", (data as any).step3.municipalityId);
       await supabase.from('user_locations').insert({
         id: generateUUID(),
         userId: userId,
-        provinceId: (data as any).step4.provinceId,
-        municipalityId: (data as any).step4.municipalityId,
+        provinceId: (data as any).step3.provinceId,
+        municipalityId: (data as any).step3.municipalityId,
         address: locationAddress,
         isPrimary: true,
         createdAt: new Date().toISOString(),

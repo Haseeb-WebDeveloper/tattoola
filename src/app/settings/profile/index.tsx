@@ -61,6 +61,9 @@ export default function ProfileSettingsScreen() {
   const handleBusinessInfoPress = () => {
     router.push("/settings/profile/business-info" as any);
   };
+  const handleProfileTypePress = () => {
+    router.push("/settings/profile/profile-type" as any);
+  };
 
   const handleBioPress = () => {
     router.push("/settings/profile/bio" as any);
@@ -111,7 +114,7 @@ export default function ProfileSettingsScreen() {
     { title: "Dove ti trovi", onPress: handleLocationPress },
     { title: "Social media", onPress: handleSocialMediaPress },
     { title: "Stili preferiti", onPress: handleStylesPress },
-    { title: "Tipo di profilo", onPress: handleBusinessInfoPress },
+    { title: "Tipo di profilo", onPress: handleProfileTypePress },
   ];
 
   const artistItems = [

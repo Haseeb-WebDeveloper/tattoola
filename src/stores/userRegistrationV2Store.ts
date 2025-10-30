@@ -30,7 +30,6 @@ interface UserV2RegistrationState {
   updateStep6: (data: Partial<UserV2Step6>) => void;
   updateStep7: (data: Partial<UserV2Step7>) => void;
   updateStep: (step: string, data: any) => void; // Generic update for compatibility
-  setAvatar: (url?: string) => void;
   setCurrentStepDisplay: (n: number) => void;
   setCurrentStep: (n: number) => void; // Alias for setCurrentStepDisplay
   setErrors: (e: Record<string, string>) => void;
@@ -41,8 +40,8 @@ interface UserV2RegistrationState {
 }
 
 const initialState: Pick<UserV2RegistrationState, 'step3' | 'step4' | 'step5' | 'step6' | 'step7' | 'currentStepDisplay' | 'totalStepsDisplay' | 'errors' | 'isSubmitting'> = {
-  step3: {},
-  step4: { province: '', provinceId: '', municipality: '', municipalityId: '' },
+  step3: { countryCode: 'IT', callingCode: '39', province: '', provinceId: '', municipality: '', municipalityId: '' },
+  step4: { avatar: undefined },
   step5: {},
   step6: {},
   step7: {},
@@ -69,7 +68,6 @@ export const useUserRegistrationV2Store = create<UserV2RegistrationState>()(
           }
           return {};
         }),
-        setAvatar: (url) => set((s) => ({ step3: { ...s.step3, avatar: url } })),
         setCurrentStepDisplay: (n) => set({ currentStepDisplay: n }),
         setCurrentStep: (n) => set({ currentStepDisplay: n }),
         setErrors: (e) => set({ errors: e }),

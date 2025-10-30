@@ -1,8 +1,10 @@
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import { logger } from "@/utils/logger";
+import { mvs } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, ScrollView, TouchableOpacity, View } from "react-native";
@@ -45,40 +47,21 @@ export default function EmailConfirmationScreen() {
         </View>
         <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
       </View>
-
-      {/* Steps indicator (step 2 of 13 visually) */}
-      <View className="items-center mb-8">
-        <View className="flex-row items-center gap-1">
-          {Array.from({ length: 13 }).map((_, idx) => (
-            <View
-              key={idx}
-              className={`${idx < 2 ? "bg-success" : "bg-gray"} ${idx === 1 ? "w-3 h-3" : "w-2 h-2"} rounded-full`}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title and instructions */}
-      <View className="px-6">
-        <View className="px-6 mb-2 flex-row gap-2 items-center justify-center">
-          <SVGIcons.MailSent className="w-7 h-7" />
-          <ScaledText
-            variant="sectionTitle"
-            className="text-foreground font-neueBold"
-          >
-            Verification email sent
-          </ScaledText>
-        </View>
-        <ScaledText
-          variant="body2"
-          className="text-foreground font-montserratLight"
-        >
-          Check your inbox → Tap Confirm email → You’re all set!
-        </ScaledText>
-      </View>
+      {/* Steps indicator */}
+      <RegistrationProgress
+        currentStep={2}
+        totalSteps={13}
+        name="Verification email sent"
+        icon={<SVGIcons.MailSent className="w-7 h-7" />}
+        description="Check your inbox → Tap Confirm email → You’re all set! ✅"
+        nameVariant="2xl"
+        descriptionVariant="md"
+        NameFont="font-neueBold"
+        DescriptionFont="font-montserratLight"
+      />
 
       {/* Loading ring or image preview */}
-      <View className="items-center my-8">
+      <View className="items-center mb-8">
         {isLoading ? (
           <View className="w-20 h-20 rounded-full border-8 border-warning border-r-gray animate-spin-slow" />
         ) : imageError ? (
@@ -108,6 +91,7 @@ export default function EmailConfirmationScreen() {
         </ScaledText>
         <TouchableOpacity
           className="px-6 py-3 rounded-full border border-foreground/60 flex-row gap-2 items-center"
+          style={{ marginTop: mvs(8) }}
           onPress={() => {
             try {
               resendVerificationEmail();
@@ -120,6 +104,7 @@ export default function EmailConfirmationScreen() {
           <ScaledText
             variant="body2"
             className="text-foreground font-montserratLight"
+            allowScaling={false}
           >
             Resend email
           </ScaledText>

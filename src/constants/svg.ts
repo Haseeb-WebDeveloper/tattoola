@@ -9,6 +9,8 @@ import LogoLight from "@/assets/icons/logo-light.svg";
 // @ts-ignore
 import Person from "@/assets/icons/person.svg";
 // @ts-ignore
+import SecurePerson from "@/assets/icons/secure-person.svg";
+// @ts-ignore
 import Follow from "@/assets/icons/follow.svg";
 // @ts-ignore
 import User from "@/assets/icons/user.svg";
@@ -72,6 +74,8 @@ import PenRed from "@/assets/icons/pen-red.svg";
 import Search from "@/assets/icons/search.svg";
 // @ts-ignore
 import Style from "@/assets/icons/style.svg";
+// @ts-ignore
+import Check from "@/assets/icons/check.svg";
 // @ts-ignore
 import CheckedCheckbox from "@/assets/icons/checked-checkbox.svg";
 // @ts-ignore
@@ -194,6 +198,8 @@ import SafeAlert from "@/assets/icons/safe-alert.svg";
 import LocationRed from "@/assets/icons/location-red.svg";
 // @ts-ignore
 import User2 from "@/assets/icons/user-2.svg";
+// @ts-ignore
+import Smile from "@/assets/icons/smile.svg";
 
 export const SVGIcons = {
   Close,
@@ -201,6 +207,7 @@ export const SVGIcons = {
   CloseGray,
   LogoLight,
   Person,
+  SecurePerson,
   UserFilled,
   User,
   Studio,
@@ -225,6 +232,7 @@ export const SVGIcons = {
   PenRed,
   Search,
   Style,
+  Check,
   CheckedCheckbox,
   UncheckedCheckbox,
   CircleCheckedCheckbox,
@@ -294,6 +302,7 @@ export const SVGIcons = {
   Users,
   UserArt,
   Follow,
+  Smile,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

@@ -23,7 +23,9 @@ export default function EmailConfirmationScreen() {
   // Check for pending email change
   React.useEffect(() => {
     const checkPendingEmail = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
       if (authUser?.new_email) {
         setPendingEmail(authUser.new_email);
       }
@@ -39,8 +41,10 @@ export default function EmailConfirmationScreen() {
     setIsResending(true);
     try {
       // Get the current user's new unconfirmed email
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
       if (!authUser?.new_email) {
         toast.error("No pending email change found");
         setIsResending(false);
@@ -110,10 +114,17 @@ export default function EmailConfirmationScreen() {
           >
             Check BOTH your old and new email addresses for confirmation links
           </ScaledText>
-          
+
           {/* Show pending email change info */}
           {pendingEmail && (
-            <View style={{ marginTop: mvs(16), backgroundColor: 'rgba(173, 46, 46, 0.1)', padding: s(12), borderRadius: 8 }}>
+            <View
+              style={{
+                marginTop: mvs(16),
+                backgroundColor: "rgba(173, 46, 46, 0.1)",
+                padding: s(12),
+                borderRadius: 8,
+              }}
+            >
               <ScaledText
                 variant="sm"
                 className="text-foreground/60 font-montserratMedium text-center"
@@ -161,6 +172,8 @@ export default function EmailConfirmationScreen() {
             <ScaledText
               variant="body2"
               className="text-foreground font-montserratLight"
+              allowScaling={false}
+              style={{ marginTop: mvs(4) }}
             >
               {isResending ? "Sending..." : "Resend email"}
             </ScaledText>
@@ -183,4 +196,3 @@ export default function EmailConfirmationScreen() {
     </LinearGradient>
   );
 }
-

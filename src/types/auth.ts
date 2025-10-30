@@ -155,13 +155,15 @@ export interface UserV2Step3 {
   firstName: string;
   lastName: string;
   phone: string;
-  avatar?: string;
-}
-export interface UserV2Step4 {
+  countryCode?: string; // ISO 3166-1 alpha-2 code (e.g., "IT", "US")
+  callingCode?: string; // e.g., "39", "1"
   province: string;        // province name (for display)
   provinceId: string;      // province ID (for DB)
   municipality: string;    // municipality name (for display)
   municipalityId: string;  // municipality ID (for DB)
+}
+export interface UserV2Step4 {
+  avatar?: string;
 }
 export interface UserV2Step5 {
   instagram?: string;
@@ -303,8 +305,8 @@ export interface Collection {
 
 // Complete registration data
 export interface CompleteUserRegistration {
-  step3: UserV2Step3; // name, phone, avatar (optional)
-  step4: UserV2Step4; // province, municipality
+  step3: UserV2Step3; // name, phone, location
+  step4: UserV2Step4; // avatar (optional)
   step5: UserV2Step5; // socials
   step6: UserV2Step6; // favorite styles
   step7: UserV2Step7; // visibility

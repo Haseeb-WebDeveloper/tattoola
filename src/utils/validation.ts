@@ -113,7 +113,16 @@ export const ValidationRules = {
   },
   phone: {
     required: true,
-    pattern: /^\+?[1-9]\d{1,14}$/,
+    pattern: /^\+[1-9]\d{1,14}$/,
+    custom: (value: string) => {
+      if (!value) return true;
+      // E.164 format: +[country code][number]
+      // Length should be between 8 and 15 characters (including +)
+      if (value.length < 8 || value.length > 16) {
+        return 'Phone number must be between 8 and 15 digits';
+      }
+      return true;
+    },
   },
   businessName: {
     required: true,
@@ -173,11 +182,12 @@ export const UserStep3ValidationSchema = {
   firstName: ValidationRules.firstName,
   lastName: ValidationRules.lastName,
   phone: ValidationRules.phone,
+  province: { required: true },
+  municipality: { required: true },
 };
 
 export const UserStep4ValidationSchema = {
-  province: { required: true },
-  municipality: { required: true },
+  // Avatar is optional, no validation needed
 };
 
 export const UserStep5ValidationSchema = {

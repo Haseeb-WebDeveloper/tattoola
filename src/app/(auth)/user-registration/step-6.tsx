@@ -14,22 +14,42 @@ import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  ScrollView,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 function StyleSkeleton() {
   return (
-    <View className="flex-row items-center border-b border-gray/20">
-      <View className="w-10 items-center" style={{ paddingVertical: mvs(12) }}>
-        <View className="w-5 h-5 rounded-md bg-gray/30" />
+    <View className="flex-row items-center">
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: mvs(6),
+          paddingRight: s(16),
+        }}
+      >
+        <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
       </View>
-      <View className="w-36 h-28 bg-gray/30" />
-      <View className="flex-1 px-4">
-        <View className="w-32 h-4 bg-gray/30 rounded" />
+      <View className="border-b border-gray/20 flex-row items-center justify-center">
+        <View
+          style={{
+            width: s(120),
+            height: mvs(72),
+            backgroundColor: "#A49A9950",
+          }}
+        />
+        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            style={{ fontSize: 12.445 }}
+            className="text-foreground font-montserratSemibold"
+          >
+            ...
+          </ScaledText>
+        </View>
       </View>
     </View>
   );
@@ -156,37 +176,48 @@ export default function UserRegistrationStep6() {
   const renderItem = ({ item }: { item: any }) => {
     const isSelected = formData.favoriteStyles.includes(item.id);
     return (
-      <View
-        className="flex-row items-center border-b border-gray/20"
-        style={{ paddingVertical: mvs(12) }}
-      >
+      <View className="flex-row items-center">
         <TouchableOpacity
-          className="w-10 items-center"
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: mvs(6),
+            paddingRight: s(16),
+          }}
           onPress={() => handleStyleToggle(item.id)}
         >
           {isSelected ? (
-            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
-            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
         </TouchableOpacity>
-        {item.imageUrl ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            className="w-36 h-28"
-            resizeMode="cover"
-          />
-        ) : (
-          <View className="w-36 h-28 bg-gray/30" />
-        )}
-        <View className="flex-1 px-4">
-          <ScaledText
-            allowScaling={false}
-            variant="body1"
-            className="text-foreground font-neueBold"
-          >
-            {item.name}
-          </ScaledText>
+        <View className="border-b border-gray/20 flex-row items-center justify-center">
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={{ width: s(120), height: mvs(72) }}
+              resizeMode="cover"
+              className=" border-b border-gray/20"
+            />
+          ) : (
+            <View
+              style={{
+                width: s(155),
+                height: mvs(72),
+                backgroundColor: "#A49A9950",
+              }}
+            />
+          )}
+          <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+            <ScaledText
+              allowScaling={false}
+              style={{ fontSize: 12.445 }}
+              className="text-foreground font-montserratSemibold"
+            >
+              {item.name}
+            </ScaledText>
+          </View>
         </View>
       </View>
     );
@@ -196,69 +227,53 @@ export default function UserRegistrationStep6() {
 
   return (
     <View className="flex-1 bg-black">
-      <KeyboardAwareScrollView
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        extraScrollHeight={150}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      {/* Header */}
+      <AuthStepHeader />
+
+      {/* Progress */}
+      <RegistrationProgress
+        currentStep={3}
+        totalSteps={7}
+        name="Your preferred styles"
+        nameVariant="2xl"
+        icon={<SVGIcons.Person width={20} height={20} />}
+        description="You can choose up to 4 favorite styles."
+        descriptionVariant="md"
+      />
+
+      {/* List */}
+      <View
+        className="flex-1"
+        style={{ paddingHorizontal: s(16), flexGrow: 1 }}
       >
-        {/* Header */}
-        <AuthStepHeader />
+        {loading ? (
+          <View>
+            {[...Array(6)].map((_, i) => (
+              <StyleSkeleton key={i} />
+            ))}
+          </View>
+        ) : (
+          <FlatList
+            data={tattooStyles}
+            keyExtractor={(i) => i.id}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={{
+              paddingBottom: mvs(47) + Math.max(insets.bottom, mvs(20)),
+            }}
+            keyboardShouldPersistTaps="handled"
+          />
+        )}
+      </View>
 
-        {/* Progress */}
-        <RegistrationProgress
-          currentStep={3}
-          totalSteps={7}
-          name="Create your profile"
-          icon={<SVGIcons.Person width={25} height={25} />}
-        />
-
-        {/* Helper Text */}
-        <View style={{ paddingHorizontal: s(24), marginBottom: mvs(16) }}>
-          <ScaledText
-            allowScaling={false}
-            variant="body2"
-            className="text-foreground/80"
-          >
-            Choose up to {TL_MAX_FAVORITE_STYLES} styles you love
-          </ScaledText>
-        </View>
-
-        {/* List */}
-        <View className="flex-1" style={{ paddingHorizontal: s(24) }}>
-          {loading ? (
-            <ScrollView
-              contentContainerStyle={{
-                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
-              }}
-            >
-              {Array.from({ length: 6 }).map((_, i) => (
-                <StyleSkeleton key={i} />
-              ))}
-            </ScrollView>
-          ) : (
-            <FlatList
-              data={tattooStyles}
-              keyExtractor={(i) => i.id}
-              renderItem={renderItem}
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={{
-                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
-              }}
-            />
-          )}
-        </View>
-
-        {/* Fixed Footer */}
-        <AbsoluteNextBackFooter
-          onNext={handleNext}
-          nextDisabled={!canProceed}
-          nextLabel="Continue"
-          backLabel="Back"
-          onBack={handleBack}
-        />
-      </KeyboardAwareScrollView>
+      {/* Fixed Footer */}
+      <AbsoluteNextBackFooter
+        onNext={handleNext}
+        nextDisabled={!canProceed}
+        nextLabel="Next"
+        backLabel="Back"
+        onBack={handleBack}
+      />
     </View>
   );
 }

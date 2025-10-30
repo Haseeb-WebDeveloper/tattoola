@@ -128,7 +128,7 @@ function LoginScreenContent() {
 
           <View className="w-full relative">
             <Image
-              source={require("@/assets/auth/login.jpg")}
+              source={require("@/assets/auth/login-2.png")}
               className="w-full"
               resizeMode="cover"
               style={{ height: scaledVSize(230) }}

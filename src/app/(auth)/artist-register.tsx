@@ -1,3 +1,4 @@
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
@@ -75,7 +76,6 @@ export default function ArtistRegisterScreen() {
       return;
     }
 
-
     // Navigate immediately to email confirmation and start background signup
     setInProgress(formData.email);
     router.push("/(auth)/email-confirmation");
@@ -108,7 +108,6 @@ export default function ArtistRegisterScreen() {
     router.replace("/(auth)/welcome");
   };
 
-
   return (
     <KeyboardAwareScrollView
       enableOnAndroid={true}
@@ -137,44 +136,12 @@ export default function ArtistRegisterScreen() {
       </View>
 
       {/* Steps indicator */}
-      <View className="items-center" style={{ marginBottom: mvs(24) }}>
-        <View className="flex-row items-center relative gap-1">
-          {/* Horizontal line behind the steps */}
-          <View
-            className="absolute left-0 right-0 top-1/2"
-            style={{
-              height: 1,
-              backgroundColor: "#A49A99",
-              zIndex: 0,
-              marginLeft: 0,
-              marginRight: 0,
-            }}
-          />
-          {steps.map((step, idx) => (
-            <View
-              key={step}
-              className={`${step === currentStep ? "w-4 h-4" : " w-[9px] h-[9px] opacity-70"} rounded-full bg-foreground `}
-              style={{
-                zIndex: 100,
-              }}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title */}
-      <View
-        className="px-6 flex-row gap-2 items-center justify-center"
-        style={{ marginBottom: mvs(24) }}
-      >
-        <SVGIcons.Pen3 className="w-7 h-7" />
-        <ScaledText
-          variant="sectionTitle"
-          className="text-foreground font-neueBold"
-        >
-          Registrati come Artista
-        </ScaledText>
-      </View>
+      <RegistrationProgress
+        currentStep={currentStep}
+        totalSteps={steps.length}
+        name="Registrati come Artista"
+        icon={<SVGIcons.Pen3 className="w-7 h-7" />}
+      />
 
       {/* Inputs */}
       <View className="px-6">

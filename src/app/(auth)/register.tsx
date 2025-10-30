@@ -1,4 +1,5 @@
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
@@ -107,7 +108,6 @@ export default function RegisterScreen() {
     router.push("/(auth)/artist-register");
   };
 
-
   return (
     <KeyboardAwareScrollView
       enableOnAndroid={true}
@@ -136,42 +136,12 @@ export default function RegisterScreen() {
       </View>
 
       {/* Steps indicator */}
-      <View className="items-center" style={{ marginBottom: mvs(16) }}>
-        <View className="flex-row items-center relative gap-1">
-          <View
-            className="absolute left-0 right-0 top-1/2"
-            style={{
-              height: 1,
-              backgroundColor: "#A49A99",
-              zIndex: 0,
-              marginLeft: 0,
-              marginRight: 0,
-            }}
-          />
-          {steps.map((step) => (
-            <View
-              key={step}
-              className={`${step === currentStep ? "w-4 h-4" : " w-[9px] h-[9px] opacity-70"} rounded-full bg-foreground `}
-              style={{ zIndex: 100 }}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Title */}
-      <View
-        className="px-6 flex-row gap-2 items-center justify-center"
-        style={{ marginBottom: mvs(24) }}
-      >
-        <SVGIcons.User2 width={s(18)} height={s(18)} />
-        <ScaledText
-          variant="2xl"
-          allowScaling={false}
-          className="text-foreground font-semibold"
-        >
-          Registrati come user
-        </ScaledText>
-      </View>
+      <RegistrationProgress
+        currentStep={currentStep}
+        totalSteps={steps.length}
+        name="Registrati come user"
+        icon={<SVGIcons.User2 width={s(18)} height={s(18)} />}
+      />
 
       {/* Inputs */}
       <View className="px-6">
@@ -318,7 +288,7 @@ export default function RegisterScreen() {
         </View>
 
         {/* Footer link */}
-        {/* <View className="items-center mt-8 mb-8">
+        <View className="items-center mt-8 mb-8">
           <ScaledText
             variant="sm"
             className="text-[#A49A99] text-center font-montserratMedium"
@@ -340,7 +310,7 @@ export default function RegisterScreen() {
           >
             Are you an Artist?
           </ScaledText>
-        </View> */}
+        </View>
       </View>
     </KeyboardAwareScrollView>
   );
