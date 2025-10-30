@@ -1,4 +1,5 @@
 import ScaledText from "@/components/ui/ScaledText";
+import { STYLE_EMOJIS } from "@/constants/styles-emoji";
 import { mvs, s } from "@/utils/scale";
 import React from "react";
 import { ScrollView, View } from "react-native";
@@ -6,22 +7,6 @@ import { ScrollView, View } from "react-native";
 interface PreferredStylesSectionProps {
   styles: { id: string; name: string }[];
 }
-
-// Style emoji mapping (can be customized or fetched from backend)
-const STYLE_EMOJIS: Record<string, string> = {
-  "Lettering": "✍️",
-  "Japanese": "🌸",
-  "Sketch": "✏️",
-  "Traditional": "🎨",
-  "Realism": "📸",
-  "Watercolor": "💧",
-  "Geometric": "📐",
-  "Blackwork": "⚫",
-  "Tribal": "🗿",
-  "Neo-Traditional": "🎭",
-  "Dotwork": "•",
-  "Minimalist": "➖",
-};
 
 export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
   styles,
@@ -31,13 +16,13 @@ export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
   }
 
   return (
-    <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+    <View style={{ paddingHorizontal: s(16), marginTop: mvs(20) }}>
       {/* Section Heading */}
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="text-foreground font-montserratSemiBold"
-        style={{ marginBottom: mvs(12) }}
+        className="text-foreground font-montserratSemibold"
+        style={{ marginBottom: mvs(8) }}
       >
         Preferred styles
       </ScaledText>
@@ -65,9 +50,8 @@ export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
             >
               <ScaledText
                 allowScaling={false}
-                variant="xs"
-                className="text-foreground font-neueMedium"
-                style={{ lineHeight: s(14.3) }}
+                variant="11"
+                className="text-foreground font-semibold"
               >
                 {displayText}
               </ScaledText>

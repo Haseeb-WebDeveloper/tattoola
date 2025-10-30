@@ -1,7 +1,12 @@
 import { TattooLoverSelfProfile } from "@/services/profile.service";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { ScaledText } from "../ui/ScaledText";
 import { FollowedArtistsList } from "./FollowedArtistsList";
 import { FollowedTattooLoversList } from "./FollowedTattooLoversList";
@@ -9,6 +14,8 @@ import { PreferredStylesSection } from "./PreferredStylesSection";
 import { ProfileTabNavigation } from "./ProfileTabNavigation";
 import { TattooLoverProfileHeader } from "./TattooLoverProfileHeader";
 import { TattooPostsGrid } from "./TattooPostsGrid";
+import { SVGIcons } from "@/constants/svg";
+import { router } from "expo-router";
 
 interface TattooLoverProfileViewProps {
   data: TattooLoverSelfProfile | null;
@@ -44,21 +51,43 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
     >
       {/* Username */}
       <View
-        className="bg-background w-full flex items-center justify-center"
+        className="flex-row w-full items-center justify-between"
         style={{
-          height: s(120),
+          height: s(80),
+          paddingHorizontal: s(16),
         }}
       >
+        {/* Back button */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          className="rounded-full bg-foreground/20 items-center justify-center"
+          style={{ width: s(32), height: s(32) }}
+        >
+          <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
+        </TouchableOpacity>
         <ScaledText
           variant="md"
-          className="text-foreground font-light"
+          className="text-foreground font-bold"
+          style={{
+            marginBottom: mvs(0),
+          }}
         >
-         @{data.user.username}
+          Your Profile
         </ScaledText>
+        {/* Settings button */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={() => router.push("/settings" as any)}
+          className="rounded-full bg-primary items-center justify-center"
+          style={{ width: s(32), height: s(32) }}
+        >
+          <SVGIcons.Settings style={{ width: s(20), height: s(20) }} />
+        </TouchableOpacity>
       </View>
 
       {/* Profile Header - Overlapping the banner */}
-      <View style={{ marginTop: -mvs(40) }}>
+      <View>
         <TattooLoverProfileHeader
           firstName={data.user.firstName}
           lastName={data.user.lastName}
@@ -80,8 +109,12 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
       {/* Content - Conditional based on active tab */}
       {activeTab === "my-tattoos" && <TattooPostsGrid posts={data.posts} />}
       {activeTab === "liked" && <TattooPostsGrid posts={data.likedPosts} />}
-      {activeTab === "artists-you-follow" && <FollowedArtistsList artists={data.followedArtists} />}
-      {activeTab === "tattoolers" && <FollowedTattooLoversList tattooLovers={data.followedTattooLovers} />}
+      {activeTab === "artists-you-follow" && (
+        <FollowedArtistsList artists={data.followedArtists} />
+      )}
+      {activeTab === "tattoolers" && (
+        <FollowedTattooLoversList tattooLovers={data.followedTattooLovers} />
+      )}
 
       {/* Bottom Spacer for tab bar */}
       <View style={{ height: mvs(100) }} />

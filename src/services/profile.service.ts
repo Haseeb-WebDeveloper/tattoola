@@ -786,4 +786,359 @@ export async function fetchTattooLoverSelfProfile(
   };
 }
 
+// ===== OTHER USER PROFILES (for viewing other users) =====
+
+export type TattooLoverProfile = {
+  user: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    instagram?: string;
+    tiktok?: string;
+    isPublic: boolean;
+  };
+  location?: {
+    province: {
+      name: string;
+    };
+    municipality: {
+      name: string;
+    };
+  };
+  favoriteStyles: { id: string; name: string }[];
+  posts: {
+    id: string;
+    thumbnailUrl?: string;
+    caption?: string;
+    createdAt: string;
+    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+  }[];
+  likedPosts: {
+    id: string;
+    thumbnailUrl?: string;
+    caption?: string;
+    createdAt: string;
+    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+  }[];
+  followedArtists: FollowingUser[];
+  followedTattooLovers: FollowingUser[];
+  isFollowing?: boolean;
+};
+
+/**
+ * Fetch another tattoo lover's profile (not self)
+ * Respects privacy settings - only shows posts/liked/followed if user is public
+ */
+export async function fetchTattooLoverProfile(
+  userId: string,
+  viewerId?: string
+): Promise<TattooLoverProfile> {
+  console.log("🌐 Fetching tattoo lover profile for:", userId, "viewer:", viewerId);
+
+  // Fetch basic user info including isPublic
+  const userQ = await supabase
+    .from("users")
+    .select("id, username, firstName, lastName, avatar, instagram, tiktok, isPublic")
+    .eq("id", userId)
+    .single();
+
+  if (userQ.error) throw new Error(userQ.error.message);
+  const userRow: any = userQ.data;
+
+  // Check if viewer is following this user
+  let isFollowingUser = false;
+  if (viewerId) {
+    isFollowingUser = await isFollowing(viewerId, userId);
+  }
+
+  // Fetch location and favorite styles (always visible)
+  const [locationQ, favStylesQ] = await Promise.all([
+    supabase
+      .from("user_locations")
+      .select(`
+        id,
+        provinces(name),
+        municipalities(name)
+      `)
+      .eq("userId", userId)
+      .eq("isPrimary", true)
+      .maybeSingle(),
+    supabase
+      .from("user_favorite_styles")
+      .select("styleId, order, tattoo_styles(id, name)")
+      .eq("userId", userId)
+      .order("order", { ascending: true }),
+  ]);
+
+  // Process location
+  const locationData = locationQ?.data as any;
+  const location = locationData
+    ? {
+        province: {
+          name: locationData.provinces?.name || "",
+        },
+        municipality: {
+          name: locationData.municipalities?.name || "",
+        },
+      }
+    : undefined;
+
+  // Process favorite styles
+  const favoriteStyles = (favStylesQ?.data || []).map((r: any) => ({
+    id: r.tattoo_styles?.id,
+    name: r.tattoo_styles?.name,
+  }));
+
+  // If profile is private, return early with empty arrays for posts/liked/followed
+  if (!userRow.isPublic) {
+    return {
+      user: {
+        id: userRow.id,
+        username: userRow.username,
+        firstName: userRow.firstName,
+        lastName: userRow.lastName,
+        avatar: userRow.avatar,
+        instagram: userRow.instagram,
+        tiktok: userRow.tiktok,
+        isPublic: userRow.isPublic,
+      },
+      location,
+      favoriteStyles,
+      posts: [],
+      likedPosts: [],
+      followedArtists: [],
+      followedTattooLovers: [],
+      isFollowing: isFollowingUser,
+    };
+  }
+
+  // If public, fetch posts, liked posts, and followed users
+  const [postsQ, likedPostsQ, followsQ] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id, caption, thumbnailUrl, createdAt")
+      .eq("authorId", userId)
+      .eq("isActive", true)
+      .order("createdAt", { ascending: false }),
+    supabase
+      .from("post_likes")
+      .select(`
+        postId,
+        createdAt,
+        posts(id, caption, thumbnailUrl, createdAt, isActive)
+      `)
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false }),
+    supabase
+      .from("follows")
+      .select(`
+        followingId,
+        users:followingId (
+          id,
+          username,
+          firstName,
+          lastName,
+          avatar,
+          role
+        )
+      `)
+      .eq("followerId", userId)
+      .order("createdAt", { ascending: false }),
+  ]);
+
+  // Process posts with media
+  const posts = postsQ?.data || [];
+  let postsWithMedia: TattooLoverProfile["posts"] = [];
+
+  if (posts.length > 0) {
+    const postIds = posts.map((p: any) => p.id);
+    const mediaQ = await supabase
+      .from("post_media")
+      .select("id, postId, mediaType, mediaUrl, order")
+      .in("postId", postIds)
+      .order("order", { ascending: true });
+
+    const mediaByPost: Record<string, any[]> = {};
+    if (!mediaQ.error && mediaQ.data) {
+      for (const m of mediaQ.data as any[]) {
+        mediaByPost[m.postId] = mediaByPost[m.postId] || [];
+        mediaByPost[m.postId].push({
+          id: m.id,
+          mediaType: m.mediaType,
+          mediaUrl: m.mediaUrl,
+          order: m.order,
+        });
+      }
+    }
+
+    postsWithMedia = posts.map((p: any) => ({
+      id: p.id,
+      thumbnailUrl: p.thumbnailUrl,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      media: mediaByPost[p.id] || [],
+    }));
+  }
+
+  // Process liked posts
+  const likedPostsData = (likedPostsQ?.data || [])
+    .map((like: any) => like.posts)
+    .filter((post: any) => post && post.isActive);
+
+  let likedPostsWithMedia: TattooLoverProfile["likedPosts"] = [];
+
+  if (likedPostsData.length > 0) {
+    const likedPostIds = likedPostsData.map((p: any) => p.id);
+    const likedMediaQ = await supabase
+      .from("post_media")
+      .select("id, postId, mediaType, mediaUrl, order")
+      .in("postId", likedPostIds)
+      .order("order", { ascending: true });
+
+    const likedMediaByPost: Record<string, any[]> = {};
+    if (!likedMediaQ.error && likedMediaQ.data) {
+      for (const m of likedMediaQ.data as any[]) {
+        likedMediaByPost[m.postId] = likedMediaByPost[m.postId] || [];
+        likedMediaByPost[m.postId].push({
+          id: m.id,
+          mediaType: m.mediaType,
+          mediaUrl: m.mediaUrl,
+          order: m.order,
+        });
+      }
+    }
+
+    likedPostsWithMedia = likedPostsData.map((p: any) => ({
+      id: p.id,
+      thumbnailUrl: p.thumbnailUrl,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      media: likedMediaByPost[p.id] || [],
+    }));
+  }
+
+  // Process followed users
+  const followedUsersData = (followsQ?.data || [])
+    .map((follow: any) => follow.users)
+    .filter((user: any) => user);
+
+  const followedArtistsData = followedUsersData.filter((user: any) => user.role === "ARTIST");
+  const followedTattooLoversData = followedUsersData.filter((user: any) => user.role === "TATTOO_LOVER");
+
+  let followedArtists: FollowingUser[] = [];
+  let followedTattooLovers: FollowingUser[] = [];
+
+  const allFollowedIds = followedUsersData.map((u: any) => u.id);
+  
+  if (allFollowedIds.length > 0) {
+    const [locationsQ, subscriptionsQ] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          userId,
+          provinces(name),
+          municipalities(name)
+        `)
+        .in("userId", allFollowedIds)
+        .eq("isPrimary", true),
+      supabase
+        .from("user_subscriptions")
+        .select(`
+          userId,
+          planId,
+          status,
+          subscription_plans(type)
+        `)
+        .in("userId", allFollowedIds)
+        .eq("status", "ACTIVE"),
+    ]);
+
+    const locationsByUserId: Record<string, any> = {};
+    if (locationsQ.data) {
+      for (const loc of locationsQ.data as any[]) {
+        locationsByUserId[loc.userId] = {
+          province: loc.provinces?.name,
+          municipality: loc.municipalities?.name,
+        };
+      }
+    }
+
+    const subscriptionsByUserId: Record<string, string> = {};
+    if (subscriptionsQ.data) {
+      for (const sub of subscriptionsQ.data as any[]) {
+        subscriptionsByUserId[sub.userId] = sub.subscription_plans?.type;
+      }
+    }
+
+    followedArtists = followedArtistsData.map((user: any) => ({
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      role: user.role,
+      location: locationsByUserId[user.id],
+      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+    }));
+
+    followedTattooLovers = followedTattooLoversData.map((user: any) => ({
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      role: user.role,
+      location: locationsByUserId[user.id],
+      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+    }));
+  }
+
+  return {
+    user: {
+      id: userRow.id,
+      username: userRow.username,
+      firstName: userRow.firstName,
+      lastName: userRow.lastName,
+      avatar: userRow.avatar,
+      instagram: userRow.instagram,
+      tiktok: userRow.tiktok,
+      isPublic: userRow.isPublic,
+    },
+    location,
+    favoriteStyles,
+    posts: postsWithMedia,
+    likedPosts: likedPostsWithMedia,
+    followedArtists,
+    followedTattooLovers,
+    isFollowing: isFollowingUser,
+  };
+}
+
+/**
+ * Fetch another artist's profile (not self)
+ * Similar to fetchArtistSelfProfile but for viewing other artists
+ */
+export async function fetchArtistProfile(
+  userId: string,
+  viewerId?: string
+): Promise<ArtistSelfProfile & { isFollowing?: boolean }> {
+  console.log("🌐 Fetching artist profile for:", userId, "viewer:", viewerId);
+
+  // Check if viewer is following this artist
+  let isFollowingArtist = false;
+  if (viewerId) {
+    isFollowingArtist = await isFollowing(viewerId, userId);
+  }
+
+  // Reuse the existing fetchArtistSelfProfile function
+  const profile = await fetchArtistSelfProfile(userId, false);
+
+  return {
+    ...profile,
+    isFollowing: isFollowingArtist,
+  };
+}
+
 

@@ -1,8 +1,9 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React from "react";
-import { Image, View } from "react-native";
+import { Image, TouchableOpacity, View } from "react-native";
 
 interface TattooPostsGridProps {
   posts: {
@@ -45,10 +46,10 @@ export const TattooPostsGrid: React.FC<TattooPostsGridProps> = ({ posts }) => {
 
   return (
     <View
-      className="flex-row bg-tat-foreground"
+      className="flex-row bg-tat-foreground "
       style={{
         paddingHorizontal: s(16),
-        marginTop: mvs(16),
+        paddingVertical: mvs(16),
         gap: s(16),
       }}
     >
@@ -83,7 +84,9 @@ const PostGridItem: React.FC<PostGridItemProps> = ({ post }) => {
   const imageUrl = post.media?.[0]?.mediaUrl || post.thumbnailUrl;
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => router.push(`/post/${post.id}` as any)}
       className="rounded-xl overflow-hidden"
       style={{
         height: s(253),
@@ -129,7 +132,7 @@ const PostGridItem: React.FC<PostGridItemProps> = ({ post }) => {
           </ScaledText>
         </LinearGradient>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 

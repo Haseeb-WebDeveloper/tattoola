@@ -1,52 +1,75 @@
 import {
-    Banner,
-    BodyPartsSection,
-    CollectionsSection,
-    ProfileHeader,
+    ArtistProfileView,
     ProfileSkeleton,
-    ServicesSection,
-    SocialMediaIcons,
-    StylesSection,
+    TattooLoverOtherProfileView,
 } from "@/components/profile";
-import { fetchArtistSelfProfile } from "@/services/profile.service";
+import { useAuth } from "@/providers/AuthProvider";
+import {
+    ArtistSelfProfile,
+    fetchArtistProfile,
+    fetchTattooLoverProfile,
+    TattooLoverProfile,
+} from "@/services/profile.service";
+import { supabase } from "@/utils/supabase";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-    Linking,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Text, View } from "react-native";
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<
+    | (ArtistSelfProfile & { isFollowing?: boolean })
+    | TattooLoverProfile
+    | null
+  >(null);
+  const [userRole, setUserRole] = useState<
+    "ARTIST" | "TATTOO_LOVER" | null
+  >(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadProfile = async () => {
+    try {
+      if (!id) return;
+
+      // First, get user role to determine which profile to fetch
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", String(id))
+        .single();
+
+      if (userError) throw new Error(userError.message);
+      if (!userData) throw new Error("User not found");
+
+      const role = userData.role as "ARTIST" | "TATTOO_LOVER";
+      setUserRole(role);
+
+      let profile;
+      if (role === "ARTIST") {
+        profile = await fetchArtistProfile(String(id), currentUser?.id);
+      } else {
+        profile = await fetchTattooLoverProfile(String(id), currentUser?.id);
+      }
+
+      setData(profile);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load profile");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        if (!id) return;
-        const profile = await fetchArtistSelfProfile(String(id));
-        if (mounted) setData(profile);
-      } catch (e: any) {
-        if (mounted) setError(e?.message || "Failed to load profile");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [id]);
+    loadProfile();
+  }, [id, currentUser?.id]);
 
-  const handleSocialMediaPress = (url: string) => {
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err)
-    );
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadProfile();
   };
 
   if (loading) {
@@ -61,72 +84,22 @@ export default function UserProfileScreen() {
     );
   }
 
-  return (
-    <View className="flex-1 bg-background">
-      <ScrollView
-        className="relative"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 10 }}
-      >
-        {/* Banner */}
-        <Banner banner={data?.artistProfile?.banner || []} />
-
-        {/* Profile Header */}
-        <ProfileHeader
-          firstName={data?.user?.firstName}
-          lastName={data?.user?.lastName}
-          avatar={data?.user?.avatar}
-          businessName={data?.artistProfile?.businessName}
-          municipality={data?.location?.municipality?.name}
-          province={data?.location?.province?.name}
-        />
-
-        {/* Social Media Icons */}
-        <SocialMediaIcons
-          instagram={data?.user?.instagram}
-          tiktok={data?.user?.tiktok}
-          website={data?.user?.website}
-          onInstagramPress={handleSocialMediaPress}
-          onTiktokPress={handleSocialMediaPress}
-          onWebsitePress={handleSocialMediaPress}
-        />
-
-        {/* Bio */}
-        {!!data?.artistProfile?.bio && (
-          <View className="px-4 mt-6">
-            <Text className="text-foreground tat-body-2-light">
-              {data.artistProfile.bio}
-            </Text>
-          </View>
-        )}
-
-        {/* Styles Section */}
-        <StylesSection styles={data?.favoriteStyles || []} />
-
-        {/* Services Section */}
-        <ServicesSection services={data?.services || []} />
-
-        {/* Collections Section */}
-        <CollectionsSection collections={data?.collections || []} />
-
-        {/* Body Parts Section */}
-        <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
-        
-        {/* Bottom actions */}
-        <View className="bg-background px-4 py-3">
-          <View className="flex-row gap-3">
-            <TouchableOpacity className="flex-1 h-12 rounded-full border border-gray items-center justify-center">
-              <Text className="text-foreground font-medium">Segui</Text>
-            </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => (id ? (require("expo-router").router.push(`/user/${id}/request/size` as any)) : null)}
-            className="flex-1 h-12 rounded-full bg-primary items-center justify-center"
-          >
-            <Text className="text-white font-medium">Invia richiesta</Text>
-          </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
-  );
+  // Render based on user role
+  if (userRole === "ARTIST") {
+    return (
+      <ArtistProfileView
+        data={data as ArtistSelfProfile & { isFollowing?: boolean }}
+        currentUserId={currentUser?.id}
+      />
+    );
+  } else {
+    return (
+      <TattooLoverOtherProfileView
+        data={data as TattooLoverProfile}
+        currentUserId={currentUser?.id}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+      />
+    );
+  }
 }

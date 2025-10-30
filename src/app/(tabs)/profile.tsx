@@ -129,20 +129,7 @@ export default function ProfileScreen() {
   if (user?.role === "TATTOO_LOVER") {
     return (
       <View className="flex-1 bg-background">
-        {/* Settings button */}
-        <View
-          className="absolute top-2 right-0 z-10"
-          style={{ paddingHorizontal: s(16) }}
-        >
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => router.push("/settings" as any)}
-            className="rounded-full bg-primary items-center justify-center"
-            style={{ width: s(36), height: s(36) }}
-          >
-            <SVGIcons.Settings style={{ width: s(20), height: s(20) }} />
-          </TouchableOpacity>
-        </View>
+       
 
         <TattooLoverProfileView
           data={data as TattooLoverSelfProfile}

@@ -4,11 +4,15 @@ import { mvs, s } from "@/utils/scale";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
+export type ProfileTabId =
+  | "my-tattoos"
+  | "liked"
+  | "artists-you-follow"
+  | "tattoolers";
+
 interface ProfileTabNavigationProps {
-  activeTab: "my-tattoos" | "liked" | "artists-you-follow" | "tattoolers";
-  onTabChange?: (
-    tab: "my-tattoos" | "liked" | "artists-you-follow" | "tattoolers"
-  ) => void;
+  activeTab: ProfileTabId;
+  onTabChange?: (tab: ProfileTabId) => void;
 }
 
 export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
@@ -42,23 +46,16 @@ export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
     <View
       style={{
         marginTop: mvs(24),
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.1)",
       }}
     >
-      <View
-        className="flex-row justify-between"
-        style={{
-          paddingHorizontal: s(16),
-          paddingBottom: mvs(8),
-        }}
-      >
-        {tabs.map((tab) => {
+      <View className="flex-row">
+        {tabs.map((tab, index) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
 
           return (
             <TouchableOpacity
+              activeOpacity={1}
               key={tab.id}
               onPress={() => {
                 // All tabs are now functional
@@ -66,10 +63,17 @@ export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
                   onTabChange(tab.id);
                 }
               }}
-              className={`items-center  ${
-                  isActive ? "bg-tat-foreground" : "bg-background"
-                }`}
-              style={{ gap: mvs(4), minWidth: s(60) }}
+              className={`items-center  w-auto border-gray ${
+                isActive ? "bg-tat-foreground" : "bg-background"
+              }
+              
+              `}
+              style={{
+                gap: mvs(4),
+                paddingHorizontal: s(10),
+                paddingVertical: mvs(8),
+                borderRightWidth: index === tabs.length - 1 ? s(0) : s(0.5),
+              }}
             >
               {/* Icon */}
               <View>
@@ -83,8 +87,8 @@ export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className={`font-neueLight text-center ${
-                  isActive ? "text-foreground" : "text-[#A49A99]"
+                className={`font-light text-center ${
+                  isActive ? "text-foreground" : "text-gray"
                 }`}
                 style={{ fontSize: s(14), lineHeight: s(23) }}
               >
@@ -92,7 +96,7 @@ export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
               </ScaledText>
 
               {/* Active Underline */}
-              {isActive && (
+              {/* {isActive && (
                 <View
                   className="bg-foreground"
                   style={{
@@ -102,7 +106,7 @@ export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
                     bottom: -mvs(8),
                   }}
                 />
-              )}
+              )} */}
             </TouchableOpacity>
           );
         })}

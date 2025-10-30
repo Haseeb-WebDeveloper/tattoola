@@ -24,6 +24,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
 
   return (
     <TouchableOpacity
+      activeOpacity={1}
       onPress={handlePress}
       className="bg-tat-foreground border-gray"
       style={{

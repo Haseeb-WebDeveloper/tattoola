@@ -105,14 +105,17 @@ export default function HomeScreen() {
       <View
         className="absolute left-0 right-0 flex-row items-center justify-between"
         style={{
-          top: Math.max(insets.top, mvs(16)),
+          top: mvs(20),
           paddingHorizontal: s(20),
         }}
       >
-        <View className="rounded-full items-center justify-center">
-          <SVGIcons.Flash style={{ width: s(20), height: s(20) }} />
+        <View
+          className="rounded-full items-center justify-center"
+          style={{ width: s(20), height: s(20) }}
+        >
+          {/* <SVGIcons.Flash  /> */}
         </View>
-        <SVGIcons.LogoLight style={{ width: s(40), height: s(40) }} />
+        <SVGIcons.LogoLight style={{ width: s(33), height: s(33) }} />
         <View style={{ width: s(20), height: s(20) }} />
       </View>
     </View>

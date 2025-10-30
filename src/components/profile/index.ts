@@ -1,4 +1,5 @@
 export { ArtistCard } from './ArtistCard';
+export { ArtistProfileView } from './ArtistProfileView';
 export { Banner } from './Banner';
 export { BodyPartsSection } from './BodyPartsSection';
 export { CollectionsSection } from './CollectionsSection';
@@ -16,6 +17,7 @@ export { StudioHeader } from './StudioHeader';
 export { StudioPhotos } from './StudioPhotos';
 export { StudioSkeleton } from './StudioSkeleton';
 export { StylesSection } from './StylesSection';
+export { TattooLoverOtherProfileView } from './TattooLoverOtherProfileView';
 export { TattooLoverProfileHeader } from './TattooLoverProfileHeader';
 export { TattooLoverProfileView } from './TattooLoverProfileView';
 export { TattooPostsGrid } from './TattooPostsGrid';

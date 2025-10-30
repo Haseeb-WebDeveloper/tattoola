@@ -1,0 +1,15 @@
+export const STYLE_EMOJIS: Record<string, string> = {
+  Lettering: "✍️",
+  Japanese: "🌸",
+  Sketch: "✏️",
+  Traditional: "🎨",
+  Realism: "📸",
+  Watercolor: "💧",
+  Geometric: "📐",
+  Blackwork: "⚫",
+  Tribal: "🗿",
+  "Neo-Traditional": "🎭",
+  Dotwork: "•",
+  Minimalist: "➖",
+  "3D": "🌸",
+};
