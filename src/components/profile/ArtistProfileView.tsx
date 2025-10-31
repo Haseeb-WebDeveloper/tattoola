@@ -62,7 +62,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   return (
     <View className="flex-1 bg-background">
       {/* Follow button - positioned top-right */}
-      {currentUserId && (
+      {/* {currentUserId && (
         <View
           className="absolute top-2 right-0 z-10"
           style={{ paddingHorizontal: s(16) }}
@@ -85,7 +85,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             </ScaledText>
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
 
       <ScrollView
         className="relative"

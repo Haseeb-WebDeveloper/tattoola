@@ -51,7 +51,7 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "Tattoola lover Profile"
+eas update --branch preview --message "User signup done"
 
 eas build --profile development --platform android
 

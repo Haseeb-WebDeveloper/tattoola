@@ -50,7 +50,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() =>
           router.push("/user/23377731-a5cf-4d99-8de7-61f952c177a7")
         }
@@ -70,9 +70,9 @@ export default function HomeScreen() {
         className="bg-primary text-background p-4 rounded-full"
       >
         <Text>User registration</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
-      {/* <FlatList
+      <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -106,7 +106,7 @@ export default function HomeScreen() {
             tintColor="#fff"
           />
         }
-      /> */}
+      />
       {/* Header brand (centered logo) */}
       <View
         className="absolute left-0 right-0 flex-row items-center justify-between"
