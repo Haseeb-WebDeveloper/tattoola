@@ -1,9 +1,9 @@
 import ArtistCard from "@/components/search/ArtistCard";
 import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
 import FilterModal from "@/components/search/FilterModal";
-import LocationModal from "@/components/search/LocationModal";
 import StudioCard from "@/components/search/StudioCard";
 import StudioCardSkeleton from "@/components/search/StudioCardSkeleton";
+import LocationPicker from "@/components/shared/LocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
@@ -12,14 +12,13 @@ import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchScreen() {
-  const insets = useSafeAreaInsets();
   const {
     activeTab,
     setActiveTab,
     results,
+    isInitializing,
     isLoading,
     isLoadingMore,
     hasMore,
@@ -28,6 +27,7 @@ export default function SearchScreen() {
     locationDisplay,
     filters,
     initializeWithUserLocation,
+    resetFilters,
   } = useSearchStore();
 
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -89,31 +89,80 @@ export default function SearchScreen() {
     }
   };
 
+  // Helper: check if filters are applied (not default/empty)
+  const areFiltersActive = () => {
+    return (
+      (filters.styleIds && filters.styleIds.length > 0) ||
+      (filters.serviceIds && filters.serviceIds.length > 0) ||
+      (filters.provinceId && filters.provinceId.length > 0) ||
+      (filters.municipalityId && filters.municipalityId.length > 0)
+    );
+  };
+
+  const handleResetFilters = () => {
+    const { resetFilters, search: searchStore } = useSearchStore.getState();
+    resetFilters();
+    searchStore();
+  };
+
   const renderEmpty = () => {
     if (isLoading) return null;
 
-    // return (
-    //   <View
-    //     className="flex-1 items-center justify-center"
-    //     style={{ paddingTop: mvs(100) }}
-    //   >
-    //     <ScaledText
-    //       allowScaling={false}
-    //       variant="lg"
-    //       className="text-gray font-neueBold text-center"
-    //     >
-    //       No results found
-    //     </ScaledText>
-    //     <ScaledText
-    //       allowScaling={false}
-    //       variant="body2"
-    //       className="text-gray font-neueLight text-center"
-    //       style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
-    //     >
-    //       Try adjusting your filters to find what you're looking for
-    //     </ScaledText>
-    //   </View>
-    // );
+    return (
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ paddingTop: mvs(100) }}
+      >
+        <View className="flex-row items-center justify-center" style={{ gap: s(4) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="lg"
+            className="text-gray font-neueBold text-center"
+          >
+          No results found
+          </ScaledText>
+          {/* <SVGIcons.SafeAlert width={s(12)} height={s(12)} /> */}
+        </View>
+        <ScaledText
+          allowScaling={false}
+          variant="body2"
+          className="text-gray font-neueLight text-center"
+          style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
+        >
+          Please try adjusting your filters
+          {areFiltersActive() ? " or reset the filters" : ""}.
+        </ScaledText>
+        <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            className="flex-row items-center"
+          >
+            {/* Fallback to generic reload or try again, since SVGIcons.Refresh doesn't exist */}
+            <ScaledText
+              allowScaling={false}
+              variant="body2"
+              className="text-primary font-neueLight text-center"
+            >
+              Try again
+            </ScaledText>
+          </TouchableOpacity>
+          {areFiltersActive() && (
+            <TouchableOpacity
+              onPress={handleResetFilters}
+              className="flex-row items-center"
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="body2"
+                className="text-primary font-neueLight text-center"
+              >
+                Reset filters
+              </ScaledText>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
   };
 
   const renderFooter = () => {
@@ -156,8 +205,14 @@ export default function SearchScreen() {
         >
           <View className="flex-row items-center justify-between">
             {/* Logo */}
-            <View className="flex-row items-center">
-              <SVGIcons.Flash width={s(20)} height={s(20)} />
+            <View
+              className="flex-row items-center"
+              style={{
+                width: s(20),
+                height: s(20),
+              }}
+            >
+              {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
             </View>
             <View className="flex-row items-center">
               <SVGIcons.LogoLight />
@@ -191,8 +246,8 @@ export default function SearchScreen() {
           >
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className={`font-light ${
+              variant="sm"
+              className={`font-neueLight ${
                 activeTab === "all" ? "text-white" : "text-gray"
               }`}
             >
@@ -212,8 +267,8 @@ export default function SearchScreen() {
           >
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className={`font-light ${
+              variant="sm"
+              className={`font-neueLight ${
                 activeTab === "artists" ? "text-white" : "text-gray"
               }`}
             >
@@ -233,8 +288,8 @@ export default function SearchScreen() {
           >
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className={`font-light ${
+              variant="sm"
+              className={`font-neueLight ${
                 activeTab === "studios" ? "text-white" : "text-gray"
               }`}
             >
@@ -244,7 +299,7 @@ export default function SearchScreen() {
         </View>
 
         {/* Location Display */}
-        {locationText && (
+        {locationText && !isInitializing && (
           <View
             className="flex-row items-center justify-center"
             style={{
@@ -263,10 +318,8 @@ export default function SearchScreen() {
             {locationDisplay && (
               <TouchableOpacity
                 onPress={() => setShowLocationModal(true)}
-                className="border border-gray rounded-full flex-row items-center"
+                className="flex-row items-center"
                 style={{
-                  paddingVertical: mvs(3),
-                  paddingHorizontal: s(8),
                   gap: s(4),
                 }}
               >
@@ -276,7 +329,16 @@ export default function SearchScreen() {
                   variant="11"
                   className="text-primary font-semibold"
                 >
-                  {locationDisplay.province.toUpperCase()}
+                  {(() => {
+                    const province = locationDisplay?.province || "";
+                    const municipality = locationDisplay?.municipality || "";
+                    if (province && municipality) {
+                      const muniAbbrev = municipality.slice(0, 2).toUpperCase();
+                      return `${province.toUpperCase()} (${muniAbbrev})`;
+                    }
+                    const single = province || municipality;
+                    return single.toUpperCase();
+                  })()}
                 </ScaledText>
               </TouchableOpacity>
             )}
@@ -284,7 +346,7 @@ export default function SearchScreen() {
         )}
 
         {/* Results List */}
-        {isLoading && combinedResults.length === 0 ? (
+        {isInitializing || (isLoading && combinedResults.length === 0) ? (
           <View className="flex-1">
             {/* Show skeletons based on active tab */}
             {activeTab === "artists" || activeTab === "all" ? (
@@ -337,12 +399,12 @@ export default function SearchScreen() {
       />
 
       {/* Location Picker Bottom Sheet */}
-      <LocationModal
+      <LocationPicker
         visible={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         onSelect={handleLocationSelect}
-        initialProvinceId={locationDisplay ? filters.provinceId : null}
-        initialMunicipalityId={locationDisplay ? filters.municipalityId : null}
+        initialProvinceId={filters.provinceId}
+        initialMunicipalityId={filters.municipalityId}
       />
     </View>
   );

@@ -31,6 +31,8 @@ import Heart from "@/assets/icons/heart.svg";
 // @ts-ignore
 import Star from "@/assets/icons/star.svg";
 // @ts-ignore
+import StarRounded from "@/assets/icons/star-rounded.svg";
+// @ts-ignore
 import FilledHeart from "@/assets/icons/heart-filled.svg";
 // @ts-ignore
 import Like from "@/assets/icons/like.svg";
@@ -215,6 +217,7 @@ export const SVGIcons = {
   Upload,
   Heart,
   Star,
+  StarRounded,
   FilledHeart,
   StartCircle,
   StartCircleFilled,

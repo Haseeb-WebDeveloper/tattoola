@@ -1,9 +1,9 @@
 import { getCurrentUserLocation } from "@/services/profile.service";
 import { searchAll, searchArtists, searchStudios } from "@/services/search.service";
 import type {
-    SearchFilters,
-    SearchResults,
-    SearchTab
+  SearchFilters,
+  SearchResults,
+  SearchTab
 } from "@/types/search";
 import { create } from "zustand";
 
@@ -12,6 +12,7 @@ type SearchState = {
   filters: SearchFilters;
   results: SearchResults;
   page: number;
+  isInitializing: boolean;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
@@ -31,6 +32,7 @@ type SearchState = {
   loadMore: () => Promise<void>;
   resetSearch: () => void;
   initializeWithUserLocation: () => Promise<void>;
+  resetFilters: () => void;
 };
 
 const initialFilters: SearchFilters = {
@@ -48,6 +50,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     studios: [],
   },
   page: 0,
+  isInitializing: true,
   isLoading: false,
   isLoadingMore: false,
   hasMore: true,
@@ -208,11 +211,10 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
 
   initializeWithUserLocation: async () => {
+    set({ isInitializing: true, isLoading: true, error: null, page: 0, results: { artists: [], studios: [] } });
     try {
       const userLocation = await getCurrentUserLocation();
-      
       if (userLocation) {
-        // Pre-fill filters with user location
         set({
           filters: {
             ...get().filters,
@@ -225,14 +227,18 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           },
         });
       }
-      
-      // Trigger search with or without location
       await get().search();
     } catch (error) {
       console.error("Error initializing with user location:", error);
-      // Fallback to regular search on error
       await get().search();
+    } finally {
+      set({ isInitializing: false });
     }
+  },
+
+  resetFilters: () => {
+    set({ filters: initialFilters, locationDisplay: null });
+    get().search();
   },
 }));
 

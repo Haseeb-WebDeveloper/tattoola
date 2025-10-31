@@ -405,6 +405,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         visible={showLocationPicker}
         onClose={() => setShowLocationPicker(false)}
         onSelect={handleLocationSelect}
+        initialProvinceId={tempFilters.provinceId}
+        initialMunicipalityId={tempFilters.municipalityId}
       />
     </>
   );

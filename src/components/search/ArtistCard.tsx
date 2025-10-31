@@ -6,6 +6,7 @@ import { ResizeMode, Video } from "expo-av";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
+import { StylePills } from "../ui/stylePills";
 
 type ArtistCardProps = {
   artist: ArtistSearchResult;
@@ -61,7 +62,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
         >
           <View
             className="rounded-full border border-black overflow-hidden"
-            style={{ width: s(58), height: s(58), marginRight: s(12) }}
+            style={{ width: s(61), height: s(61), marginRight: s(12) }}
           >
             {artist.user.avatar ? (
               <Image
@@ -78,7 +79,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <View className="flex-row items-center gap-1">
               <ScaledText
                 allowScaling={false}
-                variant="20"
+                variant="lg"
                 className="text-foreground font-neueBold leading-none "
               >
                 {artist.user.username}
@@ -96,11 +97,12 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             className="flex-row items-center"
             style={{ marginBottom: mvs(4) }}
           >
-            <SVGIcons.Star width={s(14)} height={s(14)} />
+            <SVGIcons.StarRounded width={s(14)} height={s(14)} />
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-neueLight ml-1"
+              className="text-white font-neueLight"
+              style={{ marginLeft: s(4) }}
             >
               {artist.yearsExperience} anni di esperienza
             </ScaledText>
@@ -117,7 +119,8 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-neueLight ml-1"
+              className="text-white font-neueLight"
+              style={{ marginLeft: s(4) }}
             >
               <ScaledText
                 allowScaling={false}
@@ -144,7 +147,8 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-neueLight ml-1"
+              className="text-white font-neueLight"
+              style={{ marginLeft: s(4) }}
               numberOfLines={1}
             >
               {artist.location.province
@@ -156,25 +160,9 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
 
         {/* Styles Pills */}
         {artist.styles.length > 0 && (
-          <View
-            className="flex-row flex-wrap gap-2"
-            style={{ marginTop: mvs(8) }}
-          >
-            {artist.styles.map((style, index) => (
-              <View
-                key={style.id}
-                className="border border-white rounded-full px-3 py-1"
-              >
-                <ScaledText
-                  allowScaling={false}
-                  variant="body4"
-                  className="text-white font-neueMedium"
-                >
-                  {style.name}
-                </ScaledText>
-              </View>
-            ))}
-          </View>
+         <View style={{ marginTop: mvs(4) }}>
+          <StylePills styles={artist.styles} />
+         </View>
         )}
 
         {/* Studio Profile Label */}

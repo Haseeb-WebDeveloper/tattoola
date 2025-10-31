@@ -5,12 +5,12 @@ import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import React, { useEffect, useState } from "react";
 import {
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -55,6 +55,9 @@ export default function LocationPicker({
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
   const [search, setSearch] = useState("");
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(
+    null
+  );
+  const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(
     null
   );
 
@@ -105,8 +108,16 @@ export default function LocationPicker({
     }
   }, [visible, initialProvinceId, provinces]);
 
+  // Preselect municipality when provided (used for highlighting)
+  useEffect(() => {
+    if (visible && initialMunicipalityId) {
+      setSelectedMunicipalityId(initialMunicipalityId);
+    }
+  }, [visible, initialMunicipalityId]);
+
   const handleMunicipalitySelect = (municipality: Municipality) => {
     if (selectedProvince) {
+      setSelectedMunicipalityId(municipality.id);
       onSelect({
         province: selectedProvince.name,
         provinceId: selectedProvince.id,
@@ -121,6 +132,7 @@ export default function LocationPicker({
     setModalStep("province");
     setSearch("");
     setSelectedProvince(null);
+    setSelectedMunicipalityId(null);
     onClose();
   };
 
@@ -300,30 +312,38 @@ export default function LocationPicker({
                   </ScaledText>
                 </View>
               ) : (
-                listFiltered.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    className={`py-4 border-b border-gray/20 bg-[#100C0C]`}
-                    onPress={() => {
+                listFiltered.map((item) => {
+                  const isActive =
+                    modalStep === "province"
+                      ? selectedProvince?.id === item.id
+                      : selectedMunicipalityId === item.id;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
+                      onPress={() => {
                       if (modalStep === "province") {
-                        setSelectedProvince(item);
-                        setSearch("");
-                      } else {
-                        handleMunicipalitySelect(item);
-                      }
-                    }}
-                  >
-                    <View className="flex-row items-center gap-3 px-6">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="body2"
-                        className="text-foreground"
-                      >
-                        {item.name}
-                      </ScaledText>
-                    </View>
-                  </Pressable>
-                ))
+                          setSelectedProvince(item);
+                          setSelectedMunicipalityId(null);
+                          setSearch("");
+                        } else {
+                          setSelectedMunicipalityId(item.id);
+                          handleMunicipalitySelect(item);
+                        }
+                      }}
+                    >
+                      <View className="flex-row items-center gap-3 px-6">
+                        <ScaledText
+                          allowScaling={false}
+                          variant="body2"
+                          className="text-foreground"
+                        >
+                          {item.name}
+                        </ScaledText>
+                      </View>
+                    </Pressable>
+                  );
+                })
               )}
             </View>
           </ScrollView>

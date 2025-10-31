@@ -4,8 +4,7 @@ import type {
   StudioSearchResult,
 } from "@/types/search";
 import { supabase } from "@/utils/supabase";
-
-const RESULTS_PER_PAGE = 20;
+import { SEARCH_RESULTS_PER_PAGE } from "@/constants/limits";
 
 type SearchArtistsParams = {
   filters: SearchFilters;
@@ -111,8 +110,8 @@ export async function searchArtists({
     }
 
     // Apply pagination
-    const from = page * RESULTS_PER_PAGE;
-    const to = from + RESULTS_PER_PAGE;
+    const from = page * SEARCH_RESULTS_PER_PAGE;
+    const to = from + SEARCH_RESULTS_PER_PAGE;
     query = query.range(from, to);
 
     const { data, error } = await query;
@@ -181,7 +180,7 @@ export async function searchArtists({
 
     return {
       data: artists,
-      hasMore: data?.length === RESULTS_PER_PAGE + 1,
+      hasMore: data?.length === SEARCH_RESULTS_PER_PAGE + 1,
     };
   } catch (error: any) {
     console.error("Unexpected error searching artists:", error);
@@ -233,6 +232,7 @@ export async function searchStudios({
         ),
         owner:artist_profiles(
           user:users(
+            username,
             subscriptions:user_subscriptions!user_subscriptions_userId_fkey(
               status,
               endDate,
@@ -282,8 +282,8 @@ export async function searchStudios({
     }
 
     // Apply pagination
-    const from = page * RESULTS_PER_PAGE;
-    const to = from + RESULTS_PER_PAGE;
+    const from = page * SEARCH_RESULTS_PER_PAGE;
+    const to = from + SEARCH_RESULTS_PER_PAGE;
     query = query.range(from, to);
 
     const { data, error } = await query;
@@ -307,6 +307,7 @@ export async function searchStudios({
         slug: studio.slug,
         logo: studio.logo,
         description: studio.description,
+        ownerName: studio.owner?.user?.username || "",
         locations:
           studio.locations?.map((loc: any) => ({
             province: loc.province?.name || "",
@@ -343,7 +344,7 @@ export async function searchStudios({
 
     return {
       data: studios,
-      hasMore: data?.length === RESULTS_PER_PAGE + 1,
+      hasMore: data?.length === SEARCH_RESULTS_PER_PAGE + 1,
     };
   } catch (error: any) {
     console.error("Unexpected error searching studios:", error);

@@ -6,6 +6,7 @@ import { ResizeMode, Video } from "expo-av";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
+import { StylePills } from "../ui/stylePills";
 
 type StudioCardProps = {
   studio: StudioSearchResult;
@@ -64,7 +65,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
         >
           <View
             className="rounded-full border border-black overflow-hidden"
-            style={{ width: s(58), height: s(58), marginRight: s(12) }}
+            style={{ width: s(61), height: s(61), marginRight: s(12) }}
           >
             {studio.logo ? (
               <Image
@@ -82,18 +83,18 @@ export default function StudioCard({ studio }: StudioCardProps) {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-semibold"
+                className="text-white font-neueBold"
                 numberOfLines={1}
               >
                 {studio.name}
               </ScaledText>
-              <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} />
+              {/* <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} /> */}
             </View>
           </View>
         </View>
 
         {/* Description */}
-        {studio.description && (
+        {/* {studio.description && (
           <View className="flex-row items-center" style={{ marginVertical: mvs(2) }}>
             <ScaledText
               allowScaling={false}
@@ -105,7 +106,30 @@ export default function StudioCard({ studio }: StudioCardProps) {
               {studio.description}
             </ScaledText>
           </View>
-        )}
+        )} */}
+        {studio.ownerName ? (
+          <View className="flex-row items-center" style={{ marginBottom: mvs(2) }}>
+            <SVGIcons.Studio width={s(14)} height={s(14)}
+            style={{ marginRight: s(4) }}
+            />
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-white font-neueLight"
+              numberOfLines={1}
+            >
+              Owned by
+            </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-white font-neueBold ml-1"
+              numberOfLines={1}
+            >
+              {studio.ownerName}
+            </ScaledText>
+          </View>
+        ) : null}
 
         {/* Locations */}
         {studio.locations.length > 0 && (
@@ -122,7 +146,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
                 <SVGIcons.Location width={s(14)} height={s(14)} />
                 <ScaledText
                   allowScaling={false}
-                  variant="body2"
+                  variant="md"
                   className="text-white font-neueLight ml-1"
                   numberOfLines={1}
                 >
@@ -135,25 +159,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
 
         {/* Styles Pills */}
         {studio.styles.length > 0 && (
-          <View
-            className="flex-row flex-wrap gap-2"
-            style={{ marginTop: mvs(8) }}
-          >
-            {studio.styles.map((style, index) => (
-              <View
-                key={style.id}
-                className="border border-white rounded-full px-3 py-1"
-              >
-                <ScaledText
-                  allowScaling={false}
-                  variant="body4"
-                  className="text-white font-neueMedium"
-                >
-                  {style.name}
-                </ScaledText>
-              </View>
-            ))}
-          </View>
+          <StylePills styles={studio.styles} />
         )}
       </View>
 

@@ -80,14 +80,7 @@ export default function UserRegistrationStep3() {
         .eq("isActive", true)
         .order("name");
       if (error) {
-        setProvinces([
-          { id: "1", name: "AGRIGENTO" },
-          { id: "2", name: "PALERMO" },
-          { id: "3", name: "CATANIA" },
-          { id: "4", name: "MESSINA" },
-          { id: "5", name: "SIRACUSA" },
-          { id: "6", name: "TRAPANI" },
-        ]);
+        setProvinces([]);
       } else {
         setProvinces(data || []);
       }

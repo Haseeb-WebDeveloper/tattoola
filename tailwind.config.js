@@ -157,7 +157,7 @@ module.exports = {
       fontFamily: {
         // Base families
         montserrat: ["Montserrat-Regular", "Montserrat", "system-ui", "sans-serif"],
-        neue: ["NeueHaasDisplayPro", "Montserrat", "system-ui", "sans-serif"],
+        neue: ["NeueHaasDisplay", "Montserrat", "system-ui", "sans-serif"],
 
         // Explicit weight-specific families for convenience utilities
         montserratLight: ["Montserrat-Light", "Montserrat", "system-ui", "sans-serif"],
@@ -166,15 +166,13 @@ module.exports = {
         montserratBold: ["Montserrat-Bold", "Montserrat", "system-ui", "sans-serif"],
         montserratBlack: ["Montserrat-Black", "Montserrat", "system-ui", "sans-serif"],
 
-        neueUltraThin: ["NeueHaasDisplayPro-UltraThin", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueThin: ["NeueHaasDisplayPro-Thin", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueExtraLight: ["NeueHaasDisplayPro-ExtraLight", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueLight: ["NeueHaasDisplayPro-Light", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueMedium: ["NeueHaasDisplayPro-Medium", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueSemibold: ["NeueHaasDisplayPro-SemiBold", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueBold: ["NeueHaasDisplayPro-Bold", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neueBlack: ["NeueHaasDisplayPro-Black", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
-        neue: ["NeueHaasDisplayPro", "NeueHaasDisplayPro", "system-ui", "sans-serif"],
+        neueThin: ["NeueHaasDisplay-Thin", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueLight: ["NeueHaasDisplay-Light", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueMedium: ["NeueHaasDisplay-Medium", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        // Fallback mapping for missing Semibold asset -> use Bold
+        neueSemibold: ["NeueHaasDisplay-Bold", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueBold: ["NeueHaasDisplay-Bold", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueBlack: ["NeueHaasDisplay-Black", "NeueHaasDisplay", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Typography scale inspired by the SVG text hierarchy

@@ -2,12 +2,12 @@ import { SVGIcons } from "@/constants/svg";
 import "@/global.css";
 import { mvs, s } from "@/utils/scale";
 import {
-    Montserrat_300Light,
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    Montserrat_700Bold,
-    Montserrat_900Black,
+  Montserrat_300Light,
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+  Montserrat_900Black,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -36,17 +36,14 @@ export default function RootLayout() {
     "Montserrat-Bold": Montserrat_700Bold,
     "Montserrat-Black": Montserrat_900Black,
 
-    // Neue Haas Grotesk Display Pro (local OTFs)
-    // Map a base family name to Roman by default
-    NeueHaasDisplayPro: require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_55_Roman.otf"),
-    "NeueHaasDisplayPro-UltraThin": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_15_Ultra_Thin.otf"),
-    "NeueHaasDisplayPro-Thin": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_25_Thin.otf"),
-    "NeueHaasDisplayPro-ExtraLight": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_35_Extra_Light.otf"),
-    "NeueHaasDisplayPro-Light": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_45_Light.otf"),
-    "NeueHaasDisplayPro-Medium": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_65_Medium.otf"),
-    "NeueHaasDisplayPro-SemiBold": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_65_Medium.otf"),
-    "NeueHaasDisplayPro-Bold": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_75_Bold.otf"),
-    "NeueHaasDisplayPro-Black": require("../assets/fonts/fonnts.com-Neue_Haas_Grotesk_Display_Pro_95_Black.otf"),
+    // Neue Haas Grotesk Display (local TTFs)
+    // Base family mapped to Roman by default
+    NeueHaasDisplay: require("../assets/fonts/NeueHaasDisplayRoman.ttf"),
+    "NeueHaasDisplay-Light": require("../assets/fonts/NeueHaasDisplayLight.ttf"),
+    "NeueHaasDisplay-Medium": require("../assets/fonts/NeueHaasDisplayMediu.ttf"),
+    "NeueHaasDisplay-Bold": require("../assets/fonts/NeueHaasDisplayBold.ttf"),
+    "NeueHaasDisplay-Black": require("../assets/fonts/NeueHaasDisplayBlack.ttf"),
+    "NeueHaasDisplay-Thin": require("../assets/fonts/NeueHaasDisplayThin.ttf"),
   });
 
   useEffect(() => {

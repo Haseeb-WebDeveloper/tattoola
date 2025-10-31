@@ -1,5 +1,5 @@
 import ScaledText from "@/components/ui/ScaledText";
-import { STYLE_EMOJIS } from "@/constants/styles-emoji";
+import { addEmojiWithStyle } from "@/utils/content/add-emoji-with-style";
 import { mvs, s } from "@/utils/scale";
 import React from "react";
 import { ScrollView, View } from "react-native";
@@ -34,8 +34,7 @@ export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
         contentContainerStyle={{ gap: s(10) }}
       >
         {styles.map((style) => {
-          const emoji = STYLE_EMOJIS[style.name] || "";
-          const displayText = emoji ? `${emoji} ${style.name}` : style.name;
+          const displayText = addEmojiWithStyle(style.name);
 
           return (
             <View
