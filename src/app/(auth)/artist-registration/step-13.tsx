@@ -1,16 +1,12 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
-import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { useAuth } from "@/providers/AuthProvider";
 import {
   SubscriptionPlan,
   SubscriptionService,
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
-import type { CompleteArtistRegistration } from "@/types/auth";
-import { WorkArrangement } from "@/types/auth";
 import { isValid, step13Schema } from "@/utils/artistRegistrationValidation";
 import { logger } from "@/utils/logger";
 import { mvs, s, scaledFont } from "@/utils/scale";
@@ -21,31 +17,51 @@ import React, { useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 
-// Skeleton component that mirrors the Subscription plan block layout and sizing exactly
-function PlanLoadingSkeleton() {
+// Skeleton that closely matches the plan card (layout, sizes, gradient)
+function PlanLoadingSkeleton({ accent }: { accent: string }) {
   return (
-    <View className="mb-4 p-6 rounded-2xl border-2 border-gray bg-black/40">
-      <View className="flex-row items-center justify-between mb-4">
-        <View className="flex-1">
-          <View className="w-36 h-7 bg-gray/30 rounded mb-2" />
-          <View className="w-28 h-5 bg-gray/20 rounded mb-1" />
-          <View className="w-36 h-4 bg-gray/20 rounded" />
+    <View
+      className="rounded-2xl"
+      style={{ borderWidth: 1, borderColor: "#a49a99", borderRadius: 8 }}
+    >
+      <LinearGradient
+        colors={["#FFFFFF", "#FFCACA"]}
+        locations={[0.0095, 0.995]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ borderRadius: 8, paddingVertical: mvs(16), paddingHorizontal: s(16) }}
+      >
+        <View className="mb-4">
+          {/* Title row */}
+          <View className="flex-row items-center">
+            <View style={{ width: s(45), height: mvs(24), borderRadius: 4, backgroundColor: "#E8E0E0" }} />
+            <View style={{ width: s(80), height: mvs(24), borderRadius: 4, marginLeft: s(6), backgroundColor: accent }} />
+          </View>
+          {/* Price row */}
+          <View className="flex-row items-end mt-2">
+            <View style={{ width: s(90), height: mvs(34), borderRadius: 6, backgroundColor: "#E8E0E0" }} />
+            <View style={{ width: s(40), height: mvs(18), borderRadius: 4, marginLeft: s(6), backgroundColor: "#E8E0E0" }} />
+          </View>
+          {/* Description */}
+          <View style={{ width: s(180), height: mvs(16), borderRadius: 4, marginTop: mvs(6), backgroundColor: "#E8E0E0" }} />
         </View>
-      </View>
-      {/* Features skeleton */}
-      <View style={{ gap: mvs(8) }}>
-        <View className="w-20 h-3 bg-gray/20 rounded mb-2" />
-        <View className="flex-row items-center mb-2">
-          <View className="w-24 h-3 bg-gray/30 rounded" />
+
+        {/* Includes */}
+        <View style={{ gap: mvs(8) }}>
+          <View style={{ width: s(60), height: mvs(14), borderRadius: 4, backgroundColor: "#E8E0E0" }} />
+          <View style={{ width: s(180), height: mvs(12), borderRadius: 4, backgroundColor: "#F0E8E8" }} />
+          <View style={{ width: s(160), height: mvs(12), borderRadius: 4, backgroundColor: "#E8E0E0", marginTop: mvs(6) }} />
+          <View style={{ width: s(140), height: mvs(12), borderRadius: 4, backgroundColor: "#F0E8E8", marginTop: mvs(6) }} />
         </View>
-        <View className="flex-row items-center mb-2">
-          <View className="w-32 h-3 bg-gray/20 rounded" />
+
+        {/* CTA area */}
+        <View style={{ marginTop: mvs(16) }}>
+          <View
+            style={{ backgroundColor: "#AE0E0E", paddingVertical: mvs(12), borderRadius: 38 }}
+          />
+          <View style={{ paddingVertical: mvs(10) }} />
         </View>
-        {/* Trial badge skeleton */}
-        <View className="flex-row items-center mt-2">
-          <View className="w-24 h-4 bg-gray/30 rounded" />
-        </View>
-      </View>
+      </LinearGradient>
     </View>
   );
 }
@@ -58,7 +74,6 @@ export default function ArtistStep13V2() {
     setCurrentStepDisplay,
     reset,
   } = useArtistRegistrationV2Store();
-  const { completeArtistRegistration } = useAuth();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +81,10 @@ export default function ArtistStep13V2() {
   useEffect(() => {
     setCurrentStepDisplay(13);
     fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    toast.success("🎉 All set!  Pick a plan to get started.");
   }, []);
 
   const fetchPlans = async () => {
@@ -95,87 +114,13 @@ export default function ArtistStep13V2() {
     updateStep13({ billingCycle: newCycle });
   };
 
-  const handleCompleteRegistration = async () => {
-    if (!step13.selectedPlanId) {
-      toast.error("Please select a subscription plan");
-      return;
-    }
+  const handleSubscribe = async (planId: string) => {
+    if (submitting) return;
+    // Persist selected plan locally as well
+    updateStep13({ selectedPlanId: planId });
 
     setSubmitting(true);
     try {
-      // Get all registration data from store
-      const {
-        step3,
-        step4,
-        step5,
-        step7,
-        step8,
-        step9,
-        step10,
-        step11,
-        step12,
-      } = useArtistRegistrationV2Store.getState();
-
-      const registrationData: CompleteArtistRegistration = {
-        step3: {
-          firstName: step3.firstName || "",
-          lastName: step3.lastName || "",
-          avatar: step3.avatar || "",
-        },
-        step4: {
-          workArrangement: step4.workArrangement || WorkArrangement.FREELANCE,
-        },
-        step5: {
-          studioName: step5.studioName || "",
-          province: step5.province || "",
-          provinceId: step5.provinceId || "",
-          municipalityId: step5.municipalityId || "",
-          municipality: step5.municipality || "",
-          studioAddress: step5.studioAddress || "",
-          website: step5.website || "",
-          phone: step5.phone || "",
-        },
-        step6: {
-          certificateUrl: step4.certificateUrl || "",
-        },
-        step7: {
-          bio: step7.bio || "",
-          instagram: step7.instagram || "",
-          tiktok: step7.tiktok || "",
-        },
-        step8: {
-          favoriteStyles: step8.favoriteStyles || [],
-          mainStyleId: step8.mainStyleId || "",
-        },
-        step9: {
-          servicesOffered: step9.servicesOffered || [],
-        },
-        step10: {
-          bodyParts: step10.bodyParts || [],
-        },
-        step11: {
-          minimumPrice: step11.minimumPrice || 0,
-          hourlyRate: step11.hourlyRate || 0,
-        },
-        step12: {
-          projects: (step12.projects || []).map((project, index) => ({
-            title: project.title,
-            description: project.description,
-            photos: project.photos,
-            videos: project.videos,
-            associatedStyles: [],
-            order: index + 1,
-          })),
-        },
-        step13: {
-          selectedPlanId: step13.selectedPlanId,
-          billingCycle: step13.billingCycle,
-        },
-      };
-
-      // Complete registration
-      await completeArtistRegistration(registrationData);
-
       // Get current user ID
       const {
         data: { session },
@@ -184,10 +129,10 @@ export default function ArtistStep13V2() {
         throw new Error("No authenticated user found");
       }
 
-      // Create subscription
+      // Create subscription only (no checkout yet)
       await SubscriptionService.createUserSubscription(
         session.user.id,
-        step13.selectedPlanId,
+        planId,
         step13.billingCycle
       );
 
@@ -195,10 +140,10 @@ export default function ArtistStep13V2() {
       // reset();
       router.replace("/(tabs)");
     } catch (error) {
-      logger.error("Registration error:", error);
+      logger.error("Subscription error:", error);
 
       // Extract meaningful error message
-      let errorMessage = "Failed to complete registration. Please try again.";
+      let errorMessage = "Failed to create subscription. Please try again.";
 
       if (error instanceof Error) {
         // Check for specific error patterns
@@ -277,18 +222,19 @@ export default function ArtistStep13V2() {
         <View style={{ paddingHorizontal: s(24), marginBottom: mvs(20) }}>
           <View
             className="flex-row items-center justify-center"
-            style={{ gap: mvs(10) }}
+            style={{ gap: mvs(8) }}
           >
             <TouchableOpacity
               onPress={() => updateStep13({ billingCycle: "MONTHLY" })}
               className="rounded-full items-center justify-center"
               style={{
-                paddingVertical: mvs(6),
-                paddingHorizontal: s(20),
+                paddingVertical: mvs(5),
+                paddingHorizontal: s(30),
+                minWidth: s(98),
                 borderWidth: 1,
                 borderColor: step13.billingCycle === "MONTHLY" ? "transparent" : "#a49a99",
                 backgroundColor: step13.billingCycle === "MONTHLY" ? "#AE0E0E" : "transparent",
-              }}
+              }}  
             >
               <ScaledText
                 allowScaling={false}
@@ -303,8 +249,9 @@ export default function ArtistStep13V2() {
               onPress={() => updateStep13({ billingCycle: "YEARLY" })}
               className="rounded-full items-center justify-center"
               style={{
-                paddingVertical: mvs(6),
-                paddingHorizontal: s(20),
+                paddingVertical: mvs(5),
+                paddingHorizontal: s(30),
+                minWidth: s(98),
                 borderWidth: 1,
                 borderColor: step13.billingCycle === "YEARLY" ? "transparent" : "#a49a99",
                 backgroundColor: step13.billingCycle === "YEARLY" ? "#AE0E0E" : "transparent",
@@ -325,11 +272,9 @@ export default function ArtistStep13V2() {
         {/* Plans */}
         <View style={{ paddingHorizontal: s(24), gap: mvs(16) }}>
           {loading ? (
-            // Render as many skeletons as number of plans you'd expect, or fallback to 2
             <>
-              {[...Array(Math.max(plans.length, 2))].map((_, i) => (
-                <PlanLoadingSkeleton key={i} />
-              ))}
+              <PlanLoadingSkeleton accent="#f79410" />
+              <PlanLoadingSkeleton accent="#AE0E0E" />
             </>
           ) : (
             plans.map((plan) => {
@@ -353,7 +298,7 @@ export default function ArtistStep13V2() {
                   style={{
                     borderWidth: 1,
                     borderColor: "#a49a99",
-                    borderRadius: 8,
+                    borderRadius: s(8),
                   }}
                 >
                   <LinearGradient
@@ -452,6 +397,8 @@ export default function ArtistStep13V2() {
                   <View style={{ marginTop: mvs(16) }}>
                     <TouchableOpacity
                       activeOpacity={0.9}
+                      onPress={() => handleSubscribe(plan.id)}
+                      disabled={submitting}
                       style={{
                         backgroundColor: "#AE0E0E",
                         paddingVertical: mvs(12),
@@ -465,13 +412,15 @@ export default function ArtistStep13V2() {
                         style={{ color: "#FFFFFF" }}
                         className="font-neueMedium"
                       >
-                        {showTrialCta ? "Start free trial" : "Get started"}
+                        {submitting ? "Saving..." : showTrialCta ? "Start free trial" : "Get started"}
                       </ScaledText>
                     </TouchableOpacity>
 
                     {showTrialCta && (
                       <TouchableOpacity
                         activeOpacity={0.8}
+                        onPress={() => handleSubscribe(plan.id)}
+                        disabled={submitting}
                         style={{
                           paddingVertical: mvs(10),
                           alignItems: "center",
@@ -483,7 +432,7 @@ export default function ArtistStep13V2() {
                           style={{ color: "#AE0E0E" }}
                           className="font-neueMedium"
                         >
-                          Buy Premium
+                          {submitting ? "Saving..." : "Buy Premium"}
                         </ScaledText>
                       </TouchableOpacity>
                     )}
@@ -495,15 +444,6 @@ export default function ArtistStep13V2() {
           )}
         </View>
       </ScrollView>
-
-      {/* Footer */}
-      <NextBackFooter
-        onNext={handleCompleteRegistration}
-        nextLabel={submitting ? "Saving..." : "Almost there!"}
-        nextDisabled={loading || submitting || !canProceed}
-        backLabel="Back"
-        onBack={() => router.back()}
-      />
     </View>
   );
 }

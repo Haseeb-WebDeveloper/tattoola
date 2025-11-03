@@ -143,12 +143,14 @@ export default function RootLayout() {
                 fontSize: mvs(11),
                 fontWeight: "500",
                 lineHeight: 16,
+                fontFamily: "NeueHaasDisplay-Medium",
               },
               descriptionStyle: {
                 color: "#a1a1aa",
                 fontSize: mvs(12),
                 fontWeight: "400",
                 backgroundColor: "#A49A99",
+                fontFamily: "Montserrat-Regular",
               },
               actionButtonStyle: {
                 backgroundColor: "#A49A99",
@@ -160,6 +162,7 @@ export default function RootLayout() {
                 fontWeight: "600",
                 paddingVertical: mvs(10),
                 paddingHorizontal: mvs(16),
+                fontFamily: "NeueHaasDisplay-Medium",
               },
               closeButtonStyle: {
                 position: "absolute",

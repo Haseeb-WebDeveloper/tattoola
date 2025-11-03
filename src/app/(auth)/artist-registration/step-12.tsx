@@ -5,28 +5,33 @@ import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import {
-  PortfolioProjectInput,
-  useArtistRegistrationV2Store,
+    PortfolioProjectInput,
+    useArtistRegistrationV2Store,
 } from "@/stores/artistRegistrationV2Store";
+import type { CompleteArtistRegistration } from "@/types/auth";
+import { WorkArrangement } from "@/types/auth";
 import { getFileNameFromUri } from "@/utils/get-file-name";
+import { logger } from "@/utils/logger";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DraggableFlatList, {
-  RenderItemParams,
+    RenderItemParams,
 } from "react-native-draggable-flatlist";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type DraftProject = {
   media: { uri: string; type: "image" | "video"; cloud?: string }[];
@@ -42,11 +47,13 @@ export default function ArtistStep12V2() {
     totalStepsDisplay,
     setCurrentStepDisplay,
   } = useArtistRegistrationV2Store();
+  const { completeArtistRegistration } = useAuth();
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<DraftProject>({ media: [] });
   const [modalStep, setModalStep] = useState<ModalStep>("upload");
   const insets = useSafeAreaInsets();
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -255,9 +262,125 @@ export default function ArtistStep12V2() {
       (p) => p && (p.photos?.length || 0) + (p.videos?.length || 0) > 0
     ).length >= 4;
 
-  const onNext = () => {
-    if (!canProceed) return;
-    router.push("/(auth)/artist-registration/step-13");
+  const handleSaveAndProceed = async () => {
+    if (!canProceed || submitting) return;
+    setSubmitting(true);
+    try {
+      const {
+        step3,
+        step4,
+        step5,
+        step7,
+        step8,
+        step9,
+        step10,
+        step11,
+        step12: step12State,
+      } = useArtistRegistrationV2Store.getState();
+
+      const registrationData: CompleteArtistRegistration = {
+        step3: {
+          firstName: step3.firstName || "",
+          lastName: step3.lastName || "",
+          avatar: step3.avatar || "",
+        },
+        step4: {
+          workArrangement: step4.workArrangement || WorkArrangement.FREELANCE,
+        },
+        step5: {
+          studioName: step5.studioName || "",
+          province: step5.province || "",
+          provinceId: step5.provinceId || "",
+          municipalityId: step5.municipalityId || "",
+          municipality: step5.municipality || "",
+          studioAddress: step5.studioAddress || "",
+          website: step5.website || "",
+          phone: step5.phone || "",
+        },
+        step6: {
+          certificateUrl: step4.certificateUrl || "",
+        },
+        step7: {
+          bio: step7.bio || "",
+          instagram: step7.instagram || "",
+          tiktok: step7.tiktok || "",
+        },
+        step8: {
+          favoriteStyles: step8.favoriteStyles || [],
+          mainStyleId: step8.mainStyleId || "",
+        },
+        step9: {
+          servicesOffered: step9.servicesOffered || [],
+        },
+        step10: {
+          bodyParts: step10.bodyParts || [],
+        },
+        step11: {
+          minimumPrice: step11.minimumPrice || 0,
+          hourlyRate: step11.hourlyRate || 0,
+        },
+        step12: {
+          projects: (step12State.projects || []).map((project, index) => ({
+            title: project.title,
+            description: project.description,
+            photos: project.photos,
+            videos: project.videos,
+            associatedStyles: [],
+            order: index + 1,
+          })),
+        },
+        // Minimal stub to satisfy type; not used by backend save
+        step13: {
+          selectedPlanId: "",
+          billingCycle: "MONTHLY",
+        },
+      };
+
+      await completeArtistRegistration(registrationData);
+      router.replace("/(auth)/artist-registration/step-13");
+    } catch (error) {
+      logger.error("Registration save error:", error);
+      let errorMessage = "Failed to save registration. Please try again.";
+      if (error instanceof Error) {
+        if (
+          error.message.includes("duplicate") ||
+          error.message.includes("already exists")
+        ) {
+          errorMessage =
+            "Some information already exists. Your profile has been updated.";
+        } else if (
+          error.message.includes("foreign key") ||
+          error.message.includes("violates")
+        ) {
+          errorMessage = "Invalid data provided. Please check your entries.";
+        } else if (
+          error.message.includes("network") ||
+          error.message.includes("fetch")
+        ) {
+          errorMessage =
+            "Network error. Please check your connection and try again.";
+        } else if (
+          error.message.includes("column") &&
+          error.message.includes("does not exist")
+        ) {
+          errorMessage =
+            "Database configuration error. Please contact support.";
+        } else if (
+          error.message.includes("cache") ||
+          error.message.includes("schema")
+        ) {
+          errorMessage = "Database sync error. Please try again in a moment.";
+        } else if (error.message) {
+          errorMessage =
+            error.message.length > 100
+              ? error.message.substring(0, 100) + "..."
+              : error.message;
+        }
+      }
+      toast.error(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -360,8 +483,9 @@ export default function ArtistStep12V2() {
 
       {/* Footer */}
       <NextBackFooter
-        onNext={onNext}
-        nextDisabled={!canProceed}
+        onNext={handleSaveAndProceed}
+        nextDisabled={!canProceed || submitting || uploading}
+        nextLabel={submitting ? "Saving..." : "Almost there!"}
         backLabel="Back"
         onBack={() => router.back()}
       />

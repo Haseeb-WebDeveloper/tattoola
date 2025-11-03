@@ -77,6 +77,12 @@ export default function HomeScreen() {
       >
         <Text>Artist registration</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.push("/artist-registration/step-13")}
+        className="bg-foreground text-background p-4 rounded-full"
+      >
+        <Text>Plan subscription</Text>
+      </TouchableOpacity>
 
       {/* <FlatList
         data={posts}

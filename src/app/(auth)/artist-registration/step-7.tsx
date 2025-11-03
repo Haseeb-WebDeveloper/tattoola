@@ -65,7 +65,7 @@ export default function ArtistStep7V2() {
 
       {/* Progress */}
       <RegistrationProgress
-        currentStep={currentStepDisplay}
+        currentStep={7}
         totalSteps={totalStepsDisplay}
         name="Add Bio & Socials"
         icon={<SVGIcons.Heart width={22} height={22} />}

@@ -51,7 +51,7 @@ export default function EmailConfirmationScreen() {
 
       {/* Loading ring or image preview */}
       <View className="items-center mb-8">
-        {true ? (
+        {isLoading ? (
           <View className="w-20 h-20 rounded-full border-8 border-warning border-r-gray animate-spin-slow" />
         ) : imageError ? (
           <View className="w-[320px] h-[220px] rounded-xl bg-foreground/10 items-center justify-center">

@@ -77,7 +77,7 @@ export default function ArtistStep6V2() {
       <ScrollView className="flex-1">
         {/* Progress */}
         <RegistrationProgress
-          currentStep={currentStepDisplay}
+          currentStep={6}
           totalSteps={totalStepsDisplay}
           name="Allega le tue certificazioni"
           nameVariant="2xl"

@@ -164,7 +164,9 @@ export default function RegistrationProgress({
           </View>
         )}
         {description && isDescriptionClickable && (
-          <TouchableOpacity onPress={onDescriptionPress}>
+          <TouchableOpacity onPress={onDescriptionPress}
+          style={{ paddingHorizontal: s(24) }}
+          >
             <ScaledText
               allowScaling={false}
               variant={descriptionVariant}
