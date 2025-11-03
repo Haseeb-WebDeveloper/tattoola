@@ -30,7 +30,7 @@ export function SingleMediaUpload({
   return (
     <View>
       <ScaledText
-        allowScaling={false}  
+        allowScaling={false}
         variant="sm"
         className="text-white font-montserratMedium text-center"
         style={{ marginBottom: mvs(10), paddingHorizontal: s(16) }}
@@ -129,20 +129,27 @@ export function SingleMediaUpload({
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity
-          onPress={() => onPickMedia(0, mediaType)}
-          disabled={uploading}
-          className="bg-[#100C0C] border-2 border-dashed border-error rounded-lg items-center justify-center"
-          style={{
-            height: mvs(100),
-          }}
+        <View
+        style={{
+          paddingHorizontal: s(16),
+        }}
         >
-          {uploading ? (
-            <ActivityIndicator color="#AD2E2E" />
-          ) : (
-            <SVGIcons.AddRed width={s(48)} height={s(48)} />
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onPickMedia(0, mediaType)}
+            disabled={uploading}
+            className="bg-[#100C0C]  border-dashed border-primary rounded-xl items-center justify-center"
+            style={{
+              height: mvs(100),
+              borderWidth: s(1),
+            }}
+          >
+            {uploading ? (
+              <ActivityIndicator color="#AD2E2E" />
+            ) : (
+              <SVGIcons.AddRed width={s(24)} height={s(32)} />
+            )}
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );

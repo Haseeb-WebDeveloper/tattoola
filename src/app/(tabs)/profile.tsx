@@ -104,8 +104,12 @@ export default function ProfileScreen() {
   };
 
   const handleCreateNewCollection = () => {
-    router.push("/collection/new" as any);
+    router.push("/upload/media" as any);
   };
+  
+  // const handleCreateNewCollection = () => {
+  //   router.push("/collection/new" as any);
+  // };
 
   if (loading) {
     // Show appropriate skeleton based on user role

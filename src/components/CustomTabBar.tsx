@@ -48,7 +48,7 @@ const ProfileAvatar = memo(
     }
 
     // Fallback to Profile icon if no avatar
-    const ProfileIcon = SVGIcons.Profile;
+    const ProfileIcon = SVGIcons.NoUser;
     return (
       <ProfileIcon
         width={size}

@@ -1,4 +1,5 @@
 import { RequireGuest } from "@/components/AuthGuard";
+import { CustomToast } from "@/components/ui/CustomToast";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -62,10 +63,18 @@ function LoginScreenContent() {
       await signIn(formData);
       // Navigation will be handled by the auth context
     } catch (error) {
-      toast.error(
+      const message =
         error instanceof Error
           ? error.message
-          : "An error occurred during login"
+          : "An error occurred during login";
+      let toastId: any;
+      toastId = toast.custom(
+        <CustomToast
+          message={message}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 9000 }
       );
     }
   };
@@ -161,6 +170,7 @@ function LoginScreenContent() {
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-foreground rounded-xl"
+              style={{ fontSize: s(12) }}
               placeholder="Email"
               placeholderTextColor="#A49A99"
               keyboardType="email-address"
@@ -180,6 +190,7 @@ function LoginScreenContent() {
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-foreground rounded-xl"
+              style={{ fontSize: s(12) }}
               placeholder="Password"
               placeholderTextColor="#A49A99"
               secureTextEntry={!showPassword}

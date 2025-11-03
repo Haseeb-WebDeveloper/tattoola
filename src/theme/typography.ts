@@ -109,7 +109,6 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
   "11": {
     fontSize: scaledFont(11),
     lineHeight: scaledFont(11 * 1.3),
-    letterSpacing: -0.5,
   },
   "20": {
     fontSize: scaledFont(20),

@@ -59,6 +59,10 @@ model User {
   blocking                BlockedUser[]        @relation("UserBlocking")
   blockedBy               BlockedUser[]        @relation("UserBlocked")
   locations               UserLocation[]
+  billingProfile          BillingProfile?
+  paymentMethods          PaymentMethod[]
+  invoices                Invoice[]
+  payments                Payment[]
 
   @@index([email])
   @@index([username])
@@ -143,6 +147,7 @@ model SubscriptionPlan {
   isDefault        Boolean            @default(false)
   freeTrialDays    Int?
   subscriptions    UserSubscription[]
+  invoiceItems     InvoiceItem[]
 
   @@index([name])
   @@index([type])
@@ -169,6 +174,13 @@ model UserSubscription {
   assignedByUser  User?              @relation("AdminAssignedSubscriptions", fields: [assignedBy], references: [id])
   plan            SubscriptionPlan   @relation(fields: [planId], references: [id])
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // New fields for richer lifecycle
+  trialEndsAt         DateTime?
+  cancelAtPeriodEnd   Boolean            @default(false)
+  canceledAt          DateTime?
+  events              SubscriptionEvent[]
+  invoices            Invoice[]
 
   @@index([userId])
   @@index([status])
@@ -1081,4 +1093,151 @@ enum BannerType {
   FOUR_IMAGES
   ONE_IMAGE
   ONE_VIDEO
+}
+
+// New: Billing and payments
+
+model BillingProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  fullName      String?
+  companyName   String?
+  taxId         String?
+  vatId         String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("billing_profiles")
+}
+
+model PaymentMethod {
+  id              String   @id @default(uuid())
+  userId          String
+  provider        String   // e.g., STRIPE
+  providerRef     String   // customer payment method id at provider
+  brand           String?
+  last4           String?
+  expMonth        Int?
+  expYear         Int?
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerRef])
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+model Invoice {
+  id               String         @id @default(uuid())
+  userId           String
+  subscriptionId   String
+  number           String         @unique
+  currency         String         // ISO 4217, e.g., EUR
+  amountSubtotal   Int            // in minor units (cents)
+  amountTax        Int            @default(0)
+  amountDiscount   Int            @default(0)
+  amountTotal      Int            // in minor units (cents)
+  periodStart      DateTime
+  periodEnd        DateTime
+  dueDate          DateTime?
+  paidAt           DateTime?
+  status           InvoiceStatus  @default(OPEN)
+  pdfUrl           String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription     UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  items            InvoiceItem[]
+  payments         Payment[]
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  planId      String?
+  description String?
+  quantity    Int      @default(1)
+  unitAmount  Int      // cents
+  amount      Int      // cents (quantity * unitAmount minus discounts)
+  createdAt   DateTime @default(now())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  plan        SubscriptionPlan? @relation(fields: [planId], references: [id])
+
+  @@index([invoiceId])
+  @@index([planId])
+  @@map("invoice_items")
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT_METHOD
+  REQUIRES_CONFIRMATION
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  userId           String
+  invoiceId        String
+  currency         String
+  amount           Int
+  status           PaymentStatus @default(REQUIRES_PAYMENT_METHOD)
+  provider         String        // e.g., STRIPE
+  providerChargeId String?
+  receiptUrl       String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoice          Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([invoiceId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum SubscriptionEventType {
+  CREATED
+  RENEWED
+  CANCELLED
+  EXPIRED
+  UPDATED
+  TRIAL_STARTED
+  TRIAL_ENDED
+}
+
+model SubscriptionEvent {
+  id              String                  @id @default(uuid())
+  subscriptionId  String
+  type            SubscriptionEventType
+  data            Json?
+  createdAt       DateTime               @default(now())
+  subscription    UserSubscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@map("subscription_events")
 }

@@ -121,6 +121,16 @@ export default function ArtistStep13V2() {
 
     setSubmitting(true);
     try {
+      // Decide by plan type/name: if Studio, go to checkout screen instead of immediate subscription
+      const picked = plans.find((p) => p.id === planId);
+      const planName = (picked?.name || '').toLowerCase();
+      const isStudio = planName.includes('studio');
+
+      if (isStudio) {
+        // Navigate to checkout state (no payment yet)
+        router.push('/(auth)/artist-registration/checkout');
+        return;
+      }
       // Get current user ID
       const {
         data: { session },
@@ -199,7 +209,7 @@ export default function ArtistStep13V2() {
   });
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <AuthStepHeader />
 
@@ -375,6 +385,7 @@ export default function ArtistStep13V2() {
                             <ScaledText
                               allowScaling={false}
                               variant="11"
+                              className="font-neueLight"
                               style={{ color: "#080101" }}
                             >
                               {feature.text}
@@ -416,7 +427,7 @@ export default function ArtistStep13V2() {
                       </ScaledText>
                     </TouchableOpacity>
 
-                    {showTrialCta && (
+                    {/* {showTrialCta && (
                       <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={() => handleSubscribe(plan.id)}
@@ -435,7 +446,7 @@ export default function ArtistStep13V2() {
                           {submitting ? "Saving..." : "Buy Premium"}
                         </ScaledText>
                       </TouchableOpacity>
-                    )}
+                    )} */}
                   </View>
                   </LinearGradient>
                 </TouchableOpacity>

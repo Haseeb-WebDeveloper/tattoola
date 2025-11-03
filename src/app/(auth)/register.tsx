@@ -84,7 +84,7 @@ export default function RegisterScreen() {
     }
 
     // Navigate immediately to email confirmation and start background signup
-    setInProgress();
+    setInProgress(formData.email);
     router.push("/(auth)/email-confirmation");
 
     try {
@@ -266,7 +266,7 @@ export default function RegisterScreen() {
             accessibilityRole="button"
             onPress={handleRegister}
             disabled={loading}
-            className="bg-primary-brand rounded-full items-center w-full"
+            className={` rounded-full items-center w-full bg-primary-brand `}
             style={{ paddingVertical: mvs(12), paddingHorizontal: s(32) }}
           >
             <ScaledText

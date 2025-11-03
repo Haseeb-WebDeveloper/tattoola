@@ -1,4 +1,5 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import { CustomToast } from "@/components/ui/CustomToast";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -9,11 +10,14 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, ScrollView, TouchableOpacity, View } from "react-native";
+import { toast } from "sonner-native";
+
 
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
-  const { status, reset } = useSignupStore();
+  const { status, reset, pendingVerificationEmail } = useSignupStore();
   const [imageError, setImageError] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const isLoading = status === "in_progress";
 
@@ -27,6 +31,7 @@ export default function EmailConfirmationScreen() {
   };
 
   logger.log("Email confirmation screen - status:", status);
+
 
   return (
     <ScrollView
@@ -81,11 +86,34 @@ export default function EmailConfirmationScreen() {
         <TouchableOpacity
           className="rounded-full border border-gray flex-row gap-2 items-center"
           style={{ marginTop: mvs(8), paddingVertical: mvs(10), paddingHorizontal: s(24) }}
-          onPress={() => {
+          disabled={isResending}
+          onPress={async () => {
             try {
-              resendVerificationEmail();
-            } catch (error) {
+              setIsResending(true);
+              await resendVerificationEmail(pendingVerificationEmail);
+              let toastId: any;
+              toastId = toast.custom(
+                <CustomToast
+                  message="Verification email sent successfully"
+                  iconType="success"
+                  onClose={() => toast.dismiss(toastId)}
+                />,
+                { duration: 4000 }
+              );
+            } catch (error: any) {
               logger.error("Error resending verification email:", error);
+              const message = error?.message || "Failed to resend verification email";
+              let toastId: any;
+              toastId = toast.custom(
+                <CustomToast
+                  message={message}
+                  iconType="error"
+                  onClose={() => toast.dismiss(toastId)}
+                />,
+                { duration: 6000 }
+              );
+            } finally {
+              setIsResending(false);
             }
           }}
         >
@@ -95,7 +123,7 @@ export default function EmailConfirmationScreen() {
             className="text-foreground font-neueSemibold"
             allowScaling={false}
           >
-            Resend email
+            {isResending ? "Sending..." : "Resend email"}
           </ScaledText>
         </TouchableOpacity>
         <View className="h-px bg-[#A49A99] opacity-40 w-4/5 my-8" />

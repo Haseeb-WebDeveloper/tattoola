@@ -82,7 +82,7 @@ export const CustomToast: React.FC<CustomToastProps> = ({
         <ScaledText
           allowScaling={false}
           variant="md"
-          style={{ color: "#FFFFFF", fontWeight: "400", lineHeight: mvs(23) }}
+          className="text-foreground font-neueLight"
         >
           {message}
         </ScaledText>
@@ -91,11 +91,7 @@ export const CustomToast: React.FC<CustomToastProps> = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              style={{
-                color: "#FFFFFF",
-                fontWeight: "700",
-                lineHeight: mvs(23),
-              }}
+              className="text-foreground font-montserratBold"
             >
               {actionText}
             </ScaledText>

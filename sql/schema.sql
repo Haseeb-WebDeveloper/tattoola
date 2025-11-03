@@ -55,6 +55,15 @@ CREATE TYPE "public"."PlanType" AS ENUM ('PREMIUM', 'STUDIO');
 -- CreateEnum
 CREATE TYPE "public"."BannerType" AS ENUM ('FOUR_IMAGES', 'ONE_IMAGE', 'ONE_VIDEO');
 
+-- CreateEnum
+CREATE TYPE "public"."InvoiceStatus" AS ENUM ('DRAFT', 'OPEN', 'PAID', 'VOID', 'UNCOLLECTIBLE');
+
+-- CreateEnum
+CREATE TYPE "public"."PaymentStatus" AS ENUM ('REQUIRES_PAYMENT_METHOD', 'REQUIRES_CONFIRMATION', 'SUCCEEDED', 'FAILED', 'REFUNDED');
+
+-- CreateEnum
+CREATE TYPE "public"."SubscriptionEventType" AS ENUM ('CREATED', 'RENEWED', 'CANCELLED', 'EXPIRED', 'UPDATED', 'TRIAL_STARTED', 'TRIAL_ENDED');
+
 -- CreateTable
 CREATE TABLE "public"."users" (
     "id" TEXT NOT NULL,
@@ -158,6 +167,9 @@ CREATE TABLE "public"."user_subscriptions" (
     "isTrial" BOOLEAN NOT NULL DEFAULT true,
     "adminNotes" TEXT,
     "assignedBy" TEXT,
+    "trialEndsAt" TIMESTAMP(3),
+    "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
+    "canceledAt" TIMESTAMP(3),
 
     CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
 );
@@ -729,6 +741,108 @@ CREATE TABLE "public"."studio_locations" (
     CONSTRAINT "studio_locations_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."billing_profiles" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "fullName" TEXT,
+    "companyName" TEXT,
+    "taxId" TEXT,
+    "vatId" TEXT,
+    "addressLine1" TEXT,
+    "addressLine2" TEXT,
+    "city" TEXT,
+    "state" TEXT,
+    "postalCode" TEXT,
+    "country" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "billing_profiles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."payment_methods" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "providerRef" TEXT NOT NULL,
+    "brand" TEXT,
+    "last4" TEXT,
+    "expMonth" INTEGER,
+    "expYear" INTEGER,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "payment_methods_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."invoices" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "subscriptionId" TEXT NOT NULL,
+    "number" TEXT NOT NULL,
+    "currency" TEXT NOT NULL,
+    "amountSubtotal" INTEGER NOT NULL,
+    "amountTax" INTEGER NOT NULL DEFAULT 0,
+    "amountDiscount" INTEGER NOT NULL DEFAULT 0,
+    "amountTotal" INTEGER NOT NULL,
+    "periodStart" TIMESTAMP(3) NOT NULL,
+    "periodEnd" TIMESTAMP(3) NOT NULL,
+    "dueDate" TIMESTAMP(3),
+    "paidAt" TIMESTAMP(3),
+    "status" "public"."InvoiceStatus" NOT NULL DEFAULT 'OPEN',
+    "pdfUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "invoices_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."invoice_items" (
+    "id" TEXT NOT NULL,
+    "invoiceId" TEXT NOT NULL,
+    "planId" TEXT,
+    "description" TEXT,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "unitAmount" INTEGER NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "invoice_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."payments" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "invoiceId" TEXT NOT NULL,
+    "currency" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "status" "public"."PaymentStatus" NOT NULL DEFAULT 'REQUIRES_PAYMENT_METHOD',
+    "provider" TEXT NOT NULL,
+    "providerChargeId" TEXT,
+    "receiptUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."subscription_events" (
+    "id" TEXT NOT NULL,
+    "subscriptionId" TEXT NOT NULL,
+    "type" "public"."SubscriptionEventType" NOT NULL,
+    "data" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "subscription_events_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 
@@ -1242,6 +1356,48 @@ CREATE INDEX "studio_locations_isPrimary_idx" ON "public"."studio_locations"("is
 -- CreateIndex
 CREATE INDEX "studio_locations_studioId_provinceId_idx" ON "public"."studio_locations"("studioId", "provinceId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "billing_profiles_userId_key" ON "public"."billing_profiles"("userId");
+
+-- CreateIndex
+CREATE INDEX "billing_profiles_userId_idx" ON "public"."billing_profiles"("userId");
+
+-- CreateIndex
+CREATE INDEX "payment_methods_userId_idx" ON "public"."payment_methods"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "payment_methods_provider_providerRef_key" ON "public"."payment_methods"("provider", "providerRef");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invoices_number_key" ON "public"."invoices"("number");
+
+-- CreateIndex
+CREATE INDEX "invoices_userId_idx" ON "public"."invoices"("userId");
+
+-- CreateIndex
+CREATE INDEX "invoices_subscriptionId_idx" ON "public"."invoices"("subscriptionId");
+
+-- CreateIndex
+CREATE INDEX "invoices_status_idx" ON "public"."invoices"("status");
+
+-- CreateIndex
+CREATE INDEX "invoice_items_invoiceId_idx" ON "public"."invoice_items"("invoiceId");
+
+-- CreateIndex
+CREATE INDEX "invoice_items_planId_idx" ON "public"."invoice_items"("planId");
+
+-- CreateIndex
+CREATE INDEX "payments_userId_idx" ON "public"."payments"("userId");
+
+-- CreateIndex
+CREATE INDEX "payments_invoiceId_idx" ON "public"."payments"("invoiceId");
+
+-- CreateIndex
+CREATE INDEX "payments_status_idx" ON "public"."payments"("status");
+
+-- CreateIndex
+CREATE INDEX "subscription_events_subscriptionId_idx" ON "public"."subscription_events"("subscriptionId");
+
 -- AddForeignKey
 ALTER TABLE "public"."artist_profiles" ADD CONSTRAINT "artist_profiles_mainStyleId_fkey" FOREIGN KEY ("mainStyleId") REFERENCES "public"."tattoo_styles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -1493,4 +1649,31 @@ ALTER TABLE "public"."studio_locations" ADD CONSTRAINT "studio_locations_provinc
 
 -- AddForeignKey
 ALTER TABLE "public"."studio_locations" ADD CONSTRAINT "studio_locations_municipalityId_fkey" FOREIGN KEY ("municipalityId") REFERENCES "public"."municipalities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."billing_profiles" ADD CONSTRAINT "billing_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."payment_methods" ADD CONSTRAINT "payment_methods_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."invoices" ADD CONSTRAINT "invoices_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."invoices" ADD CONSTRAINT "invoices_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "public"."user_subscriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."invoice_items" ADD CONSTRAINT "invoice_items_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "public"."invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."invoice_items" ADD CONSTRAINT "invoice_items_planId_fkey" FOREIGN KEY ("planId") REFERENCES "public"."subscription_plans"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."payments" ADD CONSTRAINT "payments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."payments" ADD CONSTRAINT "payments_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "public"."invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."subscription_events" ADD CONSTRAINT "subscription_events_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "public"."user_subscriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

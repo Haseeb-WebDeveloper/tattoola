@@ -21,6 +21,8 @@ import UserFilled from "@/assets/icons/user-filled.svg";
 // @ts-ignore
 import Users from "@/assets/icons/users.svg";
 // @ts-ignore
+import NoUser from "@/assets/icons/no-user.svg";
+// @ts-ignore
 import UserArt from "@/assets/icons/user-art.svg";
 // @ts-ignore
 import Studio from "@/assets/icons/studio.svg";
@@ -206,6 +208,15 @@ import LocationRed from "@/assets/icons/location-red.svg";
 import User2 from "@/assets/icons/user-2.svg";
 // @ts-ignore
 import Smile from "@/assets/icons/smile.svg";
+// @ts-ignore
+import Paypal from "@/assets/icons/paypal.svg";
+// @ts-ignore
+import AmericanExpress from "@/assets/icons/american-express.svg";
+// @ts-ignore
+import Visa from "@/assets/icons/visa.svg";
+// @ts-ignore
+import Mastercard from "@/assets/icons/master-card.svg";
+
 
 export const SVGIcons = {
   Close,
@@ -312,6 +323,11 @@ export const SVGIcons = {
   UserArt,
   Follow,
   Smile,
+  NoUser,
+  Paypal,
+  AmericanExpress,
+  Visa,
+  Mastercard,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

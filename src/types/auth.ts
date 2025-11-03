@@ -364,7 +364,7 @@ export interface AuthContextType {
   refreshUser: () => Promise<User | null>;
 
   // Verification methods
-  resendVerificationEmail: () => Promise<void>;
+  resendVerificationEmail: (email?: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
 }
 

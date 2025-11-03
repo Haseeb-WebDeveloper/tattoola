@@ -473,10 +473,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const resendVerificationEmail = async () => {
+  const resendVerificationEmail = async (email?: string) => {
     setLoading(true);
     try {
-      await AuthService.resendVerificationEmail();
+      await AuthService.resendVerificationEmail(email);
     } catch (error) {
       logger.error('Resend verification email error:', error);
       throw error;

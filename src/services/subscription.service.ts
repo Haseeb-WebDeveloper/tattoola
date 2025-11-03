@@ -101,6 +101,34 @@ export class SubscriptionService {
       throw new Error(subscriptionError.message);
     }
   }
+
+  static async getActiveSubscriptionWithPlan() {
+    const { data: sessionRes } = await supabase.auth.getSession();
+    const userId = sessionRes?.session?.user?.id;
+    if (!userId) throw new Error('No authenticated user found');
+
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('*, subscription_plans(*)')
+      .eq('userId', userId)
+      .eq('status', 'ACTIVE')
+      .order('createdAt', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data as any;
+  }
+
+  static async toggleAutoRenew(subscriptionId: string, autoRenew: boolean) {
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .update({ autoRenew, updatedAt: new Date().toISOString() })
+      .eq('id', subscriptionId)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
 }
 
 export const subscriptionService = new SubscriptionService();

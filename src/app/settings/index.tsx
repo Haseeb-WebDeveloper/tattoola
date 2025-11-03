@@ -2,9 +2,11 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
-import React from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Modal, ScrollView, TouchableOpacity, View } from "react-native";
+import { toast } from "sonner-native";
 
 interface SettingsItemProps {
   title: string;
@@ -122,6 +124,9 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
+
   const handleBack = () => {
     router.push("/(tabs)/profile" as any);
   };
@@ -163,7 +168,36 @@ export default function SettingsScreen() {
   };
 
   const handleAccountDeletionPress = () => {
-    router.push("/settings/delete-account" as any);
+    setShowDeleteModal(true);
+  };
+
+  const handleCancelDeletion = () => {
+    if (isDeactivating) return;
+    setShowDeleteModal(false);
+  };
+
+  const handleConfirmDeletion = async () => {
+    if (!user?.id) return;
+    setIsDeactivating(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ isActive: false })
+        .eq("id", user.id);
+
+      if (error) {
+        toast.error(error.message || "Failed to deactivate account");
+        setIsDeactivating(false);
+        return;
+      }
+
+      toast.success("Account deactivated");
+      setShowDeleteModal(false);
+      await logout();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to deactivate account");
+      setIsDeactivating(false);
+    }
   };
 
   const handleLogout = () => {
@@ -289,6 +323,91 @@ export default function SettingsScreen() {
           />
         </SettingsSection>
       </ScrollView>
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDeletion}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(28)} height={s(28)} />
+            </View>
+
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Elimina account?
+            </ScaledText>
+
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(32) }}
+            >
+              This action will deactivate your account. You can reactivate it
+              withen 30 days by contacting support.
+            </ScaledText>
+
+            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+              <TouchableOpacity
+                onPress={handleConfirmDeletion}
+                disabled={isDeactivating}
+                className="rounded-full items-center justify-center flex-row"
+                style={{
+                  backgroundColor: isDeactivating ? "#6B2C2C" : "#AD2E2E",
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="font-montserratMedium text-foreground"
+                >
+                  {isDeactivating ? "Processing..." : "I understand"}
+                </ScaledText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleCancelDeletion}
+                disabled={isDeactivating}
+                className="rounded-full items-center justify-center"
+                style={{
+                    paddingVertical: mvs(10.5),
+                    paddingLeft: s(18),
+                    paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-montserratMedium"
+                >
+                  Cancel
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

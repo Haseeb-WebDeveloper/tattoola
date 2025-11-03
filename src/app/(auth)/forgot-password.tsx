@@ -6,19 +6,20 @@ import { useAuth } from "@/providers/AuthProvider";
 import type { ForgotPasswordData, FormErrors } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import {
-    ForgotPasswordValidationSchema,
-    ValidationUtils,
+  ForgotPasswordValidationSchema,
+  ValidationUtils,
 } from "@/utils/validation";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
@@ -29,6 +30,9 @@ export default function ForgotPasswordScreen() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [emailSent, setEmailSent] = useState(false);
+  const [focusedField, setFocusedField] = useState<
+    keyof ForgotPasswordData | null
+  >(null);
 
   const handleInputChange = (
     field: keyof ForgotPasswordData,
@@ -85,143 +89,169 @@ export default function ForgotPasswordScreen() {
     );
   }
 
-  if (emailSent) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: "transparent" }]}
+  const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } =
+    Dimensions.get("window");
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        locations={[0, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[
+          StyleSheet.absoluteFillObject,
+          { height: SCREEN_HEIGHT, width: SCREEN_WIDTH, zIndex: 0 },
+        ]}
+        pointerEvents="none"
+      />
+
+      <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
+        extraKeyboardSpace={100}
+        bottomOffset={62}
+        ScrollViewComponent={ScrollView}
+        showsVerticalScrollIndicator={false}
+        className="flex-1 bg-transparent"
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={{ zIndex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        {/* Header with logo */}
+        <View
+          className="w-full flex justify-center items-center"
+          style={{ marginTop: mvs(20) }}
         >
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
+          <SVGIcons.LogoLight className="h-12" />
+        </View>
+
+        {/* Title and subtitle */}
+        <View
+          className="items-center"
+          style={{ paddingHorizontal: s(24), paddingTop: mvs(32) }}
+        >
+          <ScaledText
+            allowScaling={false}
+            variant="2xl"
+            className="text-foreground text-center font-neueSemibold"
+          >
+            Forgot Password?
+          </ScaledText>
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-gray text-center font-montserratLight"
+          >
+            Enter your email address and we&apos;ll send you a reset link.
+          </ScaledText>
+        </View>
+
+        {/* Form */}
+        {!emailSent && (
+          <View style={{ paddingHorizontal: s(24), paddingTop: mvs(20) }}>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-foreground mb-2"
+            >
+              Email
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : errors.email ? "border-2 border-error" : "border border-gray"}`}
+              className="flex-1 text-foreground rounded-xl"
+              style={{ fontSize: s(12) }}
+              placeholder="Enter your email"
+              value={formData.email}
+              onChangeText={(value) => handleInputChange("email", value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+            />
+            {!!errors.email && (
+              <ScaledText variant="body4" className="text-error mt-1">
+                {errors.email}
+              </ScaledText>
+            )}
+
+            <View className="items-center mt-6">
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleSendResetEmail}
+                disabled={loading}
+                className="bg-primary rounded-full items-center w-full"
+                style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueBold"
+                >
+                  Send Reset Link
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Email Sent State */}
+        {emailSent && (
+          <View className="px-6 mt-10 items-center">
+            <View style={{ marginBottom: mvs(16) }}>
               <SVGIcons.MailSent width={s(40)} height={s(40)} />
             </View>
             <ScaledText variant="2xl" className="text-foreground font-neueBold">
               Check Your Email
             </ScaledText>
-            <ScaledText variant="body2" className="text-gray text-center">
-              We&apos;ve sent a password reset link to{"\n"}
-              <ScaledText
-                variant="body2"
-                className="text-foreground font-montserratSemibold"
-              >
-                {formData.email}
-              </ScaledText>
+            <ScaledText variant="body2" className="text-gray text-center mt-2">
+              We&apos;ve sent a password reset link to
             </ScaledText>
-          </View>
-
-          <View style={styles.instructions}>
-            <ScaledText variant="body2" className="text-gray text-center">
-              Click the link in the email to reset your password. If you
-              don&apos;t see the email, check your spam folder.
-            </ScaledText>
-          </View>
-
-          <View style={styles.actions}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleBackToLogin}
-              className="bg-primary rounded-full"
-              style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
-            >
-              <ScaledText
-                variant="body1"
-                className="text-foreground font-neueBold"
-              >
-                Back to Login
-              </ScaledText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.resendLink]}
-              onPress={handleResendEmail}
-            >
-              <ScaledText
-                variant="body2"
-                className="text-foreground font-montserratSemibold"
-              >
-                Didn&apos;t receive the email? Resend
-              </ScaledText>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.keyboardAvoid}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <TouchableOpacity style={styles.backButton} onPress={handleBackToLogin}>
-          <SVGIcons.ChevronLeft className="w-6 h-6" />
-        </TouchableOpacity>
-
-        <View style={styles.header}>
-          <ScaledText variant="2xl" className="text-foreground font-neueBold">
-            Forgot Password?
-          </ScaledText>
-          <ScaledText variant="body2" className="text-gray text-center">
-            Enter your email address and we&apos;ll send you a link to reset
-            your password
-          </ScaledText>
-        </View>
-
-        <View style={styles.form}>
-          <ScaledText variant="sm" className="text-foreground mb-2">
-            Email
-          </ScaledText>
-          <ScaledTextInput
-            containerClassName={`flex-row items-center rounded-xl border ${errors.email ? "border-error" : "border-gray"}`}
-            className="flex-1 text-foreground rounded-xl"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange("email", value)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {!!errors.email && (
-            <ScaledText variant="body4" className="text-error mt-1">
-              {errors.email}
-            </ScaledText>
-          )}
-
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={handleSendResetEmail}
-            disabled={loading}
-            className="bg-primary rounded-full"
-            style={[
-              styles.sendButton,
-              { paddingVertical: mvs(10), paddingHorizontal: s(32) },
-            ]}
-          >
             <ScaledText
-              variant="body1"
-              className="text-foreground font-neueBold text-center"
+              variant="body2"
+              className="text-foreground font-montserratSemibold mt-1"
             >
-              Send Reset Link
+              {formData.email}
             </ScaledText>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.loginLink}
-            onPress={handleBackToLogin}
-          >
-            <ScaledText variant="body2" className="text-gray text-center">
+            <View className="items-center mt-6" style={{ gap: 12 }}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleBackToLogin}
+                className="bg-primary rounded-full"
+                style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
+              >
+                <ScaledText
+                  variant="body1"
+                  className="text-foreground font-neueBold"
+                >
+                  Back to Login
+                </ScaledText>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleResendEmail}>
+                <ScaledText
+                  variant="body2"
+                  className="text-foreground font-montserratSemibold"
+                >
+                  Didn&apos;t receive the email? Resend
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Bottom link */}
+        <View className="items-center mt-10 px-6 pb-8">
+          <TouchableOpacity onPress={handleBackToLogin}>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-gray font-montserratMedium"
+            >
               Remember your password?{" "}
               <ScaledText
-                variant="body2"
+                allowScaling={false}
+                variant="md"
                 className="text-foreground font-montserratSemibold"
               >
                 Sign in
@@ -229,8 +259,8 @@ export default function ForgotPasswordScreen() {
             </ScaledText>
           </TouchableOpacity>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 }
 
@@ -239,18 +269,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  keyboardAvoid: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingVertical: 32,
-  },
-  backButton: {
-    alignSelf: "flex-start",
-    padding: 8,
-    marginBottom: 16,
   },
   header: {
     alignItems: "center",

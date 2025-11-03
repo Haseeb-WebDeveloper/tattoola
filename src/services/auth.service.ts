@@ -42,6 +42,28 @@ export class AuthService {
       throw new Error("Authentication failed");
     }
 
+    // Guard: prevent login for deactivated users
+    try {
+      const authUserId = data.user.id;
+      const { data: dbUser, error: dbErr } = await supabase
+        .from("users")
+        .select("id, isActive")
+        .eq("id", authUserId)
+        .maybeSingle();
+
+      if (!dbErr && dbUser && dbUser.isActive === false) {
+        // Immediately sign them out and block login
+        await supabase.auth.signOut();
+        throw new Error("Your account has been deactivated. Please contact support.");
+      }
+    } catch (guardErr: any) {
+      // Re-throw guard error messages; other errors should still block login gracefully
+      if (guardErr instanceof Error) {
+        throw guardErr;
+      }
+      throw new Error("Unable to sign in at this time. Please try again later.");
+    }
+
     // Construct a minimal user object based on auth user for pre-setup flow
     const authUser = data.user as any;
     const isVerified = !!authUser.email_confirmed_at;
@@ -1203,10 +1225,17 @@ export class AuthService {
   /**
    * Resend verification email
    */
-  static async resendVerificationEmail(): Promise<void> {
+  static async resendVerificationEmail(email?: string): Promise<void> {
+    // If email is not provided, try to use the current session's user email
+    let targetEmail = email;
+    if (!targetEmail) {
+      const { data } = await supabase.auth.getUser();
+      targetEmail = data?.user?.email ?? undefined;
+    }
+
     const { error } = await supabase.auth.resend({
       type: "signup",
-      email: "",
+      email: targetEmail,
     });
 
     if (error) {

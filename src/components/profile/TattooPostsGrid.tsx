@@ -19,12 +19,12 @@ export const TattooPostsGrid: React.FC<TattooPostsGridProps> = ({ posts }) => {
     return (
       <View
         className="flex-1 items-center justify-center bg-tat-foreground"
-        style={{ paddingVertical: mvs(60) }}
+        style={{ paddingVertical: mvs(60), minHeight: mvs(253) }}
       >
         <ScaledText
           allowScaling={false}
-          variant="body1"
-          className="text-gray text-center"
+          variant="md"
+          className="text-gray text-center font-neueLight"
         >
           No tattoos yet
         </ScaledText>

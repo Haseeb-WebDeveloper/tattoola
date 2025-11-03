@@ -18,13 +18,14 @@ export const FollowedTattooLoversList: React.FC<FollowedTattooLoversListProps> =
           justifyContent: "center",
           paddingVertical: mvs(40),
           paddingHorizontal: s(16),
+          minHeight: mvs(253),
         }}
         className="bg-tat-foreground"
       >
         <ScaledText
           allowScaling={false}
           variant="md"
-          className="text-gray text-center"
+          className="text-gray text-center font-neueLight"
         >
           Non segui ancora nessun tattoo lover
         </ScaledText>
