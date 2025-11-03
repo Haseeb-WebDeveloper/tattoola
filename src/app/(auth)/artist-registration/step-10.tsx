@@ -20,10 +20,26 @@ import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
 
 function PartSkeleton() {
   return (
-    <View className="flex-row items-center justify-between p-4 border-b border-gray/20 tat-foreground-gray">
-      <View className="w-6 h-6 rounded bg-gray/30 mr-3" />
+    <View
+      className="flex-row items-center tat-foreground-gray border-gray"
+      style={{
+        paddingHorizontal: s(16),
+        paddingVertical: mvs(14),
+        borderBottomWidth: s(0.5),
+        gap: s(8),
+      }}
+    >
+      <Pressable className="w-10 items-center">
+        <SVGIcons.UncheckedCheckbox width={s(17)} height={s(17)} />
+      </Pressable>
       <View className="flex-1">
-        <View className="w-48 h-4 bg-gray/30 rounded" />
+        <ScaledText
+          allowScaling={false}
+          variant="md"
+          className="text-foreground font-montserratMedium"
+        >
+          ...
+        </ScaledText>
       </View>
     </View>
   );
@@ -66,18 +82,17 @@ export default function ArtistStep10V2() {
     const isSelected = selected.includes(item.id);
     return (
       <View
-        className="flex-row items-center border-b border-gray/20 tat-foreground-gray"
-        style={{ paddingHorizontal: s(16), paddingVertical: mvs(16) }}
+        className="flex-row items-center tat-foreground-gray border-gray"
+        style={{ paddingHorizontal: s(16), paddingVertical: mvs(14), borderBottomWidth: s(0.5), gap: s(8) }}
       >
         <Pressable
           className="items-center"
-          style={{ width: s(40) }}
           onPress={() => toggleBodyPart(item.id)}
         >
           {isSelected ? (
-            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />
           ) : (
-            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.UncheckedCheckbox width={s(17)} height={s(17)} />
           )}
         </Pressable>
         <View className="flex-1">
@@ -127,7 +142,7 @@ export default function ArtistStep10V2() {
                 paddingBottom: mvs(13),
               }}
             >
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 12 }).map((_, i) => (
                 <PartSkeleton key={i} />
               ))}
             </ScrollView>

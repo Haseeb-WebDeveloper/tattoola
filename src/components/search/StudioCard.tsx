@@ -83,8 +83,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-neueBold"
-                numberOfLines={1}
+                className="text-foreground font-neueBold"
               >
                 {studio.name}
               </ScaledText>
@@ -108,9 +107,14 @@ export default function StudioCard({ studio }: StudioCardProps) {
           </View>
         )} */}
         {studio.ownerName ? (
-          <View className="flex-row items-center" style={{ marginBottom: mvs(2) }}>
-            <SVGIcons.Studio width={s(14)} height={s(14)}
-            style={{ marginRight: s(4) }}
+          <View
+            className="flex-row items-center"
+            style={{ marginBottom: mvs(2) }}
+          >
+            <SVGIcons.Studio
+              width={s(14)}
+              height={s(14)}
+              style={{ marginRight: s(4) }}
             />
             <ScaledText
               allowScaling={false}
@@ -158,9 +162,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
         )}
 
         {/* Styles Pills */}
-        {studio.styles.length > 0 && (
-          <StylePills styles={studio.styles} />
-        )}
+        {studio.styles.length > 0 && <StylePills styles={studio.styles} />}
       </View>
 
       {/* Banner - Video or Images */}

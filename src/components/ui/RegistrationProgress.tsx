@@ -17,6 +17,8 @@ interface RegistrationProgressProps {
   descriptionVariant?: TypographyVariant;
   NameFont?: string;
   DescriptionFont?: string;
+  isDescriptionClickable?: boolean;
+  onDescriptionPress?: () => void;
 }
 
 export default function RegistrationProgress({
@@ -30,6 +32,8 @@ export default function RegistrationProgress({
   descriptionVariant = "md",
   NameFont = "font-neueBold",
   DescriptionFont = "font-neueLight",
+  isDescriptionClickable = true,
+  onDescriptionPress = () => {},
   onIconPress = () => {},
 }: RegistrationProgressProps) {
   const barRef = useRef(null);
@@ -148,7 +152,7 @@ export default function RegistrationProgress({
             </ScaledText>
           </View>
         )}
-        {description && (
+        {description && !isDescriptionClickable && (
           <View style={{ paddingHorizontal: s(24), marginTop: mvs(10) }}>
             <ScaledText
               allowScaling={false}
@@ -158,6 +162,17 @@ export default function RegistrationProgress({
               {description}
             </ScaledText>
           </View>
+        )}
+        {description && isDescriptionClickable && (
+          <TouchableOpacity onPress={onDescriptionPress}>
+            <ScaledText
+              allowScaling={false}
+              variant={descriptionVariant}
+              className={`text-[#FFF] text-center ${DescriptionFont}`}
+            >
+              {description}
+            </ScaledText>
+          </TouchableOpacity>
         )}
       </View>
     </View>

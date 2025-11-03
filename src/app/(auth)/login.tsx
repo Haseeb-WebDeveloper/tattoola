@@ -146,7 +146,7 @@ function LoginScreenContent() {
             <View className="absolute bottom-6 left-0 right-0 px-6 z-20">
               <ScaledText
                 allowScaling={false}
-                variant="sectionTitle"
+                variant="2xl"
                 className="text-foreground text-center font-neueSemibold"
               >
                 Welcome back!!
@@ -220,7 +220,7 @@ function LoginScreenContent() {
             <ScaledText
               allowScaling={false}
               variant="body4"
-              className="text-gray font-neneSemibold"
+              className="text-gray font-neueLight"
             >
               Forgot password?
             </ScaledText>
@@ -238,8 +238,8 @@ function LoginScreenContent() {
           >
             <ScaledText
               allowScaling={false}
-              variant="body1"
-              className="text-foreground font-neueBold"
+              variant="lg"
+              className="text-foreground font-neueSemibold"
             >
               Sign in
             </ScaledText>

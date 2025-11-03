@@ -21,6 +21,7 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { getFileNameFromUri } from "@/utils/get-file-name";
 import { LinearGradient } from "expo-linear-gradient";
+import ScaledText from "@/components/ui/ScaledText";
 
 export default function UploadMediaStep() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
@@ -203,9 +204,13 @@ export default function UploadMediaStep() {
                 disabled={uploading}
                 className="bg-primary rounded-full py-3 px-6 mt-4"
               >
-                <Text className="text-foreground tat-body-1 font-neueBold">
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueBold"
+                >
                   {uploading ? "Uploading..." : "Upload files"}
-                </Text>
+                </ScaledText>
               </TouchableOpacity>
               <Text className="text-foreground/80 mt-6 text-center px-4">
                 JPG/PNG up to 5MB. MP4/MOV/AVI up to 10MB. Drag to reorder.

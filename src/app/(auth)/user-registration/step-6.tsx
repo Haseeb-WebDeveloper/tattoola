@@ -236,7 +236,7 @@ export default function UserRegistrationStep6() {
         totalSteps={7}
         name="Your preferred styles"
         nameVariant="2xl"
-        icon={<SVGIcons.Person width={20} height={20} />}
+        icon={<SVGIcons.Style width={20} height={20} />}
         description="You can choose up to 4 favorite styles."
         descriptionVariant="md"
       />

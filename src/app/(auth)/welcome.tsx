@@ -1,7 +1,6 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { useAuth } from "@/providers/AuthProvider";
-import { mvs, s, scaledVSize } from "@/utils/scale";
+import { mvs, s, scaledFont, scaledVSize } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
@@ -11,11 +10,10 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  View
+  View,
 } from "react-native";
 
 export default function WelcomeScreen() {
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -34,8 +32,11 @@ export default function WelcomeScreen() {
           {/* Hero image */}
           <View className="relative">
             {/* Top logo */}
-            <View className="w-full h-fit flex justify-center items-center">
-              <SVGIcons.LogoLight width={100} height={100} />
+            <View
+              className="w-full h-fit flex justify-center items-center"
+              style={{ height: mvs(100) }}
+            >
+              {/* <SVGIcons.Logo /> */}
             </View>
 
             <View className="w-full relative">
@@ -43,7 +44,7 @@ export default function WelcomeScreen() {
                 source={require("@/assets/auth/welcome-screen.jpg")}
                 className="w-full"
                 resizeMode="cover"
-                style={{ height: scaledVSize(230) }}
+                style={{ height: scaledVSize(200) }}
               />
               {/* Top-bottom fade gradient overlay */}
               <LinearGradient
@@ -53,7 +54,7 @@ export default function WelcomeScreen() {
                 end={{ x: 0, y: 1 }}
                 className="absolute w-full top-0 left-0 right-0 bottom-0 z-10"
                 style={{
-                  height: scaledVSize(230),
+                  height: scaledVSize(200),
                   position: "absolute",
                   top: 0,
                   left: 0,
@@ -62,11 +63,22 @@ export default function WelcomeScreen() {
                 pointerEvents="none"
               />
               {/* Headline overlay */}
-              <View className="absolute top-2 left-0 right-0 p-6 z-20">
+              <View
+                className="absolute left-0 right-0 p-6 z-20"
+                style={{ top: mvs(-70) }}
+              >
+                {/* Top logo */}
+                <View
+                  className="w-full h-fit flex justify-center items-center" 
+                  style={{ height: mvs(55) }}
+                >
+                  <SVGIcons.Logo height={s(50)} />
+                </View>
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
-                  className="text-foreground text-center font-montserratSemibold"
+                  // variant="lg"
+                  className="text-foreground text-center font-montserratBold"
+                  style={{ fontSize: scaledFont(18) }}
                 >
                   Where tattoos meet their stories.
                 </ScaledText>
@@ -79,7 +91,8 @@ export default function WelcomeScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className=" text-gray text-center mb-2 italic font-montserratMedium"
+              className="text-center mb-2 font-montserratMediumItalic"
+              style={{ color: "#A49A99" }}
             >
               Create a profile to showcase your work
             </ScaledText>
@@ -93,7 +106,7 @@ export default function WelcomeScreen() {
                 style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
               >
                 <ScaledText
-                  variant="md"
+                  variant="lg"
                   allowScaling={false}
                   className="text-foreground font-neueBold"
                 >
@@ -123,7 +136,8 @@ export default function WelcomeScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className=" text-gray text-center mt-6 italic font-montserratMedium"
+              className=" text-center mt-6  font-montserratMediumItalic"
+              style={{ color: "#A49A99" }}
             >
               Discover and connect with artists
             </ScaledText>
@@ -137,7 +151,7 @@ export default function WelcomeScreen() {
                 style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
               >
                 <ScaledText
-                  variant="body1"
+                  variant="lg"
                   allowScaling={false}
                   className="text-foreground font-neueBold"
                 >

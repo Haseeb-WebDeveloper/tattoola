@@ -69,10 +69,11 @@ export default function ArtistStep7V2() {
         totalSteps={totalStepsDisplay}
         name="Add Bio & Socials"
         icon={<SVGIcons.Heart width={22} height={22} />}
+        nameVariant="2xl"
       />
 
       {/* Bio */}
-      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(15) }}>
+      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(20) }}>
         <ScaledText
           allowScaling={false}
           variant="sm"
@@ -98,7 +99,11 @@ export default function ArtistStep7V2() {
           }}
           multiline
           numberOfLines={6}
-          style={{ textAlignVertical: "top", minHeight: mvs(120) }}
+          style={{
+            textAlignVertical: "top",
+            minHeight: mvs(120),
+            fontSize: s(12),
+          }}
         />
         {!!errors.bio && (
           <ScaledText
@@ -113,7 +118,7 @@ export default function ArtistStep7V2() {
       </View>
 
       {/* Instagram */}
-      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(15) }}>
+      <View style={{ paddingHorizontal: s(24), marginBottom: mvs(20) }}>
         <ScaledText
           allowScaling={false}
           variant="sm"
@@ -125,25 +130,20 @@ export default function ArtistStep7V2() {
         <View
           className={`flex-row items-center rounded-xl bg-black/40 ${focused === "instagram" ? "border-2 border-foreground" : "border border-gray"}`}
         >
-          <View
-            style={{
-              paddingLeft: s(16),
-              paddingRight: s(8),
-              paddingVertical: mvs(12),
-            }}
-          >
+          <View style={{ paddingLeft: s(16) }} className="bg-tat-foreground">
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-foreground font-neueBold"
+              variant="sm"
+              className="text-gray font-montserratSemibold bg-tat-foreground"
             >
               @
             </ScaledText>
           </View>
           <ScaledTextInput
-            containerClassName="flex-1"
-            className="text-foreground"
-            placeholder="tattooking_85"
+            containerClassName="flex-1 rounded-xl "
+            className="text-foreground rounded-xl"
+            style={{ fontSize: s(12), paddingHorizontal: s(4) }}
+            placeholder="tattooking_857"
             placeholderTextColor="#A49A99"
             autoCapitalize="none"
             value={(step7.instagram || "").replace(/^@/, "")}
@@ -170,25 +170,20 @@ export default function ArtistStep7V2() {
         <View
           className={`flex-row items-center rounded-xl bg-black/40 ${focused === "tiktok" ? "border-2 border-foreground" : "border border-gray"}`}
         >
-          <View
-            style={{
-              paddingLeft: s(16),
-              paddingRight: s(8),
-              paddingVertical: mvs(12),
-            }}
-          >
+          <View style={{ paddingLeft: s(16) }} className="bg-tat-foreground">
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-foreground font-neueBold"
+              variant="sm"
+              className="text-gray font-montserratSemibold bg-tat-foreground"
             >
               @
             </ScaledText>
           </View>
           <ScaledTextInput
-            containerClassName="flex-1"
-            className="text-foreground"
-            placeholder="tattooking_85"
+            containerClassName="flex-1 rounded-xl "
+            className="text-foreground rounded-xl"
+            style={{ fontSize: s(12), paddingHorizontal: s(4) }}
+            placeholder="tattooking_857"
             placeholderTextColor="#A49A99"
             autoCapitalize="none"
             value={(step7.tiktok || "").replace(/^@/, "")}

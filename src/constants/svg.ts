@@ -7,6 +7,8 @@ import CloseGray from "@/assets/icons/close-gray.svg";
 // @ts-ignore
 import LogoLight from "@/assets/icons/logo-light.svg";
 // @ts-ignore
+import Logo from "@/assets/icons/logo.svg";
+// @ts-ignore
 import Person from "@/assets/icons/person.svg";
 // @ts-ignore
 import SecurePerson from "@/assets/icons/secure-person.svg";
@@ -111,6 +113,8 @@ import ChevronRight from "@/assets/icons/chevron-right.svg";
 // @ts-ignore
 import ChevronDown from "@/assets/icons/chevron-downward.svg";
 // @ts-ignore
+import ChevronDownGray from "@/assets/icons/chevron-downward-gray.svg";
+// @ts-ignore
 import HeartFilled from "@/assets/icons/heart-filled.svg";
 // @ts-ignore
 import Trash from "@/assets/icons/trash.svg";
@@ -208,6 +212,7 @@ export const SVGIcons = {
   CloseRed,
   CloseGray,
   LogoLight,
+  Logo,
   Person,
   SecurePerson,
   UserFilled,
@@ -252,6 +257,7 @@ export const SVGIcons = {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronDownGray,
   HeartFilled,
   Trash,
   Delete,

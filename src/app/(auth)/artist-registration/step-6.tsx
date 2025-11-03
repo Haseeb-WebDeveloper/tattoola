@@ -80,53 +80,46 @@ export default function ArtistStep6V2() {
           currentStep={currentStepDisplay}
           totalSteps={totalStepsDisplay}
           name="Allega le tue certificazioni"
+          nameVariant="2xl"
           icon={<SVGIcons.Certificate width={22} height={22} />}
+          description="Carica un certificato o attestato che dimostri la tua autorizzazione a esercitare come tatuatore in Italia, insieme a un documento d’identità. Questo ci aiuta a verificare la tua identità e a mantenere la community sicura."
+          descriptionVariant="md"
         />
-
-
-        {/* Description */}
-        <View style={{ paddingHorizontal: s(24), marginBottom: mvs(24) }}>
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-center text-foreground font-montserratLight"
-          >
-            Carica un certificato o attestato che dimostri la tua autorizzazione
-            a esercitare come tatuatore in Italia, insieme a un documento
-            d’identità. Questo ci aiuta a verificare la tua identità e a
-            mantenere la community sicura.
-          </ScaledText>
-        </View>
 
         {/* Upload area */}
         <View style={{ paddingHorizontal: s(24) }}>
           <View
-            className="rounded-2xl items-center bg-primary/20 border-2 border-dashed border-error/70"
-            style={{ paddingVertical: mvs(24), paddingHorizontal: s(16) }}
+            className="rounded-2xl items-center bg-primary/20 border-dashed border-error/70"
+            style={{
+              paddingVertical: mvs(24),
+              paddingHorizontal: s(16),
+              borderWidth: s(1),
+            }}
           >
             <SVGIcons.Upload width={s(42)} height={s(42)} />
             <TouchableOpacity
               onPress={handlePickCertificate}
               disabled={uploading}
-              className="bg-primary rounded-full"
+              className="bg-primary text-background rounded-full"
               style={{
                 paddingVertical: mvs(8),
-                paddingHorizontal: s(16),
-                marginTop: mvs(8),
+                paddingHorizontal: s(20),
+                borderRadius: s(70),
+                marginTop: mvs(12),
               }}
             >
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-neueBold"
+                className="text-foreground font-neueSemibold"
               >
-                {uploading ? "Uploading..." : "Upload files"}
+                {uploading ? "Uploading..." : "Upload Certificate"}
               </ScaledText>
             </TouchableOpacity>
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-gray text-center"
+              className="text-gray text-center font-neueSemibold"
               style={{ marginTop: mvs(12) }}
             >
               Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}Fino a 2

@@ -171,8 +171,8 @@ export default function LocationPicker({
           <View
             className="border-b border-gray flex-row items-center justify-between relative bg-primary/30"
             style={{
-              paddingBottom: mvs(20),
-              paddingTop: mvs(70),
+              paddingBottom: mvs(15),
+              paddingTop: mvs(50),
               paddingHorizontal: s(20),
             }}
           >
@@ -181,13 +181,13 @@ export default function LocationPicker({
               className="rounded-full bg-foreground/20 items-center justify-center"
               style={{ width: s(30), height: s(30) }}
             >
-              <SVGIcons.Close className="w-8 h-8" />
+              <SVGIcons.Close width={s(12)} height={s(12)} />
             </TouchableOpacity>
             <View className="flex-row items-center justify-center">
               <ScaledText
                 allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueBold"
+                variant="lg"
+                className="text-foreground font-neueSemibold"
               >
                 {modalStep === "province"
                   ? "Seleziona la provincia"
@@ -200,14 +200,19 @@ export default function LocationPicker({
           {/* Search */}
           <View style={{ paddingHorizontal: s(20), paddingTop: mvs(16) }}>
             <View className="border border-gray rounded-full flex-row items-center">
-              <View style={{ paddingLeft: s(16) }}>
-                <SVGIcons.Search className="w-5 h-5 mr-2" />
+              <View style={{ paddingLeft: s(12) }}>
+                <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
               <ScaledTextInput
                 containerClassName="bg-background"
                 className="text-foreground"
                 style={{
                   backgroundColor: "transparent",
+                  fontSize: s(14),
+                  lineHeight: mvs(23),
+                  fontFamily: "NeueHaasDisplay-Light",
+                  paddingVertical: mvs(6),
+                  paddingHorizontal: s(12),
                 }}
                 placeholder={
                   modalStep === "province" ? "Cerca provincia" : "Cerca comune"
@@ -224,7 +229,7 @@ export default function LocationPicker({
             className="flex-1"
             style={{
               paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
-              paddingTop: mvs(16),
+              paddingTop: mvs(20),
             }}
             showsVerticalScrollIndicator={false}
           >
@@ -234,8 +239,8 @@ export default function LocationPicker({
                 <ScaledText
                   allowScaling={false}
                   variant="lg"
-                  className="text-gray font-neueBold mb-3 ml-1"
-                  style={{ paddingHorizontal: s(20) }}
+                  className="text-gray font-neueSemibold"
+                  style={{ paddingHorizontal: s(20), paddingBottom: mvs(6) }}
                 >
                   Popular cities
                 </ScaledText>
@@ -269,8 +274,8 @@ export default function LocationPicker({
                         >
                           <ScaledText
                             allowScaling={false}
-                            variant="body2"
-                            className="text-foreground text-center"
+                            variant="11"
+                            className="text-foreground text-center font-neueLight"
                           >
                             {p.name}
                           </ScaledText>
@@ -287,8 +292,8 @@ export default function LocationPicker({
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-gray font-neueBold mb-3 ml-1"
-                style={{ paddingHorizontal: s(20) }}
+                className="text-gray font-neueSemibold"
+                style={{ paddingHorizontal: s(20),  paddingBottom: mvs(6) }}
               >
                 {isSearching
                   ? "Search results"
@@ -305,8 +310,8 @@ export default function LocationPicker({
                 >
                   <ScaledText
                     allowScaling={false}
-                    variant="body2"
-                    className="text-gray text-center"
+                    variant="lg"
+                    className="text-gray text-center font-neueLight"
                   >
                     No results found
                   </ScaledText>
@@ -335,8 +340,8 @@ export default function LocationPicker({
                       <View className="flex-row items-center gap-3 px-6">
                         <ScaledText
                           allowScaling={false}
-                          variant="body2"
-                          className="text-foreground"
+                          variant="md"
+                          className="text-foreground font-montserratLight"
                         >
                           {item.name}
                         </ScaledText>
@@ -371,7 +376,7 @@ export default function LocationPicker({
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground"
+                className="text-foreground font-neueSemibold"
               >
                 Back
               </ScaledText>
@@ -397,7 +402,7 @@ export default function LocationPicker({
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground"
+                  className="text-foreground font-neueSemibold"
                 >
                   Next
                 </ScaledText>

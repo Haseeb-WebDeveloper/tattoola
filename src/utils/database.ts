@@ -68,7 +68,7 @@ function getDatabase(): SQLite.SQLiteDatabase {
  */
 export async function saveProfileToCache(
   userId: string,
-  profileData: ArtistSelfProfile
+  profileData: any
 ): Promise<void> {
   try {
     const database = getDatabase();
@@ -94,7 +94,7 @@ export async function saveProfileToCache(
  */
 export async function getProfileFromCache(
   userId: string
-): Promise<ArtistSelfProfile | null> {
+): Promise<any | null> {
   try {
     const database = getDatabase();
     

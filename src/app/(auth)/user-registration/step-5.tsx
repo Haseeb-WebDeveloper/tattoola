@@ -67,14 +67,17 @@ export default function UserRegistrationStep5() {
               variant="sm"
               className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-             Inserisci il link al tuo account Instagram (facoltativo)
+              Inserisci il link al tuo account Instagram (facoltativo)
             </ScaledText>
-            <View className="flex-row items-center rounded-xl border border-gray">
-              <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
+            <View className="flex-row items-center rounded-xl border border-gray bg-tat-foreground">
+              <View
+                style={{ paddingLeft: s(16), }}
+                className="bg-tat-foreground"
+              >
                 <ScaledText
                   allowScaling={false}
-                  variant="body1"
-                  className="text-foreground font-neueBold"
+                  variant="sm"
+                  className="text-gray font-montserratSemibold bg-tat-foreground"
                 >
                   @
                 </ScaledText>
@@ -82,7 +85,8 @@ export default function UserRegistrationStep5() {
               <ScaledTextInput
                 containerClassName="flex-1 rounded-xl"
                 className="text-foreground rounded-xl"
-                placeholder="username"
+                style={{ fontSize: s(12), paddingHorizontal: s(4) }}
+                placeholder="tattooking_85"
                 placeholderTextColor="#A49A99"
                 autoCapitalize="none"
                 value={(formData.instagram || "").replace(/^@/, "")}
@@ -107,12 +111,15 @@ export default function UserRegistrationStep5() {
             >
               Inserisci il link al tuo account TikTok (facoltativo)
             </ScaledText>
-            <View className="flex-row items-center rounded-xl border border-gray">
-              <View style={{ paddingLeft: s(16), paddingRight: s(8) }}>
+            <View className="flex-row items-center rounded-xl border border-gray bg-tat-foreground">
+              <View
+                style={{ paddingLeft: s(16), }}
+                className="bg-tat-foreground"
+              >
                 <ScaledText
                   allowScaling={false}
-                  variant="body1"
-                  className="text-foreground font-neueBold"
+                  variant="sm"
+                  className="text-gray font-montserratSemibold bg-tat-foreground"
                 >
                   @
                 </ScaledText>
@@ -120,7 +127,8 @@ export default function UserRegistrationStep5() {
               <ScaledTextInput
                 containerClassName="flex-1 rounded-xl "
                 className="text-foreground rounded-xl"
-                placeholder="username"
+                style={{ fontSize: s(12), paddingHorizontal: s(4) }}
+                placeholder="tattooking_857"
                 placeholderTextColor="#A49A99"
                 autoCapitalize="none"
                 value={(formData.tiktok || "").replace(/^@/, "")}

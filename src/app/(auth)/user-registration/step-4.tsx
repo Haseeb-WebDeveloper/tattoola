@@ -124,8 +124,7 @@ export default function UserRegistrationStep4() {
         />
 
         {/* Content */}
-        <View style={{ paddingHorizontal: s(24),}}>
-
+        <View style={{ paddingHorizontal: s(24) }}>
           {/* Avatar Upload Area */}
           <View
             className="items-center justify-center"
@@ -185,12 +184,11 @@ export default function UserRegistrationStep4() {
               <TouchableOpacity
                 onPress={handlePickAvatar}
                 disabled={isUploading}
-                className="border-2 border-dashed items-center justify-center  bg-tat-darkMaroon"
+                className="border-2 border-dashed items-center justify-center  bg-tat-darkMaroon border-primary"
                 style={{
                   width: s(200),
                   height: s(200),
                   borderRadius: s(100),
-                  borderColor: "#E80D0D33",
                   opacity: isUploading ? 0.5 : 1,
                 }}
               >
@@ -199,6 +197,24 @@ export default function UserRegistrationStep4() {
                 ) : (
                   <SVGIcons.User width={s(48)} height={s(48)} />
                 )}
+                <View
+                  className="items-center justify-center"
+                  style={{
+                    paddingVertical: mvs(8),
+                    paddingHorizontal: s(20),
+                    borderRadius: s(70),
+                    backgroundColor: "#E80D0D",
+                    marginTop: mvs(16),
+                  }}
+                >
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueSemibold"
+                  >
+                    Upload Photo
+                  </ScaledText>
+                </View>
               </TouchableOpacity>
             )}
           </View>

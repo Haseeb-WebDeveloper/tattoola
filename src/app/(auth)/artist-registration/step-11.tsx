@@ -67,26 +67,21 @@ export default function ArtistStep11V2() {
         {label}
       </ScaledText>
       <View
-        className={`flex-row items-center rounded-xl bg-black/40 ${focused === field ? "border-2 border-foreground" : "border border-gray"}`}
+        className={`flex-row items-center rounded-xl bg-tat-foreground ${focused === field ? "border-2 border-foreground" : "border border-gray"}`}
       >
-        <View
-          style={{
-            paddingLeft: s(16),
-            paddingRight: s(8),
-            paddingVertical: mvs(12),
-          }}
-        >
+        <View style={{ paddingLeft: s(16) }} className="bg-tat-foreground">
           <ScaledText
             allowScaling={false}
-            variant="md"
-            className="text-foreground font-neueBold"
+            variant="sm"
+            className="text-gray font-montserratSemibold bg-tat-foreground"
           >
             €
           </ScaledText>
         </View>
         <ScaledTextInput
-          containerClassName="flex-1"
-          className="text-foreground rounded-xl"
+          containerClassName="flex-1 bg-tat-foreground rounded-xl"
+          className="text-foreground rounded-xl font-montserratSemibold bg-tat-foreground"
+          style={{ fontSize: s(12), paddingHorizontal: s(4) }}
           placeholder="0"
           placeholderTextColor="#A49A99"
           keyboardType="numeric"
@@ -99,15 +94,15 @@ export default function ArtistStep11V2() {
           onBlur={() => setFocused(null)}
           maxLength={6}
         />
-        <View style={{ paddingRight: s(16), paddingVertical: mvs(12) }}>
+        {/* <View style={{ paddingRight: s(16) }} className="bg-tat-foreground">
           <ScaledText
             allowScaling={false}
-            variant="body2"
-            className="text-foreground/80"
+            variant="sm"
+            className="text-gray font-montserratSemibold bg-tat-foreground"
           >
             EUR
           </ScaledText>
-        </View>
+        </View> */}
       </View>
     </View>
   );
@@ -124,6 +119,7 @@ export default function ArtistStep11V2() {
         name=" Set your pricing"
         description="Enter your minimum price and hourly rate to guide clients."
         icon={<SVGIcons.Pricing width={19} height={19} />}
+        nameVariant="2xl"
       />
 
       {renderCurrencyInput(

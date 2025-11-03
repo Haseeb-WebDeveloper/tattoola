@@ -41,19 +41,9 @@ export default function IndexScreen() {
       style={{ flex: 1, gap: mvs(12) }}
       className="bg-background flex-col items-center justify-center"
     >
-      <View className="items-center justify-center animate-spin">
-        <SVGIcons.Loading
-          width={s(32)}
-          height={s(32)}
-          className="self-center animate-spin"
-        />
+      <View className="items-center justify-center">
+        <SVGIcons.LogoLight />
       </View>
-      <ScaledText
-        variant="lg"
-        className="text-foreground font-montserratMedium"
-      >
-        Loading Tattoola...
-      </ScaledText>
     </View>
   );
 }

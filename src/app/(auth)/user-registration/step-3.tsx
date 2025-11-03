@@ -1,3 +1,4 @@
+import LocationPicker from "@/components/shared/LocationPicker";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
@@ -11,10 +12,16 @@ import { supabase } from "@/utils/supabase";
 import { UserStep3ValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View } from "react-native";
-import CountryPicker, { Country, CountryCode } from "react-native-country-picker-modal";
+import { Modal, Pressable, TouchableOpacity, View } from "react-native";
+import CountryPicker, {
+  Country,
+  CountryCode,
+} from "react-native-country-picker-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 function formatPhoneForInput(phone: string, callingCode: string): string {
   // Show only the user part (remove country code prefix)
@@ -40,7 +47,10 @@ export default function UserRegistrationStep3() {
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
-  const [modalStep, setModalStep] = useState<null | "province" | "municipality">(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [modalStep, setModalStep] = useState<
+    null | "province" | "municipality"
+  >(null);
   const [provinces, setProvinces] = useState<
     { id: string; name: string; imageUrl?: string | null }[]
   >([]);
@@ -94,7 +104,9 @@ export default function UserRegistrationStep3() {
         modalStep === "municipality" &&
         (selectedProvince || formData.province)
       ) {
-        const provinceId = selectedProvince?.id || provinces.find((p) => p.name === formData.province)?.id;
+        const provinceId =
+          selectedProvince?.id ||
+          provinces.find((p) => p.name === formData.province)?.id;
         const { data, error } = await supabase
           .from("municipalities")
           .select("id, name, imageUrl")
@@ -139,19 +151,33 @@ export default function UserRegistrationStep3() {
   };
 
   const handleMunicipalitySelect = (municipality: any) => {
-    setFormData((prev) => ({ 
-      ...prev, 
+    setFormData((prev) => ({
+      ...prev,
       municipality: municipality.name,
       municipalityId: municipality.id,
       province: selectedProvince?.name || formData.province,
-      provinceId: selectedProvince?.id || (provinces.find(p => p.name === formData.province)?.id || '')
+      provinceId:
+        selectedProvince?.id ||
+        provinces.find((p) => p.name === formData.province)?.id ||
+        "",
     }));
     setModalStep(null);
     setSearch("");
   };
 
-  const onChange = (province: string, municipality: string, provinceId: string, municipalityId: string) => {
-    setFormData({ ...formData, province, municipality, provinceId, municipalityId });
+  const onChange = (
+    province: string,
+    municipality: string,
+    provinceId: string,
+    municipalityId: string
+  ) => {
+    setFormData({
+      ...formData,
+      province,
+      municipality,
+      provinceId,
+      municipalityId,
+    });
     clearErrors();
   };
 
@@ -217,6 +243,7 @@ export default function UserRegistrationStep3() {
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl border border-gray`}
               className="text-foreground rounded-xl"
+              style={{ fontSize: s(12) }}
               placeholder="Mario"
               placeholderTextColor="#A49A99"
               value={formData.firstName}
@@ -243,6 +270,7 @@ export default function UserRegistrationStep3() {
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl border border-gray`}
               className="text-foreground rounded-xl"
+              style={{ fontSize: s(12) }}
               placeholder="Rossi"
               placeholderTextColor="#A49A99"
               value={formData.lastName}
@@ -269,9 +297,9 @@ export default function UserRegistrationStep3() {
             <View className="flex-row items-center rounded-xl border border-gray bg-tat-foreground">
               <Pressable
                 onPress={() => setCountryPickerVisible(true)}
-                style={{ 
-                  paddingLeft: s(16), 
-                  paddingRight: s(2),
+                style={{
+                  paddingLeft: s(16),
+                  // paddingRight: s(2),
                   paddingVertical: mvs(12),
                   flexDirection: "row",
                   alignItems: "center",
@@ -285,29 +313,36 @@ export default function UserRegistrationStep3() {
               >
                 <ScaledText
                   allowScaling={false}
-                  variant="body1"
-                  className="text-foreground font-neueBold"
+                  variant="sm"
+                  className="text-gray font-montserratSemibold"
                 >
                   +{formData.callingCode}
                 </ScaledText>
-                <SVGIcons.ChevronDown width={s(14)} height={s(14)} fill="#A49A99" />
+                <SVGIcons.ChevronDownGray width={s(12)} height={s(12)} />
               </Pressable>
               <ScaledTextInput
                 containerClassName="flex-1 rounded-xl"
-                className="text-foreground"
+                className="text-foreground font-montserratSemibold"
+                style={{ fontSize: s(12) }}
                 placeholder="Numero di telefono"
-                placeholderTextColor="#A49A99"
-                value={formatPhoneForInput(formData.phone, formData.callingCode || "39")}
+                placeholderTextColor="#262626"
+                value={formatPhoneForInput(
+                  formData.phone,
+                  formData.callingCode || "39"
+                )}
                 onChangeText={(v) => {
                   const digits = v.replace(/[^0-9]/g, "");
-                  handleInputChange("phone", `+${formData.callingCode}${digits}`);
+                  handleInputChange(
+                    "phone",
+                    `+${formData.callingCode}${digits}`
+                  );
                 }}
                 keyboardType="number-pad"
                 textContentType="telephoneNumber"
                 maxLength={15}
               />
             </View>
-            
+
             {/* Country Picker Modal with Safe Area */}
             <Modal
               visible={countryPickerVisible}
@@ -315,7 +350,14 @@ export default function UserRegistrationStep3() {
               presentationStyle="pageSheet"
               onRequestClose={() => setCountryPickerVisible(false)}
             >
-              <SafeAreaView style={{ flex: 1, backgroundColor: "#000000", paddingBottom: insets.bottom, paddingTop: s(10), }}>
+              <SafeAreaView
+                style={{
+                  flex: 1,
+                  backgroundColor: "#000000",
+                  paddingBottom: insets.bottom,
+                  paddingTop: s(10),
+                }}
+              >
                 <CountryPicker
                   countryCode={formData.countryCode as CountryCode}
                   withFilter
@@ -355,28 +397,28 @@ export default function UserRegistrationStep3() {
               variant="sm"
               className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              Location
+              Provincia & Comune
               <ScaledText variant="sm" className="text-error">
                 *
               </ScaledText>
             </ScaledText>
             <TouchableOpacity
               accessibilityRole="button"
-              onPress={() => {
-                setModalStep("province");
-                setSearch("");
-              }}
-              className="rounded-xl border border-gray px-4 py-3"
+              onPress={() => setShowLocationPicker(true)}
+              className="rounded-xl border border-gray bg-tat-foreground"
               style={{ paddingVertical: mvs(12), paddingHorizontal: s(16) }}
             >
               <ScaledText
                 allowScaling={false}
-                variant="body1"
-                className={
-                  formData.municipality && formData.province
-                    ? "text-foreground"
-                    : "text-gray"
-                }
+                variant="sm"
+                className={`
+                  font-montserratSemibold
+                  ${
+                    formData.municipality && formData.province
+                      ? "text-foreground"
+                      : "text-gray"
+                  }
+                `}
               >
                 {formData.municipality && formData.province
                   ? `${formData.province}, ${formData.municipality}`
@@ -398,280 +440,25 @@ export default function UserRegistrationStep3() {
       </KeyboardAwareScrollView>
 
       {/* Footer */}
-      <NextBackFooter
-        onNext={handleNext}
-        nextLabel="Next"
-        backLabel="Back"
-        onBack={handleBack}
+      <NextBackFooter onNext={handleNext} nextLabel="Next" showBack={false} />
+
+      <LocationPicker
+        visible={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onSelect={(data) => {
+          setFormData((prev) => ({
+            ...prev,
+            province: data.province,
+            provinceId: data.provinceId,
+            municipality: data.municipality,
+            municipalityId: data.municipalityId,
+          }));
+          clearErrors();
+          setShowLocationPicker(false);
+        }}
+        initialProvinceId={formData.provinceId || null}
+        initialMunicipalityId={formData.municipalityId || null}
       />
-
-      {/* Location Selection Modal */}
-      <Modal
-        visible={!!modalStep}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalStep(null)}
-      >
-        <View className="flex-1 bg-black/50">
-          <View
-            className="flex-1 bg-black rounded-t-3xl"
-            style={{ marginTop: "auto" }}
-          >
-            {/* Header */}
-            <View
-              className="border-b border-gray flex-row items-center justify-between relative bg-primary/30"
-              style={{
-                paddingBottom: mvs(12),
-                paddingTop: mvs(50),
-                paddingHorizontal: s(20),
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  if (modalStep === "municipality") setModalStep("province");
-                  else setModalStep(null);
-                }}
-                className="rounded-full bg-foreground/20 items-center justify-center"
-                style={{ width: s(30), height: s(30) }}
-              >
-                <SVGIcons.Close className="w-8 h-8" />
-              </TouchableOpacity>
-              <View className="flex-row items-center justify-center">
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueBold"
-                >
-                  {modalStep === "province"
-                    ? "Seleziona la provincia"
-                    : "Seleziona il comune"}
-                </ScaledText>
-              </View>
-              <View style={{ height: mvs(30), width: mvs(30) }} />
-            </View>
-
-            {/* Search */}
-            <View
-              style={{ paddingHorizontal: s(20), paddingVertical: mvs(16) }}
-            >
-              <View className="border border-gray rounded-full flex-row items-center bg-tat-foreground">
-                <View style={{ paddingLeft: s(16) }}>
-                  <SVGIcons.Search className="w-5 h-5 mr-2" />
-                </View>
-                <ScaledTextInput
-                  containerClassName="rounded-l-full bg-tat-foreground"
-                  className="text-foreground"
-                  placeholder={
-                    modalStep === "province"
-                      ? "Cerca provincia"
-                      : "Cerca comune"
-                  }
-                  placeholderTextColor="#A49A99"
-                  value={search}
-                  onChangeText={setSearch}
-                />
-              </View>
-            </View>
-
-            {/* Content */}
-            <ScrollView
-              className="flex-1"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
-              }}
-            >
-              {/* Popular six for province step - only show when not searching */}
-              {modalStep === "province" && provinces.slice(0, 6).length > 0 && search.trim().length === 0 && (
-                <View style={{ paddingBottom: mvs(16) }}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="lg"
-                    className="text-gray font-neueBold mb-3 ml-1"
-                    style={{ paddingHorizontal: s(20) }}
-                  >
-                    Popular cities
-                  </ScaledText>
-                  <View className="flex-row flex-wrap gap-[2px] bg-background">
-                    {provinces.slice(0, 6).map((p) => {
-                      const active =
-                        selectedProvince?.id === p.id || formData.province === p.name;
-                      return (
-                        <TouchableOpacity
-                          key={p.id}
-                          onPress={() => {
-                            setSelectedProvince(p);
-                            setSearch("");
-                          }}
-                          style={{
-                            width: "32%",
-                            overflow: "hidden",
-                          }}
-                          className="h-32"
-                        >
-                          {p.imageUrl ? (
-                            <Image
-                              source={{ uri: p.imageUrl }}
-                              className="w-full h-[75%]"
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <View className="w-full h-[70%] bg-gray/30" />
-                          )}
-                          <View
-                            className={`h-[25%] flex items-center justify-center ${active ? "bg-primary" : "bg-background"}`}
-                          >
-                            <ScaledText
-                              allowScaling={false}
-                              variant="body2"
-                              className="text-foreground text-center"
-                            >
-                              {p.name}
-                            </ScaledText>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              )}
-
-              {/* List */}
-              <View>
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-gray font-neueBold mb-3 ml-1"
-                  style={{ paddingHorizontal: s(20) }}
-                >
-                  {search.trim().length > 0
-                    ? "Search results"
-                    : modalStep === "province"
-                      ? "Other provinces"
-                      : `Comunes under ${selectedProvince?.name || formData.province || "Roma"}`}
-                </ScaledText>
-                {(modalStep === "province" ? provinces : municipalities)
-                  .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
-                  .filter((r) =>
-                    modalStep === "province" && search.trim().length === 0
-                      ? !provinces.slice(0, 6).map(p => p.id).includes(r.id)
-                      : true
-                  ).length === 0 ? (
-                  <View style={{ paddingHorizontal: s(20), paddingVertical: mvs(40) }}>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="body2"
-                      className="text-gray text-center"
-                    >
-                      No results found
-                    </ScaledText>
-                  </View>
-                ) : (
-                  (modalStep === "province" ? provinces : municipalities)
-                    .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
-                    .filter((r) =>
-                      modalStep === "province" && search.trim().length === 0
-                        ? !provinces.slice(0, 6).map(p => p.id).includes(r.id)
-                        : true
-                    )
-                    .map((item) => (
-                      <Pressable
-                        key={item.id}
-                        className={`py-4 border-b border-gray/20 ${formData.municipality === item.name && formData.province === selectedProvince?.name ? "bg-primary" : "bg-[#100C0C]"}`}
-                        onPress={() => {
-                          if (modalStep === "province") {
-                            setSelectedProvince(item);
-                            setSearch("");
-                          } else {
-                            onChange(
-                              selectedProvince?.name || formData.province,
-                              item.name,
-                              selectedProvince?.id || (provinces.find(p => p.name === formData.province)?.id || ''),
-                              item.id
-                            );
-                            setModalStep(null);
-                            setSearch("");
-                          }
-                        }}
-                      >
-                        <View className="flex-row items-center gap-3 px-6">
-                          <ScaledText
-                            allowScaling={false}
-                            variant="body2"
-                            className="text-foreground"
-                          >
-                            {item.name}
-                          </ScaledText>
-                        </View>
-                      </Pressable>
-                    ))
-                )}
-              </View>
-            </ScrollView>
-
-            {/* Footer actions */}
-            <View
-              className="flex-row justify-between absolute left-0 right-0 bg-background border-t border-gray/20"
-              style={{
-                paddingHorizontal: s(20),
-                paddingTop: mvs(16),
-                paddingBottom: Math.max(insets.bottom, mvs(20)),
-                bottom: 0,
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  if (modalStep === "municipality") setModalStep("province");
-                  else setModalStep(null);
-                }}
-                className="rounded-full border border-foreground items-center flex-row gap-3"
-                style={{
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                }}
-              >
-                <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground"
-                >
-                  Back
-                </ScaledText>
-              </TouchableOpacity>
-              {modalStep === "province" ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    if (selectedProvince) {
-                      setModalStep("municipality");
-                      setSearch("");
-                    }
-                  }}
-                  className={`rounded-full items-center flex-row gap-3 ${selectedProvince ? "bg-primary" : "bg-gray/40"}`}
-                  style={{
-                    paddingVertical: mvs(10.5),
-                    paddingLeft: s(18),
-                    paddingRight: s(20),
-                  }}
-                  disabled={!selectedProvince}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground"
-                  >
-                    Next
-                  </ScaledText>
-                  <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
-                </TouchableOpacity>
-              ) : (
-                <View />
-              )}
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

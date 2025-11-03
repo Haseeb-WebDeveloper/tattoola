@@ -1,3 +1,4 @@
+import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -118,22 +119,7 @@ export default function ArtistRegisterScreen() {
       className="flex-1 bg-background"
     >
       {/* Header: close + logo */}
-      <View
-        className="px-4"
-        style={{ marginTop: mvs(15), marginBottom: mvs(20) }}
-      >
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity
-            onPress={handleClose}
-            className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
-          >
-            <SVGIcons.Close className="w-8 h-8" />
-          </TouchableOpacity>
-          <SVGIcons.LogoLight className="h-10" />
-          <View className="w-10" />
-        </View>
-        <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
-      </View>
+      <AuthStepHeader />
 
       {/* Steps indicator */}
       <RegistrationProgress
@@ -141,6 +127,7 @@ export default function ArtistRegisterScreen() {
         totalSteps={steps.length}
         name="Registrati come Artista"
         icon={<SVGIcons.Pen3 className="w-7 h-7" />}
+        nameVariant="2xl"
       />
 
       {/* Inputs */}
@@ -155,6 +142,7 @@ export default function ArtistRegisterScreen() {
         <ScaledTextInput
           containerClassName={`flex-row items-center rounded-xl bg-gray-foreground ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
           className="flex-1 text-foreground rounded-xl"
+          style={{ fontSize: s(12) }}
           placeholder="TattooKing_97"
           placeholderTextColor="#A49A99"
           autoCapitalize="none"
@@ -178,6 +166,7 @@ export default function ArtistRegisterScreen() {
           <ScaledTextInput
             containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
             className="flex-1 text-foreground rounded-xl"
+            style={{ fontSize: s(12) }}
             placeholder="abc@gmail.com"
             placeholderTextColor="#A49A99"
             keyboardType="email-address"
@@ -204,6 +193,7 @@ export default function ArtistRegisterScreen() {
           <ScaledTextInput
             containerClassName={`flex-row items-center rounded-xl ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
             className="flex-1 text-foreground rounded-xl"
+            style={{ fontSize: s(12) }}
             placeholder="*************"
             placeholderTextColor="#A49A99"
             secureTextEntry={!showPassword}
@@ -242,6 +232,7 @@ export default function ArtistRegisterScreen() {
           <ScaledTextInput
             containerClassName={`flex-row items-center rounded-xl ${focusedField === "confirmPassword" ? "border-2 border-foreground" : "border border-gray"}`}
             className="flex-1 text-foreground rounded-xl"
+            style={{ fontSize: s(12) }}
             placeholder="*************"
             placeholderTextColor="#A49A99"
             secureTextEntry={!showConfirmPassword}
@@ -279,7 +270,7 @@ export default function ArtistRegisterScreen() {
             accessibilityRole="button"
             onPress={handleRegister}
             disabled={loading}
-            className="bg-primary rounded-full items-center w-full"
+            className="bg-primary-brand rounded-full items-center w-full"
             style={{ paddingVertical: mvs(12), paddingHorizontal: s(32) }}
           >
             <ScaledText
@@ -293,7 +284,7 @@ export default function ArtistRegisterScreen() {
 
         {/* Footer link */}
         <View className="items-center mt-8 mb-8">
-          <ScaledText variant="md" className="text-[#A49A99]">
+          <ScaledText variant="md" className="text-[#A49A99] font-montserratLight">
             Already have an account?{" "}
             <ScaledText
               variant="md"

@@ -19,12 +19,12 @@ module.exports = {
     },
     extend: {
       colors: {
-        // Theme colors based on the SVG design system
         background: "##0A0101",
         foreground: "#FFFFFF",
         primary: {
           DEFAULT: "#AE0E0E", // Black background from SVG
           foreground: "#FFFFFF", // White text
+          brand: "#AE0E0E",
           50: "#F8F9FA",
           100: "#E9ECEF",
           200: "#DEE2E6",
@@ -165,6 +165,13 @@ module.exports = {
         montserratSemibold: ["Montserrat-SemiBold", "Montserrat", "system-ui", "sans-serif"],
         montserratBold: ["Montserrat-Bold", "Montserrat", "system-ui", "sans-serif"],
         montserratBlack: ["Montserrat-Black", "Montserrat", "system-ui", "sans-serif"],
+        // Italic convenience aliases
+        montserratItalic: ["Montserrat-Italic", "Montserrat-Regular", "system-ui", "sans-serif"],
+        montserratLightItalic: ["Montserrat-LightItalic", "Montserrat-Light", "system-ui", "sans-serif"],
+        montserratMediumItalic: ["Montserrat-MediumItalic", "Montserrat-Medium", "system-ui", "sans-serif"],
+        montserratSemiboldItalic: ["Montserrat-SemiBoldItalic", "Montserrat-SemiBold", "system-ui", "sans-serif"],
+        montserratBoldItalic: ["Montserrat-BoldItalic", "Montserrat-Bold", "system-ui", "sans-serif"],
+        montserratBlackItalic: ["Montserrat-BlackItalic", "Montserrat-Black", "system-ui", "sans-serif"],
 
         neueThin: ["NeueHaasDisplay-Thin", "NeueHaasDisplay", "system-ui", "sans-serif"],
         neueLight: ["NeueHaasDisplay-Light", "NeueHaasDisplay", "system-ui", "sans-serif"],
@@ -173,6 +180,13 @@ module.exports = {
         neueSemibold: ["NeueHaasDisplay-Bold", "NeueHaasDisplay", "system-ui", "sans-serif"],
         neueBold: ["NeueHaasDisplay-Bold", "NeueHaasDisplay", "system-ui", "sans-serif"],
         neueBlack: ["NeueHaasDisplay-Black", "NeueHaasDisplay", "system-ui", "sans-serif"],
+
+        neueThinItalic: ["NeueHaasDisplay-ThinItalic", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueLightItalic: ["NeueHaasDisplay-LightItalic", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueMediumItalic: ["NeueHaasDisplay-MediumItalic", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueSemiboldItalic: ["NeueHaasDisplay-BoldItalic", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueBoldItalic: ["NeueHaasDisplay-BoldItalic", "NeueHaasDisplay", "system-ui", "sans-serif"],
+        neueBlackItalic: ["NeueHaasDisplay-BlackItalic", "NeueHaasDisplay", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Typography scale inspired by the SVG text hierarchy

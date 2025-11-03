@@ -9,7 +9,7 @@ type Props = TextProps & {
 };
 
  export const ScaledText: React.FC<Props> = ({
-   variant = "body2Light",
+   variant = "md",
    allowScaling = false,
    style,
    children,

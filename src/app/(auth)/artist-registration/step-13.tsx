@@ -13,8 +13,9 @@ import type { CompleteArtistRegistration } from "@/types/auth";
 import { WorkArrangement } from "@/types/auth";
 import { isValid, step13Schema } from "@/utils/artistRegistrationValidation";
 import { logger } from "@/utils/logger";
-import { mvs, s } from "@/utils/scale";
+import { mvs, s, scaledFont } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
@@ -195,32 +196,51 @@ export default function ArtistStep13V2() {
       router.replace("/(tabs)");
     } catch (error) {
       logger.error("Registration error:", error);
-      
+
       // Extract meaningful error message
       let errorMessage = "Failed to complete registration. Please try again.";
-      
+
       if (error instanceof Error) {
         // Check for specific error patterns
-        if (error.message.includes("duplicate") || error.message.includes("already exists")) {
-          errorMessage = "Some information already exists. Your profile has been updated.";
-        } else if (error.message.includes("foreign key") || error.message.includes("violates")) {
+        if (
+          error.message.includes("duplicate") ||
+          error.message.includes("already exists")
+        ) {
+          errorMessage =
+            "Some information already exists. Your profile has been updated.";
+        } else if (
+          error.message.includes("foreign key") ||
+          error.message.includes("violates")
+        ) {
           errorMessage = "Invalid data provided. Please check your entries.";
-        } else if (error.message.includes("network") || error.message.includes("fetch")) {
-          errorMessage = "Network error. Please check your connection and try again.";
-        } else if (error.message.includes("column") && error.message.includes("does not exist")) {
-          errorMessage = "Database configuration error. Please contact support.";
+        } else if (
+          error.message.includes("network") ||
+          error.message.includes("fetch")
+        ) {
+          errorMessage =
+            "Network error. Please check your connection and try again.";
+        } else if (
+          error.message.includes("column") &&
+          error.message.includes("does not exist")
+        ) {
+          errorMessage =
+            "Database configuration error. Please contact support.";
           logger.error("Database schema mismatch:", error.message);
-        } else if (error.message.includes("cache") || error.message.includes("schema")) {
+        } else if (
+          error.message.includes("cache") ||
+          error.message.includes("schema")
+        ) {
           errorMessage = "Database sync error. Please try again in a moment.";
           logger.error("Database cache/schema error:", error.message);
         } else if (error.message) {
           // Use the actual error message if it's user-friendly (max 100 chars)
-          errorMessage = error.message.length > 100 
-            ? error.message.substring(0, 100) + "..."
-            : error.message;
+          errorMessage =
+            error.message.length > 100
+              ? error.message.substring(0, 100) + "..."
+              : error.message;
         }
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -249,44 +269,61 @@ export default function ArtistStep13V2() {
           currentStep={13}
           totalSteps={totalStepsDisplay}
           name="Choose your plan"
-          icon={<SVGIcons.Wallet width={22} height={22} />}
+          icon={<SVGIcons.Wallet width={20} height={20} />}
+          nameVariant="2xl"
         />
 
         {/* Billing Toggle */}
         <View style={{ paddingHorizontal: s(24), marginBottom: mvs(20) }}>
           <View
-            className="flex-row items-center justify-center rounded-full p-1"
+            className="flex-row items-center justify-center"
             style={{ gap: mvs(10) }}
           >
             <TouchableOpacity
               onPress={() => updateStep13({ billingCycle: "MONTHLY" })}
-              className={`flex-1 py-2 px-8 rounded-full border ${step13.billingCycle === "MONTHLY" ? "bg-primary border-transparent" : "bg-transparent border-foreground"}`}
+              className="rounded-full items-center justify-center"
+              style={{
+                paddingVertical: mvs(6),
+                paddingHorizontal: s(20),
+                borderWidth: 1,
+                borderColor: step13.billingCycle === "MONTHLY" ? "transparent" : "#a49a99",
+                backgroundColor: step13.billingCycle === "MONTHLY" ? "#AE0E0E" : "transparent",
+              }}
             >
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className={`text-center font--nfont-neueMedium text-foreground`}
+                className="text-center font-neueLight"
+                style={{ color: "#FFFFFF" }}
               >
                 Monthly
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => updateStep13({ billingCycle: "YEARLY" })}
-              className={`flex-1 py-2 px-8 rounded-full border ${step13.billingCycle === "YEARLY" ? "bg-primary border-transparent" : "bg-transparent border-foreground"}`}
+              className="rounded-full items-center justify-center"
+              style={{
+                paddingVertical: mvs(6),
+                paddingHorizontal: s(20),
+                borderWidth: 1,
+                borderColor: step13.billingCycle === "YEARLY" ? "transparent" : "#a49a99",
+                backgroundColor: step13.billingCycle === "YEARLY" ? "#AE0E0E" : "transparent",
+              }}
             >
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className={`text-center font-neueMedium text-foreground`}
+                className="text-center font-neueLight"
+                style={{ color: "#FFFFFF" }}
               >
-                Yearly
+                Annually
               </ScaledText>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Plans */}
-        <View style={{ paddingHorizontal: s(24) }}>
+        <View style={{ paddingHorizontal: s(24), gap: mvs(16) }}>
           {loading ? (
             // Render as many skeletons as number of plans you'd expect, or fallback to 2
             <>
@@ -295,97 +332,166 @@ export default function ArtistStep13V2() {
               ))}
             </>
           ) : (
-            plans.map((plan) => (
-              <TouchableOpacity
-                key={plan.id}
-                onPress={() => handlePlanSelect(plan.id)}
-                disabled={loading}
-                className={`mb-4 p-6 rounded-2xl border-2 ${
-                  step13.selectedPlanId === plan.id
-                    ? "border-primary bg-primary/10"
-                    : "border-gray bg-black/40"
-                }`}
-              >
-                <View className="flex-row items-center justify-between mb-4">
-                  <View className="flex-1">
-                    <ScaledText
-                      allowScaling={false}
-                      variant="xl"
-                      className="text-foreground font-neueMedium"
-                    >
-                      Piano {plan.name}
-                    </ScaledText>
-                    <View className="flex-row items-end mb-1">
+            plans.map((plan) => {
+              const planName = (plan.name || "").toLowerCase();
+              const accentColor = planName.includes("premium")
+                ? "#f79410"
+                : planName.includes("studio")
+                ? "#AE0E0E"
+                : "#080101";
+              const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+              const unit = isYearly ? "year" : "month";
+              const showTrialCta = planName.includes("premium");
+
+              return (
+                <TouchableOpacity
+                  activeOpacity={1}
+                  key={plan.id}
+                  onPress={() => handlePlanSelect(plan.id)}
+                  disabled={loading}
+                  className="rounded-2xl"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#a49a99",
+                    borderRadius: 8,
+                  }}
+                >
+                  <LinearGradient
+                    colors={["#FFFFFF", "#FFCACA"]}
+                    locations={[0.0095, 0.995]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      borderRadius: 8,
+                      paddingVertical: mvs(16),
+                      paddingHorizontal: s(16),
+                    }}
+                  >
+                  <View className="mb-4">
+                    <View className="flex-row items-center">
                       <ScaledText
                         allowScaling={false}
-                        variant="5xl"
-                        className="text-foreground font-neueBold"
+                        variant="20"
+                        className="font-neueMedium"
                       >
-                        €{isYearly ? plan.yearlyPrice : plan.monthlyPrice}/
+                        Piano
+                      </ScaledText>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="20"
+                        className="font-neueMedium"
+                        style={{ color: accentColor, marginLeft: s(6) }}
+                      >
+                        {plan.name}
+                      </ScaledText>
+                    </View>
+                    <View className="flex-row items-end mt-2">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="6xl"
+                        className="font-neueBold "
+                        style={{ color: "#080101", lineHeight: scaledFont(38) }}
+                      >
+                        €{price}/
                       </ScaledText>
                       <ScaledText
                         allowScaling={false}
                         variant="lg"
-                        className="text-foreground"
+                        className="font-neueMedium"
+                        style={{ color: "#080101", marginLeft: s(2) }}
                       >
-                        {isYearly ? "year" : "month"}
+                        {unit}
                       </ScaledText>
                     </View>
                     <ScaledText
                       allowScaling={false}
                       variant="11"
-                      className="text-foreground italic"
+                      className="font-neueLightItalic"
+                      style={{ color: "#080101", marginTop: mvs(6) }}
                     >
                       {plan.description}
                     </ScaledText>
                   </View>
-                </View>
 
-                {/* Features */}
-                <View style={{ gap: mvs(8) }}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="11"
-                    className="text-foreground font-neueSemibold"
-                  >
-                    Includes
-                  </ScaledText>
-                  <View className="flex-row items-center">
+                  {/* Features */}
+                  <View style={{ gap: mvs(8) }}>
                     <ScaledText
                       allowScaling={false}
                       variant="11"
-                      className="text-foreground"
+                      className="font-neueSemibold"
+                      style={{ color: "#080101" }}
                     >
-                      {plan.features.canUploadVideos
-                        ? "Video uploads"
-                        : "Image uploads only"}
+                      Includes:
                     </ScaledText>
+                    <View>
+                      {Array.isArray(plan.features) && plan.features.length > 0 ? (
+                        plan.features.map((feature: any, idx: number) => (
+                          <View key={idx} className="flex-row items-center mb-1">
+                            <ScaledText
+                              allowScaling={false}
+                              variant="11"
+                              style={{ color: "#080101" }}
+                            >
+                              {feature.text}
+                            </ScaledText>
+                          </View>
+                        ))
+                      ) : (
+                        <ScaledText
+                          allowScaling={false}
+                          variant="11"
+                          style={{ color: "#080101" }}
+                        >
+                          No features listed
+                        </ScaledText>
+                      )}
+                    </View>
                   </View>
-                  <View className="flex-row items-center">
-                    <ScaledText
-                      allowScaling={false}
-                      variant="11"
-                      className="text-foreground"
+
+                  {/* CTAs */}
+                  <View style={{ marginTop: mvs(16) }}>
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      style={{
+                        backgroundColor: "#AE0E0E",
+                        paddingVertical: mvs(12),
+                        borderRadius: 38,
+                        alignItems: "center",
+                      }}
                     >
-                      {plan.features.canCreateStudio
-                        ? "Studio creation"
-                        : "No studio features"}
-                    </ScaledText>
-                  </View>
-                  {plan.freeTrialDays > 0 && (
-                    <View className="flex-row items-center mt-2">
                       <ScaledText
                         allowScaling={false}
                         variant="body2"
-                        className="text-success font-neueBold"
+                        style={{ color: "#FFFFFF" }}
+                        className="font-neueMedium"
                       >
-                        {plan.freeTrialDays} days free trial
+                        {showTrialCta ? "Start free trial" : "Get started"}
                       </ScaledText>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))
+                    </TouchableOpacity>
+
+                    {showTrialCta && (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={{
+                          paddingVertical: mvs(10),
+                          alignItems: "center",
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          variant="body2"
+                          style={{ color: "#AE0E0E" }}
+                          className="font-neueMedium"
+                        >
+                          Buy Premium
+                        </ScaledText>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -393,7 +499,7 @@ export default function ArtistStep13V2() {
       {/* Footer */}
       <NextBackFooter
         onNext={handleCompleteRegistration}
-        nextLabel={submitting ? "Saving..." : "save"}
+        nextLabel={submitting ? "Saving..." : "Almost there!"}
         nextDisabled={loading || submitting || !canProceed}
         backLabel="Back"
         onBack={() => router.back()}

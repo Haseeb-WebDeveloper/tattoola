@@ -50,7 +50,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      {/* <TouchableOpacity
+      <TouchableOpacity
         onPress={() =>
           router.push("/user/23377731-a5cf-4d99-8de7-61f952c177a7")
         }
@@ -67,12 +67,18 @@ export default function HomeScreen() {
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/user-registration/step-3")}
-        className="bg-primary text-background p-4 rounded-full"
+        className="bg-foreground text-background p-4 rounded-full"
       >
         <Text>User registration</Text>
-      </TouchableOpacity> */}
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.push("/artist-registration/step-3")}
+        className="bg-foreground text-background p-4 rounded-full"
+      >
+        <Text>Artist registration</Text>
+      </TouchableOpacity>
 
-      <FlatList
+      {/* <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -106,13 +112,13 @@ export default function HomeScreen() {
             tintColor="#fff"
           />
         }
-      />
+      /> */}
       {/* Header brand (centered logo) */}
       <View
         className="absolute left-0 right-0 flex-row items-center justify-between"
         style={{
-          top: mvs(20),
-          paddingHorizontal: s(20),
+          paddingTop: mvs(8),
+          paddingHorizontal: s(16),
         }}
       >
         <View
@@ -121,7 +127,7 @@ export default function HomeScreen() {
         >
           {/* <SVGIcons.Flash  /> */}
         </View>
-        <SVGIcons.LogoLight style={{ width: s(33), height: s(33) }} />
+        <SVGIcons.LogoLight />
         <View style={{ width: s(20), height: s(20) }} />
       </View>
     </View>

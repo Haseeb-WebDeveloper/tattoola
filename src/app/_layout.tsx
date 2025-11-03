@@ -3,11 +3,17 @@ import "@/global.css";
 import { mvs, s } from "@/utils/scale";
 import {
   Montserrat_300Light,
+  Montserrat_300Light_Italic,
   Montserrat_400Regular,
+  Montserrat_400Regular_Italic,
   Montserrat_500Medium,
+  Montserrat_500Medium_Italic,
   Montserrat_600SemiBold,
+  Montserrat_600SemiBold_Italic,
   Montserrat_700Bold,
+  Montserrat_700Bold_Italic,
   Montserrat_900Black,
+  Montserrat_900Black_Italic,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -35,6 +41,13 @@ export default function RootLayout() {
     "Montserrat-SemiBold": Montserrat_600SemiBold,
     "Montserrat-Bold": Montserrat_700Bold,
     "Montserrat-Black": Montserrat_900Black,
+    // Italic faces
+    "Montserrat-Italic": Montserrat_400Regular_Italic,
+    "Montserrat-LightItalic": Montserrat_300Light_Italic,
+    "Montserrat-MediumItalic": Montserrat_500Medium_Italic,
+    "Montserrat-SemiBoldItalic": Montserrat_600SemiBold_Italic,
+    "Montserrat-BoldItalic": Montserrat_700Bold_Italic,
+    "Montserrat-BlackItalic": Montserrat_900Black_Italic,
 
     // Neue Haas Grotesk Display (local TTFs)
     // Base family mapped to Roman by default
@@ -44,6 +57,11 @@ export default function RootLayout() {
     "NeueHaasDisplay-Bold": require("../assets/fonts/NeueHaasDisplayBold.ttf"),
     "NeueHaasDisplay-Black": require("../assets/fonts/NeueHaasDisplayBlack.ttf"),
     "NeueHaasDisplay-Thin": require("../assets/fonts/NeueHaasDisplayThin.ttf"),
+    "NeueHaasDisplay-LightItalic": require("../assets/fonts/NeueHaasDisplayLightItalic.ttf"),
+    "NeueHaasDisplay-MediumItalic": require("../assets/fonts/NeueHaasDisplayMediumItalic.ttf"),
+    "NeueHaasDisplay-BoldItalic": require("../assets/fonts/NeueHaasDisplayBoldItalic.ttf"),
+    "NeueHaasDisplay-BlackItalic": require("../assets/fonts/NeueHaasDisplayBlackItalic.ttf"),
+    "NeueHaasDisplay-ThinItalic": require("../assets/fonts/NeueHaasDisplayThinItalic.ttf"),
   });
 
   useEffect(() => {
@@ -87,7 +105,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthProvider>
-          <SafeAreaView className="flex-1 text-foreground bg-background">
+          <SafeAreaView className="flex-1 text-foreground bg-background font-neue">
             <Stack
               screenOptions={{
                 headerShown: false,

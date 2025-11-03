@@ -12,7 +12,6 @@ import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 
-
 // Normalize search query: trim whitespace and convert to lowercase
 const normalizeSearchTerm = (text: string): string => {
   return text.trim().toLowerCase();
@@ -111,7 +110,9 @@ export default function InboxScreen() {
           >
             <Image
               source={{
-                uri: item.peerAvatar || `https://api.dicebear.com/7.x/initials/png?seed=${item.peerName?.split(" ")[0]}`,
+                uri:
+                  item.peerAvatar ||
+                  `https://api.dicebear.com/7.x/initials/png?seed=${item.peerName?.split(" ")[0]}`,
               }}
               className="rounded-full"
               style={{
@@ -172,7 +173,7 @@ export default function InboxScreen() {
                   marginRight: s(8),
                 }}
               >
-                  {TrimText(item.lastMessageText || "New conversation", 50)}
+                {TrimText(item.lastMessageText || "New conversation", 50)}
               </ScaledText>
               {item.lastMessageTime && (
                 <View
@@ -222,7 +223,10 @@ export default function InboxScreen() {
           paddingHorizontal: s(24),
         }}
       >
-        <ScaledText variant="md" className="text-gray text-center font-montserratMedium">
+        <ScaledText
+          variant="md"
+          className="text-gray text-center font-montserratMedium"
+        >
           {hasSearchQuery
             ? `No conversations found for "${debouncedQuery.trim()}"`
             : "No conversations yet.\nSend a request to get started!"}
@@ -253,13 +257,18 @@ export default function InboxScreen() {
       <View
         className="flex-row items-center justify-between"
         style={{
-          paddingHorizontal: s(20),
-          paddingTop: mvs(16),
-          paddingBottom: mvs(24),
+          paddingTop: mvs(8),
+          paddingHorizontal: s(16),
+          paddingBottom: mvs(28),
         }}
       >
-        <View className="rounded-full items-center justify-center">
-          <SVGIcons.Flash width={s(20)} height={s(20)} />
+        <View className="rounded-full items-center justify-center"
+        style={{
+          width: s(20),
+          height: s(20),
+        }}
+        >
+          {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
         </View>
         <SVGIcons.LogoLight />
         <View className="rounded-full items-center justify-center">

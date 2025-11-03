@@ -39,18 +39,19 @@ export default function NextBackFooter({
       {showBack ? (
         <TouchableOpacity
           onPress={onBack}
-          className="rounded-full border border-foreground items-center flex-row gap-3"
+          className="rounded-full border border-foreground items-center flex-row"
           style={{
             paddingVertical: mvs(10.5),
             paddingLeft: s(18),
             paddingRight: s(20),
+            gap: s(15),
           }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
           <ScaledText
             allowScaling={false}
-            variant="body1"
-            className="text-foreground"
+            variant="md"
+            className="text-foreground font-neueSemibold"
           >
             {backLabel}
           </ScaledText>
@@ -61,17 +62,18 @@ export default function NextBackFooter({
       <TouchableOpacity
         onPress={onNext}
         disabled={!!nextDisabled}
-        className={`rounded-full items-center flex-row gap-3 ${!nextDisabled ? "bg-primary" : "bg-gray/40"}`}
+        className={`rounded-full items-center flex-row  ${!nextDisabled ? "bg-primary" : "bg-gray/40"}`}
         style={{
           paddingVertical: mvs(10.5),
-          paddingLeft: s(18),
+          paddingLeft: s(25),
           paddingRight: s(20),
+          gap: s(15),
         }}
       >
         <ScaledText
           allowScaling={false}
-          variant="body1"
-          className="text-foreground"
+          variant="md"
+          className="text-foreground font-neueSemibold"
         >
           {nextLabel}
         </ScaledText>

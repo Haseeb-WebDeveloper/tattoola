@@ -536,6 +536,23 @@ export async function fetchTattooLoverSelfProfile(
   userId: string,
   forceRefresh = false
 ): Promise<TattooLoverSelfProfile> {
+  // Step 1: Try cache first (unless forceRefresh is true)
+  if (!forceRefresh) {
+    const cached = await getProfileFromCache(userId);
+    if (cached) {
+      console.log("📦 Using cached tattoo lover profile for user:", userId);
+      shouldRefreshCache(userId).then((shouldRefresh) => {
+        if (shouldRefresh) {
+          console.log("🔄 Cache is stale (tattoo lover), triggering background sync...");
+          fetchTattooLoverSelfProfile(userId, true).catch((err) =>
+            console.error("Background sync failed (tattoo lover):", err)
+          );
+        }
+      });
+      return cached as TattooLoverSelfProfile;
+    }
+  }
+
   console.log("🌐 Fetching tattoo lover profile from Supabase for user:", userId);
 
   // Fetch user basic info
@@ -767,7 +784,7 @@ export async function fetchTattooLoverSelfProfile(
     }));
   }
 
-  return {
+  const profileTL: TattooLoverSelfProfile = {
     user: {
       id: userRow.id,
       username: userRow.username,
@@ -784,6 +801,13 @@ export async function fetchTattooLoverSelfProfile(
     followedArtists,
     followedTattooLovers,
   };
+
+  // Save to cache for next time (fire-and-forget)
+  saveProfileToCache(userId, profileTL).catch((err) =>
+    console.error("Failed to cache tattoo lover profile:", err)
+  );
+
+  return profileTL;
 }
 
 // ===== OTHER USER PROFILES (for viewing other users) =====

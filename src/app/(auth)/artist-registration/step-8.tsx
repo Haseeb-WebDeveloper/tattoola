@@ -1,5 +1,5 @@
-import AuthStepHeader from "@/components/ui/auth-step-header";
 import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
+import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { AR_MAX_FAVORITE_STYLES } from "@/constants/limits";
@@ -14,7 +14,6 @@ import {
   FlatList,
   Image,
   Modal,
-  Pressable,
   ScrollView,
   TouchableOpacity,
   View,
@@ -23,13 +22,39 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function StyleSkeleton() {
   return (
-    <View className="flex-row items-center justify-between border-b border-gray/20 px-4">
-      <View className="w-6 h-6 rounded-md bg-gray/30 mr-3" />
-      <View className="w-32 h-24 bg-gray/30" />
-      <View className="flex-1 px-4">
-        <View className="w-24 h-4 bg-gray/30 rounded" />
+    <View className="flex-row items-center">
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: mvs(6),
+          paddingRight: s(16),
+        }}
+      >
+        <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
       </View>
-      <View className="w-6 h-6 rounded-full bg-gray/30" />
+      <View className="border-b border-gray/20 flex-row items-center justify-center">
+        <View
+          style={{
+            width: s(120),
+            height: mvs(72),
+            backgroundColor: "#A49A9950",
+          }}
+        />
+        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            style={{ fontSize: 12.445 }}
+            className="text-foreground font-montserratSemibold"
+          >
+            ...
+          </ScaledText>
+        </View>
+        <View style={{ paddingRight: s(16) }}>
+          <SVGIcons.StartCircle className="w-5 h-5" />
+        </View>
+        
+      </View>
     </View>
   );
 }
@@ -82,7 +107,6 @@ export default function ArtistStep8V2() {
   const resolveImageUrl = (url?: string | null) => {
     if (!url) return undefined;
     try {
-      // Handle google imgres links → extract real image via imgurl parameter
       if (url.includes("imgres") && url.includes("imgurl=")) {
         const u = new URL(url);
         const real = u.searchParams.get("imgurl");
@@ -95,48 +119,50 @@ export default function ArtistStep8V2() {
   };
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
-  
     const isSelected = selected.includes(item.id);
     const isPrimary = step8.mainStyleId === item.id;
     const img = resolveImageUrl(item.imageUrl);
     return (
       <View
-        className="flex-row items-center border-b border-gray/20"
-        style={{ paddingHorizontal: s(16) }}
+        className="flex-row items-center"
       >
         {/* Left select box */}
-        <Pressable
-          className="items-center"
-          style={{ width: s(40) }}
+        <TouchableOpacity
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: mvs(6),
+            paddingRight: s(16),
+          }}
           onPress={() => toggleFavoriteStyle(item.id, AR_MAX_FAVORITE_STYLES)}
         >
           {isSelected ? (
-            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
-            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </Pressable>
+        </TouchableOpacity>
 
         {/* Image */}
         {img ? (
           <Image
             source={{ uri: img }}
-            className=""
-            style={{ width: s(120), height: s(96) }}
+            className=" border-b border-gray/20"
+            style={{ width: s(120), height: mvs(72) }}
             resizeMode="cover"
           />
         ) : (
           <View
             className="bg-gray/30"
-            style={{ width: s(120), height: s(96) }}
+            style={{ width: s(155), height: mvs(72) }}
           />
         )}
 
         {/* Name */}
-        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
+        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
           <ScaledText
             allowScaling={false}
-            variant="sm"
+            style={{ fontSize: 12.445 }}
             className="text-foreground font-montserratSemibold"
           >
             {item.name}
@@ -171,13 +197,16 @@ export default function ArtistStep8V2() {
           totalSteps={totalStepsDisplay}
           name="Your preferred styles"
           description="Choose at least 2 styles. Then mark one as your primary style (★)"
+          descriptionVariant="md"
           icon={<SVGIcons.Style width={19} height={19} />}
           isIconPressable={true}
           onIconPress={() => setInfoVisible(true)}
+          isDescriptionClickable={true}
+          onDescriptionPress={() => setInfoVisible(true)}
         />
 
         {/* List */}
-        <View className="flex-1">
+        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
           {loading ? (
             <ScrollView
               contentContainerStyle={{

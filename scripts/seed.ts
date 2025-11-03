@@ -18,18 +18,13 @@ async function main() {
       name: 'Premium',
       type: PlanType.PREMIUM,
       description: 'Advanced features for professional artists',
-      features: {
-        maxPosts: null, // unlimited
-        maxCollections: null, // unlimited
-        maxStudioMembers: 0,
-        canCreateStudio: true,
-        canUploadVideos: true,
-        prioritySupport: true,
-        mainStyles: 2,
-        accessType: 'priority_requests',
-        yearsExperience: true,
-        coverMedia: true
-      },
+      features: [
+        { "index": 1, "text": "🎨 Add up to 3 styles" },
+        { "index": 2, "text": "⭐ Feature 2 favourites as premium" },
+        { "index": 3, "text": "🏆 Show years of experience" },
+        { "index": 4, "text": "🌍 Multi-location support" },
+        { "index": 5, "text": "📂 Create collections of your work" }
+      ],
       monthlyPrice: 39.00,
       yearlyPrice: 390.00, // 2 months free
       maxPosts: null,
@@ -52,20 +47,13 @@ async function main() {
       name: 'Studio',
       type: PlanType.STUDIO,
       description: 'Complete studio management solution',
-      features: {
-        maxPosts: null, // unlimited
-        maxCollections: null, // unlimited
-        maxStudioMembers: null, // unlimited
-        canCreateStudio: true,
-        canUploadVideos: true,
-        prioritySupport: true,
-        mainStyles: 3,
-        accessType: 'priority_requests',
-        yearsExperience: true,
-        coverMedia: true,
-        studioPage: true,
-        campaignDiscounts: true
-      },
+      features: [
+        { "index": 1, "text": "🎨 Add up to 3 styles" },
+        { "index": 2, "text": "⭐ Feature 2 favourites as premium" },
+        { "index": 3, "text": "🏆 Show years of experience" },
+        { "index": 4, "text": "🌍 Multi-location support" },
+        { "index": 5, "text": "📂 Create collections of your work" }
+      ],
       monthlyPrice: 79.00,
       yearlyPrice: 790.00, // 2 months free
       maxPosts: null,

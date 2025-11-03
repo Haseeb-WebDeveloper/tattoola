@@ -1,10 +1,11 @@
+import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import { logger } from "@/utils/logger";
-import { mvs } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, ScrollView, TouchableOpacity, View } from "react-native";
@@ -34,19 +35,7 @@ export default function EmailConfirmationScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Header with back and logo */}
-      <View className="px-4 my-8">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity
-            onPress={handleClose}
-            className="w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
-          >
-            <SVGIcons.Close className="w-8 h-8" />
-          </TouchableOpacity>
-          <SVGIcons.LogoLight className="h-10" />
-          <View className="w-10" />
-        </View>
-        <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
-      </View>
+      <AuthStepHeader />
       {/* Steps indicator */}
       <RegistrationProgress
         currentStep={2}
@@ -62,7 +51,7 @@ export default function EmailConfirmationScreen() {
 
       {/* Loading ring or image preview */}
       <View className="items-center mb-8">
-        {isLoading ? (
+        {true ? (
           <View className="w-20 h-20 rounded-full border-8 border-warning border-r-gray animate-spin-slow" />
         ) : imageError ? (
           <View className="w-[320px] h-[220px] rounded-xl bg-foreground/10 items-center justify-center">
@@ -85,13 +74,13 @@ export default function EmailConfirmationScreen() {
       <View className="items-center">
         <ScaledText
           variant="body2"
-          className="text-foreground font-montserratLight"
+          className="text-gray font-neueLight"
         >
           Haven’t received the email?
         </ScaledText>
         <TouchableOpacity
-          className="px-6 py-3 rounded-full border border-foreground/60 flex-row gap-2 items-center"
-          style={{ marginTop: mvs(8) }}
+          className="rounded-full border border-gray flex-row gap-2 items-center"
+          style={{ marginTop: mvs(8), paddingVertical: mvs(10), paddingHorizontal: s(24) }}
           onPress={() => {
             try {
               resendVerificationEmail();
@@ -102,8 +91,8 @@ export default function EmailConfirmationScreen() {
         >
           <SVGIcons.Reload className="w-5 h-5" />
           <ScaledText
-            variant="body2"
-            className="text-foreground font-montserratLight"
+            variant="11"
+            className="text-foreground font-neueSemibold"
             allowScaling={false}
           >
             Resend email

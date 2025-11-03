@@ -56,3 +56,37 @@ eas update --branch preview --message "User signup done"
 eas build --profile development --platform android
 
 eas build --profile preview --platform android
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+at user Signup we have login and are you artist links
+user signup step 4 logo upload icon
+user ame input @

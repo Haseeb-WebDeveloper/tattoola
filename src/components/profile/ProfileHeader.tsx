@@ -85,13 +85,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground"
+              className="text-foreground font-neueLight"
             >
               Titolare di{" "}
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-neueBlack"
+                className="text-foreground font-neueSemibold"
               >
                 {businessName || ""}
               </ScaledText>
@@ -104,7 +104,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground"
+              className="text-foreground font-neueLight"
             >
               {location}
             </ScaledText>

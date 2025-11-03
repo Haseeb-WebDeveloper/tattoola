@@ -31,8 +31,9 @@ export const ScaledTextInput: React.FC<Props> = ({
           {
             paddingHorizontal: s(12),
             paddingVertical: mvs(8.5),
-            fontSize: s(14),
+            fontSize: s(12),
             lineHeight: mvs(23),
+            fontFamily: "Montserrat-SemiBold",
           },
           autofillStyle,
           style,

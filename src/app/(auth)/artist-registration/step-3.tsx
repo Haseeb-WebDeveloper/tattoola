@@ -104,20 +104,21 @@ export default function ArtistStep3V2() {
           totalSteps={totalStepsDisplay}
           name="Create your profile"
           icon={<SVGIcons.Person width={25} height={25} />}
+          nameVariant="2xl"
         />
 
         {/* Upload section */}
         <View style={{ paddingHorizontal: s(24) }}>
           <ScaledText
             allowScaling={false}
-            variant="body2"
-            className="text-foreground font-montserratSemibold"
-            style={{ marginBottom: mvs(4) }}
+            variant="lg"
+            className="text-foreground font-neueSemibold"
+            style={{ marginBottom: mvs(2) }}
           >
             Upload your photo
             <ScaledText
               allowScaling={false}
-              variant="body2"
+              variant="lg"
               className="text-error"
             >
               *
@@ -125,7 +126,7 @@ export default function ArtistStep3V2() {
           </ScaledText>
           <ScaledText
             allowScaling={false}
-            variant="body2"
+            variant="sm"
             className="text-foreground font-montserratLight"
             style={{ marginBottom: mvs(12) }}
           >
@@ -191,6 +192,7 @@ export default function ArtistStep3V2() {
           <ScaledTextInput
             containerClassName={`flex-row items-center rounded-xl  ${focused === "firstName" ? "border-2 border-foreground" : "border border-gray"}`}
             className="flex-1 text-foreground"
+            style={{ fontSize: s(12) }}
             placeholder="John"
             placeholderTextColor="#A49A99"
             value={step3?.firstName || ""}
@@ -204,8 +206,8 @@ export default function ArtistStep3V2() {
           {!!errors.firstName && (
             <ScaledText
               allowScaling={false}
-              variant="body2"
-              className="text-error"
+              variant="sm"
+              className="text-error font-montserratLight"
               style={{ marginTop: mvs(4) }}
             >
               {errors.firstName}
@@ -231,6 +233,7 @@ export default function ArtistStep3V2() {
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${focused === "lastName" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-foreground rounded-xl"
+              style={{ fontSize: s(12) }}
               placeholder="Doe"
               placeholderTextColor="#A49A99"
               value={step3?.lastName || ""}
@@ -244,8 +247,8 @@ export default function ArtistStep3V2() {
             {!!errors.lastName && (
               <ScaledText
                 allowScaling={false}
-                variant="body2"
-                className="text-error"
+                variant="sm"
+                className="text-error font-montserratLight"
                 style={{ marginTop: mvs(4) }}
               >
                 {errors.lastName}

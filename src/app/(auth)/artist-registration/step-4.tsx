@@ -58,6 +58,7 @@ export default function ArtistStep4V2() {
         totalSteps={totalStepsDisplay}
         name="How do you work as an artist?"
         icon={<SVGIcons.Pen2 width={18} height={18} />}
+        nameVariant="2xl"
       />
 
       {/* Options */}
@@ -68,18 +69,22 @@ export default function ArtistStep4V2() {
             <TouchableOpacity
               key={opt.key}
               onPress={() => setWorkArrangement(opt.key)}
-              className={`rounded-xl px-3 py-4 border ${active ? "border-foreground" : "border-gray"} bg-[#100C0C]`}
-            >
+              className={`rounded-xl border ${active ? "border-foreground" : "border-gray"} bg-tat-foreground`}
+              style={{
+                paddingVertical: mvs(18),
+                paddingHorizontal: s(12),
+              }}
+            > 
               <View className="flex-row items-center gap-2">
                 {active ? (
-                  <SVGIcons.CircleCheckedCheckbox width={24} height={24} />
+                  <SVGIcons.CircleCheckedCheckbox width={s(17)} height={s(17)} />
                 ) : (
-                  <SVGIcons.CircleUncheckedCheckbox width={24} height={24} />
+                  <SVGIcons.CircleUncheckedCheckbox width={s(17)} height={s(17)} />
                 )}
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-foreground font-montserratMedium flex-1"
+                  className="text-foreground font-montserratSemibold flex-1"
                   style={{ flexShrink: 1, flexWrap: "wrap" }}
                 >
                   {opt.label}
