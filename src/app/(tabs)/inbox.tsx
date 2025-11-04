@@ -296,7 +296,7 @@ export default function InboxScreen() {
           <SVGIcons.Search width={s(18)} height={s(18)} />
           <ScaledTextInput
             placeholder="Search conversations..."
-            placeholderTextColor="#A49A99"
+              
             className="text-foreground w-full"
             value={query}
             onChangeText={setQuery}

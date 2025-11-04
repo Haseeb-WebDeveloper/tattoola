@@ -191,7 +191,7 @@ export default function StudioStylesScreen() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             {item.name}
           </ScaledText>
@@ -236,7 +236,7 @@ export default function StudioStylesScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-bold"
+              className="text-white font-neueSemibold"
             >
               Styles
             </ScaledText>
@@ -257,7 +257,7 @@ export default function StudioStylesScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-semibold"
+              className="text-white font-neueSemibold"
             >
               Select styles
             </ScaledText>

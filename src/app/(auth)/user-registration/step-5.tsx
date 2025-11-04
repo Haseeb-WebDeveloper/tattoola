@@ -87,7 +87,7 @@ export default function UserRegistrationStep5() {
                 className="text-foreground rounded-xl"
                 style={{ fontSize: s(12), paddingHorizontal: s(4) }}
                 placeholder="tattooking_85"
-                placeholderTextColor="#A49A99"
+                  
                 autoCapitalize="none"
                 value={(formData.instagram || "").replace(/^@/, "")}
                 onChangeText={(value) => {
@@ -129,7 +129,7 @@ export default function UserRegistrationStep5() {
                 className="text-foreground rounded-xl"
                 style={{ fontSize: s(12), paddingHorizontal: s(4) }}
                 placeholder="tattooking_857"
-                placeholderTextColor="#A49A99"
+                  
                 autoCapitalize="none"
                 value={(formData.tiktok || "").replace(/^@/, "")}
                 onChangeText={(value) => {

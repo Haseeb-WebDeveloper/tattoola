@@ -77,7 +77,7 @@ export default function StudioStepHeader({
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-foreground font-semibold text-center"
+            className="text-foreground font-neueSemibold text-center"
           >
             Set up your studio page
           </ScaledText>

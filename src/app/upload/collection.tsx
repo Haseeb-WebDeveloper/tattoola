@@ -1,9 +1,10 @@
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import { SVGIcons } from "@/constants/svg";
 import { createCollection } from "@/services/collection.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { supabase } from "@/utils/supabase";
-import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -17,7 +18,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import NextBackFooter from "@/components/ui/NextBackFooter";  
 
 type SimpleCollection = {
   id: string;
@@ -387,7 +387,7 @@ export default function UploadCollectionStep() {
                 value={newName}
                 onChangeText={setNewName}
                 placeholder="Collection name"
-                placeholderTextColor="#A49A99"
+                  
                 className="px-4 py-3 text-base text-foreground"
               />
             </View>

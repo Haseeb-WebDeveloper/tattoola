@@ -191,7 +191,7 @@ export default function StudioLogoScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-bold"
+                className="text-white font-neueSemibold"
               >
                 Logo
               </ScaledText>
@@ -209,7 +209,7 @@ export default function StudioLogoScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-semibold"
+                className="text-white font-neueSemibold"
                 style={{ marginBottom: mvs(8) }}
               >
                 Upload your studio logo
@@ -219,7 +219,7 @@ export default function StudioLogoScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-gray"
+                className="text-gray font-neueSemibold"
                 style={{ marginBottom: mvs(24) }}
               >
                 Supporta JPG, PNG, max size 5MB

@@ -2,7 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { clearProfileCache } from "@/utils/database";
-import { mvs, s, scaledFont } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -130,7 +130,7 @@ export default function BioSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Bio
           </ScaledText>
@@ -153,7 +153,7 @@ export default function BioSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-gray font-montserratMedium"
+              className="text-gray font-montserratSemibold"
               style={{ marginBottom: mvs(12) }}
             >
               Racconta qualcosa di te
@@ -162,16 +162,14 @@ export default function BioSettingsScreen() {
               value={bio}
               onChangeText={handleBioChange}
               placeholder="Tattoo artist passionate about fine line and blackwork. 8+ years of experience creating custom designs"
-              placeholderTextColor="#666"
+                
               multiline
               textAlignVertical="top"
               editable={!isLoading}
               maxLength={500}
               style={{
                 color: "#FFFFFF",
-                fontSize: scaledFont(14),
-                fontFamily: "Montserrat-Medium",
-                backgroundColor: "#100C0C",
+                fontSize: s(12),
                 borderWidth: s(1),
                 borderColor: "#A49A99",
                 borderRadius: s(8),

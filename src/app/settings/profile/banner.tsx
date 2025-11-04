@@ -348,7 +348,7 @@ export default function BannerSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-bold"
+              className="text-white font-neueSemibold"
             >
               Cover
             </ScaledText>
@@ -412,7 +412,7 @@ export default function BannerSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Cover
           </ScaledText>

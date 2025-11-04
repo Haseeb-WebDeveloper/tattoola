@@ -8,13 +8,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Linking,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -90,7 +90,7 @@ export default function SettingsBilling() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Fatturazione
           </ScaledText>

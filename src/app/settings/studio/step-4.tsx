@@ -77,7 +77,7 @@ export default function StudioStep4() {
               className="text-foreground"
               style={{ fontSize: s(12) }}
               placeholder="https://yourwebsite.com"
-              placeholderTextColor="#A49A99"
+                
               value={formData.website}
               onChangeText={(value) => handleInputChange("website", value)}
               keyboardType="url"
@@ -100,7 +100,7 @@ export default function StudioStep4() {
               className="text-foreground"
               style={{ fontSize: s(12) }}
               placeholder="@username"
-              placeholderTextColor="#A49A99"
+                
               value={formData.instagram}
               onChangeText={(value) => handleInputChange("instagram", value)}
               autoCapitalize="none"
@@ -122,7 +122,7 @@ export default function StudioStep4() {
               className="text-foreground"
               style={{ fontSize: s(12) }}
               placeholder="@username"
-              placeholderTextColor="#A49A99"
+                
               value={formData.tiktok}
               onChangeText={(value) => handleInputChange("tiktok", value)}
               autoCapitalize="none"

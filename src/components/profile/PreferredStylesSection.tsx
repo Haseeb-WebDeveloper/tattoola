@@ -50,7 +50,7 @@ export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
               <ScaledText
                 allowScaling={false}
                 variant="11"
-                className="text-foreground font-semibold"
+                className="text-foreground font-neueSemibold"
               >
                 {displayText}
               </ScaledText>

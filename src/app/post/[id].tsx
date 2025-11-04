@@ -1,7 +1,9 @@
+import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchPostDetails, togglePostLike } from "@/services/post.service";
 import { toggleFollow } from "@/services/profile.service";
+import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -14,8 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ScaledText } from "@/components/ui/ScaledText";
-import { s } from "@/utils/scale";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 interface PostDetail {
@@ -206,7 +206,7 @@ export default function PostDetailScreen() {
           onPress={handleBack}
           className="bg-primary px-6 py-3 rounded-lg"
         >
-          <Text className="text-white font-semibold">Go Back</Text>
+          <Text className="text-white font-neueSemibold">Go Back</Text>
         </TouchableOpacity>
       </View>
     );

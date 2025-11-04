@@ -81,7 +81,6 @@ export function Input({
           autoCorrect={false}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholderTextColor="#00000093"
           {...props}
         />
         

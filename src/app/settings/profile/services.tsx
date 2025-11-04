@@ -239,7 +239,7 @@ export default function ServicesSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Services offered
           </ScaledText>
@@ -260,7 +260,7 @@ export default function ServicesSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             Select services
           </ScaledText>

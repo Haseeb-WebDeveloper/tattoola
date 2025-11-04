@@ -166,7 +166,7 @@ export default function AvatarSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Profile photo
           </ScaledText>
@@ -187,7 +187,7 @@ export default function AvatarSettingsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-semibold"
+                className="text-white font-neueSemibold"
               >
                 Upload your studio logo
               </ScaledText>
@@ -266,7 +266,7 @@ export default function AvatarSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="11"
-                  className="text-error font-semibold"
+                  className="text-error font-neueSemibold"
                 >
                   Remove image
                 </ScaledText>

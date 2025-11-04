@@ -50,7 +50,6 @@ export default function DescriptionStep() {
             value={description}
             onChangeText={setDescription}
             placeholder="Describe your tattoo design in brief"
-            placeholderTextColor="#6B7280"
             multiline
             numberOfLines={6}
           />

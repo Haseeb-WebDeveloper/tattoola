@@ -37,7 +37,7 @@ export function BannerSkeleton() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             Voglio mostrare i miei tatuaggi preferiti
           </ScaledText>
@@ -64,7 +64,7 @@ export function BannerSkeleton() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             Voglio mostrare una foto a mia scelta
           </ScaledText>
@@ -91,7 +91,7 @@ export function BannerSkeleton() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             Voglio mostrare un video a mia scelta
           </ScaledText>

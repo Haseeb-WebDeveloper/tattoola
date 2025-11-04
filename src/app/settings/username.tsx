@@ -3,17 +3,17 @@ import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { clearProfileCache } from "@/utils/database";
-import { mvs, s, scaledFont } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { ValidationRules, ValidationUtils } from "@/utils/validation";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -161,7 +161,7 @@ export default function UsernameSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Modifica username
           </ScaledText>
@@ -182,7 +182,7 @@ export default function UsernameSettingsScreen() {
               value={username}
               onChangeText={handleUsernameChange}
               placeholder="Username"
-              placeholderTextColor="#666"
+                
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}

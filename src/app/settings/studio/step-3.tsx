@@ -9,8 +9,8 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    TouchableOpacity,
-    View,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
@@ -112,7 +112,7 @@ export default function StudioStep3() {
               className="text-foreground"
               style={{ fontSize: s(12) }}
               placeholder="Enter studio name"
-              placeholderTextColor="#A49A99"
+                
               value={formData.name}
               onChangeText={(value) => handleInputChange("name", value)}
             />
@@ -162,7 +162,7 @@ export default function StudioStep3() {
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
               placeholder="Enter studio address"
-              placeholderTextColor="#A49A99"
+                
               value={formData.address}
               onChangeText={(value) => handleInputChange("address", value)}
               multiline

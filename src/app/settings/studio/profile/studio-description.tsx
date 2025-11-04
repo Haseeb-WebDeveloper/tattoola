@@ -3,19 +3,19 @@ import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    fetchStudioDetails,
-    updateStudioDescription,
+  fetchStudioDetails,
+  updateStudioDescription,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
@@ -147,7 +147,7 @@ export default function StudioDescriptionScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-bold"
+                className="text-white font-neueSemibold"
               >
                 Description
               </ScaledText>
@@ -165,20 +165,10 @@ export default function StudioDescriptionScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-semibold"
+                className="text-white font-neueSemibold"
                 style={{ marginBottom: mvs(8) }}
               >
                 Describe your studio
-              </ScaledText>
-
-              {/* Subtitle */}
-              <ScaledText
-                allowScaling={false}
-                variant="sm"
-                className="text-gray"
-                style={{ marginBottom: mvs(24) }}
-              >
-                Tell people about your studio, what makes it unique, and what they can expect
               </ScaledText>
 
               {/* Description Input */}
@@ -187,7 +177,6 @@ export default function StudioDescriptionScreen() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="Write a description for your studio..."
-                  placeholderTextColor="#A49A99"
                   value={description}
                   onChangeText={(text) => {
                     if (text.length <= MAX_DESCRIPTION_LENGTH) {
@@ -202,12 +191,17 @@ export default function StudioDescriptionScreen() {
                 />
 
                 {/* Character Count */}
-                <View className="flex-row justify-end" style={{ marginTop: mvs(8) }}>
+                <View
+                  className="flex-row justify-end"
+                  style={{ marginTop: mvs(8) }}
+                >
                   <ScaledText
                     allowScaling={false}
                     variant="11"
                     className={
-                      description.length > MAX_DESCRIPTION_LENGTH ? "text-error" : "text-gray"
+                      description.length > MAX_DESCRIPTION_LENGTH
+                        ? "text-error font-neueLight"
+                        : "text-gray font-neueLight"
                     }
                   >
                     {description.length}/{MAX_DESCRIPTION_LENGTH}

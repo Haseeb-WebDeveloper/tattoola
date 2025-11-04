@@ -762,7 +762,7 @@ export default function ArtistStep12V2() {
                     multiline
                     numberOfLines={4}
                     placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                    placeholderTextColor="#A49A99"
+                      
                     value={draft.description || ""}
                     onChangeText={(v) =>
                       setDraft((d) => ({ ...d, description: v }))

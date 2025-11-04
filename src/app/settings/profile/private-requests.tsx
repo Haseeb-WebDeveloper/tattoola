@@ -9,13 +9,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -31,8 +31,11 @@ export default function PrivateRequestsSettingsScreen() {
   const [acceptRequests, setAcceptRequests] = useState<boolean>(true);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [customMessage, setCustomMessage] = useState("");
-  const [initialAcceptRequests, setInitialAcceptRequests] = useState<boolean>(true);
-  const [initialRejectionMessage, setInitialRejectionMessage] = useState<string | null>(null);
+  const [initialAcceptRequests, setInitialAcceptRequests] =
+    useState<boolean>(true);
+  const [initialRejectionMessage, setInitialRejectionMessage] = useState<
+    string | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
@@ -60,10 +63,10 @@ export default function PrivateRequestsSettingsScreen() {
           setArtistId(profileData.id);
           setAcceptRequests(profileData.acceptPrivateRequests ?? true);
           setInitialAcceptRequests(profileData.acceptPrivateRequests ?? true);
-          
+
           const rejectionMsg = profileData.rejectionMessage;
           setInitialRejectionMessage(rejectionMsg);
-          
+
           // Set selected message based on initial data
           if (rejectionMsg) {
             if (PREDEFINED_MESSAGES.includes(rejectionMsg)) {
@@ -135,7 +138,6 @@ export default function PrivateRequestsSettingsScreen() {
     setStep(2);
   };
 
-
   const handleSave = async () => {
     if (!artistId) {
       router.back();
@@ -150,7 +152,7 @@ export default function PrivateRequestsSettingsScreen() {
       // console.log("finalMessage", finalMessage);
       // console.log("acceptRequests", acceptRequests);
       // console.log("artistId", artistId);
-      
+
       const { error } = await supabase
         .from("artist_profiles")
         .update({
@@ -213,7 +215,7 @@ export default function PrivateRequestsSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Richieste private
           </ScaledText>
@@ -375,8 +377,8 @@ export default function PrivateRequestsSettingsScreen() {
               {/* Step 2: Rejection message */}
               <ScaledText
                 allowScaling={false}
-                variant="lg"
-                className="text-white font-montserratMedium"
+                variant="md"
+                className="text-foreground font-neueLight"
                 style={{ marginBottom: mvs(8) }}
               >
                 Seleziona un messaggio sostitutivo che apparirà cliccando sul
@@ -401,22 +403,22 @@ export default function PrivateRequestsSettingsScreen() {
                     >
                       {selectedMessage === msg ? (
                         <SVGIcons.CircleCheckedCheckbox
-                          width={s(24)}
-                          height={s(24)}
+                          width={s(17)}
+                          height={s(17)}
                         />
                       ) : (
                         <SVGIcons.CircleUncheckedCheckbox
-                          width={s(24)}
-                          height={s(24)}
+                          width={s(17)}
+                          height={s(17)}
                         />
                       )}
                       <ScaledText
                         allowScaling={false}
-                        variant="md"
-                        className="text-foreground font-montserratMedium flex-1"
-                        style={{ flexShrink: 1, flexWrap: "wrap", fontStyle: "italic" }}
+                        variant="sm"
+                        className="text-foreground font-montserratMediumItalic flex-1"
+                        style={{ flexShrink: 1, flexWrap: "wrap" }}
                       >
-                        " {msg}"
+                        "{msg}"
                       </ScaledText>
                     </View>
                   </TouchableOpacity>
@@ -425,7 +427,7 @@ export default function PrivateRequestsSettingsScreen() {
                 {/* Custom Message Option */}
                 <TouchableOpacity
                   onPress={() => setSelectedMessage("custom")}
-                  className={`rounded-xl border ${selectedMessage === "custom" ? "border-foreground" : "border-gray"} bg-[#100C0C]`}
+                  // className={`rounded-xl border ${selectedMessage === "custom" ? "border-foreground" : "border-gray"} bg-[#100C0C]`}
                   style={{
                     paddingHorizontal: s(16),
                     paddingVertical: mvs(16),
@@ -437,19 +439,19 @@ export default function PrivateRequestsSettingsScreen() {
                   >
                     {selectedMessage === "custom" ? (
                       <SVGIcons.CircleCheckedCheckbox
-                        width={s(24)}
-                        height={s(24)}
+                        width={s(17)}
+                        height={s(17)}
                       />
                     ) : (
                       <SVGIcons.CircleUncheckedCheckbox
-                        width={s(24)}
-                        height={s(24)}
+                        width={s(17)}
+                        height={s(17)}
                       />
                     )}
                     <ScaledText
                       allowScaling={false}
                       variant="sm"
-                      className="text-foreground font-montserratMedium flex-1"
+                      className="text-foreground font-montserratSemibold flex-1"
                       style={{ flexShrink: 1, flexWrap: "wrap" }}
                     >
                       Write a custom message
@@ -465,24 +467,20 @@ export default function PrivateRequestsSettingsScreen() {
                     value={customMessage}
                     onChangeText={setCustomMessage}
                     placeholder="I'm not available for the next 2 weeks..."
-                    placeholderTextColor="#666"
                     multiline
                     textAlignVertical="top"
                     maxLength={200}
                     editable={!isLoading}
-                    className="text-foreground font-neueMedium"
+                    className="text-foreground"
                     containerClassName="rounded-xl"
                     containerStyle={{
                       borderWidth: s(1),
                       borderColor: "#A49A99",
-                      backgroundColor: "#0A0808",
                       minHeight: mvs(150),
                       paddingVertical: mvs(4),
                       paddingHorizontal: s(8),
                     }}
                     style={{
-                      fontSize: scaledFont(14),
-                      fontFamily: "Montserrat-Medium",
                       flex: 1,
                     }}
                   />
@@ -496,95 +494,99 @@ export default function PrivateRequestsSettingsScreen() {
         <View
           className="bg-background/90 backdrop-blur-xl"
           style={{
-            paddingHorizontal: s(16),
-            paddingBottom: mvs(32),
-            paddingTop: mvs(16),
+            paddingHorizontal: s(0),
+            marginTop: mvs(24),
+            marginBottom: mvs(0),
+            backgroundColor: "transparent",
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
           }}
         >
-          {step === 2 ? (
-            <View className="flex-row" style={{ gap: s(12) }}>
-              {/* Back Button */}
-              <TouchableOpacity
-                onPress={() => setStep(1)}
-                disabled={isLoading}
-                className="flex-1 rounded-full items-center justify-center flex-row"
-                style={{
-                  borderColor: "#FFFFFF",
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                  gap: s(8),
-                  borderWidth: s(1),
-                }}
-              >
-                <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-white font-neueMedium"
+          <View
+            className="flex-row justify-between"
+            style={{
+              paddingHorizontal: s(24),
+              paddingTop: mvs(16),
+              paddingBottom: mvs(32),
+              backgroundColor: "transparent",
+              gap: 0,
+            }}
+          >
+            {step === 2 ? (
+              <>
+                {/* BACK BUTTON */}
+                <TouchableOpacity
+                  onPress={() => setStep(1)}
+                  disabled={isLoading || loading}
+                  className="w-fit rounded-full border border-foreground items-center flex-row"
+                  style={{
+                    paddingVertical: mvs(10.5),
+                    paddingLeft: s(18),
+                    paddingRight: s(20),
+                    gap: s(15),
+                    marginRight: s(12),
+                  }}
                 >
-                  Back
-                </ScaledText>
-              </TouchableOpacity>
+                  <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueSemibold"
+                  >
+                    Back
+                  </ScaledText>
+                </TouchableOpacity>
 
-              {/* Save Button */}
-              <TouchableOpacity
-                onPress={handleSave}
-                disabled={isLoading || loading }
-                className="flex-1 rounded-full items-center justify-center flex-row"
-                style={{
-                  backgroundColor:
-                    isLoading || loading 
-                      ? "#6B2C2C"
-                      : "#AD2E2E",
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                  gap: s(8),
-                }}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : null}
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueMedium"
+                {/* SAVE BUTTON */}
+                <TouchableOpacity
+                  onPress={handleSave}
+                  disabled={!!(isLoading || loading)}
+                  className={`rounded-full items-center flex-row ${!(isLoading || loading) ? "bg-primary" : "bg-gray/40"}`}
+                  style={{
+                    paddingVertical: mvs(10.5),
+                    paddingLeft: s(25),
+                    paddingRight: s(20),
+                    gap: s(15),
+                  }}
                 >
-                  Save
-                </ScaledText>
-                <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
-              </TouchableOpacity>
-            </View>
-           ) : (
-             <TouchableOpacity
-               onPress={handleNext}
-               disabled={isLoading || loading}
-               className="rounded-full items-center justify-center flex-row"
-               style={{
-                 backgroundColor: isLoading || loading ? "#6B2C2C" : "#AD2E2E",
-                 paddingVertical: mvs(10.5),
-                 paddingLeft: s(18),
-                 paddingRight: s(20),
-                 gap: s(8),
-               }}
-             >
-               {isLoading || loading ? (
-                 <ActivityIndicator color="#FFFFFF" size="small" />
-               ) : null}
-               <ScaledText
-                 allowScaling={false}
-                 variant="md"
-                 className="text-foreground font-neueMedium"
-               >
-                 {loading ? "Loading..." : "Next"}
-               </ScaledText>
-             </TouchableOpacity>
-           )}
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueSemibold"
+                  >
+                    Save
+                  </ScaledText>
+                  <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={{ flex: 1 }} />
+                <TouchableOpacity
+                  onPress={handleNext}
+                  disabled={!!(isLoading || loading)}
+                  className={`rounded-full items-center flex-row ${!(isLoading || loading) ? "bg-primary" : "bg-gray/40"}`}
+                  style={{
+                    paddingVertical: mvs(10.5),
+                    paddingLeft: s(25),
+                    paddingRight: s(20),
+                    gap: s(15),
+                  }}
+                >
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueSemibold"
+                  >
+                    {loading ? "Loading..." : "Next"}
+                  </ScaledText>
+                  <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
       </LinearGradient>
 

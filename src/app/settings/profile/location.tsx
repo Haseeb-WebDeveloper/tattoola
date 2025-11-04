@@ -1,10 +1,10 @@
 import { LocationCard } from "@/components/settings/LocationCard";
 import { FullPageLocationSkeleton } from "@/components/settings/LocationCardSkeleton";
+import LocationPicker from "@/components/shared/LocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { getMunicipalities, getProvinces } from "@/services/location.service";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -12,15 +12,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -305,7 +303,7 @@ export default function LocationSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Multilocations
           </ScaledText>
@@ -383,7 +381,7 @@ export default function LocationSettingsScreen() {
                     </ScaledText>
                     {locations
                       .filter((loc) => loc.isPrimary)
-                      .map((location) => (
+                      .map((location, index) => (
                         <LocationCard
                           key={location.id}
                           location={location}
@@ -399,14 +397,14 @@ export default function LocationSettingsScreen() {
                     <ScaledText
                       allowScaling={false}
                       variant="11"
-                      className="text-gray font-normal italic"
+                      className="text-gray font-neueLightItalic"
                     >
                       Displayed as "Comune, Province"
                     </ScaledText>
                     <ScaledText
                       allowScaling={false}
                       variant="11"
-                      className="text-gray font-normal italic"
+                      className="text-gray font-neueLightItalic"
                       style={{ marginTop: mvs(4) }}
                     >
                       eg : "Battipaglia, Salerno"
@@ -417,21 +415,22 @@ export default function LocationSettingsScreen() {
 
               {/* Other Locations - Always show header if we have a primary location */}
               {locations.filter((loc) => loc.isPrimary).length > 0 && (
-                <View style={{ marginBottom: mvs(24) }}>
+                <View>
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueLight"
+                    className="text-gray font-neueLight"
                     style={{ marginBottom: mvs(6) }}
                   >
                     Other locations
                   </ScaledText>
                   {locations
                     .filter((loc) => !loc.isPrimary)
-                    .map((location) => (
+                    .map((location, index) => (
                       <LocationCard
                         key={location.id}
                         location={location}
+                        isLast={index === locations.filter((loc) => !loc.isPrimary).length - 1}
                         onEdit={() => setEditingLocationId(location.id)}
                         onRemove={() => handleRemoveLocation(location.id)}
                         onSetPrimary={() => handleSetPrimary(location.id)}
@@ -458,8 +457,8 @@ export default function LocationSettingsScreen() {
                 </View>
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-montserratSemibold"
+                  variant="sm"
+                  className="text-gray font-montserratSemibold"
                 >
                   Add locations
                 </ScaledText>
@@ -629,17 +628,7 @@ function LocationEditModal({
   onSave: (updates: Partial<LocationItem>) => void;
 }) {
   const insets = useSafeAreaInsets();
-  const [modalStep, setModalStep] = useState<
-    "province" | "municipality" | null
-  >(null);
-  const [provinces, setProvinces] = useState<
-    { id: string; name: string; imageUrl?: string | null }[]
-  >([]);
-  const [municipalities, setMunicipalities] = useState<
-    { id: string; name: string; imageUrl?: string | null }[]
-  >([]);
-  const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
-  const [search, setSearch] = useState("");
+  const [pickerVisible, setPickerVisible] = useState(false);
   const [selectedProvince, setSelectedProvince] = useState<{
     id: string;
     name: string;
@@ -665,45 +654,6 @@ function LocationEditModal({
       : null
   );
   const [address, setAddress] = useState(location.address || "");
-
-  useEffect(() => {
-    if (modalStep === "province" && provinces.length === 0) {
-      getProvinces()
-        .then(setProvinces)
-        .catch(() => setProvinces([]));
-    }
-  }, [modalStep]);
-
-  useEffect(() => {
-    if (modalStep === "municipality" && selectedProvince) {
-      setLoadingMunicipalities(true);
-      setMunicipalities([]); // Clear previous municipalities
-      getMunicipalities(selectedProvince.id)
-        .then((data) => {
-          setMunicipalities(data);
-        })
-        .catch((err) => {
-          console.error("Error loading municipalities:", err);
-          setMunicipalities([]);
-          toast.error("Failed to load municipalities");
-        })
-        .finally(() => {
-          setLoadingMunicipalities(false);
-        });
-    }
-  }, [modalStep, selectedProvince]);
-
-  const topSix = provinces.slice(0, 6);
-  const topSixIds = new Set(topSix.map((p) => p.id));
-  const isSearching = search.trim().length > 0;
-
-  const sourceList = modalStep === "province" ? provinces : municipalities;
-
-  const listFiltered = sourceList
-    .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
-    .filter((r) =>
-      modalStep === "province" && !isSearching ? !topSixIds.has(r.id) : true
-    );
 
   const displayValue =
     selectedProvince && selectedMunicipality
@@ -761,11 +711,7 @@ function LocationEditModal({
               variant="md"
               className="text-foreground font-neueBold"
             >
-              {modalStep
-                ? modalStep === "province"
-                  ? "Seleziona la provincia"
-                  : "Seleziona il comune"
-                : "Edit Location"}
+              Edit Location
             </ScaledText>
             <View style={{ width: s(30) }} />
           </View>
@@ -778,276 +724,53 @@ function LocationEditModal({
               paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
             }}
           >
-            {!modalStep ? (
-              // Main edit view
-              <View style={{ padding: s(20), gap: mvs(20) }}>
-                {/* Location Selector */}
-                <View>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="text-gray font-montserratSemibold"
-                    style={{ marginBottom: mvs(8) }}
-                  >
-                    Province and Municipality
-                  </ScaledText>
-                  <TouchableOpacity
-                    onPress={() => setModalStep("province")}
-                    className="rounded-xl border border-gray bg-[#100C0C] px-4 py-3"
-                  >
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className={
-                        selectedProvince ? "text-foreground" : "text-[#A49A99]"
-                      }
-                    >
-                      {displayValue}
-                    </ScaledText>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Address (Optional) */}
-                <View>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="text-gray font-montserratSemibold"
-                    style={{ marginBottom: mvs(8) }}
-                  >
-                    Address (Optional)
-                  </ScaledText>
-                  <ScaledTextInput
-                    value={address}
-                    onChangeText={setAddress}
-                    placeholder="Via A.G. Alaimo 139"
-                    placeholderTextColor="#A49A99"
-                    className="text-foreground"
-                    containerClassName="rounded-xl border border-gray bg-[#100C0C]"
-                  />
-                </View>
-              </View>
-            ) : (
-              // Province/Municipality selection view
+            {/* Main edit view */}
+            <View style={{ padding: s(20), gap: mvs(20) }}>
+              {/* Location Selector */}
               <View>
-                {/* Selected province pill */}
-                {modalStep === "municipality" && selectedProvince && (
-                  <View
-                    className="flex-row items-center justify-between bg-[#100C0C]"
-                    style={{
-                      paddingTop: mvs(6),
-                      paddingHorizontal: s(16),
-                    }}
-                  >
-                    <View className="flex-row items-center gap-4">
-                      <View className="overflow-hidden bg-gray/20 w-24 h-16">
-                        {selectedProvince.imageUrl ? (
-                          <Image
-                            source={{ uri: selectedProvince.imageUrl }}
-                            className="w-full h-full"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View className="w-full h-full bg-gray/30" />
-                        )}
-                      </View>
-                      <View className="h-16 flex items-center justify-center">
-                        <ScaledText
-                          allowScaling={false}
-                          variant="body1"
-                          className="text-foreground"
-                        >
-                          Province:{" "}
-                          <ScaledText
-                            allowScaling={false}
-                            variant="body1"
-                            className="font-neueBold"
-                          >
-                            {selectedProvince.name}
-                          </ScaledText>
-                        </ScaledText>
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setModalStep("province");
-                        setSearch("");
-                      }}
-                    >
-                      <SVGIcons.Pen2 className="w-5 h-5" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {/* Search */}
-                <View
-                  className="border border-gray rounded-full flex-row items-center"
-                  style={{
-                    paddingHorizontal: s(12),
-                    marginHorizontal: s(24),
-                    marginTop: mvs(12),
-                    marginBottom: mvs(16),
-                  }}
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-gray font-montserratSemibold"
+                  style={{ marginBottom: mvs(8) }}
                 >
-                  <SVGIcons.Search width={s(20)} height={s(20)} />
-                  <ScaledTextInput
-                    containerClassName="flex-1"
-                    className="text-foreground"
-                    placeholder={
-                      modalStep === "province"
-                        ? "Cerca provincia"
-                        : "Cerca comune"
-                    }
-                    placeholderTextColor="#A49A99"
-                    value={search}
-                    onChangeText={setSearch}
-                  />
-                </View>
-
-                {/* Popular six for province */}
-                {modalStep === "province" &&
-                  topSix.length > 0 &&
-                  !isSearching && (
-                    <View style={{ paddingBottom: mvs(16) }}>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="lg"
-                        className="text-gray font-neueBold mb-3 ml-1"
-                        style={{ paddingHorizontal: s(20) }}
-                      >
-                        Popular cities
-                      </ScaledText>
-                      <View className="flex-row flex-wrap gap-[2px] bg-background">
-                        {topSix.map((p) => {
-                          const active = selectedProvince?.id === p.id;
-                          return (
-                            <TouchableOpacity
-                              key={p.id}
-                              onPress={() => {
-                                setSelectedProvince(p);
-                                setSearch("");
-                              }}
-                              style={{ width: "32%", overflow: "hidden" }}
-                              className="h-32"
-                            >
-                              {p.imageUrl ? (
-                                <Image
-                                  source={{ uri: p.imageUrl }}
-                                  className="w-full h-[75%]"
-                                  resizeMode="cover"
-                                />
-                              ) : (
-                                <View className="w-full h-[70%] bg-gray/30" />
-                              )}
-                              <View
-                                className={`h-[25%] flex items-center justify-center ${active ? "bg-primary" : "bg-background"}`}
-                              >
-                                <ScaledText
-                                  allowScaling={false}
-                                  variant="body2"
-                                  className="text-foreground text-center"
-                                >
-                                  {p.name}
-                                </ScaledText>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  )}
-
-                {/* List */}
-                <View>
+                  Province and Municipality
+                </ScaledText>
+                <TouchableOpacity
+                  onPress={() => setPickerVisible(true)}
+                  className="rounded-xl border border-gray bg-[#100C0C] px-4 py-3"
+                >
                   <ScaledText
                     allowScaling={false}
-                    variant="body1"
-                    className="px-6 mb-2 text-gray font-semibold"
+                    variant="md"
+                    className={
+                      selectedProvince ? "text-foreground" : "text-[#A49A99]"
+                    }
                   >
-                    {isSearching
-                      ? `Search results${listFiltered.length > 0 ? ` (${listFiltered.length})` : ""}`
-                      : modalStep === "province"
-                        ? "Other provinces"
-                        : `Comunes under ${selectedProvince?.name || ""}`}
+                    {displayValue}
                   </ScaledText>
-
-                  {/* Loading state for municipalities - show 6 skeleton items */}
-                  {modalStep === "municipality" && loadingMunicipalities ? (
-                    <View>
-                      {[...Array(6)].map((_, idx) => (
-                        <View
-                          key={idx}
-                          className="py-4 border-b border-gray/20 bg-[#100C0C]"
-                        >
-                          <View className="flex-row items-center gap-3 px-6">
-                            <View
-                              style={{
-                                width: 112,
-                                height: 14,
-                                borderRadius: 7,
-                                backgroundColor: "#262626",
-                              }}
-                              className="animate-pulse"
-                            />
-                          </View>
-                        </View>
-                      ))}
-                    </View>
-                  ) : listFiltered.length === 0 && isSearching ? (
-                    <View className="py-8 px-6">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="body1"
-                        className="text-gray text-center"
-                      >
-                        No results found for "{search}"
-                      </ScaledText>
-                    </View>
-                  ) : listFiltered.length === 0 ? (
-                    <View className="py-8 px-6">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="body1"
-                        className="text-gray text-center"
-                      >
-                        No{" "}
-                        {modalStep === "province"
-                          ? "provinces"
-                          : "municipalities"}{" "}
-                        available
-                      </ScaledText>
-                    </View>
-                  ) : (
-                    listFiltered.map((item) => (
-                      <Pressable
-                        key={item.id}
-                        className={`py-4 border-b border-gray/20 ${selectedMunicipality?.id === item.id && selectedProvince?.id === selectedProvince?.id ? "bg-primary" : "bg-[#100C0C]"}`}
-                        onPress={() => {
-                          if (modalStep === "province") {
-                            setSelectedProvince(item);
-                            setSearch("");
-                          } else {
-                            setSelectedMunicipality(item);
-                            setModalStep(null);
-                            setSearch("");
-                          }
-                        }}
-                      >
-                        <View className="flex-row items-center gap-3 px-6">
-                          <ScaledText
-                            allowScaling={false}
-                            variant="body2"
-                            className="text-foreground"
-                          >
-                            {item.name}
-                          </ScaledText>
-                        </View>
-                      </Pressable>
-                    ))
-                  )}
-                </View>
+                </TouchableOpacity>
               </View>
-            )}
+
+              {/* Address (Optional) */}
+              <View>
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-gray font-montserratSemibold"
+                  style={{ marginBottom: mvs(8) }}
+                >
+                  Address (Optional)
+                </ScaledText>
+                <ScaledTextInput
+                  value={address}
+                  onChangeText={setAddress}
+                  placeholder="Via A.G. Alaimo 139"
+                  className="text-foreground"
+                  containerClassName="rounded-xl border border-gray bg-[#100C0C]"
+                />
+              </View>
+            </View>
           </ScrollView>
 
           {/* Footer */}
@@ -1059,92 +782,43 @@ function LocationEditModal({
               paddingBottom: mvs(16) + Math.max(insets.bottom, mvs(20)),
             }}
           >
-            {!modalStep ? (
-              <TouchableOpacity
-                onPress={handleSave}
-                disabled={!selectedProvince || !selectedMunicipality}
-                className="rounded-full items-center justify-center"
-                style={{
-                  backgroundColor:
-                    !selectedProvince || !selectedMunicipality
-                      ? "#6B2C2C"
-                      : "#AD2E2E",
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                }}
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={!selectedProvince || !selectedMunicipality}
+              className="rounded-full items-center justify-center"
+              style={{
+                backgroundColor:
+                  !selectedProvince || !selectedMunicipality
+                    ? "#6B2C2C"
+                    : "#AD2E2E",
+                paddingVertical: mvs(10.5),
+                paddingLeft: s(18),
+                paddingRight: s(20),
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-foreground font-neueMedium"
               >
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueMedium"
-                >
-                  Save
-                </ScaledText>
-              </TouchableOpacity>
-            ) : (
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  onPress={() => {
-                    if (modalStep === "municipality") {
-                      setModalStep("province");
-                    } else {
-                      setModalStep(null);
-                    }
-                    setSearch("");
-                  }}
-                  className="flex-1 rounded-full border border-gray items-center justify-center"
-                  style={{
-                    paddingVertical: mvs(10.5),
-                    paddingLeft: s(18),
-                    paddingRight: s(20),
-                  }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground font-neueMedium"
-                  >
-                    Back
-                  </ScaledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (modalStep === "province") {
-                      if (selectedProvince) {
-                        setModalStep("municipality");
-                        setSearch("");
-                      }
-                    } else {
-                      setModalStep(null);
-                      setSearch("");
-                    }
-                  }}
-                  disabled={modalStep === "province" && !selectedProvince}
-                  className="flex-1 rounded-full items-center justify-center"
-                  style={{
-                    backgroundColor:
-                      modalStep === "province" && !selectedProvince
-                        ? "#6B2C2C"
-                        : "#AD2E2E",
-                    paddingVertical: mvs(10.5),
-                    paddingLeft: s(18),
-                    paddingRight: s(20),
-                  }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground font-neueMedium"
-                  >
-                    Next
-                  </ScaledText>
-                </TouchableOpacity>
-              </View>
-            )}
+                Save
+              </ScaledText>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
+      {/* Shared LocationPicker */}
+      <LocationPicker
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        initialProvinceId={selectedProvince?.id || null}
+        initialMunicipalityId={selectedMunicipality?.id || null}
+        onSelect={({ province, provinceId, municipality, municipalityId }) => {
+          setSelectedProvince({ id: provinceId, name: province, imageUrl: null });
+          setSelectedMunicipality({ id: municipalityId, name: municipality });
+          setPickerVisible(false);
+        }}
+      />
     </Modal>
   );
 }

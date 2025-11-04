@@ -1,18 +1,17 @@
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import { SVGIcons } from "@/constants/svg";
 import { usePostUploadStore } from "@/stores/postUploadStore";
-import { router } from "expo-router";
+import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import {
   Image,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
-  View,
-  StyleSheet,
+  View
 } from "react-native";
-import NextBackFooter from "@/components/ui/NextBackFooter";
-import { s } from "@/utils/scale";
 
 export default function UploadDescriptionStep() {
   const caption = usePostUploadStore((s) => s.caption);
@@ -73,7 +72,7 @@ export default function UploadDescriptionStep() {
             className="text-foreground bg-tat-darkMaroon rounded-2xl min-h-[180px]"
             style={{ fontSize: s(12) }}
             placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit....."
-            placeholderTextColor="#A49A99"
+              
             value={caption || ""}
             onChangeText={(v) => setCaption(v)}
           />

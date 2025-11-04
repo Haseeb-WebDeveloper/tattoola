@@ -376,7 +376,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-semibold"
+                    className="text-foreground font-neueSemibold"
                   >
                     Reset
                   </ScaledText>
@@ -391,7 +391,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-white font-semibold"
+                    className="text-white font-neueSemibold"
                   >
                     Apply Filters
                   </ScaledText>

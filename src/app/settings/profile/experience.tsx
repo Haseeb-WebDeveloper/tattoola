@@ -199,7 +199,7 @@ export default function ExperienceSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Esperienza
           </ScaledText>
@@ -261,7 +261,7 @@ export default function ExperienceSettingsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-white font-montserratMedium"
+                className="text-white font-neueLight"
                 style={{ marginBottom: mvs(16) }}
               >
                 In questa sezione puoi inserire gli anni di esperienza che
@@ -284,8 +284,8 @@ export default function ExperienceSettingsScreen() {
                   <SVGIcons.Certificate width={s(20)} height={s(20)} />
                   <ScaledText
                     allowScaling={false}
-                    variant="md"
-                    className={`flex-1 ${selectedYear ? "text-foreground" : "text-gray"} font-montserratMedium`}
+                    variant="sm"
+                    className={`flex-1 ${selectedYear ? "text-foreground" : "text-gray"} font-montserratSemibold`}
                   >
                     {selectedYear
                       ? selectedYear.toString()
@@ -299,14 +299,14 @@ export default function ExperienceSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium"
+                  className="text-foreground font-montserratMedium"
                   style={{ marginTop: mvs(12) }}
                 >
                   Nel tuo profilo verrà scritto che hai{" "}
                   <ScaledText
                     allowScaling={false}
                     variant="sm"
-                    className="text-foreground font-montserratSemibold"
+                    className="text-foreground font-montserratBold"
                   >
                     {yearsOfExperience} ann{yearsOfExperience === 1 ? "o" : "i"}
                   </ScaledText>{" "}
@@ -317,8 +317,8 @@ export default function ExperienceSettingsScreen() {
               {/* Info Note */}
               <ScaledText
                 allowScaling={false}
-                variant="sm"
-                className="text-gray font-montserratMedium"
+                variant="11"
+                className="text-gray font-neueSemibold"
                 style={{ marginTop: mvs(24) }}
               >
                 NB: ti chiediamo di inserire un'informazione corrispondente al

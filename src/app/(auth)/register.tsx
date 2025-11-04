@@ -1,5 +1,4 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -14,7 +13,6 @@ import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 export default function RegisterScreen() {
@@ -143,7 +141,7 @@ export default function RegisterScreen() {
           className="flex-1 text-foreground rounded-xl"
           style={{ fontSize: s(12) }}
           placeholder="TattooLover_97"
-          placeholderTextColor="#A49A99"
+            
           autoCapitalize="none"
           value={formData.username}
           onChangeText={(value) => handleInputChange("username", value)}
@@ -166,7 +164,7 @@ export default function RegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="abc@gmail.com"
-            placeholderTextColor="#A49A99"
+              
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -192,7 +190,7 @@ export default function RegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-            placeholderTextColor="#A49A99"
+              
             secureTextEntry={!showPassword}
             value={formData.password}
             onChangeText={(value) => handleInputChange("password", value)}
@@ -230,7 +228,7 @@ export default function RegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-            placeholderTextColor="#A49A99"
+              
             secureTextEntry={!showConfirmPassword}
             value={formData.confirmPassword}
             onChangeText={(value) =>

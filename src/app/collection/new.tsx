@@ -255,7 +255,7 @@ export default function NewCollectionScreen() {
         </TouchableOpacity>
         <View className="flex-1 items-center">
           <View className="flex-row items-center">
-            <Text className="text-foreground font-bold mr-2 underline underline-offset-2 section-title">
+            <Text className="text-foreground font-neueSemibold mr-2 underline underline-offset-2 section-title">
               {name}
             </Text>
             <TouchableOpacity onPress={openEditName}>
@@ -334,7 +334,7 @@ export default function NewCollectionScreen() {
       >
         <View className="flex-1 bg-black/60 items-center justify-center px-4">
           <View className="bg-background rounded-xl p-4 w-full max-w-xl">
-            <Text className="text-foreground text-lg font-bold mb-3">Select tattoos</Text>
+            <Text className="text-foreground text-lg font-neueSemibold mb-3">Select tattoos</Text>
             <ScrollView className="max-h-[60vh]">
               <View className="flex-row flex-wrap justify-between">
                 {allUserPosts.map((p) => {
@@ -363,10 +363,10 @@ export default function NewCollectionScreen() {
             </ScrollView>
             <View className="flex-row gap-3 mt-4">
               <TouchableOpacity onPress={() => setSelectModalVisible(false)} className="flex-1 bg-gray-200 py-3 rounded-lg">
-                <Text className="text-foreground text-center font-semibold">Cancel</Text>
+                <Text className="text-foreground text-center font-neueSemibold">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={confirmAdd} className="flex-1 bg-primary py-3 rounded-lg">
-                <Text className="text-white text-center font-semibold">Add to collection</Text>
+                <Text className="text-white text-center font-neueSemibold">Add to collection</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -382,21 +382,21 @@ export default function NewCollectionScreen() {
       >
         <View className="flex-1 items-center justify-center px-6 bg-black/50">
           <View className="bg-[#1a1a1a] p-6 rounded-xl w-full max-w-sm">
-            <Text className="text-foreground text-lg font-bold mb-4">Edit Collection Name</Text>
+            <Text className="text-foreground text-lg font-neueSemibold mb-4">Edit Collection Name</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="Collection name"
-              placeholderTextColor="#666"
+                
               className="px-4 py-3 text-base text-foreground bg-[#252424] rounded-lg mb-4"
               autoFocus
             />
             <View className="flex-row gap-3">
               <TouchableOpacity onPress={() => setShowEditNameModal(false)} className="flex-1 bg-[#100C0C] py-3 rounded-lg">
-                <Text className="text-foreground text-center font-semibold">Cancel</Text>
+                <Text className="text-foreground text-center font-neueSemibold">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={saveName} className="flex-1 bg-primary py-3 rounded-lg">
-                <Text className="text-white text-center font-semibold">Save</Text>
+                <Text className="text-white text-center font-neueSemibold">Save</Text>
               </TouchableOpacity>
             </View>
           </View>

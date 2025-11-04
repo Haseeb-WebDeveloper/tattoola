@@ -331,7 +331,7 @@ export default function FollowingScreen() {
           <ScaledText
             allowScaling={false}
             variant="body1"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Chi segui
           </ScaledText>

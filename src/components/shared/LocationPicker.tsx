@@ -217,7 +217,7 @@ export default function LocationPicker({
                 placeholder={
                   modalStep === "province" ? "Cerca provincia" : "Cerca comune"
                 }
-                placeholderTextColor="#A49A99"
+                  
                 value={search}
                 onChangeText={setSearch}
               />

@@ -144,7 +144,7 @@ export default function ArtistRegisterScreen() {
           className="flex-1 text-foreground rounded-xl"
           style={{ fontSize: s(12) }}
           placeholder="TattooKing_97"
-          placeholderTextColor="#A49A99"
+            
           autoCapitalize="none"
           value={formData.username}
           onChangeText={(value) => handleInputChange("username", value)}
@@ -168,7 +168,7 @@ export default function ArtistRegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="abc@gmail.com"
-            placeholderTextColor="#A49A99"
+              
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -195,7 +195,7 @@ export default function ArtistRegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-            placeholderTextColor="#A49A99"
+              
             secureTextEntry={!showPassword}
             value={formData.password}
             onChangeText={(value) => handleInputChange("password", value)}
@@ -234,7 +234,7 @@ export default function ArtistRegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-            placeholderTextColor="#A49A99"
+              
             secureTextEntry={!showConfirmPassword}
             value={formData.confirmPassword}
             onChangeText={(value) =>

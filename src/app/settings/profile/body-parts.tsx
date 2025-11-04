@@ -235,7 +235,7 @@ export default function BodyPartsSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Parti del corpo su cui lavori
           </ScaledText>
@@ -256,7 +256,7 @@ export default function BodyPartsSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             Seleziona le parti del corpo su cui lavori
           </ScaledText>
@@ -270,7 +270,7 @@ export default function BodyPartsSettingsScreen() {
                 paddingBottom: mvs(100),
               }}
             >
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 12 }).map((_, i) => (
                 <PartSkeleton key={i} />
               ))}
             </ScrollView>
@@ -315,9 +315,9 @@ export default function BodyPartsSettingsScreen() {
               gap: s(8),
             }}
           >
-            {isLoading ? (
+            {/* {isLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : null}
+            ) : null} */}
             <ScaledText
               allowScaling={false}
               variant="md"

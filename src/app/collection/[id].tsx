@@ -406,7 +406,7 @@ export default function CollectionDetailsScreen() {
           onPress={handleBack}
           className="bg-primary px-6 py-3 rounded-lg"
         >
-          <Text className="text-white font-semibold">Go Back</Text>
+          <Text className="text-white font-neueSemibold">Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -426,7 +426,7 @@ export default function CollectionDetailsScreen() {
 
           <View className="flex-1 items-center">
             <View className="flex-row items-center">
-              <Text className="text-foreground font-bold mr-2 underline underline-offset-2 section-title">
+              <Text className="text-foreground font-neueSemibold mr-2 underline underline-offset-2 section-title">
                 {TrimText(collection.name, 15)}
               </Text>
               <TouchableOpacity onPress={handleEditName}>
@@ -496,7 +496,7 @@ export default function CollectionDetailsScreen() {
         >
           <View className="flex-1 items-center justify-center px-6 bg-black/50">
             <View className="bg-[#1a1a1a] p-6 rounded-xl w-full max-w-sm">
-              <Text className="text-foreground text-lg font-bold mb-4">
+              <Text className="text-foreground text-lg font-neueSemibold mb-4">
                 Edit Collection Name
               </Text>
 
@@ -504,7 +504,7 @@ export default function CollectionDetailsScreen() {
                 value={editName}
                 onChangeText={setEditName}
                 placeholder="Collection name"
-                placeholderTextColor="#666"
+                  
                 className="px-4 py-3 text-base text-foreground bg-[#252424] rounded-lg mb-4"
                 autoFocus
               />
@@ -514,7 +514,7 @@ export default function CollectionDetailsScreen() {
                   onPress={() => setShowEditModal(false)}
                   className="flex-1 bg-[#100C0C] py-3 rounded-lg"
                 >
-                  <Text className="text-foreground text-center font-semibold">
+                  <Text className="text-foreground text-center font-neueSemibold">
                     Cancel
                   </Text>
                 </TouchableOpacity>
@@ -523,7 +523,7 @@ export default function CollectionDetailsScreen() {
                   onPress={handleSaveName}
                   className="flex-1 bg-primary py-3 rounded-lg"
                 >
-                  <Text className="text-white text-center font-semibold">
+                  <Text className="text-white text-center font-neueSemibold">
                     Save
                   </Text>
                 </TouchableOpacity>
@@ -541,7 +541,7 @@ export default function CollectionDetailsScreen() {
         >
           <View className="flex-1 bg-black/60 items-center justify-center px-4">
             <View className="bg-background rounded-xl p-4 w-full max-w-xl">
-              <Text className="text-foreground text-lg font-bold mb-3">
+              <Text className="text-foreground text-lg font-neueSemibold mb-3">
                 Select tattoos
               </Text>
               <ScrollView className="max-h-[60vh]">
@@ -584,7 +584,7 @@ export default function CollectionDetailsScreen() {
                   onPress={() => setSelectModalVisible(false)}
                   className="flex-1 bg-gray-200 py-3 rounded-lg"
                 >
-                  <Text className="text-foreground text-center font-semibold">
+                  <Text className="text-foreground text-center font-neueSemibold">
                     Cancel
                   </Text>
                 </TouchableOpacity>
@@ -592,7 +592,7 @@ export default function CollectionDetailsScreen() {
                   onPress={confirmAdd}
                   className="flex-1 bg-primary py-3 rounded-lg"
                 >
-                  <Text className="text-white text-center font-semibold">
+                  <Text className="text-white text-center font-neueSemibold">
                     Add to collection
                   </Text>
                 </TouchableOpacity>

@@ -1,4 +1,5 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -8,8 +9,7 @@ import { isValid, step11Schema } from "@/utils/artistRegistrationValidation";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
-import NextBackFooter from "@/components/ui/NextBackFooter";
+import { View } from "react-native";
 
 export default function ArtistStep11V2() {
   const { step11, updateStep11, totalStepsDisplay, setCurrentStepDisplay } =
@@ -83,7 +83,7 @@ export default function ArtistStep11V2() {
           className="text-foreground rounded-xl font-montserratSemibold bg-tat-foreground"
           style={{ fontSize: s(12), paddingHorizontal: s(4) }}
           placeholder="0"
-          placeholderTextColor="#A49A99"
+            
           keyboardType="numeric"
           value={value !== undefined ? String(value) : ""}
           onChangeText={(v) => {

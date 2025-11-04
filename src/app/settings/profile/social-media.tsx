@@ -157,7 +157,7 @@ export default function SocialMediaSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Social Media
           </ScaledText>
@@ -199,7 +199,7 @@ export default function SocialMediaSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-neueMedium"
+                  className="text-gray font-montserratSemibold"
                 >
                   @
                 </ScaledText>
@@ -209,7 +209,7 @@ export default function SocialMediaSettingsScreen() {
                 value={tiktok}
                 onChangeText={handleTiktokChange}
                 placeholder="tattooking_85"
-                placeholderTextColor="#666"
+                  
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
@@ -253,7 +253,7 @@ export default function SocialMediaSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-neueMedium"
+                  className="text-gray font-montserratSemibold"
                 >
                   @
                 </ScaledText>
@@ -263,7 +263,7 @@ export default function SocialMediaSettingsScreen() {
                 value={instagram}
                 onChangeText={handleInstagramChange}
                 placeholder="tattooking_85"
-                placeholderTextColor="#666"
+                  
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}

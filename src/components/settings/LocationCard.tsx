@@ -16,6 +16,7 @@ type LocationItem = {
 
 interface LocationCardProps {
   location: LocationItem;
+  isLast?: boolean;
   onEdit: () => void;
   onRemove: () => void;
   onSetPrimary: () => void;
@@ -23,6 +24,7 @@ interface LocationCardProps {
 
 export function LocationCard({
   location,
+  isLast = false,
   onEdit,
   onRemove,
   onSetPrimary,
@@ -37,6 +39,7 @@ export function LocationCard({
       className="bg-[#100C0C] rounded-xl border border-[#262626]"
       style={{
         padding: s(16),
+        marginBottom: isLast ? mvs(16) : 0,
       }}
     >
       <View className="flex-row items-start justify-between">

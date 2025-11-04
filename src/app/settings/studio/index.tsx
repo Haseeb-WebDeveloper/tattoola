@@ -93,7 +93,20 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
       </ImageBackground>
 
       {/* Bottom row: for spacing - just to create space for abs content */}
-      <View style={{ minHeight: mvs(120) }} />
+      <View style={{ minHeight: mvs(120), position: "relative" }}>
+        {/* Gradient overlay between image end and bottom space */}
+        <LinearGradient
+          colors={["rgba(16, 12, 12, 0)", "#100C0C"]}
+          locations={[0, 1]}
+          style={{
+            position: "absolute",
+            top: -mvs(60),
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}
+        />
+      </View>
     </View>
     {/* Absolute overlayed content (centered & bottom) */}
     <View
@@ -110,9 +123,6 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
         allowScaling={false}
         variant="xl"
         className="text-white font-neueSemibold"
-        style={{
-          marginBottom: mvs(6),
-        }}
       >
         Setup your Studio Page 🪄
       </ScaledText>
@@ -206,7 +216,20 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
       </ImageBackground>
 
       {/* Bottom row: for spacing - just to create space for abs content */}
-      <View style={{ minHeight: mvs(120) }} />
+      <View style={{ minHeight: mvs(100), position: "relative" }}>
+        {/* Gradient overlay between image end and bottom space */}
+        <LinearGradient
+          colors={["rgba(16, 12, 12, 0)", "#100C0C"]}
+          locations={[0, 1]}
+          style={{
+            position: "absolute",
+            top: -mvs(60),
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}
+        />
+      </View>
     </View>
     {/* Absolute overlayed content (centered & bottom) */}
     <View
@@ -223,9 +246,6 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
         allowScaling={false}
         variant="xl"
         className="text-white font-neueSemibold"
-        style={{
-          marginBottom: mvs(6),
-        }}
       >
         Your Studio Page is Live ✨
       </ScaledText>
@@ -425,7 +445,7 @@ export default function StudioSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-bold"
+              className="text-white font-neueSemibold"
             >
               Studio
             </ScaledText>
@@ -449,18 +469,20 @@ export default function StudioSettingsScreen() {
               onPress={handleStudioPagePress}
             />
             {/* Show "Artisti Collegati" and "Foto dello studio" only for OWNER or MANAGER */}
-            {studio && (studio.userRole === "OWNER" || studio.userRole === "MANAGER") && (
-              <>
-                <StudioSettingsItem
-                  title="Artisti Collegati"
-                  onPress={handleArtistsPress}
-                />
-                <StudioSettingsItem
-                  title="Foto dello studio"
-                  onPress={handlePhotosPress}
-                />
-              </>
-            )}
+            {studio &&
+              (studio.userRole === "OWNER" ||
+                studio.userRole === "MANAGER") && (
+                <>
+                  <StudioSettingsItem
+                    title="Artisti Collegati"
+                    onPress={handleArtistsPress}
+                  />
+                  <StudioSettingsItem
+                    title="Foto dello studio"
+                    onPress={handlePhotosPress}
+                  />
+                </>
+              )}
           </View>
           {/* Setup Card - Show when no studio OR incomplete studio for OWNER/MANAGER */}
           {showSetupCard ? (

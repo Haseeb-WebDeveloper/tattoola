@@ -3,19 +3,19 @@ import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { clearProfileCache } from "@/utils/database";
-import { mvs, s, scaledFont } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { ValidationRules, ValidationUtils } from "@/utils/validation";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -225,7 +225,7 @@ export default function PasswordSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Modifica password
           </ScaledText>
@@ -252,7 +252,7 @@ export default function PasswordSettingsScreen() {
                 value={currentPassword}
                 onChangeText={handleCurrentPasswordChange}
                 placeholder="Current password"
-                placeholderTextColor="#666"
+                  
                 secureTextEntry={!showCurrentPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -311,7 +311,7 @@ export default function PasswordSettingsScreen() {
                 value={newPassword}
                 onChangeText={handleNewPasswordChange}
                 placeholder="New password"
-                placeholderTextColor="#666"
+                  
                 secureTextEntry={!showNewPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -377,7 +377,7 @@ export default function PasswordSettingsScreen() {
                 value={confirmPassword}
                 onChangeText={handleConfirmPasswordChange}
                 placeholder="Confirm password"
-                placeholderTextColor="#666"
+                  
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
                 autoCorrect={false}

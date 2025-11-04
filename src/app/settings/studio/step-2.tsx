@@ -9,11 +9,11 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function StudioStep2() {
@@ -112,7 +112,7 @@ export default function StudioStep2() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
             style={{ marginBottom: mvs(8) }}
           >
             Upload your studio logo
@@ -214,7 +214,7 @@ export default function StudioStep2() {
                       <ScaledText
                         allowScaling={false}
                         variant="md"
-                        className="text-foreground font-semibold"
+                        className="text-foreground font-neueSemibold"
                       >
                         Upload image
                       </ScaledText>

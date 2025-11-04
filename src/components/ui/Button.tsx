@@ -100,7 +100,7 @@ export function Button({
   );
 
   const textClasses = cn(
-    'font-semibold text-center',
+    'font-neueSemibold text-center',
     getTextVariantClasses(),
     getTextSizeClasses(),
     isDisabled && 'opacity-70',

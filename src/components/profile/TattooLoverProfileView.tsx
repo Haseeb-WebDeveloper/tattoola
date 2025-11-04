@@ -1,11 +1,13 @@
+import { SVGIcons } from "@/constants/svg";
 import { TattooLoverSelfProfile } from "@/services/profile.service";
 import { mvs, s } from "@/utils/scale";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { ScaledText } from "../ui/ScaledText";
 import { FollowedArtistsList } from "./FollowedArtistsList";
@@ -14,8 +16,6 @@ import { PreferredStylesSection } from "./PreferredStylesSection";
 import { ProfileTabNavigation } from "./ProfileTabNavigation";
 import { TattooLoverProfileHeader } from "./TattooLoverProfileHeader";
 import { TattooPostsGrid } from "./TattooPostsGrid";
-import { SVGIcons } from "@/constants/svg";
-import { router } from "expo-router";
 
 interface TattooLoverProfileViewProps {
   data: TattooLoverSelfProfile | null;
@@ -68,7 +68,7 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
         </TouchableOpacity>
         <ScaledText
           variant="md"
-          className="text-foreground font-bold"
+          className="text-foreground font-neueSemibold"
           style={{
             marginBottom: mvs(0),
           }}

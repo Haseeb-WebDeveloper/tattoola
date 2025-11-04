@@ -118,7 +118,7 @@ export default function ProfileTypeSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Profile visibility
           </ScaledText>

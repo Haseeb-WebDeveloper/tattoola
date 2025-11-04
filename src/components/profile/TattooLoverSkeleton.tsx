@@ -50,7 +50,7 @@ export const TattooLoverSkeleton: React.FC = () => {
         {/* Title - Static */}
         <ScaledText
           variant="md"
-          className="text-foreground font-bold"
+          className="text-foreground font-neueSemibold"
           style={{
             marginBottom: mvs(0),
           }}

@@ -410,7 +410,7 @@ export default function StudioStep8() {
                   className="text-foreground"
                   style={{ fontSize: s(12) }}
                   placeholder="Enter your question"
-                  placeholderTextColor="#A49A99"
+                    
                   value={tempQuestion}
                   onChangeText={setTempQuestion}
                 />
@@ -432,7 +432,7 @@ export default function StudioStep8() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="Enter your answer"
-                  placeholderTextColor="#A49A99"
+                    
                   value={tempAnswer}
                   onChangeText={setTempAnswer}
                   multiline

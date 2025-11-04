@@ -214,7 +214,7 @@ export default function StudioStep1() {
                           <ScaledText
                             allowScaling={false}
                             variant="md"
-                            className="text-foreground font-semibold"
+                            className="text-foreground font-neueSemibold"
                           >
                             Upload image
                           </ScaledText>
@@ -407,7 +407,7 @@ export default function StudioStep1() {
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className={`text-foreground font-semibold flex-1 `}
+                className={`text-foreground font-neueSemibold flex-1 `}
               >
                 Voglio caricare una sola foto di sfondo
               </ScaledText>
@@ -436,7 +436,7 @@ export default function StudioStep1() {
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className={`text-foreground font-semibold flex-1`}
+                className={`text-foreground font-neueSemibold flex-1`}
               >
                 Voglio caricare 4 foto verticali per comporre la cover
               </ScaledText>

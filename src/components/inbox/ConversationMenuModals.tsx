@@ -2,17 +2,17 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { ms, mvs, s } from "@/utils/scale";
 import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  BottomSheetView,
+    BottomSheetBackdrop,
+    BottomSheetScrollView,
+    BottomSheetTextInput,
+    BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { TouchableOpacity, View } from "react-native";
 
@@ -240,7 +240,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           value={reportReason}
           onChangeText={setReportReason}
           placeholder="Describe your issue here...."
-          placeholderTextColor="#666"
+            
           multiline
           textAlignVertical="top"
           style={{

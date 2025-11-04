@@ -311,7 +311,7 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-semibold"
+              className="text-white font-neueSemibold"
             >
               {locationText}{" "}
             </ScaledText>
@@ -327,7 +327,7 @@ export default function SearchScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="11"
-                  className="text-primary font-semibold"
+                  className="text-primary font-neueSemibold"
                 >
                   {(() => {
                     const province = locationDisplay?.province || "";

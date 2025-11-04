@@ -138,7 +138,7 @@ export default function EmailConfirmationScreen() {
           If you entered an incorrect email address,{" "}
           <ScaledText
             variant="body2"
-            className="text-foreground font-bold underline underline-offset-auto decoration-solid font-montserratRegular text-[14px] leading-[23px]"
+            className="text-foreground font-neueSemibold underline underline-offset-auto decoration-solid font-montserratRegular text-[14px] leading-[23px]"
             style={{
               textDecorationLine: "underline",
             }}

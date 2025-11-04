@@ -9,13 +9,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -165,14 +165,13 @@ export default function RatesSettingsScreen() {
         <View
           style={{
             paddingLeft: s(16),
-            paddingRight: s(8),
             paddingVertical: mvs(12),
           }}
         >
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-foreground font-montserratBold"
+            className="text-gray font-montserratSemibold"
           >
             €
           </ScaledText>
@@ -181,7 +180,6 @@ export default function RatesSettingsScreen() {
           containerClassName="flex-1"
           className="text-foreground font-neueMedium"
           placeholder="0"
-          placeholderTextColor="#666"
           keyboardType="numeric"
           value={value !== undefined ? String(value) : ""}
           onChangeText={(v) => {
@@ -196,16 +194,12 @@ export default function RatesSettingsScreen() {
             borderWidth: 0,
             backgroundColor: "transparent",
           }}
-          style={{
-            fontSize: 14,
-            fontFamily: "Montserrat-Medium",
-          }}
         />
         <View style={{ paddingRight: s(16), paddingVertical: mvs(12) }}>
           <ScaledText
             allowScaling={false}
             variant="sm"
-            className="text-gray font-montserratMedium"
+            className="text-gray font-montserratSemibold"
           >
             EUR
           </ScaledText>
@@ -249,7 +243,7 @@ export default function RatesSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Tariffe
           </ScaledText>

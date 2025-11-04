@@ -15,7 +15,7 @@ import {
   Modal,
   Platform,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
@@ -166,7 +166,7 @@ export default function StudioSocialScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-bold"
+                className="text-white font-neueSemibold"
               >
                 Social links
               </ScaledText>
@@ -182,24 +182,18 @@ export default function StudioSocialScreen() {
             <View style={{ paddingHorizontal: s(24), gap: mvs(24) }}>
               {/* Website */}
               <View>
-                <View
-                  className="flex-row items-center mb-2"
-                  style={{ gap: s(8) }}
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-tat font-montserratSemibold"
+                  style={{ marginBottom: mvs(6) }}
                 >
-                  <SVGIcons.Website width={s(18)} height={s(18)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-foreground"
-                  >
-                    Website
-                  </ScaledText>
-                </View>
+                  Inserisci il link al tuo studio website (facoltativo)
+                </ScaledText>
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="https://yourwebsite.com"
-                  placeholderTextColor="#A49A99"
                   value={formData.website}
                   onChangeText={(text) => handleInputChange("website", text)}
                   autoCapitalize="none"
@@ -210,24 +204,18 @@ export default function StudioSocialScreen() {
 
               {/* Instagram */}
               <View>
-                <View
-                  className="flex-row items-center mb-2"
-                  style={{ gap: s(8) }}
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-tat font-montserratSemibold"
+                  style={{ marginBottom: mvs(6) }}
                 >
-                  <SVGIcons.Instagram width={s(18)} height={s(18)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-foreground"
-                  >
-                    Instagram
-                  </ScaledText>
-                </View>
+                  Inserisci il link al tuo account Instagram (facoltativo)
+                </ScaledText>
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="@username"
-                  placeholderTextColor="#A49A99"
                   value={formData.instagram}
                   onChangeText={(text) => handleInputChange("instagram", text)}
                   autoCapitalize="none"
@@ -237,24 +225,18 @@ export default function StudioSocialScreen() {
 
               {/* TikTok */}
               <View>
-                <View
-                  className="flex-row items-center mb-2"
-                  style={{ gap: s(8) }}
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-tat font-montserratSemibold"
+                  style={{ marginBottom: mvs(6) }}
                 >
-                  <SVGIcons.Tiktok width={s(18)} height={s(18)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-foreground"
-                  >
-                    TikTok
-                  </ScaledText>
-                </View>
+                  Inserisci il link al tuo account TikTok (facoltativo)
+                </ScaledText>
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="@username"
-                  placeholderTextColor="#A49A99"
                   value={formData.tiktok}
                   onChangeText={(text) => handleInputChange("tiktok", text)}
                   autoCapitalize="none"

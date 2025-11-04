@@ -194,7 +194,7 @@ export default function ArtistStep3V2() {
             className="flex-1 text-foreground"
             style={{ fontSize: s(12) }}
             placeholder="John"
-            placeholderTextColor="#A49A99"
+              
             value={step3?.firstName || ""}
             onChangeText={(v) => updateStep3({ firstName: v })}
             onFocus={() => setFocused("firstName")}
@@ -235,7 +235,7 @@ export default function ArtistStep3V2() {
               className="flex-1 text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
               placeholder="Doe"
-              placeholderTextColor="#A49A99"
+                
               value={step3?.lastName || ""}
               onChangeText={(v) => updateStep3({ lastName: v })}
               onFocus={() => setFocused("lastName")}

@@ -442,7 +442,7 @@ export default function LikesScreen() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Cosa ti piace
           </ScaledText>
@@ -495,7 +495,7 @@ export default function LikesScreen() {
                 className="text-white"
               >
                 Filtra per stile:{" "}
-                <ScaledText variant="sm" className="text-white font-bold">
+                <ScaledText variant="sm" className="text-white font-neueSemibold">
                   {selectedStyleName}
                 </ScaledText>
               </ScaledText>
@@ -549,7 +549,7 @@ export default function LikesScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-gray"
+                className="text-gray font-neueLight"
               >
                 Non hai ancora messo "Mi piace" a nessun post
               </ScaledText>
@@ -885,7 +885,7 @@ export default function LikesScreen() {
                 >
                   <ScaledText
                     variant="md"
-                    className="font-semibold text-foreground"
+                    className="font-neueSemibold text-foreground"
                   >
                     Reset
                   </ScaledText>
@@ -901,7 +901,7 @@ export default function LikesScreen() {
                 >
                   <ScaledText
                     variant="md"
-                    className="font-semibold text-foreground"
+                    className="font-neueSemibold text-foreground"
                   >
                     Apply Filters
                   </ScaledText>

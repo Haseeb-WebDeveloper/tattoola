@@ -176,7 +176,7 @@ export default function WorkModalitySettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Modalità di lavoro
           </ScaledText>

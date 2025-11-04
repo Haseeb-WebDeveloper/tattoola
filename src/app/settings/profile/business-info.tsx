@@ -294,7 +294,7 @@ export default function BusinessInfoSettingsScreen() {
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#666"
+          
         editable={!loading && !isSaving && !uploading}
         keyboardType={keyboardType}
         containerClassName=""
@@ -347,7 +347,7 @@ export default function BusinessInfoSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             La tua attività
           </ScaledText>

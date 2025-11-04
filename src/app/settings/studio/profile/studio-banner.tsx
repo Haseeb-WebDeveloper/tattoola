@@ -223,7 +223,7 @@ export default function StudioBannerScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-bold"
+                className="text-white font-neueSemibold"
               >
                 Cover
               </ScaledText>
@@ -377,11 +377,11 @@ export default function StudioBannerScreen() {
                           <TouchableOpacity
                             onPress={() => handlePickImage(index)}
                             disabled={uploadingIndices.includes(index)}
-                            className="border border-error/60 border-dashed items-center justify-center"
+                            className=" border-dashed items-center justify-center border-primary bg-tat-darkMaroon"
                             style={{
                               height: mvs(120),
                               borderRadius: s(12),
-                              backgroundColor: "#E80D0D0D",
+                              borderWidth: s(1),
                             }}
                           >
                             {uploadingIndices.includes(index) ? (
@@ -447,11 +447,11 @@ export default function StudioBannerScreen() {
                           <TouchableOpacity
                             onPress={() => handlePickImage(index)}
                             disabled={uploadingIndices.includes(index)}
-                            className="border border-error/60 border-dashed items-center justify-center"
+                            className=" border-dashed items-center justify-center border-primary bg-tat-darkMaroon"
                             style={{
                               height: mvs(120),
                               borderRadius: s(12),
-                              backgroundColor: "#E80D0D0D",
+                              borderWidth: s(1),
                             }}
                           >
                             {uploadingIndices.includes(index) ? (
@@ -470,6 +470,7 @@ export default function StudioBannerScreen() {
               {/* Radio Button Options - Below Image Area */}
               <View style={{ marginBottom: mvs(16) }}>
                 <TouchableOpacity
+                  activeOpacity={1}
                   onPress={() => handleTypeSelect("ONE_IMAGE")}
                   disabled={isFetching}
                   className={`flex-row  justify-between bg-tat-foreground border-gray`}
@@ -497,13 +498,14 @@ export default function StudioBannerScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="sm"
-                    className="text-white flex-1"
+                    className="text-white flex-1 font-montserratSemibold"
                   >
                     Voglio caricare una sola foto di sfondo
                   </ScaledText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  activeOpacity={1}
                   onPress={() => handleTypeSelect("FOUR_IMAGES")}
                   disabled={isFetching}
                   className={`flex-row  justify-between bg-tat-foreground border-gray`}
@@ -531,7 +533,7 @@ export default function StudioBannerScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="sm"
-                    className="text-white flex-1"
+                    className="text-white flex-1 font-montserratSemibold"
                   >
                     Voglio caricare 4 foto verticali per comporre la cover
                   </ScaledText>

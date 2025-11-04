@@ -5,10 +5,10 @@ import { ScaledTextInput } from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  blockUser,
-  deleteConversation,
-  fetchConversationByIdWithPeer,
-  reportUser,
+    blockUser,
+    deleteConversation,
+    fetchConversationByIdWithPeer,
+    reportUser,
 } from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
@@ -19,11 +19,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  FlatList,
-  Image,
-  Platform,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    Platform,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -552,7 +552,7 @@ export default function ChatThreadScreen() {
                 value={text}
                 onChangeText={setText}
                 placeholder="Hello I'm looking for sketch tattoo"
-                placeholderTextColor="#A49A99"
+                  
                 className="text-foreground"
                 containerClassName="bg-transparent"
                 multiline={true}

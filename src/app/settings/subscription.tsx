@@ -7,12 +7,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -136,7 +136,7 @@ export default function SettingsSubscription() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Your subscription
           </ScaledText>

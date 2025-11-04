@@ -71,7 +71,7 @@ export default function StudioStep5() {
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
               placeholder="Write a description for your studio..."
-              placeholderTextColor="#A49A99"
+                
               value={description}
               onChangeText={setDescription}
               multiline

@@ -9,12 +9,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -312,7 +312,7 @@ export default function EmailSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             {currentStep === "password" ? "Modifica email" : "New email"}
           </ScaledText>
@@ -418,7 +418,7 @@ export default function EmailSettingsScreen() {
                     value={confirmPassword}
                     onChangeText={handleConfirmPasswordChange}
                     placeholder="Re-enter your password"
-                    placeholderTextColor="#666"
+                      
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -515,7 +515,7 @@ export default function EmailSettingsScreen() {
                   value={newEmail}
                   onChangeText={handleNewEmailChange}
                   placeholder={user?.email || "Enter new email"}
-                  placeholderTextColor="#666"
+                    
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -558,7 +558,7 @@ export default function EmailSettingsScreen() {
                   value={confirmEmail}
                   onChangeText={handleConfirmEmailChange}
                   placeholder="Re-enter new email"
-                  placeholderTextColor="#666"
+                    
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}

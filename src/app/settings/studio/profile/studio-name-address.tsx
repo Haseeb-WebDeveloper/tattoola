@@ -1,3 +1,4 @@
+import LocationPicker from "@/components/shared/LocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
@@ -7,19 +8,15 @@ import {
   updateStudioNameAddress,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
-import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
-  ScrollView,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -48,21 +45,7 @@ export default function StudioNameAddressScreen() {
     address: "",
   });
 
-  const [modalStep, setModalStep] = useState<null | "province" | "municipality">(
-    null
-  );
-  const [provinces, setProvinces] = useState<
-    { id: string; name: string; imageUrl?: string | null }[]
-  >([]);
-  const [municipalities, setMunicipalities] = useState<
-    { id: string; name: string; imageUrl?: string | null }[]
-  >([]);
-  const [search, setSearch] = useState("");
-  const [selectedProvince, setSelectedProvince] = useState<{
-    id: string;
-    name: string;
-    imageUrl?: string | null;
-  } | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -99,93 +82,18 @@ export default function StudioNameAddressScreen() {
     fetchData();
   }, [user?.id]);
 
-  // Load provinces on mount
-  useEffect(() => {
-    (async () => {
-      const { data, error } = await supabase
-        .from("provinces")
-        .select("id, name, imageUrl")
-        .eq("isActive", true)
-        .order("name");
-      if (error) {
-        console.error("Error loading provinces:", error);
-        setProvinces([]);
-      } else {
-        setProvinces(data || []);
-      }
-    })();
-  }, []);
-
-  // Load municipalities when a province is selected in modal
-  useEffect(() => {
-    (async () => {
-      if (
-        modalStep === "municipality" &&
-        (selectedProvince || formData.province)
-      ) {
-        const provinceId =
-          selectedProvince?.id ||
-          provinces.find((p) => p.name === formData.province)?.id;
-        const { data, error } = await supabase
-          .from("municipalities")
-          .select("id, name, imageUrl")
-          .eq("provinceId", provinceId)
-          .eq("isActive", true)
-          .order("name");
-        if (error) {
-          console.error("Error loading municipalities:", error);
-          setMunicipalities([]);
-        } else {
-          setMunicipalities(data || []);
-        }
-      }
-    })();
-  }, [modalStep, selectedProvince, formData.province]);
+  // Using shared LocationPicker, no local province/municipality fetching here
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleOpenProvinceModal = () => {
-    setModalStep("province");
-    setSearch("");
+    setPickerVisible(true);
   };
 
-  const handleMunicipalitySelect = (municipality: {
-    id: string;
-    name: string;
-    imageUrl?: string | null;
-  }) => {
-    setFormData((prev) => ({
-      ...prev,
-      province: selectedProvince?.name || formData.province,
-      provinceId: selectedProvince?.id || formData.provinceId,
-      municipality: municipality.name,
-      municipalityId: municipality.id,
-    }));
-    setModalStep(null);
-    setSearch("");
-  };
-
-  const handleBackInModal = () => {
-    if (modalStep === "municipality") {
-      setModalStep("province");
-      setSearch("");
-    } else {
-      setModalStep(null);
-      setSearch("");
-    }
-  };
-
-  const topSix = provinces.slice(0, 6);
-  const topSixIds = new Set(topSix.map((p) => p.id));
-  const isSearching = search.trim().length > 0;
-
-  const listFiltered = (modalStep === "province" ? provinces : municipalities)
-    .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
-    .filter((r) =>
-      modalStep === "province" && !isSearching ? !topSixIds.has(r.id) : true
-    );
+  // Selection handled by LocationPicker
+  // Removed local filtering; delegated to LocationPicker
 
   const displayValue =
     formData.municipality && formData.province
@@ -290,7 +198,7 @@ export default function StudioNameAddressScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-bold"
+                className="text-white font-neueSemibold"
               >
                 Studio name and address
               </ScaledText>
@@ -308,11 +216,11 @@ export default function StudioNameAddressScreen() {
               <View>
                 <ScaledText
                   allowScaling={false}
-                  variant="body2"
-                  className="text-foreground mb-2"
+                  variant="sm"
+                  className="text-tat mb-2 font-montserratSemibold"
                 >
                   Name of the Studio
-                  <ScaledText variant="body2" className="text-error">
+                  <ScaledText variant="sm" className="text-error">
                     *
                   </ScaledText>
                 </ScaledText>
@@ -320,7 +228,6 @@ export default function StudioNameAddressScreen() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="Enter studio name"
-                  placeholderTextColor="#A49A99"
                   value={formData.name}
                   onChangeText={(value) => handleInputChange("name", value)}
                   editable={!isFetching}
@@ -331,11 +238,11 @@ export default function StudioNameAddressScreen() {
               <View>
                 <ScaledText
                   allowScaling={false}
-                  variant="body2"
-                  className="text-foreground mb-2"
+                  variant="sm"
+                  className="text-tat mb-2 font-montserratSemibold"
                 >
                   Provincia & Comune
-                  <ScaledText variant="body2" className="text-error">
+                  <ScaledText variant="sm" className="text-error">
                     *
                   </ScaledText>
                 </ScaledText>
@@ -343,17 +250,21 @@ export default function StudioNameAddressScreen() {
                   accessibilityRole="button"
                   onPress={handleOpenProvinceModal}
                   disabled={isFetching}
-                  className="rounded-xl border border-gray px-4 py-3"
-                  style={{ 
-                    paddingVertical: mvs(12), 
+                  className="rounded-xl border border-gray bg-tat-foreground"
+                  style={{
+                    paddingVertical: mvs(12),
                     paddingHorizontal: s(16),
                     opacity: isFetching ? 0.5 : 1,
                   }}
                 >
                   <ScaledText
                     allowScaling={false}
-                    variant="body1"
-                    className={displayValue ? "text-foreground" : "text-gray"}
+                    variant="md"
+                    className={
+                      displayValue
+                        ? "text-foreground font-montserratSemibold"
+                        : "text-tat-chat font-montserratSemibold"
+                    }
                   >
                     {displayValue || "Select Province and Municipality"}
                   </ScaledText>
@@ -364,11 +275,11 @@ export default function StudioNameAddressScreen() {
               <View>
                 <ScaledText
                   allowScaling={false}
-                  variant="body2"
-                  className="text-foreground mb-2"
+                  variant="sm"
+                  className="text-tat mb-2 font-montserratSemibold"
                 >
                   Inserisci l'indirizzo dello Studio dove lavori
-                  <ScaledText variant="body2" className="text-error">
+                  <ScaledText variant="sm" className="text-error">
                     *
                   </ScaledText>
                 </ScaledText>
@@ -376,7 +287,6 @@ export default function StudioNameAddressScreen() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="Enter studio address"
-                  placeholderTextColor="#A49A99"
                   value={formData.address}
                   onChangeText={(value) => handleInputChange("address", value)}
                   multiline
@@ -397,7 +307,9 @@ export default function StudioNameAddressScreen() {
           >
             <TouchableOpacity
               onPress={handleSave}
-              disabled={isLoading || isFetching || !hasUnsavedChanges || !canSave}
+              disabled={
+                isLoading || isFetching || !hasUnsavedChanges || !canSave
+              }
               className="rounded-full items-center justify-center"
               style={{
                 backgroundColor:
@@ -421,266 +333,22 @@ export default function StudioNameAddressScreen() {
         </KeyboardAvoidingView>
       </LinearGradient>
 
-      {/* Selection Modal */}
-      <Modal
-        visible={!!modalStep}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalStep(null)}
-      >
-        <View className="flex-1 bg-black/50">
-          <View
-            className="flex-1 bg-black rounded-t-3xl"
-            style={{ marginTop: "auto" }}
-          >
-            {/* Header */}
-            <View
-              className="border-b border-gray flex-row items-center justify-between relative bg-primary/30"
-              style={{
-                paddingBottom: mvs(20),
-                paddingTop: mvs(70),
-                paddingHorizontal: s(20),
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  if (modalStep === "municipality") setModalStep("province");
-                  else setModalStep(null);
-                }}
-                className="rounded-full bg-foreground/20 items-center justify-center"
-                style={{ width: s(30), height: s(30) }}
-              >
-                <SVGIcons.Close className="w-8 h-8" />
-              </TouchableOpacity>
-              <View className="flex-row items-center justify-center">
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueBold"
-                >
-                  {modalStep === "province"
-                    ? "Seleziona la provincia"
-                    : "Seleziona il comune"}
-                </ScaledText>
-              </View>
-              <View style={{ height: mvs(30), width: mvs(30) }} />
-            </View>
-
-            {/* Search */}
-            <View style={{ paddingHorizontal: s(20), paddingTop: mvs(16) }}>
-              <View className="border border-gray rounded-full flex-row items-center">
-                <View style={{ paddingLeft: s(16) }}>
-                  <SVGIcons.Search className="w-5 h-5 mr-2" />
-                </View>
-                <ScaledTextInput
-                  containerClassName="bg-background"
-                  className="text-foreground"
-                  style={{
-                    backgroundColor: "transparent",
-                  }}
-                  placeholder={
-                    modalStep === "province" ? "Cerca provincia" : "Cerca comune"
-                  }
-                  placeholderTextColor="#A49A99"
-                  value={search}
-                  onChangeText={setSearch}
-                />
-              </View>
-            </View>
-
-            {/* Content */}
-            <ScrollView
-              className="flex-1"
-              style={{
-                paddingBottom: mvs(100) + Math.max(insets.bottom, mvs(20)),
-                paddingTop: mvs(16),
-              }}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Popular six for province step - only show when not searching */}
-              {modalStep === "province" && topSix.length > 0 && !isSearching && (
-                <View style={{ paddingBottom: mvs(16) }}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="lg"
-                    className="text-gray font-neueBold mb-3 ml-1"
-                    style={{ paddingHorizontal: s(20) }}
-                  >
-                    Popular cities
-                  </ScaledText>
-                  <View className="flex-row flex-wrap gap-[2px] bg-background">
-                    {topSix.map((p) => {
-                      const active =
-                        selectedProvince?.id === p.id ||
-                        formData.province === p.name;
-                      return (
-                        <TouchableOpacity
-                          key={p.id}
-                          onPress={() => {
-                            setSelectedProvince(p);
-                            setSearch("");
-                          }}
-                          style={{
-                            width: "32%",
-                            overflow: "hidden",
-                          }}
-                          className="h-32"
-                        >
-                          {p.imageUrl ? (
-                            <Image
-                              source={{ uri: p.imageUrl }}
-                              className="w-full h-[75%]"
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <View className="w-full h-[70%] bg-gray/30" />
-                          )}
-                          <View
-                            className={`h-[25%] flex items-center justify-center ${active ? "bg-primary" : "bg-background"}`}
-                          >
-                            <ScaledText
-                              allowScaling={false}
-                              variant="body2"
-                              className="text-foreground text-center"
-                            >
-                              {p.name}
-                            </ScaledText>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              )}
-
-              {/* List */}
-              <View>
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-gray font-neueBold mb-3 ml-1"
-                  style={{ paddingHorizontal: s(20) }}
-                >
-                  {isSearching
-                    ? "Search results"
-                    : modalStep === "province"
-                      ? "Other provinces"
-                      : `Comunes under ${selectedProvince?.name || formData.province || "Selected province"}`}
-                </ScaledText>
-                {listFiltered.length === 0 ? (
-                  <View
-                    style={{
-                      paddingHorizontal: s(20),
-                      paddingVertical: mvs(40),
-                    }}
-                  >
-                    <ScaledText
-                      allowScaling={false}
-                      variant="body2"
-                      className="text-gray text-center"
-                    >
-                      No results found
-                    </ScaledText>
-                  </View>
-                ) : (
-                  listFiltered.map((item) => (
-                    <Pressable
-                      key={item.id}
-                      className={`py-4 border-b border-gray/20 ${
-                        formData.municipality === item.name &&
-                        formData.province === selectedProvince?.name
-                          ? "bg-primary"
-                          : "bg-[#100C0C]"
-                      }`}
-                      onPress={() => {
-                        if (modalStep === "province") {
-                          setSelectedProvince(item);
-                          setSearch("");
-                        } else {
-                          handleMunicipalitySelect(item);
-                        }
-                      }}
-                    >
-                      <View className="flex-row items-center gap-3 px-6">
-                        <ScaledText
-                          allowScaling={false}
-                          variant="body2"
-                          className="text-foreground"
-                        >
-                          {item.name}
-                        </ScaledText>
-                      </View>
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            </ScrollView>
-
-            {/* Footer actions */}
-            <View
-              className="flex-row justify-between absolute left-0 right-0 bg-background border-t border-gray/20"
-              style={{
-                paddingHorizontal: s(20),
-                paddingTop: mvs(16),
-                paddingBottom: Math.max(insets.bottom, mvs(20)),
-                bottom: 0,
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  if (modalStep === "municipality") setModalStep("province");
-                  else setModalStep(null);
-                }}
-                className="rounded-full border border-foreground items-center flex-row gap-3"
-                style={{
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                }}
-              >
-                <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground"
-                >
-                  Back
-                </ScaledText>
-              </TouchableOpacity>
-              {modalStep === "province" ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    if (selectedProvince) {
-                      setModalStep("municipality");
-                      setSearch("");
-                    }
-                  }}
-                  className={`rounded-full items-center flex-row gap-3 ${
-                    selectedProvince ? "bg-primary" : "bg-gray/40"
-                  }`}
-                  style={{
-                    paddingVertical: mvs(10.5),
-                    paddingLeft: s(18),
-                    paddingRight: s(20),
-                  }}
-                  disabled={!selectedProvince}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground"
-                  >
-                    Next
-                  </ScaledText>
-                  <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
-                </TouchableOpacity>
-              ) : (
-                <View />
-              )}
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <LocationPicker
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        initialProvinceId={formData.provinceId || null}
+        initialMunicipalityId={formData.municipalityId || null}
+        onSelect={({ province, provinceId, municipality, municipalityId }) => {
+          setFormData((prev) => ({
+            ...prev,
+            province,
+            provinceId,
+            municipality,
+            municipalityId,
+          }));
+          setPickerVisible(false);
+        }}
+      />
 
       {/* Unsaved Changes Modal */}
       <Modal

@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
               alignItems: 'center' 
             }}
           >
-            <Text className="text-foreground text-2xl font-bold mb-4 text-center">
+            <Text className="text-foreground text-2xl font-neueSemibold mb-4 text-center">
               Oops! Something went wrong
             </Text>
             
@@ -82,7 +82,7 @@ export class ErrorBoundary extends Component<Props, State> {
               onPress={this.handleReset}
               className="bg-primary px-8 py-4 rounded-full"
             >
-              <Text className="text-foreground font-semibold text-base">
+              <Text className="text-foreground font-neueSemibold text-base">
                 Go to Home
               </Text>
             </TouchableOpacity>

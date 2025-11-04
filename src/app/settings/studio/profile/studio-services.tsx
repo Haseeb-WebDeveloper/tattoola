@@ -1,28 +1,25 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { fetchServices, ServiceItem } from "@/services/services.service";
 import {
-    fetchServices,
-    ServiceItem,
-} from "@/services/services.service";
-import {
-    fetchStudioDetails,
-    updateStudioServices,
+  fetchStudioDetails,
+  updateStudioServices,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -36,7 +33,13 @@ function ServiceSkeleton() {
         className="rounded bg-gray/30"
         style={{ width: s(40), alignItems: "center" }}
       >
-        <View style={{ width: s(20), height: s(20), backgroundColor: "transparent" }} />
+        <View
+          style={{
+            width: s(20),
+            height: s(20),
+            backgroundColor: "transparent",
+          }}
+        />
       </View>
       <View className="flex-1">
         <View
@@ -162,7 +165,11 @@ export default function StudioServicesScreen() {
     return (
       <View
         className="flex-row items-center border-b border-gray/20"
-        style={{ paddingHorizontal: s(16), paddingVertical: mvs(16), gap: s(8) }}
+        style={{
+          paddingHorizontal: s(16),
+          paddingVertical: mvs(16),
+          gap: s(8),
+        }}
       >
         <Pressable
           className="items-center"
@@ -226,11 +233,11 @@ export default function StudioServicesScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-bold"
+              className="text-white font-neueSemibold"
             >
               Services
             </ScaledText>
-            </View>
+          </View>
 
           {/* Divider */}
           <View
@@ -243,21 +250,13 @@ export default function StudioServicesScreen() {
           />
 
           {/* Subtitle */}
-          <View style={{ paddingHorizontal: s(24), marginBottom: mvs(16) }}>
+          <View style={{ paddingHorizontal: s(24)}}>
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-semibold"
-              style={{ marginBottom: mvs(8) }}
+              className="text-white font-neueSemibold"
             >
               Select services
-            </ScaledText>
-            <ScaledText
-              allowScaling={false}
-              variant="sm"
-              className="text-gray"
-            >
-              Choose the services your studio offers
             </ScaledText>
           </View>
 

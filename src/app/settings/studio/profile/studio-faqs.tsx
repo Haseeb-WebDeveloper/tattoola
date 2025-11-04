@@ -210,7 +210,7 @@ export default function StudioFAQsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-white font-bold"
+                className="text-white font-neueSemibold"
               >
                 FAQs
               </ScaledText>
@@ -400,7 +400,7 @@ export default function StudioFAQsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium mb-2"
+                  className="text-gray font-montserratSemibold mb-2"
                 >
                   Question
                   <ScaledText variant="sm" className="text-error">
@@ -411,7 +411,7 @@ export default function StudioFAQsScreen() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="Enter your question"
-                  placeholderTextColor="#A49A99"
+                    
                   value={tempQuestion}
                   onChangeText={setTempQuestion}
                 />
@@ -422,7 +422,7 @@ export default function StudioFAQsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium mb-2"
+                  className="text-gray font-montserratSemibold mb-2"
                 >
                   Rispondi a questa domanda*
                   <ScaledText variant="sm" className="text-error">
@@ -433,7 +433,7 @@ export default function StudioFAQsScreen() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   placeholder="Enter your answer"
-                  placeholderTextColor="#A49A99"
+                    
                   value={tempAnswer}
                   onChangeText={setTempAnswer}
                   multiline

@@ -12,13 +12,13 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, TouchableOpacity, View } from "react-native";
 import CountryPicker, {
-  Country,
-  CountryCode,
+    Country,
+    CountryCode,
 } from "react-native-country-picker-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 function formatPhoneForInput(phone: string, callingCode: string): string {
@@ -132,7 +132,7 @@ export default function ArtistStep5V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="Tattoo Paradise"
-            placeholderTextColor="#A49A99"
+              
             value={step5.studioName || ""}
             onChangeText={(v) => updateStep5({ studioName: v })}
             onFocus={() => setFocused("studioName")}
@@ -194,7 +194,7 @@ export default function ArtistStep5V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="Via A.G. Alaimo 139, Ancona, 60044"
-            placeholderTextColor="#A49A99"
+              
             value={step5.studioAddress || ""}
             onChangeText={(v) => updateStep5({ studioAddress: v })}
             onFocus={() => setFocused("studioAddress")}
@@ -230,7 +230,7 @@ export default function ArtistStep5V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="https://..."
-            placeholderTextColor="#A49A99"
+              
             value={step5.website || ""}
             onChangeText={(v) => updateStep5({ website: v })}
             onFocus={() => setFocused("website")}
@@ -287,7 +287,7 @@ export default function ArtistStep5V2() {
               containerClassName="flex-1 rounded-xl"
               className="text-foreground rounded-xl"
               placeholder="Numero di telefono"
-              placeholderTextColor="#A49A99"
+                
               value={formatPhoneForInput(
                 step5.phone || "",
                 callingCode || "39"

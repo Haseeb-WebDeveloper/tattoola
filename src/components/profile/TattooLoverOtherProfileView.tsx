@@ -65,7 +65,7 @@ export const TattooLoverOtherProfileView: React.FC<
         {/* Username */}
         <ScaledText
           variant="md"
-          className="text-foreground font-bold"
+          className="text-foreground font-neueSemibold"
           style={{
             marginBottom: mvs(0),
           }}

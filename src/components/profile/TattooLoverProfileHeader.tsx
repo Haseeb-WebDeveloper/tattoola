@@ -103,7 +103,7 @@ export const TattooLoverProfileHeader: React.FC<
               <ScaledText
                 allowScaling={false}
                 variant="2xl"
-                className="text-foreground font-semibold"
+                className="text-foreground font-neueSemibold"
                 style={{ lineHeight: mvs(24) }}
               >
                 {fullName}

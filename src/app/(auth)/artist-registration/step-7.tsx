@@ -89,7 +89,7 @@ export default function ArtistStep7V2() {
           containerClassName={`rounded-2xl bg-black/40 ${focused === "bio" ? "border-2 border-foreground" : "border border-gray"}`}
           className="text-foreground"
           placeholder="Hi, I’m John. I’m a tattoo artist from the past 10 years..."
-          placeholderTextColor="#A49A99"
+            
           value={step7.bio || ""}
           onChangeText={(v) => updateStep7({ bio: v })}
           onFocus={() => setFocused("bio")}
@@ -144,7 +144,7 @@ export default function ArtistStep7V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12), paddingHorizontal: s(4) }}
             placeholder="tattooking_857"
-            placeholderTextColor="#A49A99"
+              
             autoCapitalize="none"
             value={(step7.instagram || "").replace(/^@/, "")}
             onChangeText={(v) => {
@@ -184,7 +184,7 @@ export default function ArtistStep7V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12), paddingHorizontal: s(4) }}
             placeholder="tattooking_857"
-            placeholderTextColor="#A49A99"
+              
             autoCapitalize="none"
             value={(step7.tiktok || "").replace(/^@/, "")}
             onChangeText={(v) => {

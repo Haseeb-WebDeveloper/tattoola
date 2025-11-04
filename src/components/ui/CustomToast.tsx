@@ -91,7 +91,7 @@ export const CustomToast: React.FC<CustomToastProps> = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-montserratBold"
+              className="text-foreground font-neueSemibold"
             >
               {actionText}
             </ScaledText>
