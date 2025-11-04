@@ -12,15 +12,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -376,7 +376,7 @@ export default function LocationSettingsScreen() {
                     <ScaledText
                       allowScaling={false}
                       variant="md"
-                      className="text-gray font-light"
+                      className="text-gray font-neueLight"
                       style={{ marginBottom: mvs(6) }}
                     >
                       Primary location
@@ -421,7 +421,7 @@ export default function LocationSettingsScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-light"
+                    className="text-foreground font-neueLight"
                     style={{ marginBottom: mvs(6) }}
                   >
                     Other locations

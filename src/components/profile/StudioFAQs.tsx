@@ -3,11 +3,11 @@ import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
 import {
-  LayoutAnimation,
-  Platform,
-  TouchableOpacity,
-  UIManager,
-  View,
+    LayoutAnimation,
+    Platform,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 
 // Enable LayoutAnimation on Android
@@ -110,7 +110,7 @@ export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
                   <ScaledText
                     allowScaling={false}
                     variant="11"
-                    className="text-foreground font-light"
+                    className="text-foreground font-neueLight"
                   >
                     {faq.answer}
                   </ScaledText>

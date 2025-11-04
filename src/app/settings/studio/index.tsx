@@ -37,7 +37,7 @@ const StudioSettingsItem: React.FC<StudioSettingsItemProps> = ({
     <ScaledText
       allowScaling={false}
       variant="md"
-      className={`font-semibold text-white`}
+      className={`font-neueSemibold text-white`}
     >
       {title}
     </ScaledText>
@@ -108,8 +108,8 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
     >
       <ScaledText
         allowScaling={false}
-        variant="2xl"
-        className="text-white font-semibold"
+        variant="xl"
+        className="text-white font-neueSemibold"
         style={{
           marginBottom: mvs(6),
         }}
@@ -119,7 +119,7 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="text-foreground font-light"
+        className="text-foreground font-neueLight"
         style={{
           marginBottom: mvs(14),
           width: "100%",
@@ -154,7 +154,7 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="font-semibold text-white"
+        className="font-neueSemibold text-white"
       >
         Get started
       </ScaledText>
@@ -221,8 +221,8 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
     >
       <ScaledText
         allowScaling={false}
-        variant="2xl"
-        className="text-white font-semibold"
+        variant="xl"
+        className="text-white font-neueSemibold"
         style={{
           marginBottom: mvs(6),
         }}
@@ -232,7 +232,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="text-foreground font-light"
+        className="text-foreground font-neueLight"
         style={{
           marginBottom: mvs(14),
           width: "100%",
@@ -267,7 +267,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="font-semibold text-white"
+        className="font-neueSemibold text-white"
       >
         View Studio Page
       </ScaledText>
@@ -448,14 +448,19 @@ export default function StudioSettingsScreen() {
               title="Studio page"
               onPress={handleStudioPagePress}
             />
-            <StudioSettingsItem
-              title="Artisti Collegati"
-              onPress={handleArtistsPress}
-            />
-            <StudioSettingsItem
-              title="Foto dello studio"
-              onPress={handlePhotosPress}
-            />
+            {/* Show "Artisti Collegati" and "Foto dello studio" only for OWNER or MANAGER */}
+            {studio && (studio.userRole === "OWNER" || studio.userRole === "MANAGER") && (
+              <>
+                <StudioSettingsItem
+                  title="Artisti Collegati"
+                  onPress={handleArtistsPress}
+                />
+                <StudioSettingsItem
+                  title="Foto dello studio"
+                  onPress={handlePhotosPress}
+                />
+              </>
+            )}
           </View>
           {/* Setup Card - Show when no studio OR incomplete studio for OWNER/MANAGER */}
           {showSetupCard ? (

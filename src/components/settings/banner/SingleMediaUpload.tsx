@@ -40,7 +40,7 @@ export function SingleMediaUpload({
       <ScaledText
         allowScaling={false}
         variant="11"
-        className="text-foreground font-light text-center"
+        className="text-foreground font-neueLight text-center"
         style={{ marginBottom: mvs(14), paddingHorizontal: s(16) }}
       >
         This is how your banner will look

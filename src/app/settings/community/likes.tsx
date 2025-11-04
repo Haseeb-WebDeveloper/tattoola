@@ -3,33 +3,33 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  fetchLikedPosts,
-  LikedPost,
-  togglePostLike,
+    fetchLikedPosts,
+    LikedPost,
+    togglePostLike,
 } from "@/services/post.service";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetView,
+    BottomSheetBackdrop,
+    BottomSheetScrollView,
+    BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  Animated,
-  Dimensions,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Image,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -522,7 +522,7 @@ export default function LikesScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white text-center font-light"
+              className="text-white text-center font-neueLight"
               style={{ lineHeight: mvs(23) }}
             >
               Here you'll find the works you've liked.{"\n"}
@@ -648,7 +648,7 @@ export default function LikesScreen() {
                   onPress={handleResetFilter}
                   className="items-center justify-center"
                 >
-                  <ScaledText variant="md" className="font-light text-gray">
+                  <ScaledText variant="md" className="font-neueLight text-gray">
                     Reset
                   </ScaledText>
                 </TouchableOpacity>
@@ -822,7 +822,7 @@ export default function LikesScreen() {
                   onPress={handleResetFilter}
                   className="items-center justify-center"
                 >
-                  <ScaledText variant="md" className="font-light text-gray">
+                  <ScaledText variant="md" className="font-neueLight text-gray">
                     Reset
                   </ScaledText>
                 </TouchableOpacity>

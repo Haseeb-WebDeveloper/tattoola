@@ -46,6 +46,7 @@ model User {
   likedPosts              PostLike[]
   posts                   Post[]
   studioMemberships       StudioMember[]
+  studioMemberInvitations StudioMember[] @relation("StudioMemberInviter")
   favoriteStyles          UserFavoriteStyle[]
   assignedSubscriptions   UserSubscription[]   @relation("AdminAssignedSubscriptions")
   subscriptions           UserSubscription[]
@@ -228,20 +229,29 @@ model Studio {
 }
 
 model StudioMember {
-  id       String        @id @default(uuid())
-  studioId String
-  userId   String
-  artistId String
-  role     StudioRole    @default(MEMBER)
-  joinedAt DateTime      @default(now())
-  isActive Boolean       @default(true)
-  artist   ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  studio   Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String             @id @default(uuid())
+  studioId        String
+  userId          String
+  artistId        String
+  role            StudioRole        @default(MEMBER)
+  status          StudioMemberStatus @default(PENDING)
+  invitationToken String?            @unique
+  invitedAt       DateTime?
+  acceptedAt      DateTime?
+  joinedAt        DateTime?
+  isActive        Boolean            @default(false)
+  invitedBy       String?
+  artist          ArtistProfile      @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  studio          Studio             @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inviter         User?              @relation("StudioMemberInviter", fields: [invitedBy], references: [id])
 
   @@unique([studioId, userId])
   @@index([studioId])
   @@index([userId])
+  @@index([status])
+  @@index([invitationToken])
+  @@index([invitedBy])
   @@map("studio_members")
 }
 
@@ -1093,6 +1103,12 @@ enum BannerType {
   FOUR_IMAGES
   ONE_IMAGE
   ONE_VIDEO
+}
+
+enum StudioMemberStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 // New: Billing and payments

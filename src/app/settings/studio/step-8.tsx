@@ -207,7 +207,7 @@ export default function StudioStep8() {
         {/* Header */}
         <StudioStepHeader
           currentStep={8}
-          totalSteps={totalSteps}
+          totalSteps={8}
           stepName="FAQs"
           icon={<SVGIcons.Faq width={s(19)} height={s(19)} />}
         />
@@ -217,8 +217,8 @@ export default function StudioStep8() {
           {/* Subtitle */}
           <ScaledText
             allowScaling={false}
-            variant="sm"
-            className="text-foreground font-light text-center"
+            variant="md"
+            className="text-foreground font-neueLight text-center"
             style={{ marginBottom: mvs(20) }}
           >
             Add a question and its answer to help visitors learn more about your
@@ -319,7 +319,7 @@ export default function StudioStep8() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-medium"
+                className="text-foreground font-neueSemibold"
               >
                 Saving...
               </ScaledText>
@@ -366,8 +366,8 @@ export default function StudioStep8() {
               <View className="flex-row items-center justify-center">
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueBold"
+                  variant="lg"
+                  className="text-foreground font-neueSemibold"
                 >
                   {editingFaq ? "Edit FAQ" : "Add FAQ"}
                 </ScaledText>
@@ -386,8 +386,8 @@ export default function StudioStep8() {
             >
               <ScaledText
                 allowScaling={false}
-                variant="sm"
-                className="text-foreground font-light text-center"
+                variant="md"
+                className="text-foreground font-neueLight text-center"
                 style={{ marginBottom: mvs(20) }}
               >
                 Add a question and its answer to help visitors learn more about
@@ -398,7 +398,7 @@ export default function StudioStep8() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium mb-2"
+                  className="text-gray font-montserratSemibold mb-2"
                 >
                   Question
                   <ScaledText variant="sm" className="text-error">
@@ -408,6 +408,7 @@ export default function StudioStep8() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
+                  style={{ fontSize: s(12) }}
                   placeholder="Enter your question"
                   placeholderTextColor="#A49A99"
                   value={tempQuestion}
@@ -420,7 +421,7 @@ export default function StudioStep8() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium mb-2"
+                  className="text-gray font-montserratSemibold mb-2"
                 >
                   Rispondi a questa domanda*
                   <ScaledText variant="sm" className="text-error">
@@ -436,7 +437,7 @@ export default function StudioStep8() {
                   onChangeText={setTempAnswer}
                   multiline
                   numberOfLines={4}
-                  style={{ minHeight: mvs(120), textAlignVertical: "top" }}
+                  style={{ minHeight: mvs(120), textAlignVertical: "top", fontSize: s(12) }}
                 />
               </View>
             </ScrollView>
@@ -469,9 +470,9 @@ export default function StudioStep8() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueSemibold text-nowrap"
                 >
-                  {editingFaq ? "Update FAQ" : "Add FAQ"}
+                  {editingFaq ? "Update FAQ" : "Add FAQ "}
                 </ScaledText>
               </TouchableOpacity>
             </View>

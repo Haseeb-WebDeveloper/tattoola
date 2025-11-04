@@ -671,9 +671,26 @@ export class AuthService {
             artistId: artistProfile.id,
             role: "OWNER",
             isActive: true,
+            status: "ACCEPTED",
+            invitedAt: now2,
+            acceptedAt: now2,
+            joinedAt: now2,
+            invitationToken: null,
           });
           logger.log("studio member created");
         } else {
+          // Ensure existing membership is active and accepted
+          await adminOrUserClient
+            .from("studio_members")
+            .update({
+              role: "OWNER",
+              isActive: true,
+              status: "ACCEPTED",
+              acceptedAt: now2,
+              joinedAt: now2,
+              invitationToken: null,
+            })
+            .eq("id", existingMember.id);
           logger.log("studio member already exists");
         }
       } else {
@@ -717,6 +734,11 @@ export class AuthService {
             artistId: artistProfile.id,
             role: "OWNER",
             isActive: true,
+            status: "ACCEPTED",
+            invitedAt: now2,
+            acceptedAt: now2,
+            joinedAt: now2,
+            invitationToken: null,
           });
           logger.log("studio and member created");
         }

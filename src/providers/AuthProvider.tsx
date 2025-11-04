@@ -291,6 +291,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setUser(result.user);
       setSession(result.session);
+      
+      // Check for pending studio invitation token after login
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const pendingToken = await AsyncStorage.getItem('pending_studio_invitation_token');
+        if (pendingToken) {
+          logger.log('Found pending studio invitation token after login');
+          await AsyncStorage.removeItem('pending_studio_invitation_token');
+          // Navigate to invitation acceptance screen
+          setTimeout(() => {
+            router.replace(`/(studio-invitation)/accept?token=${pendingToken}` as any);
+          }, 100);
+          return;
+        }
+      } catch (error) {
+        logger.error('Error checking for pending invitation token:', error);
+      }
+      
       // After login, check profile completion and redirect accordingly
       if (result.user && result.user.id && result.user.role) {
         logger.log('Sign in result user role:', result.user.role);

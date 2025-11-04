@@ -4,13 +4,13 @@ import { useSearchStore } from "@/stores/searchStore";
 import { mvs, s } from "@/utils/scale";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Modal,
-  PanResponder,
-  ScrollView,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Animated,
+    Modal,
+    PanResponder,
+    ScrollView,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LocationPicker from "../shared/LocationPicker";
@@ -255,7 +255,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                     <ScaledText
                       allowScaling={false}
                       variant="md"
-                      className="text-gray font-light"
+                      className="text-gray font-neueLight"
                     >
                       Reset
                     </ScaledText>
@@ -296,7 +296,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                     <ScaledText
                       allowScaling={false}
                       variant="md"
-                      className="text-gray font-light"
+                      className="text-gray font-neueLight"
                     >
                       Reset
                     </ScaledText>
@@ -335,7 +335,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                       <ScaledText
                         allowScaling={false}
                         variant="md"
-                        className="text-gray font-light"
+                        className="text-gray font-neueLight"
                       >
                         Reset
                       </ScaledText>

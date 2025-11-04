@@ -43,7 +43,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
           <ScaledText
             allowScaling={false}
             variant="md"
-            className={`font-semibold ${isDanger && icon ? "text-error" : "text-white"}`}
+            className={`font-neueSemibold ${isDanger && icon ? "text-error" : "text-white"}`}
           >
             {title}
           </ScaledText>
@@ -51,7 +51,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-gray-300 font-light"
+              className="text-gray-300 font-neueLight"
             >
               {value}
             </ScaledText>
@@ -71,7 +71,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
         <ScaledText
           allowScaling={false}
           variant="md"
-          className={`font-semibold ${isDanger ? "text-error" : "text-white"}`}
+          className={`font-neueSemibold ${isDanger ? "text-error" : "text-white"}`}
         >
           {title}
         </ScaledText>
@@ -111,7 +111,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="font-light text-gray"
+        className="font-neueLight text-gray"
       >
         {title}
       </ScaledText>
@@ -230,7 +230,7 @@ export default function SettingsScreen() {
         <ScaledText
           allowScaling={false}
           variant="2xl"
-          className="text-white font-bold"
+          className="text-white font-neueSemibold"
         >
           Settings
         </ScaledText>

@@ -193,7 +193,7 @@ export const TattooLoverSkeleton: React.FC = () => {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className={`font-light text-center ${
+                  className={`font-neueLight text-center ${
                     isActive ? "text-foreground" : "text-gray"
                   }`}
                   style={{ fontSize: s(14), lineHeight: s(23) }}

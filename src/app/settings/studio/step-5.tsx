@@ -48,7 +48,7 @@ export default function StudioStep5() {
         {/* Header */}
         <StudioStepHeader
           currentStep={5}
-          totalSteps={totalSteps}
+          totalSteps={8}
           stepName="Description"
           icon={<SVGIcons.SafeAlert width={s(19)} height={s(19)} />}
         />
@@ -77,7 +77,7 @@ export default function StudioStep5() {
               multiline
               numberOfLines={8}
               maxLength={maxCharacters}
-              style={{ minHeight: mvs(200), textAlignVertical: "top" }}
+              style={{ minHeight: mvs(200), textAlignVertical: "top", fontSize: s(12) }}
             />
 
             {/* Character Count */}

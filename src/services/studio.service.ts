@@ -1,12 +1,12 @@
 import {
-  StudioSetupStep1,
-  StudioSetupStep2,
-  StudioSetupStep3,
-  StudioSetupStep4,
-  StudioSetupStep5,
-  StudioSetupStep6,
-  StudioSetupStep7,
-  StudioSetupStep8,
+    StudioSetupStep1,
+    StudioSetupStep2,
+    StudioSetupStep3,
+    StudioSetupStep4,
+    StudioSetupStep5,
+    StudioSetupStep6,
+    StudioSetupStep7,
+    StudioSetupStep8,
 } from "@/stores/studioSetupStore";
 import { StudioInfo } from "@/types/studio";
 import { generateUUID } from "@/utils/randomUUIDValue";
@@ -14,7 +14,8 @@ import { supabase } from "@/utils/supabase";
 
 /**
  * Fetch studio information for an artist user
- * Returns studio details and user's role in the studio
+ * Priority: 1) Check if artist owns a studio, 2) Check if artist is a member of a studio
+ * Returns studio details and user's role in the studio (only one studio for now)
  */
 export async function fetchArtistStudio(userId: string): Promise<StudioInfo | null> {
   try {
@@ -30,44 +31,54 @@ export async function fetchArtistStudio(userId: string): Promise<StudioInfo | nu
       return null;
     }
 
-    // 2. Query studios table where ownerId = artistProfile.id
-    const { data: studio, error: studioError } = await supabase
+    // 2. PRIORITY 1: Check if artist owns a studio
+    const { data: ownedStudio, error: ownedStudioError } = await supabase
       .from('studios')
       .select('id, name, isCompleted, ownerId')
       .eq('ownerId', artistProfile.id)
       .single();
 
-    if (studioError || !studio) {
-      console.error('Error fetching studio:', studioError);
+    if (ownedStudio && !ownedStudioError) {
+      // Artist owns a studio - return it with OWNER role
+      return {
+        id: ownedStudio.id,
+        name: ownedStudio.name,
+        isCompleted: ownedStudio.isCompleted,
+        userRole: 'OWNER',
+      };
+    }
+
+    // 3. PRIORITY 2: If no owned studio, check if artist is a member of any studio
+    const { data: memberRecord, error: memberError } = await supabase
+      .from('studio_members')
+      .select('studioId, role')
+      .eq('userId', userId)
+      .eq('isActive', true)
+      .limit(1)
+      .single();
+
+    if (memberError || !memberRecord) {
+      // No studio found - artist is neither owner nor member
       return null;
     }
 
-    // 3. Check if user is owner or get role from studio_members
-    let userRole: 'OWNER' | 'MANAGER' | 'MEMBER' = 'OWNER'; // Owner by default since we queried by ownerId
+    // Artist is a member of a studio - fetch studio details separately
+    const { data: studio, error: studioError } = await supabase
+      .from('studios')
+      .select('id, name, isCompleted')
+      .eq('id', memberRecord.studioId)
+      .single();
 
-    // If not owner, check studio_members table
-    if (studio.ownerId !== artistProfile.id) {
-      const { data: memberData, error: memberError } = await supabase
-        .from('studio_members')
-        .select('role')
-        .eq('studioId', studio.id)
-        .eq('userId', userId)
-        .single();
-
-      if (memberError || !memberData) {
-        console.error('Error fetching studio member role:', memberError);
-        return null;
-      }
-
-      userRole = memberData.role as 'OWNER' | 'MANAGER' | 'MEMBER';
+    if (studioError || !studio) {
+      console.error('Error fetching studio details for member:', studioError);
+      return null;
     }
 
-    // 4. Return studio info with role
     return {
       id: studio.id,
       name: studio.name,
       isCompleted: studio.isCompleted,
-      userRole,
+      userRole: memberRecord.role as 'OWNER' | 'MANAGER' | 'MEMBER',
     };
   } catch (error) {
     console.error('Error in fetchArtistStudio:', error);
@@ -132,6 +143,33 @@ export async function saveStudioSetup(
         .eq('id', studioId);
 
       if (updateError) throw new Error(`Failed to update studio: ${updateError.message}`);
+
+      // Ensure owner is in studio_members table
+      const { data: existingMember } = await supabase
+        .from('studio_members')
+        .select('id')
+        .eq('studioId', studioId)
+        .eq('userId', userId)
+        .maybeSingle();
+
+      if (!existingMember) {
+        // Add owner as studio member if missing
+        const { error: memberError } = await supabase
+          .from('studio_members')
+          .insert({
+            id: generateUUID(),
+            studioId,
+            userId,
+            artistId,
+            role: 'OWNER',
+            isActive: true,
+            joinedAt: new Date().toISOString(),
+          });
+
+        if (memberError) {
+          console.error('Failed to add owner as studio member:', memberError);
+        }
+      }
 
       // Update studio location
       const { data: existingLocation } = await supabase
@@ -229,6 +267,7 @@ export async function saveStudioSetup(
           userId,
           artistId, // artistId is required by schema
           role: 'OWNER',
+          isActive: true,
           joinedAt: new Date().toISOString(),
         });
 
@@ -1203,5 +1242,41 @@ export async function reorderStudioPhotos(
     console.error('Error reordering studio photos:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Get studio members (delegates to invitation service)
+ */
+export async function getStudioMembers(
+  studioId: string,
+  userId: string
+) {
+  const { getStudioMembers } = await import('./studio.invitation.service');
+  return getStudioMembers(studioId, userId);
+}
+
+/**
+ * Remove studio member (delegates to invitation service)
+ */
+export async function removeStudioMember(
+  studioId: string,
+  memberId: string,
+  removedByUserId: string
+) {
+  const { removeStudioMember } = await import('./studio.invitation.service');
+  return removeStudioMember(studioId, memberId, removedByUserId);
+}
+
+/**
+ * Update member role (delegates to invitation service)
+ */
+export async function updateMemberRole(
+  studioId: string,
+  memberId: string,
+  newRole: 'MANAGER' | 'MEMBER',
+  updatedByUserId: string
+) {
+  const { updateMemberRole } = await import('./studio.invitation.service');
+  return updateMemberRole(studioId, memberId, newRole, updatedByUserId);
 }
 

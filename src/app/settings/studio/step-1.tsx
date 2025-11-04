@@ -132,8 +132,8 @@ export default function StudioStep1() {
         {/* Header */}
         <StudioStepHeader
           currentStep={1}
-          totalSteps={totalSteps}
-          stepName="Add a Cover"
+          totalSteps={8}
+          stepName="Add a Cover "
           stepDescription="Choose how you want to display your studio's cover"
           icon={<SVGIcons.Magic width={s(19)} height={s(19)} />}
         />

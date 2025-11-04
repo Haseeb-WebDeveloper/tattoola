@@ -2,7 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { BannerMedia } from "@/types/banner";
 import { mvs, s } from "@/utils/scale";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 interface FourImagesUploadProps {
@@ -64,7 +64,7 @@ export function FourImagesUpload({
       <ScaledText
         allowScaling={false}
         variant="11"
-        className="text-foreground font-light text-center"
+        className="text-foreground font-neueLight text-center"
         style={{ marginBottom: mvs(14), paddingHorizontal: s(16) }}
       >
         This is how your banner will look
@@ -110,7 +110,7 @@ export function FourImagesUpload({
       <ScaledText
         allowScaling={false}
         variant="11"
-        className="text-foreground font-light"
+        className="text-foreground font-neueLight"
         style={{ marginBottom: mvs(12), paddingHorizontal: s(16) }}
       >
         Selected images :

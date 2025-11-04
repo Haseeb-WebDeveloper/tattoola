@@ -367,7 +367,7 @@ export default function StylesSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Stili preferiti
           </ScaledText>

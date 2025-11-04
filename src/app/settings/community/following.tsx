@@ -223,7 +223,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => {
           <ScaledText
             allowScaling={false}
             variant="11"
-            className="text-gray font-light"
+            className="text-gray font-neueLight"
             numberOfLines={1}
             style={{ marginBottom: mvs(3) }}
           >

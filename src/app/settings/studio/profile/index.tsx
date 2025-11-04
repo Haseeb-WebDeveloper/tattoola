@@ -28,7 +28,7 @@ const StudioProfileSettingsItem: React.FC<StudioProfileSettingsItemProps> = ({
     <ScaledText
       allowScaling={false}
       variant="md"
-      className={`font-semibold text-white`}
+      className={`font-neueSemibold text-white`}
     >
       {title}
     </ScaledText>
@@ -102,7 +102,7 @@ export default function StudioProfileSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-white font-bold"
+              className="text-white font-neueSemibold"
             >
               Studio page
             </ScaledText>

@@ -83,6 +83,12 @@ export default function HomeScreen() {
       >
         <Text>Plan subscription</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.push("/(studio-invitation)/accept?token=021f4d87-75cb-4ebb-bd87-0c61fb7f0e25")}
+        className="bg-foreground text-background p-4 rounded-full"
+      >
+        <Text>Studio invitation accept</Text>
+      </TouchableOpacity>
 
       {/* <FlatList
         data={posts}

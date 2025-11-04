@@ -228,7 +228,7 @@ export default function StudioFAQsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-foreground font-light text-center"
+                className="text-foreground font-neueLight text-center"
                 style={{ marginBottom: mvs(20) }}
               >
                 Add a question and its answer to help visitors learn more about your
@@ -388,7 +388,7 @@ export default function StudioFAQsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-foreground font-light text-center"
+                className="text-foreground font-neueLight text-center"
                 style={{ marginBottom: mvs(20) }}
               >
                 Add a question and its answer to help visitors learn more about

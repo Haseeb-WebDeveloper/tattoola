@@ -2,20 +2,12 @@ import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import StudioStepHeader from "@/components/ui/StudioStepHeader";
 import { SVGIcons } from "@/constants/svg";
-import {
-    fetchServices,
-    ServiceItem,
-} from "@/services/services.service";
+import { fetchServices, ServiceItem } from "@/services/services.service";
 import { useStudioSetupStore } from "@/stores/studioSetupStore";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-    FlatList,
-    Pressable,
-    ScrollView,
-    View,
-} from "react-native";
+import { FlatList, Pressable, ScrollView, View } from "react-native";
 
 function ServiceSkeleton() {
   return (
@@ -111,7 +103,11 @@ export default function StudioStep7() {
     return (
       <View
         className="flex-row items-center border-b border-gray/20"
-        style={{ paddingHorizontal: s(16), paddingVertical: mvs(16), gap: s(8) }}
+        style={{
+          paddingHorizontal: s(16),
+          paddingVertical: mvs(16),
+          gap: s(8),
+        }}
       >
         <Pressable
           className="items-center"
@@ -145,27 +141,20 @@ export default function StudioStep7() {
         {/* Header */}
         <StudioStepHeader
           currentStep={7}
-          totalSteps={totalSteps}
-          stepName="Services"
-          icon={<SVGIcons.Work width={s(19)} height={s(19)} />}
+          totalSteps={8}
+          stepName="Seleziona i  servizi del tuo studio"
+          icon={<SVGIcons.MagicStick width={s(19)} height={s(19)} />}
         />
 
         {/* Subtitle */}
-        <View style={{ paddingHorizontal: s(24), marginBottom: mvs(16) }}>
+        <View style={{ paddingHorizontal: s(24)}}>
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-semibold"
+            className="text-foreground font-neueSemibold"
             style={{ marginBottom: mvs(8) }}
           >
             Select services
-          </ScaledText>
-          <ScaledText
-            allowScaling={false}
-            variant="sm"
-            className="text-gray"
-          >
-            Choose the services your studio offers
           </ScaledText>
         </View>
 
@@ -214,4 +203,3 @@ export default function StudioStep7() {
     </View>
   );
 }
-

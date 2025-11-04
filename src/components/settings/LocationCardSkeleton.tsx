@@ -64,7 +64,7 @@ export function FullPageLocationSkeleton() {
         <ScaledText
           allowScaling={false}
           variant="md"
-          className="text-gray font-light"
+          className="text-gray font-neueLight"
           style={{ marginBottom: mvs(6) }}
         >
           Primary location
@@ -96,7 +96,7 @@ export function FullPageLocationSkeleton() {
         <ScaledText
           allowScaling={false}
           variant="md"
-          className="text-foreground/50 font-light"
+          className="text-foreground/50 font-neueLight"
           style={{ marginBottom: mvs(6) }}
         >
           Other locations

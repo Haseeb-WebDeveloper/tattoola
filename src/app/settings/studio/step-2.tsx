@@ -101,8 +101,8 @@ export default function StudioStep2() {
         {/* Header */}
         <StudioStepHeader
           currentStep={2}
-          totalSteps={totalSteps}
-          stepName="Add logo"
+          totalSteps={8}
+          stepName="Add logo "
           icon={<SVGIcons.Magic width={s(19)} height={s(19)} />}
         />
 

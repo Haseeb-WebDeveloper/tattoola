@@ -10,18 +10,45 @@ import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  Pressable,
   ScrollView,
+  TouchableOpacity,
   View,
 } from "react-native";
 
 function StyleSkeleton() {
   return (
-    <View className="flex-row items-center justify-between border-b border-gray/20 px-4">
-      <View className="w-6 h-6 rounded-md bg-gray/30 mr-3" />
-      <View className="w-32 h-24 bg-gray/30" />
-      <View className="flex-1 px-4">
-        <View className="w-24 h-4 bg-gray/30 rounded" />
+    <View className="flex-row items-center">
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: mvs(6),
+          paddingRight: s(16),
+        }}
+      >
+        <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
+      </View>
+      <View className="border-b border-gray/20 flex-row items-center justify-center">
+        <View
+          style={{
+            width: s(120),
+            height: mvs(72),
+            backgroundColor: "#A49A9950",
+          }}
+        />
+        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            style={{ fontSize: 12.445 }}
+            className="text-foreground font-montserratSemibold"
+          >
+            ...
+          </ScaledText>
+        </View>
+        <View style={{ paddingRight: s(16), width: s(20), height: s(20) }} >
+          {/* <SVGIcons.StartCircle className="w-5 h-5" /> */}
+        </View>
+        
       </View>
     </View>
   );
@@ -99,44 +126,47 @@ export default function StudioStep6() {
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = selectedStyles.includes(item.id);
     const img = resolveImageUrl(item.imageUrl);
-
     return (
       <View
-        className="flex-row items-center border-b border-gray/20"
-        style={{ paddingHorizontal: s(16) }}
+        className="flex-row items-center"
       >
         {/* Left select box */}
-        <Pressable
-          className="items-center"
-          style={{ width: s(40) }}
+        <TouchableOpacity
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: mvs(6),
+            paddingRight: s(16),
+          }}
           onPress={() => toggleStyle(item.id)}
         >
           {isSelected ? (
-            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
-            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </Pressable>
+        </TouchableOpacity>
 
         {/* Image */}
         {img ? (
           <Image
             source={{ uri: img }}
-            style={{ width: s(120), height: s(96) }}
+            className=" border-b border-gray/20"
+            style={{ width: s(120), height: mvs(72) }}
             resizeMode="cover"
           />
         ) : (
           <View
             className="bg-gray/30"
-            style={{ width: s(120), height: s(96) }}
+            style={{ width: s(155), height: mvs(72) }}
           />
         )}
 
         {/* Name */}
-        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
+        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
           <ScaledText
             allowScaling={false}
-            variant="sm"
+            style={{ fontSize: 12.445 }}
             className="text-foreground font-montserratSemibold"
           >
             {item.name}
@@ -152,8 +182,8 @@ export default function StudioStep6() {
         {/* Header */}
         <StudioStepHeader
           currentStep={6}
-          totalSteps={totalSteps}
-          stepName="Styles"
+          totalSteps={8}
+          stepName="Stili preferiti dello studio"
           icon={<SVGIcons.Style width={s(19)} height={s(19)} />}
         />
 
@@ -162,14 +192,14 @@ export default function StudioStep6() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-semibold"
+            className="text-foreground font-neueSemibold"
           >
-            Select tattoo styles
+           Select styles
           </ScaledText>
         </View>
 
         {/* Styles List */}
-        <View className="flex-1">
+        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
           {loading ? (
             <ScrollView
               contentContainerStyle={{

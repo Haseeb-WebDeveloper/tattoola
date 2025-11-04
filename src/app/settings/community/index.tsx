@@ -28,7 +28,7 @@ const CommunitySettingsItem: React.FC<CommunitySettingsItemProps> = ({
     <ScaledText
       allowScaling={false}
       variant="md"
-      className={`font-semibold text-white`}
+      className={`font-neueSemibold text-white`}
     >
       {title}
     </ScaledText>
@@ -83,7 +83,7 @@ export default function CommunitySettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Community
           </ScaledText>

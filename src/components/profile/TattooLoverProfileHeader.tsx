@@ -116,7 +116,7 @@ export const TattooLoverProfileHeader: React.FC<
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="font-light text-foreground"
+                  className="font-neueLight text-foreground"
                 >
                   @{username}
                 </ScaledText>
@@ -160,7 +160,7 @@ export const TattooLoverProfileHeader: React.FC<
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-light"
+              className="text-foreground font-neueLight"
             >
               {location}
             </ScaledText>

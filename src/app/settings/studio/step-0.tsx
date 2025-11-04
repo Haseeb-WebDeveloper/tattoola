@@ -93,7 +93,7 @@ export default function StudioStep0() {
         <ScaledText
           allowScaling={false}
           variant="2xl"
-          className="text-white font-bold"
+          className="text-white font-neueSemibold"
           style={{
             marginBottom: mvs(6),
           }}
@@ -108,7 +108,7 @@ export default function StudioStep0() {
           style={{
             marginBottom: mvs(20),
           }}
-          className="text-foreground font-light"
+          className="text-foreground font-neueLight"
         >
           Create a dedicated page for your studio. Add details, photos, and
           services to showcase your work and attract more clients.
@@ -125,7 +125,7 @@ export default function StudioStep0() {
           <ScaledText
             allowScaling={false}
             variant="11"
-            className="text-foreground font-semibold"
+            className="text-foreground font-neueSemibold"
           >
             🖼 Cover & Logo {"\n"}
             📍 Location & Links {"\n"}
@@ -140,7 +140,7 @@ export default function StudioStep0() {
           style={{
             marginBottom: mvs(40),
           }}
-          className="text-foreground font-light"
+          className="text-foreground font-neueLight"
         >
           You can edit everything later at any time.
         </ScaledText>
@@ -167,7 +167,7 @@ export default function StudioStep0() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-white font-semibold"
+            className="text-white font-neueSemibold"
           >
             Get started
           </ScaledText>

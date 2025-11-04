@@ -55,7 +55,7 @@ export default function StudioStep4() {
         {/* Header */}
         <StudioStepHeader
           currentStep={4}
-          totalSteps={totalSteps}
+          totalSteps={8}
           stepName="Social Links"
           icon={<SVGIcons.Magic width={s(19)} height={s(19)} />}
         />
@@ -75,6 +75,7 @@ export default function StudioStep4() {
             <ScaledTextInput
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
+              style={{ fontSize: s(12) }}
               placeholder="https://yourwebsite.com"
               placeholderTextColor="#A49A99"
               value={formData.website}
@@ -97,6 +98,7 @@ export default function StudioStep4() {
             <ScaledTextInput
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
+              style={{ fontSize: s(12) }}
               placeholder="@username"
               placeholderTextColor="#A49A99"
               value={formData.instagram}
@@ -118,6 +120,7 @@ export default function StudioStep4() {
             <ScaledTextInput
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
+              style={{ fontSize: s(12) }}
               placeholder="@username"
               placeholderTextColor="#A49A99"
               value={formData.tiktok}

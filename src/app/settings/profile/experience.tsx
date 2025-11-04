@@ -402,7 +402,7 @@ export default function ExperienceSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-[#fff] font-light text-center"
+            className="text-[#fff] font-neueLight text-center"
             style={{ marginBottom: mvs(24) }}
           >
             Select the year you started your profession

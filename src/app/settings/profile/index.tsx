@@ -29,7 +29,7 @@ const ProfileSettingsItem: React.FC<ProfileSettingsItemProps> = ({
     <ScaledText
       allowScaling={false}
       variant="md"
-      className={`font-semibold text-white`}
+      className={`font-neueSemibold text-white`}
     >
       {title}
     </ScaledText>
@@ -168,7 +168,7 @@ export default function ProfileSettingsScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-white font-bold"
+            className="text-white font-neueSemibold"
           >
             Your profile
           </ScaledText>

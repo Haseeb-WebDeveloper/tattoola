@@ -3,6 +3,8 @@ import Close from "@/assets/icons/close.svg";
 // @ts-ignore
 import CloseRed from "@/assets/icons/close-red.svg";
 // @ts-ignore
+import CloseRedBold from "@/assets/icons/close-red-bold.svg";
+// @ts-ignore
 import CloseGray from "@/assets/icons/close-gray.svg";
 // @ts-ignore
 import LogoLight from "@/assets/icons/logo-light.svg";
@@ -78,6 +80,8 @@ import Pen3 from "@/assets/icons/pen-3.svg";
 import PenRed from "@/assets/icons/pen-red.svg";
 // @ts-ignore
 import Search from "@/assets/icons/search.svg";
+// @ts-ignore
+import Search2 from "@/assets/icons/search-2.svg";
 // @ts-ignore
 import Style from "@/assets/icons/style.svg";
 // @ts-ignore
@@ -185,6 +189,8 @@ import BubbleYou from "@/assets/icons/bubble-you.svg";
 // @ts-ignore
 import Loading from "@/assets/icons/loading.svg";
 // @ts-ignore
+import LoadingGray from "@/assets/icons/loading-gray.svg";
+// @ts-ignore
 import Play from "@/assets/icons/play.svg";
 // @ts-ignore
 import Docs from "@/assets/icons/docs.svg";
@@ -216,12 +222,17 @@ import AmericanExpress from "@/assets/icons/american-express.svg";
 import Visa from "@/assets/icons/visa.svg";
 // @ts-ignore
 import Mastercard from "@/assets/icons/master-card.svg";
+// @ts-ignore
+import Link from "@/assets/icons/link.svg";
+// @ts-ignore
+import Pending from "@/assets/icons/pending.svg";
 
 
 export const SVGIcons = {
   Close,
   CloseRed,
   CloseGray,
+  CloseRedBold,
   LogoLight,
   Logo,
   Person,
@@ -250,6 +261,7 @@ export const SVGIcons = {
   Pen1,
   PenRed,
   Search,
+  Search2,
   Style,
   Check,
   CheckedCheckbox,
@@ -308,6 +320,7 @@ export const SVGIcons = {
   BubbleMe,
   BubbleYou,
   Loading,
+  LoadingGray,
   Play,
   Docs,
   Audio,
@@ -328,6 +341,8 @@ export const SVGIcons = {
   AmericanExpress,
   Visa,
   Mastercard,
+  Link,
+  Pending,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

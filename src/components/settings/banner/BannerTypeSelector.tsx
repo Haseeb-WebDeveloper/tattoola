@@ -25,7 +25,7 @@ export function BannerTypeSelector({
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="text-foreground font-light"
+        className="text-foreground font-neueLight"
         style={{ marginBottom: mvs(16) }}
       >
         In this section you can choose the cover of your page.
