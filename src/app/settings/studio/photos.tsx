@@ -181,7 +181,7 @@ export default function StudioPhotosScreen() {
         )}
 
         {/* Drag handle (left side) */}
-        <View
+        {/* <View
           style={{
             position: "absolute",
             left: s(7),
@@ -191,7 +191,7 @@ export default function StudioPhotosScreen() {
           }}
         >
           <SVGIcons.Drag style={{ width: s(7), height: mvs(11) }} />
-        </View>
+        </View> */}
 
         {/* Delete button */}
         {!isDeleting && (

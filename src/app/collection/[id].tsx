@@ -1,41 +1,38 @@
+import AddPostsModal from "@/components/collection/AddPostsModal";
+import CollectionPostCard from "@/components/collection/CollectionPostCard";
+import DeleteConfirmModal from "@/components/collection/DeleteConfirmModal";
+import EditCollectionNameModal from "@/components/collection/EditCollectionNameModal";
+import { CustomToast } from "@/components/ui/CustomToast";
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    addPostsToCollection,
-    fetchCollectionDetails,
-    fetchUserPosts,
-    removePostFromCollection,
-    reorderCollectionPosts,
-    updateCollectionName,
+  addPostsToCollection,
+  fetchCollectionDetails,
+  fetchUserPosts,
+  removePostFromCollection,
+  reorderCollectionPosts,
+  updateCollectionName,
 } from "@/services/collection.service";
 import { clearProfileCache } from "@/utils/database";
+import { mvs } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-    Alert,
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Dimensions, Image, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, {
-    RenderItemParams,
-    ScaleDecorator,
+  RenderItemParams,
+  ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
-const GAP = 8;
-const NUM_COLUMNS = 2;
-const H_PADDING = 32;
-const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
+// Responsive spacing based on screen width (reference width 375)
+const REF_WIDTH = 375;
+const GAP = Math.max(6, Math.round((8 * screenWidth) / REF_WIDTH));
+const H_PADDING = Math.max(24, Math.round((32 * screenWidth) / REF_WIDTH));
 
 interface CollectionPost {
   id: string;
@@ -71,6 +68,7 @@ export default function CollectionDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,12 +80,19 @@ export default function CollectionDetailsScreen() {
   const previousNameRef = useRef<string>("");
   const previousPostsRef = useRef<CollectionPost[] | null>(null);
   const [selectModalVisible, setSelectModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null);
   const [allUserPosts, setAllUserPosts] = useState<
     { id: string; caption?: string; thumbnailUrl?: string }[]
   >([]);
   const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(
     new Set()
   );
+
+  // Layout depends on edit mode: 1 column while editing for reliable DnD
+  const NUM_COLUMNS = editMode ? 1 : 2;
+  const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
+  const layoutKey = editMode ? "one-col" : "two-col";
 
   const loadCollection = useCallback(async () => {
     if (!id) return;
@@ -135,7 +140,7 @@ export default function CollectionDetailsScreen() {
 
     try {
       await updateCollectionName(collection.id, newName);
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
@@ -146,7 +151,14 @@ export default function CollectionDetailsScreen() {
         ...prev,
         name: previousNameRef.current,
       }));
-      toast.error(err.message || "Failed to update collection name");
+      const toastId = toast.custom(
+        <CustomToast
+          message={err.message || "Failed to update collection name"}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
     }
   };
 
@@ -155,34 +167,28 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleDeletePost = (postId: string, caption: string) => {
-    Alert.alert(
-      "Delete Post",
-      `Are you sure you want to remove "${caption || "this post"}" from the collection?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await removePostFromCollection(collection.id, postId);
-              setPosts((prev) => prev.filter((p) => p.postId !== postId));
-              setCollection((prev) => ({
-                ...prev,
-                postsCount: prev.postsCount - 1,
-              }));
-              
-              // Clear profile cache to refresh collections on profile screen
-              if (user?.id) {
-                await clearProfileCache(user.id);
-              }
-            } catch (err: any) {
-              Alert.alert("Error", err.message || "Failed to remove post");
-            }
-          },
-        },
-      ]
-    );
+    setPostToDelete({ id: postId, caption });
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete || !collection) return;
+    try {
+      await removePostFromCollection(collection.id, postToDelete.id);
+      setPosts((prev) => prev.filter((p) => p.postId !== postToDelete.id));
+      setCollection((prev) => ({ ...prev, postsCount: prev.postsCount - 1 }));
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
+    } catch (err: any) {
+      const toastId = toast.custom(
+        <CustomToast message={err.message || "Failed to remove post"} iconType="error" onClose={() => toast.dismiss(toastId)} />,
+        { duration: 4000 }
+      );
+    } finally {
+      setDeleteModalVisible(false);
+      setPostToDelete(null);
+    }
   };
 
   const handleDragEnd = async (data: CollectionPost[]) => {
@@ -195,7 +201,7 @@ export default function CollectionDetailsScreen() {
         collection.id,
         data.map((p) => p.postId)
       );
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
@@ -264,18 +270,35 @@ export default function CollectionDetailsScreen() {
     try {
       await addPostsToCollection(collection.id, toAdd);
       await loadCollection();
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
       }
+
+      // Show success toast
+      const toastId = toast.custom(
+        <CustomToast
+          message={`${toAdd.length} ${toAdd.length === 1 ? "tattoo" : "tattoos"} added to collection`}
+          iconType="success"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
     } catch (err: any) {
       setPosts(prevPostsSnapshot);
       setCollection((prev: any) => ({
         ...prev,
         postsCount: Math.max((prev?.postsCount || 0) - optimistic.length, 0),
       }));
-      Alert.alert("Error", err.message || "Failed to add posts to collection");
+      const toastId = toast.custom(
+        <CustomToast
+          message={err.message || "Failed to add posts to collection"}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
     }
   };
 
@@ -301,65 +324,21 @@ export default function CollectionDetailsScreen() {
 
     return (
       <ScaleDecorator>
-        <TouchableOpacity
+        <CollectionPostCard
+          thumbnailUrl={item.thumbnailUrl}
+          mediaUrl={item.media[0]?.mediaUrl}
+          caption={item.caption}
+          editMode={editMode}
+          isActive={isActive}
           onPress={() => handlePostPress(item.postId)}
-          onLongPress={editMode ? drag : undefined}
-          delayLongPress={200}
-          disabled={isActive}
-          style={{
-            width: POST_WIDTH,
-            marginLeft,
-            marginRight,
-            marginTop,
-          }}
-        >
-          <View
-            className="relative aspect-[9/16]"
-            style={{
-              opacity: isActive ? 0.7 : 1,
-              transform: [{ scale: isActive ? 1.05 : 1 }],
-            }}
-          >
-            <Image
-              source={{ uri: item.thumbnailUrl || item.media[0]?.mediaUrl }}
-              className="w-full aspect-[9/16] rounded-lg"
-              resizeMode="cover"
-            />
-
-            {/* Gradient overlay */}
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,1)"]}
-              className="absolute bottom-0 left-0 right-0 rounded-b-lg p-3"
-            >
-              <Text className="text-gray text-sm font-neueMedium" numberOfLines={1}>
-                {item.caption || "Descrizione del tatuaggio"}
-              </Text>
-            </LinearGradient>
-
-            {/* Edit mode controls */}
-            {editMode && (
-              <>
-                <TouchableOpacity
-                  className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center"
-                  onPressIn={drag}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <SVGIcons.Drag className="w-6 h-6" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-foreground items-center justify-center"
-                  onPress={() =>
-                    handleDeletePost(item.postId, item.caption || "")
-                  }
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <SVGIcons.Trash className="w-4 h-4" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </TouchableOpacity>
+          onDragHandlePressIn={editMode ? drag : undefined}
+          onDeletePress={() => handleDeletePost(item.postId, item.caption || "")}
+          width={POST_WIDTH}
+          marginLeft={marginLeft}
+          marginRight={marginRight}
+          marginTop={marginTop}
+          fixedHeight={editMode ? mvs(253) : undefined}
+        />
       </ScaleDecorator>
     );
   };
@@ -399,14 +378,19 @@ export default function CollectionDetailsScreen() {
   if (error || !collection) {
     return (
       <View className="flex-1 bg-background items-center justify-center px-6">
-        <Text className="text-foreground text-center mb-4">
+        <ScaledText
+          className="text-foreground text-center"
+          style={{ marginBottom: mvs(16) }}
+        >
           {error || "Collection not found"}
-        </Text>
+        </ScaledText>
         <TouchableOpacity
           onPress={handleBack}
           className="bg-primary px-6 py-3 rounded-lg"
         >
-          <Text className="text-white font-neueSemibold">Go Back</Text>
+          <ScaledText className="text-white font-neueSemibold">
+            Go Back
+          </ScaledText>
         </TouchableOpacity>
       </View>
     );
@@ -426,9 +410,17 @@ export default function CollectionDetailsScreen() {
 
           <View className="flex-1 items-center">
             <View className="flex-row items-center">
-              <Text className="text-foreground font-neueSemibold mr-2 underline underline-offset-2 section-title">
+              <ScaledText
+                allowScaling={false}
+                variant="2xl"
+                className="text-foreground font-neueSemibold mr-2  border-foreground"
+                style={{
+                  lineHeight: mvs(20),
+                  borderBottomWidth: mvs(0.5),
+                }}
+              >
                 {TrimText(collection.name, 15)}
-              </Text>
+              </ScaledText>
               <TouchableOpacity onPress={handleEditName}>
                 {editMode && <SVGIcons.Edit width={16} height={16} />}
               </TouchableOpacity>
@@ -443,11 +435,14 @@ export default function CollectionDetailsScreen() {
                 }}
                 className="w-5 h-5 rounded-full mr-2 border border-foreground"
               />
-              <Text className="text-foreground text-sm">
+              <ScaledText
+                variant="sm"
+                className="text-foreground font-montserratSemibold"
+              >
                 {collection?.author?.firstName || user?.firstName || "Unknown"}{" "}
                 {collection?.author?.lastName || user?.lastName || "User"} •{" "}
                 {collection.postsCount} designs
-              </Text>
+              </ScaledText>
             </View>
           </View>
 
@@ -471,6 +466,7 @@ export default function CollectionDetailsScreen() {
 
         {/* Posts Grid */}
         <DraggableFlatList
+          key={layoutKey}
           data={posts}
           onDragEnd={({ data }) => handleDragEnd(data)}
           keyExtractor={(item) => item.postId}
@@ -485,121 +481,38 @@ export default function CollectionDetailsScreen() {
           }}
           dragItemOverflow={true}
           activationDistance={editMode ? 0 : 999999}
+          autoscrollThreshold={24}
         />
 
         {/* Edit Name Modal */}
-        <Modal
+        <EditCollectionNameModal
           visible={showEditModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowEditModal(false)}
-        >
-          <View className="flex-1 items-center justify-center px-6 bg-black/50">
-            <View className="bg-[#1a1a1a] p-6 rounded-xl w-full max-w-sm">
-              <Text className="text-foreground text-lg font-neueSemibold mb-4">
-                Edit Collection Name
-              </Text>
-
-              <TextInput
-                value={editName}
-                onChangeText={setEditName}
-                placeholder="Collection name"
-                  
-                className="px-4 py-3 text-base text-foreground bg-[#252424] rounded-lg mb-4"
-                autoFocus
-              />
-
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={() => setShowEditModal(false)}
-                  className="flex-1 bg-[#100C0C] py-3 rounded-lg"
-                >
-                  <Text className="text-foreground text-center font-neueSemibold">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleSaveName}
-                  className="flex-1 bg-primary py-3 rounded-lg"
-                >
-                  <Text className="text-white text-center font-neueSemibold">
-                    Save
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          value={editName}
+          onChangeValue={setEditName}
+          onCancel={() => setShowEditModal(false)}
+          onSave={handleSaveName}
+        />
 
         {/* Add Posts Modal */}
-        <Modal
+        <AddPostsModal
           visible={selectModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectModalVisible(false)}
-        >
-          <View className="flex-1 bg-black/60 items-center justify-center px-4">
-            <View className="bg-background rounded-xl p-4 w-full max-w-xl">
-              <Text className="text-foreground text-lg font-neueSemibold mb-3">
-                Select tattoos
-              </Text>
-              <ScrollView className="max-h-[60vh]">
-                <View className="flex-row flex-wrap justify-between">
-                  {allUserPosts.map((p) => {
-                    const checked = selectedPostIds.has(p.id);
-                    return (
-                      <TouchableOpacity
-                        key={p.id}
-                        onPress={() => toggleSelect(p.id)}
-                        style={{ width: POST_WIDTH }}
-                        className="mb-4"
-                      >
-                        <View
-                          className={`rounded-lg overflow-hidden border ${checked ? "border-primary" : "border-transparent"}`}
-                        >
-                          <Image
-                            source={{
-                              uri:
-                                p.thumbnailUrl ||
-                                "https://via.placeholder.com/200",
-                            }}
-                            className="w-full aspect-[9/16]"
-                            resizeMode="cover"
-                          />
-                        </View>
-                        <Text
-                          className="text-foreground text-xs mt-2"
-                          numberOfLines={2}
-                        >
-                          {p.caption || "Untitled"}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-              <View className="flex-row gap-3 mt-4">
-                <TouchableOpacity
-                  onPress={() => setSelectModalVisible(false)}
-                  className="flex-1 bg-gray-200 py-3 rounded-lg"
-                >
-                  <Text className="text-foreground text-center font-neueSemibold">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={confirmAdd}
-                  className="flex-1 bg-primary py-3 rounded-lg"
-                >
-                  <Text className="text-white text-center font-neueSemibold">
-                    Add to collection
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          items={allUserPosts as any}
+          selectedIds={selectedPostIds}
+          onToggle={toggleSelect}
+          onClose={() => setSelectModalVisible(false)}
+          onConfirm={confirmAdd}
+        />
+
+        {/* Delete Confirm Modal */}
+        <DeleteConfirmModal
+          visible={deleteModalVisible}
+          caption={postToDelete?.caption}
+          onCancel={() => {
+            setDeleteModalVisible(false);
+            setPostToDelete(null);
+          }}
+          onConfirm={confirmDeletePost}
+        />
       </View>
     </GestureHandlerRootView>
   );
