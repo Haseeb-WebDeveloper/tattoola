@@ -186,16 +186,12 @@ export default function UsernameSettingsScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
               containerClassName="rounded-lg"
               containerStyle={{
                 borderWidth: s(1),
                 borderColor: error ? "#DC3545" : "#A49A99",
                 backgroundColor: "#100C0C",
-              }}
-              style={{
-                fontSize: scaledFont(14),
-                fontFamily: "Montserrat-Medium",
               }}
             />
             {error ? (
@@ -238,7 +234,7 @@ export default function UsernameSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading ? "Saving..." : "Save"}
             </ScaledText>

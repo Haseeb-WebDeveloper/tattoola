@@ -22,6 +22,7 @@ import DraggableFlatList, {
 import { getFileNameFromUri } from "@/utils/get-file-name";
 import { LinearGradient } from "expo-linear-gradient";
 import ScaledText from "@/components/ui/ScaledText";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 
 export default function UploadMediaStep() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
@@ -243,21 +244,13 @@ export default function UploadMediaStep() {
           </View>
         </View>
 
-        <View className="flex-row justify-between px-6 py-4 bg-background">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="rounded-full border border-foreground px-6 py-4"
-          >
-            <Text className="text-foreground">Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            disabled={!canProceed}
-            onPress={() => router.push("/upload/description")}
-            className={`rounded-full px-8 py-4 ${canProceed ? "bg-primary" : "bg-gray/40"}`}
-          >
-            <Text className="text-foreground">Next</Text>
-          </TouchableOpacity>
-        </View>
+        <NextBackFooter
+          onBack={() => router.back()}
+          onNext={() => router.push("/upload/description")}
+          nextDisabled={!canProceed}
+          nextLabel="Next"
+          backLabel="Back"
+        />
       </View>
     </View>
   );

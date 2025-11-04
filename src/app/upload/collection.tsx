@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import NextBackFooter from "@/components/ui/NextBackFooter";  
 
 type SimpleCollection = {
   id: string;
@@ -36,7 +37,7 @@ export default function UploadCollectionStep() {
   const caption = usePostUploadStore((s) => s.caption);
   const styleId = usePostUploadStore((s) => s.styleId);
   const [styleName, setStyleName] = useState<string | null>(null);
-
+  const canProceed = !!collectionId;
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -358,20 +359,13 @@ export default function UploadCollectionStep() {
         </View>
       </ScrollView>
 
-      <View className="flex-row justify-between px-6 py-4 bg-background z-20">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push("/upload/preview")}
-          className="rounded-full px-8 py-4 bg-primary"
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onBack={() => router.back()}
+        onNext={() => router.push("/upload/preview")}
+        nextDisabled={!canProceed}
+        nextLabel="Next"
+        backLabel="Back"
+      />
 
       {/* Create collection modal */}
       <Modal

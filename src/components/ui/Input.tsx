@@ -2,12 +2,12 @@ import { cn } from '@/utils/cn';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-  Text,
-  TextInput,
-  TextInputProps,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    Text,
+    TextInput,
+    TextInputProps,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
@@ -66,7 +66,7 @@ export function Input({
   return (
     <View className={containerClasses} style={containerStyle}>
       {label && (
-        <Text className="text-sm font-medium text-foreground mb-2">
+        <Text className="text-sm font-neueMedium text-foreground mb-2">
           {label}
           {required && <Text className="text-error"> *</Text>}
         </Text>

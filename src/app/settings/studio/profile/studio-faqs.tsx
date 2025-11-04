@@ -327,7 +327,7 @@ export default function StudioFAQsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
               >
                 {isLoading ? "Saving..." : "Save"}
               </ScaledText>
@@ -471,7 +471,7 @@ export default function StudioFAQsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                 >
                   {editingFaq ? "Update FAQ" : "Add FAQ"}
                 </ScaledText>

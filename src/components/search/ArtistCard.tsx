@@ -52,7 +52,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-primary font-medium"
+              className="text-primary font-neueMedium"
             >
               Artist profile
             </ScaledText>

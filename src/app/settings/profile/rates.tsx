@@ -9,13 +9,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -179,7 +179,7 @@ export default function RatesSettingsScreen() {
         </View>
         <ScaledTextInput
           containerClassName="flex-1"
-          className="text-foreground font-medium"
+          className="text-foreground font-neueMedium"
           placeholder="0"
           placeholderTextColor="#666"
           keyboardType="numeric"
@@ -337,7 +337,7 @@ export default function RatesSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading ? "Saving..." : loading ? "Loading..." : "Save"}
             </ScaledText>

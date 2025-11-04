@@ -500,7 +500,7 @@ export default function LocationSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading ? "Saving..." : "Save"}
             </ScaledText>
@@ -1077,7 +1077,7 @@ function LocationEditModal({
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                 >
                   Save
                 </ScaledText>
@@ -1103,7 +1103,7 @@ function LocationEditModal({
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-medium"
+                    className="text-foreground font-neueMedium"
                   >
                     Back
                   </ScaledText>
@@ -1135,7 +1135,7 @@ function LocationEditModal({
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-medium"
+                    className="text-foreground font-neueMedium"
                   >
                     Next
                   </ScaledText>

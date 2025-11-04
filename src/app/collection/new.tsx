@@ -213,7 +213,7 @@ export default function NewCollectionScreen() {
               colors={["transparent", "rgba(0,0,0,0.6)"]}
               className="absolute bottom-0 left-0 right-0 rounded-b-lg p-3"
             >
-              <Text className="text-white text-sm font-medium" numberOfLines={2}>
+              <Text className="text-white text-sm font-neueMedium" numberOfLines={2}>
                 {item.caption || "Descrizione del tatuaggio"}
               </Text>
             </LinearGradient>

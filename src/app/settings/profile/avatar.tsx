@@ -299,7 +299,7 @@ export default function AvatarSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading || uploading ? "Saving..." : "Save"}
             </ScaledText>

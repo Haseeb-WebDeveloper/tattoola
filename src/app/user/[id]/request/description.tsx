@@ -45,6 +45,7 @@ export default function DescriptionStep() {
               paddingHorizontal: s(16),
               paddingVertical: mvs(12),
               color: "#FFFFFF",
+              fontSize: s(12),
             }}
             value={description}
             onChangeText={setDescription}

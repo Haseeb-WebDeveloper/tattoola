@@ -143,7 +143,7 @@ export const TattooLoverProfileHeader: React.FC<
                 <ScaledText
                   allowScaling={false}
                   variant="11"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                 >
                   {isFollowing ? "Seguito" : "Segui"}
                 </ScaledText>

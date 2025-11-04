@@ -8,12 +8,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -199,7 +199,7 @@ export default function SocialMediaSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                 >
                   @
                 </ScaledText>
@@ -213,7 +213,7 @@ export default function SocialMediaSettingsScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
                 containerClassName="rounded-lg"
                 containerStyle={{
                   borderWidth: s(1),
@@ -253,7 +253,7 @@ export default function SocialMediaSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                 >
                   @
                 </ScaledText>
@@ -267,7 +267,7 @@ export default function SocialMediaSettingsScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
                 containerClassName="rounded-lg"
                 containerStyle={{
                   borderWidth: s(1),
@@ -306,7 +306,7 @@ export default function SocialMediaSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading ? "Saving..." : "Save"}
             </ScaledText>

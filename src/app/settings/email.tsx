@@ -9,13 +9,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -346,7 +345,7 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium"
+                  className="text-tat mb-2 font-montserratSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
                   Inserire la password
@@ -356,12 +355,11 @@ export default function EmailSettingsScreen() {
                     value={currentPassword}
                     onChangeText={handlePasswordChange}
                     placeholder="Enter your password"
-                    placeholderTextColor="#666"
                     secureTextEntry={!showCurrentPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
                     editable={!isVerifyingPassword}
-                    className="text-foreground font-medium"
+                    className="text-foreground font-neueMedium"
                     containerClassName="rounded-lg"
                     containerStyle={{
                       borderWidth: s(1),
@@ -369,8 +367,6 @@ export default function EmailSettingsScreen() {
                       backgroundColor: "#100C0C",
                     }}
                     style={{
-                      fontSize: scaledFont(14),
-                      fontFamily: "Montserrat-Medium",
                       paddingRight: s(48),
                     }}
                     rightAccessory={
@@ -412,7 +408,7 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-montserratMedium"
+                  className="text-tat mb-2 font-montserratSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
                   Conferma Password
@@ -427,7 +423,7 @@ export default function EmailSettingsScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     editable={!isVerifyingPassword}
-                    className="text-foreground font-medium"
+                    className="text-foreground font-neueMedium"
                     containerClassName="rounded-lg"
                     containerStyle={{
                       borderWidth: s(1),
@@ -435,8 +431,6 @@ export default function EmailSettingsScreen() {
                       backgroundColor: "#100C0C",
                     }}
                     style={{
-                      fontSize: scaledFont(14),
-                      fontFamily: "Montserrat-Medium",
                       paddingRight: s(48),
                     }}
                     rightAccessory={
@@ -526,7 +520,7 @@ export default function EmailSettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isUpdatingEmail}
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                   containerClassName="rounded-lg"
                   containerStyle={{
                     borderWidth: s(1),
@@ -569,7 +563,7 @@ export default function EmailSettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isUpdatingEmail}
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                   containerClassName="rounded-lg"
                   containerStyle={{
                     borderWidth: s(1),
@@ -639,7 +633,7 @@ export default function EmailSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {currentStep === "password"
                 ? isVerifyingPassword

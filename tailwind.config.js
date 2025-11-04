@@ -125,6 +125,7 @@ module.exports = {
           DEFAULT: "#A49A99",
           darkMaroon: "#140404",
           foreground: "#100C0C",
+          chat: "#262626",
         },
         // Base colors
         background: "#000000",

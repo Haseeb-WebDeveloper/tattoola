@@ -1,6 +1,6 @@
 import { mvs, s } from "@/utils/scale";
 import React from "react";
-import { TextInput, TextInputProps, View, ViewStyle, Platform } from "react-native";
+import { Platform, TextInput, TextInputProps, View, ViewStyle } from "react-native";
 
 type Props = TextInputProps & {
   containerClassName?: string;
@@ -20,7 +20,7 @@ export const ScaledTextInput: React.FC<Props> = ({
   // On iOS, by default, backgroundColor stays transparent and respects parent.
   const autofillStyle =
     Platform.OS === "android"
-      ? { backgroundColor: "transparent", fontSize: s(14), lineHeight: mvs(23), borderRadius: s(12) }
+      ? { backgroundColor: "transparent", borderRadius: s(12) }
       : {};
 
   return (
@@ -41,6 +41,7 @@ export const ScaledTextInput: React.FC<Props> = ({
         // Setting underlineColorAndroid to transparent also to avoid underline highlight
         underlineColorAndroid="transparent"
         {...rest}
+        placeholderTextColor={rest.placeholderTextColor ?? "#262626"}
       />
       {rightAccessory}
     </View>

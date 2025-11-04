@@ -3,19 +3,19 @@ import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    fetchStudioDetails,
-    updateStudioSocial,
+  fetchStudioDetails,
+  updateStudioSocial,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
@@ -288,7 +288,7 @@ export default function StudioSocialScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
               >
                 {isLoading ? "Saving..." : "Save"}
               </ScaledText>

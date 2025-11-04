@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 
 export default function UploadStyleStep() {
   const styleId = usePostUploadStore((s) => s.styleId);
@@ -21,7 +22,7 @@ export default function UploadStyleStep() {
   const caption = usePostUploadStore((s) => s.caption);
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const canProceed = !!styleId;
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -214,22 +215,13 @@ export default function UploadStyleStep() {
           />
         )}
       </View>
-
-      <View className="flex-row justify-between px-6 py-4 bg-background">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={!styleId}
-          onPress={() => router.push("/upload/collection")}
-          className={`rounded-full px-8 py-4 ${styleId ? "bg-primary" : "bg-gray/40"}`}
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onBack={() => router.back()}
+        onNext={() => router.push("/upload/collection")}
+        nextDisabled={!styleId}
+        nextLabel="Next"
+        backLabel="Back"
+      />
     </View>
   );
 }

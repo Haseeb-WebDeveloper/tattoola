@@ -1,12 +1,12 @@
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  addPostsToCollection,
-  fetchCollectionDetails,
-  fetchUserPosts,
-  removePostFromCollection,
-  reorderCollectionPosts,
-  updateCollectionName,
+    addPostsToCollection,
+    fetchCollectionDetails,
+    fetchUserPosts,
+    removePostFromCollection,
+    reorderCollectionPosts,
+    updateCollectionName,
 } from "@/services/collection.service";
 import { clearProfileCache } from "@/utils/database";
 import { TrimText } from "@/utils/text-trim";
@@ -14,19 +14,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  Image,
-  Modal,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Dimensions,
+    Image,
+    Modal,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
+    RenderItemParams,
+    ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { toast } from "sonner-native";
@@ -331,7 +331,7 @@ export default function CollectionDetailsScreen() {
               colors={["transparent", "rgba(0,0,0,1)"]}
               className="absolute bottom-0 left-0 right-0 rounded-b-lg p-3"
             >
-              <Text className="text-gray text-sm font-medium" numberOfLines={1}>
+              <Text className="text-gray text-sm font-neueMedium" numberOfLines={1}>
                 {item.caption || "Descrizione del tatuaggio"}
               </Text>
             </LinearGradient>

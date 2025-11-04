@@ -51,7 +51,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-primary font-medium"
+              className="text-primary font-neueMedium"
             >
               Studio profile
             </ScaledText>

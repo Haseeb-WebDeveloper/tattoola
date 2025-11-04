@@ -14,7 +14,7 @@ import {
     View,
     useWindowDimensions,
 } from "react-native";
-
+import NextBackFooter from "@/components/ui/NextBackFooter";
 export default function UploadPreviewStep() {
   const { media, caption, styleId, collectionId, reset, setSubmitting } =
     usePostUploadStore();
@@ -127,20 +127,14 @@ export default function UploadPreviewStep() {
           </View>
         </View>
       </ScrollView>
-      <View className="flex-row justify-between px-6 py-4 bg-background">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onSubmit}
-          className="rounded-full px-8 py-4 bg-primary"
-        >
-          <Text className="text-foreground">Publish</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onBack={() => router.back()}
+        onNext={onSubmit}
+        nextDisabled={!media.length || !caption || !styleId || !collectionId}
+        nextLabel="Publish"
+        backLabel="Back"
+      />
+
     </View>
   );
 }

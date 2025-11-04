@@ -31,6 +31,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     ""
   );
 
+
   return (
     <View
       style={{
@@ -73,7 +74,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              className=" font-neueLight text-tat"
+              className=" font-neueLight text-gray"
             >
               {username}
             </ScaledText>

@@ -257,17 +257,12 @@ export default function PasswordSettingsScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
                 containerClassName="rounded-lg"
                 containerStyle={{
                   borderWidth: s(1),
                   borderColor: currentPasswordError ? "#DC3545" : "#A49A99",
                   backgroundColor: "#100C0C",
-                }}
-                style={{
-                  fontSize: scaledFont(14),
-                  fontFamily: "Montserrat-Medium",
-                  paddingRight: s(48),
                 }}
                 rightAccessory={
                   <TouchableOpacity
@@ -321,7 +316,7 @@ export default function PasswordSettingsScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
                 containerClassName="rounded-lg"
                 containerStyle={{
                   borderWidth: s(1),
@@ -332,8 +327,7 @@ export default function PasswordSettingsScreen() {
                   backgroundColor: "#100C0C",
                 }}
                 style={{
-                  fontSize: scaledFont(14),
-                  fontFamily: "Montserrat-Medium",
+                  fontSize: s(12),
                   paddingRight: s(48),
                 }}
                 rightAccessory={
@@ -388,7 +382,7 @@ export default function PasswordSettingsScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
                 containerClassName="rounded-lg"
                 containerStyle={{
                   borderWidth: s(1),
@@ -396,8 +390,7 @@ export default function PasswordSettingsScreen() {
                   backgroundColor: "#100C0C",
                 }}
                 style={{
-                  fontSize: scaledFont(14),
-                  fontFamily: "Montserrat-Medium",
+                  fontSize: s(12),
                   paddingRight: s(48),
                 }}
                 rightAccessory={
@@ -455,7 +448,7 @@ export default function PasswordSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading ? "Updating..." : "Update Password"}
             </ScaledText>

@@ -4,22 +4,22 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import {
-  fetchStudioDetails,
-  updateStudioLogo,
+    fetchStudioDetails,
+    updateStudioLogo,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -327,7 +327,7 @@ export default function StudioLogoScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
               >
                 {isLoading ? "Saving..." : "Save"}
               </ScaledText>

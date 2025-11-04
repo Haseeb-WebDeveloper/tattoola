@@ -15,6 +15,7 @@ interface Collection {
 interface CollectionsSectionProps {
   collections: Collection[];
   onCreateNewCollection?: () => void;
+  showNewCollection?: boolean;
 }
 
 const COLLECTION_GAP = 12;
@@ -23,6 +24,7 @@ const NUM_COLUMNS = 2;
 export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   collections,
   onCreateNewCollection,
+  showNewCollection = true,
 }) => {
   const router = useRouter();
 
@@ -125,6 +127,9 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                 );
               }
               if (collection.id === "__new__") {
+                if (!showNewCollection) {
+                  return null;
+                }
                 return (
                   <TouchableOpacity
                     key="new"
@@ -136,21 +141,20 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                       maxWidth: 180,
                       aspectRatio: 1,
                       borderRadius: s(16),
-                      borderWidth: 2,
-                      borderColor: "#FF4646",
+                      borderWidth: s(1),
                       borderStyle: "dashed",
-                      backgroundColor: "rgba(255, 70, 70, 0.12)", // bg-primary/20
                       alignItems: "center",
                       justifyContent: "center",
                       marginRight: colIdx === 0 ? itemGap : 0,
                       padding: s(10),
                     }}
+                    className="border-primary bg-tat-darkMaroon"
                   >
                     <SVGIcons.AddRed style={{ width: s(32), height: s(32) }} />
                     <ScaledText
                       allowScaling={false}
-                      variant="body2"
-                      className="text-foreground text-center"
+                      variant="md"
+                      className="text-foreground text-center font-neueLight"
                       style={{ marginTop: mvs(8) }}
                     >
                       Create new collection

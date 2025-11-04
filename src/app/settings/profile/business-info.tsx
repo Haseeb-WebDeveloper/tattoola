@@ -11,14 +11,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -298,7 +298,7 @@ export default function BusinessInfoSettingsScreen() {
         editable={!loading && !isSaving && !uploading}
         keyboardType={keyboardType}
         containerClassName=""
-        className="text-foreground font-medium"
+        className="text-foreground font-neueMedium"
         containerStyle={{
           backgroundColor: "#100C0C",
           borderColor: "#A49A99",
@@ -509,7 +509,7 @@ export default function BusinessInfoSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isSaving || uploading
                 ? "Saving..."

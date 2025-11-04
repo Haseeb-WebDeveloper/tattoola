@@ -268,7 +268,7 @@ export default function ProfileTypeSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-medium"
+              className="text-foreground font-neueMedium"
             >
               {isLoading ? "Saving..." : "Save"}
             </ScaledText>

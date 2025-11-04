@@ -1,23 +1,21 @@
 import {
-    Banner,
-    BodyPartsSection,
-    CollectionsSection,
-    ProfileHeader,
-    ServicesSection,
-    SocialMediaIcons,
-    StylesSection,
+  Banner,
+  BodyPartsSection,
+  CollectionsSection,
+  ProfileHeader,
+  ServicesSection,
+  SocialMediaIcons,
+  StylesSection,
 } from "@/components/profile";
-import ScaledText from "@/components/ui/ScaledText";
 import { ArtistSelfProfile, toggleFollow } from "@/services/profile.service";
-import { s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Linking,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface ArtistProfileViewProps {
@@ -97,6 +95,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
         {/* Profile Header */}
         <ProfileHeader
+          username={data?.user?.username}
           firstName={data?.user?.firstName}
           lastName={data?.user?.lastName}
           avatar={data?.user?.avatar}
@@ -118,7 +117,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         {/* Bio */}
         {!!data?.artistProfile?.bio && (
           <View className="px-4 mt-6">
-            <Text className="text-foreground tat-body-2-light">
+            <Text className="text-foreground font-neueLight">
               {data.artistProfile.bio}
             </Text>
           </View>
@@ -131,7 +130,10 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         <ServicesSection services={data?.services || []} />
 
         {/* Collections Section */}
-        <CollectionsSection collections={data?.collections || []} />
+        <CollectionsSection
+          collections={data?.collections || []}
+          showNewCollection={false}
+        />
 
         {/* Body Parts Section */}
         <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
@@ -146,7 +148,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
                 isFollowing ? "border border-gray" : "border border-gray"
               }`}
             >
-              <Text className="text-foreground font-medium">
+              <Text className="text-foreground font-neueMedium">
                 {isFollowing ? "Seguendo" : "Segui"}
               </Text>
             </TouchableOpacity>
@@ -158,7 +160,9 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
               }
               className="flex-1 h-12 rounded-full bg-primary items-center justify-center"
             >
-              <Text className="text-white font-medium">Invia richiesta</Text>
+              <Text className="text-white font-neueMedium">
+                Invia richiesta
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -166,4 +170,3 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
     </View>
   );
 };
-

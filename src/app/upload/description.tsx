@@ -11,6 +11,8 @@ import {
   View,
   StyleSheet,
 } from "react-native";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import { s } from "@/utils/scale";
 
 export default function UploadDescriptionStep() {
   const caption = usePostUploadStore((s) => s.caption);
@@ -19,7 +21,7 @@ export default function UploadDescriptionStep() {
 
   return (
     <View className="flex-1 bg-background">
-       <LinearGradient
+      <LinearGradient
         colors={["#000000", "#0F0202"]}
         locations={[0, 1]}
         start={{ x: 0, y: 0 }}
@@ -68,7 +70,8 @@ export default function UploadDescriptionStep() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
-            className="pl-10 pr-4 py-3 text-base text-foreground bg-[#100C0C] rounded-2xl min-h-[180px]"
+            className="text-foreground bg-tat-darkMaroon rounded-2xl min-h-[180px]"
+            style={{ fontSize: s(12) }}
             placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit....."
             placeholderTextColor="#A49A99"
             value={caption || ""}
@@ -77,20 +80,13 @@ export default function UploadDescriptionStep() {
         </View>
       </ScrollView>
 
-      <View className="flex-row justify-between px-6 py-4 bg-background">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="rounded-full border border-foreground px-6 py-4"
-        >
-          <Text className="text-foreground">Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push("/upload/style")}
-          className="rounded-full px-8 py-4 bg-primary"
-        >
-          <Text className="text-foreground">Next</Text>
-        </TouchableOpacity>
-      </View>
+      <NextBackFooter
+        onBack={() => router.back()}
+        onNext={() => router.push("/upload/style")}
+        nextDisabled={!caption}
+        nextLabel="Next"
+        backLabel="Back"
+      />
     </View>
   );
 }

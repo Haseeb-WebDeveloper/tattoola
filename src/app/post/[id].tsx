@@ -14,7 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { ScaledText } from "@/components/ui/ScaledText";
+import { s } from "@/utils/scale";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 interface PostDetail {
@@ -87,7 +88,6 @@ export default function PostDetailScreen() {
 
   const handleLike = async () => {
     if (!post || !user) return;
-
 
     const previous = post;
     const optimistic: PostDetail = {
@@ -324,25 +324,34 @@ export default function PostDetailScreen() {
             {/* Caption and like button */}
             <View className="flex-row items-start justify-between mb-6">
               <View className="flex-1 mr-4">
-                <Text className="text-foreground text-[16px] leading-[32px] mb-2 font-neueBold">
+                <ScaledText
+                  variant="lg"
+                  className="text-foreground mb-2 font-neueBold"
+                >
                   {post.caption || "Dragon x Sunflower sketch with abc.."}
-                </Text>
+                </ScaledText>
 
                 {/* Style tag */}
-                {post.style && (
+                {/* {post.style && (
                   <View className="inline-flex self-start rounded-full px-3 py-1 border border-gray max-w-fit">
-                    <Text className="text-gray text-[11px] font-neueLight">
+                    <ScaledText
+                      variant="sm"
+                      className="text-gray font-neueLight"
+                    >
                       {post.style.name}
-                    </Text>
+                    </ScaledText>
                   </View>
-                )}
+                )} */}
               </View>
 
-              <TouchableOpacity onPress={handleLike} className="items-center z-10">
+              <TouchableOpacity
+                onPress={handleLike}
+                className="items-center z-10"
+              >
                 {post.isLiked ? (
-                  <SVGIcons.LikeFilled className="w-7 h-7 text-red-500" />
+                  <SVGIcons.LikeFilled width={s(26)} height={s(26)} />
                 ) : (
-                  <SVGIcons.Like className="w-7 h-7 text-gray-400" />
+                  <SVGIcons.Like width={s(26)} height={s(26)} />
                 )}
               </TouchableOpacity>
             </View>
@@ -358,18 +367,22 @@ export default function PostDetailScreen() {
                   source={{
                     uri: post.author.avatar || "https://via.placeholder.com/40",
                   }}
-                  className="w-[60px] h-[60px] rounded-full mr-3"
+                  className="rounded-full mr-3"
+                  style={{ width: s(40), height: s(40) }}
                 />
                 <View className="flex-1">
-                  <Text className="text-foreground font-semibold text-[12px] font-neueMedium">
+                  <ScaledText
+                    variant="11"
+                    className="text-foreground font-neueMedium"
+                  >
                     {post.author.firstName} {post.author.lastName}
-                  </Text>
-                  <Text className="text-tat text-sm">
+                  </ScaledText>
+                  <ScaledText variant="11" className="text-gray font-neueLight">
                     @{post.author.username}
-                  </Text>
-                  <Text className="text-tat text-sm">
+                  </ScaledText>
+                  <ScaledText variant="11" className="text-gray font-neueLight">
                     {getLocationString()}
-                  </Text>
+                  </ScaledText>
                 </View>
               </TouchableOpacity>
 
@@ -377,10 +390,13 @@ export default function PostDetailScreen() {
                 onPress={handleFollow}
                 className={`border rounded-full px-4 py-2 flex-row items-center gap-2 ${post.isFollowingAuthor ? "border-primary bg-primary/10" : "border-gray"}`}
               >
-                <SVGIcons.Person className="w-4 h-4" />
-                <Text className="text-foreground font-medium">
+                <SVGIcons.Follow className="w-4 h-4" />
+                <ScaledText
+                  variant="sm"
+                  className="text-foreground font-montserratSemibold"
+                >
                   {post.isFollowingAuthor ? "Seguito" : "Segui"}
-                </Text>
+                </ScaledText>
               </TouchableOpacity>
             </View>
 
@@ -389,9 +405,12 @@ export default function PostDetailScreen() {
 
             {/* Likes info */}
             <View className="mb-6">
-              <Text className="text-foreground font-medium mb-3">
+              <ScaledText
+                variant="sm"
+                className="text-foreground font-montserratSemibold mb-3"
+              >
                 Piace a {post.likesCount} persone
-              </Text>
+              </ScaledText>
 
               {/* Recent likers */}
               {post.likes.length > 0 && (
@@ -404,9 +423,12 @@ export default function PostDetailScreen() {
                         }}
                         className="w-10 h-10 border-2 border-primary rounded-full mr-2"
                       />
-                      <Text className="text-tat text-[12px] font-neueMedium">
+                      <ScaledText
+                        variant="md"
+                        className="text-foreground font-montserratSemibold"
+                      >
                         @{like.username}
-                      </Text>
+                      </ScaledText>
                     </View>
                   ))}
                 </View>

@@ -470,7 +470,7 @@ export default function PrivateRequestsSettingsScreen() {
                     textAlignVertical="top"
                     maxLength={200}
                     editable={!isLoading}
-                    className="text-foreground font-medium"
+                    className="text-foreground font-neueMedium"
                     containerClassName="rounded-xl"
                     containerStyle={{
                       borderWidth: s(1),
@@ -525,7 +525,7 @@ export default function PrivateRequestsSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-white font-medium"
+                  className="text-white font-neueMedium"
                 >
                   Back
                 </ScaledText>
@@ -553,7 +553,7 @@ export default function PrivateRequestsSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-medium"
+                  className="text-foreground font-neueMedium"
                 >
                   Save
                 </ScaledText>
@@ -579,7 +579,7 @@ export default function PrivateRequestsSettingsScreen() {
                <ScaledText
                  allowScaling={false}
                  variant="md"
-                 className="text-foreground font-medium"
+                 className="text-foreground font-neueMedium"
                >
                  {loading ? "Loading..." : "Next"}
                </ScaledText>

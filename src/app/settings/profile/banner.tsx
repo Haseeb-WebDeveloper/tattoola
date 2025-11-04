@@ -1,9 +1,9 @@
 import {
-  BannerSkeleton,
-  BannerTypeSelector,
-  FourImagesUpload,
-  SingleMediaUpload,
-  UnsavedChangesModal,
+    BannerSkeleton,
+    BannerTypeSelector,
+    FourImagesUpload,
+    SingleMediaUpload,
+    UnsavedChangesModal,
 } from "@/components/settings/banner";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -19,11 +19,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -501,7 +501,7 @@ export default function BannerSettingsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
               >
                 {isLoading || uploading ? "Saving..." : "Save"}
               </ScaledText>
@@ -523,7 +523,7 @@ export default function BannerSettingsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-medium"
+                className="text-foreground font-neueMedium"
               >
                 Edit cover
               </ScaledText>

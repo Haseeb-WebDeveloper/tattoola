@@ -183,31 +183,28 @@ export default function ReferencesStep() {
                           flex: 1,
                           aspectRatio: 1,
                           borderRadius: s(16),
-                          borderWidth: 1.5,
+                          borderWidth: s(1),
                           borderStyle: "dashed",
-                          borderColor: "#A62E2E",
                           alignItems: "center",
                           justifyContent: "center",
-                          backgroundColor: "rgba(227, 31, 36, 0.12)",
                           marginRight:
                             colIdx === 0 && row.length === 2 ? GAP : 0, // gap between columns
                         }}
+                        className="border-primary bg-tat-darkMaroon"
                         accessibilityLabel="Add image"
                       >
                         {uploading ? (
                           <ActivityIndicator color="#A62E2E" size="small" />
                         ) : (
                           <>
-                            <SVGIcons.Upload width={s(24)} height={s(24)} />
+                            <SVGIcons.Upload width={s(32)} height={s(32)} />
                             <ScaledText
                               allowScaling={false}
-                              variant="11"
-                              className="text-foreground"
+                              variant="md"
+                              className="text-foreground font-neueLight"
                               style={{
-                                color: "#fff",
                                 marginTop: mvs(10),
                                 textAlign: "center",
-                                opacity: 0.8,
                               }}
                             >
                               Add image
@@ -249,7 +246,10 @@ export default function ReferencesStep() {
                             borderRadius: 99,
                             padding: s(4),
                             zIndex: 2,
+                            width: s(24),
+                            height: s(24),
                           }}
+                          className=" items-center justify-center  "
                           accessibilityLabel="Remove image"
                           onPress={() =>
                             setReferences(
@@ -260,11 +260,7 @@ export default function ReferencesStep() {
                           }
                           hitSlop={s(10)}
                         >
-                          <SVGIcons.Close
-                            width={s(16)}
-                            height={s(16)}
-                            color="#fff"
-                          />
+                          <SVGIcons.Close width={s(10)} height={s(10)} />
                         </TouchableOpacity>
                       </View>
                     )
