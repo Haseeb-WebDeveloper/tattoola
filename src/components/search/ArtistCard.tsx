@@ -19,6 +19,10 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
     router.push(`/user/${artist.userId}`);
   };
 
+  const displayName = [artist.user.firstName, artist.user.lastName]
+    .filter(Boolean)
+    .join(" ") || artist.user.username;
+
   return (
     <TouchableOpacity
       activeOpacity={1}
@@ -82,7 +86,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
                 variant="lg"
                 className="text-foreground font-neueBold leading-none "
               >
-                {artist.user.username}
+                {displayName}
               </ScaledText>
               {artist.isVerified && (
                 <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} />

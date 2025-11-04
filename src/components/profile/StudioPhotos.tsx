@@ -23,7 +23,7 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
   const remainingCount = Math.max(0, photos.length - 4);
 
   return (
-    <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
+    <View style={{ marginTop: mvs(24), paddingHorizontal: s(16) }}>
       <ScaledText
         allowScaling={false}
         variant="md"
@@ -33,13 +33,13 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
         Foto dello studio
       </ScaledText>
       
-      <View className="flex-row">
+      <View style={{ flexDirection: "row" }}>
         {/* Large main photo */}
-        <TouchableOpacity activeOpacity={0.8} style={{ marginRight: s(6) }}>
+        <TouchableOpacity activeOpacity={0.8} style={{ flex: 1, marginRight: s(6) }}>
           <Image
             source={{ uri: mainPhoto.imageUrl }}
             style={{
-              width: s(282),
+              width: "100%",
               height: mvs(173),
               borderRadius: s(6),
             }}
@@ -48,7 +48,7 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
         </TouchableOpacity>
 
         {/* Three small thumbnails */}
-        <View>
+        <View style={{ width: s(62) }}>
           {thumbnails.map((photo, index) => {
             const isLast = index === 2 && remainingCount > 0;
             
@@ -56,14 +56,14 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
               <TouchableOpacity 
                 key={photo.id} 
                 activeOpacity={0.8}
-                style={{ marginBottom: index < thumbnails.length - 1 ? mvs(10) : 0 }}
+                style={{ marginBottom: index < thumbnails.length - 1 ? mvs(6) : 0 }}
               >
                 <View>
                   <Image
                     source={{ uri: photo.imageUrl }}
                     style={{
                       width: s(62),
-                      height: mvs(51),
+                      height: mvs(52),
                       borderRadius: s(4),
                     }}
                     resizeMode="cover"
@@ -78,7 +78,7 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
                     >
                       <ScaledText
                         allowScaling={false}
-                        variant="sm"
+                        variant="11"
                         className="text-white font-neueBold"
                       >
                         +{remainingCount} more

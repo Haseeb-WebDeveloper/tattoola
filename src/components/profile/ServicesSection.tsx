@@ -28,7 +28,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
         allowScaling={false}
         variant="md"
         className="text-foreground font-montserratSemibold"
-        style={{ marginBottom: mvs(10) }}
+        style={{ marginBottom: mvs(8) }}
       >
         Services
       </ScaledText>
@@ -37,7 +37,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
           <View key={service.id} className="flex-row items-center">
             <ScaledText
               allowScaling={false}
-              variant="sm"
+              variant="11"
               className="text-foreground flex-1 font-neueBold"
             >
               ✅ {service.name}

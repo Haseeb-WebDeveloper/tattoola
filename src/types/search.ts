@@ -4,6 +4,8 @@ export type ArtistSearchResult = {
   user: {
     username: string;
     avatar: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
   };
   businessName: string | null;
   yearsExperience: number | null;

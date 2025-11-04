@@ -1,12 +1,12 @@
 import {
-    StudioSetupStep1,
-    StudioSetupStep2,
-    StudioSetupStep3,
-    StudioSetupStep4,
-    StudioSetupStep5,
-    StudioSetupStep6,
-    StudioSetupStep7,
-    StudioSetupStep8,
+  StudioSetupStep1,
+  StudioSetupStep2,
+  StudioSetupStep3,
+  StudioSetupStep4,
+  StudioSetupStep5,
+  StudioSetupStep6,
+  StudioSetupStep7,
+  StudioSetupStep8,
 } from "@/stores/studioSetupStore";
 import { StudioInfo } from "@/types/studio";
 import { generateUUID } from "@/utils/randomUUIDValue";
@@ -1106,6 +1106,166 @@ export async function fetchStudioPublicProfile(studioId: string) {
     };
   } catch (error: any) {
     console.error('Error in fetchStudioPublicProfile:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch studio members with enhanced details for public profile display
+ * Returns data formatted to match ArtistSearchResult type
+ */
+export async function fetchStudioMembersForPublicProfile(studioId: string) {
+  try {
+    console.log('🔍 Fetching enhanced studio members for studio ID:', studioId);
+
+    // Get studio members with user details
+    const { data: members, error: membersError } = await supabase
+      .from('studio_members')
+      .select(`
+        artistId,
+        role,
+        artist:artist_profiles!studio_members_artistId_fkey(
+          id,
+          userId,
+          yearsExperience,
+          user:users!artist_profiles_userId_fkey(
+            id,
+            username,
+            avatar,
+            firstName,
+            lastName,
+            isVerified
+          )
+        )
+      `)
+      .eq('studioId', studioId)
+      .eq('isActive', true);
+
+    if (membersError) {
+      console.error('❌ Members fetch error:', membersError);
+      throw new Error(`Failed to fetch members: ${membersError.message}`);
+    }
+
+    if (!members || members.length === 0) {
+      console.log('ℹ️ No active members found for studio');
+      return [];
+    }
+
+    console.log(`✅ Found ${members.length} active members`);
+
+    // For each member, fetch additional details
+    const membersWithDetails = await Promise.all(
+      members.map(async (member: any) => {
+        if (!member.artist) return null;
+
+        const artistId = member.artist.id;
+        const userId = member.artist.user?.id;
+        if (!userId) return null;
+
+        // Get primary user location
+        const { data: userLocation } = await supabase
+          .from('user_locations')
+          .select(`
+            isPrimary,
+            municipality:municipalities(name),
+            province:provinces(code),
+            address
+          `)
+          .eq('userId', userId)
+          .eq('isPrimary', true)
+          .maybeSingle();
+
+        // Get active subscription
+        const { data: subscriptions } = await supabase
+          .from('user_subscriptions')
+          .select(`
+            status,
+            endDate,
+            plan:subscription_plans(type, name)
+          `)
+          .eq('userId', userId)
+          .eq('status', 'ACTIVE')
+          .gte('endDate', new Date().toISOString())
+          .order('endDate', { ascending: false })
+          .limit(1);
+
+        const activeSubscription = subscriptions?.[0] || null;
+
+        // Get all artist banner media
+        const { data: bannerMedia } = await supabase
+          .from('artist_banner_media')
+          .select('mediaUrl, mediaType, order')
+          .eq('artistId', artistId)
+          .order('order');
+
+        // Get artist styles
+        const { data: artistStyles } = await supabase
+          .from('artist_styles')
+          .select(`
+            styleId,
+            style:tattoo_styles(id, name)
+          `)
+          .eq('artistId', artistId);
+
+        // Check if artist owns a studio
+        const { data: ownedStudio } = await supabase
+          .from('studios')
+          .select('id, name')
+          .eq('ownerId', artistId)
+          .maybeSingle();
+
+        // Transform to ArtistSearchResult format
+        const province = userLocation?.province as any;
+        const municipality = userLocation?.municipality as any;
+        const plan = activeSubscription?.plan as any;
+
+        return {
+          id: artistId,
+          userId: userId,
+          user: {
+            username: member.artist.user.username || '',
+            avatar: member.artist.user.avatar || null,
+            firstName: member.artist.user.firstName || null,
+            lastName: member.artist.user.lastName || null,
+          },
+          businessName: ownedStudio?.name || null,
+          yearsExperience: member.artist.yearsExperience || null,
+          isStudioOwner: !!ownedStudio,
+          location: userLocation
+            ? {
+                province: province?.code || '',
+                municipality: municipality?.name || '',
+                address: userLocation.address || null,
+              }
+            : null,
+          styles: artistStyles?.map((s: any) => ({
+            id: s.style?.id || '',
+            name: s.style?.name || '',
+          })).filter((s: any) => s.id && s.name) || [],
+          bannerMedia: bannerMedia?.map((b: any) => ({
+            mediaUrl: b.mediaUrl,
+            mediaType: b.mediaType as 'IMAGE' | 'VIDEO',
+            order: b.order,
+          })) || [],
+          subscription: activeSubscription
+            ? {
+                plan: {
+                  name: plan?.name || '',
+                  type: plan?.type || '',
+                },
+              }
+            : null,
+          isVerified: member.artist.user.isVerified || false,
+        };
+      })
+    );
+
+    const validMembers = membersWithDetails.filter(Boolean);
+    console.log(`✅ Successfully fetched details for ${validMembers.length} members`);
+    
+    return validMembers;
+  } catch (error: any) {
+    console.error('Error in fetchStudioMembersForPublicProfile:', error);
     throw error;
   }
 }

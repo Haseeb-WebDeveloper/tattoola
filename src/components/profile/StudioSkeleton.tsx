@@ -1,10 +1,17 @@
 import { mvs, s } from "@/utils/scale";
 import React from "react";
 import { View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 export const StudioSkeleton: React.FC = () => {
   return (
     <View className="flex-1 bg-background">
+      <LinearGradient
+        colors={["#000000", "#0F0202"]}
+        start={{ x: 0.4, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        className="flex-1"
+      >
       {/* Banner skeleton */}
       <View
         className="w-full bg-gray/20"
@@ -22,47 +29,51 @@ export const StudioSkeleton: React.FC = () => {
         }}
         className="bg-background"
       >
-        <View className="flex-row items-start justify-between">
-          {/* Logo skeleton */}
-          <View className="flex-row flex-1" style={{ gap: s(12) }}>
-            <View
-              className="rounded-full bg-gray/20"
-              style={{ width: s(92), height: s(92) }}
-            />
-            
-            {/* Info skeleton */}
-            <View className="flex-1" style={{ gap: mvs(8) }}>
-              <View
-                className="bg-gray/20 rounded"
-                style={{ width: "80%", height: mvs(24) }}
-              />
-              <View
-                className="bg-gray/20 rounded"
-                style={{ width: "60%", height: mvs(16) }}
-              />
-              <View
-                className="bg-gray/20 rounded"
-                style={{ width: "70%", height: mvs(16) }}
-              />
+        {/* Top: Logo + Name */}
+        <View className="flex-row items-center" style={{ gap: s(12) }}>
+          <View
+            className="rounded-full bg-gray/20"
+            style={{ width: s(92), height: s(92) }}
+          />
+          <View className="flex-1">
+            <View className="bg-gray/20 rounded" style={{ width: "80%", height: mvs(28) }} />
+          </View>
+        </View>
+
+        {/* Bottom: two columns */}
+        <View
+          style={{
+            marginTop: mvs(16),
+            flexDirection: "row",
+            alignItems: "stretch",
+            gap: s(20),
+          }}
+        >
+          {/* Left column */}
+          <View style={{ flex: 1 }}>
+            {/* Owned by row */}
+            <View className="flex-row items-center" style={{ gap: s(6), marginBottom: mvs(8) }}>
+              <View className="bg-gray/20 rounded-full" style={{ width: s(14), height: s(14) }} />
+              <View className="bg-gray/20 rounded" style={{ width: "60%", height: mvs(16) }} />
+            </View>
+            {/* Location row */}
+            <View className="flex-row items-center" style={{ gap: s(6), marginBottom: mvs(12) }}>
+              <View className="bg-gray/20 rounded-full" style={{ width: s(14), height: s(14) }} />
+              <View className="bg-gray/20 rounded" style={{ width: "70%", height: mvs(16) }} />
+            </View>
+            {/* Socials row */}
+            <View className="flex-row" style={{ gap: s(12) }}>
+              <View className="bg-gray/20 rounded-full" style={{ width: s(41.5), height: s(41.5) }} />
+              <View className="bg-gray/20 rounded-full" style={{ width: s(41.5), height: s(41.5) }} />
+              <View className="bg-gray/20 rounded-full" style={{ width: s(41.5), height: s(41.5) }} />
             </View>
           </View>
 
-          {/* Map skeleton */}
+          {/* Right column: Map */}
           <View
-            className="bg-gray/20 rounded"
-            style={{
-              width: s(68),
-              height: s(68),
-              marginLeft: s(8),
-            }}
+            className="bg-gray/20"
+            style={{ width: s(150), height: mvs(100), borderRadius: s(12) }}
           />
-        </View>
-
-        {/* Social icons skeleton */}
-        <View className="flex-row" style={{ marginTop: mvs(16), gap: s(12) }}>
-          <View className="bg-gray/20 rounded-full" style={{ width: s(40), height: s(40) }} />
-          <View className="bg-gray/20 rounded-full" style={{ width: s(40), height: s(40) }} />
-          <View className="bg-gray/20 rounded-full" style={{ width: s(40), height: s(40) }} />
         </View>
       </View>
 
@@ -126,6 +137,7 @@ export const StudioSkeleton: React.FC = () => {
           <View className="bg-gray/20 rounded" style={{ height: mvs(48) }} />
         </View>
       </View>
+      </LinearGradient>
     </View>
   );
 };
