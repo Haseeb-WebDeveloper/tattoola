@@ -1,3 +1,4 @@
+import { ArtistSelfProfileInterface } from "@/types/artist";
 import {
   getProfileFromCache,
   saveProfileToCache,
@@ -14,20 +15,24 @@ export async function getCurrentUserLocation(): Promise<{
   municipality: string;
 } | null> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session?.user?.id) {
       return null;
     }
 
     const { data, error } = await supabase
       .from("user_locations")
-      .select(`
+      .select(
+        `
         provinceId,
         municipalityId,
         province:provinces(id, name),
         municipality:municipalities(id, name)
-      `)
+      `
+      )
       .eq("userId", session.user.id)
       .eq("isPrimary", true)
       .maybeSingle();
@@ -49,7 +54,10 @@ export async function getCurrentUserLocation(): Promise<{
 }
 
 // Follow helpers co-located for now to avoid a new file import churn
-export async function isFollowing(userId: string, targetUserId: string): Promise<boolean> {
+export async function isFollowing(
+  userId: string,
+  targetUserId: string
+): Promise<boolean> {
   const { data } = await supabase
     .from("follows")
     .select("id")
@@ -88,60 +96,16 @@ export async function toggleFollow(
   return { isFollowing: true };
 }
 
-export type ArtistSelfProfile = {
-  user: {
-    id: string;
-    email: string;
-    username: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    instagram?: string;
-    tiktok?: string;
-    website?: string;
-  };
-  artistProfile: {
-    id: string;
-    businessName?: string;
-    bio?: string;
-    mainStyleId?: string | null;
-    banner: { mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
-  };
-  location?: {
-    id: string;
-    address?: string;
-    province: {
-      id: string;
-      name: string;
-      code?: string;
-    };
-    municipality: {
-      id: string;
-      name: string;
-    };
-    isPrimary: boolean;
-  };
-  favoriteStyles: { id: string; name: string; imageUrl?: string | null; isMain?: boolean }[];
-  services: { id: string; name: string; description?: string | null }[];
-  collections: Array<{
-    id: string;
-    name: string;
-    isPortfolioCollection: boolean;
-    thumbnails: string[]; // up to 4
-  }>;
-  bodyPartsNotWorkedOn: { id: string; name: string }[];
-};
-
 export async function fetchArtistSelfProfile(
   userId: string,
   forceRefresh = false
-): Promise<ArtistSelfProfile> {
+): Promise<ArtistSelfProfileInterface> {
   // Step 1: Try cache first (unless forceRefresh is true)
   if (!forceRefresh) {
     const cached = await getProfileFromCache(userId);
     if (cached) {
       console.log("📦 Using cached profile for user:", userId);
-      
+
       // Optionally trigger background sync if cache is stale
       shouldRefreshCache(userId).then((shouldRefresh) => {
         if (shouldRefresh) {
@@ -152,7 +116,7 @@ export async function fetchArtistSelfProfile(
           );
         }
       });
-      
+
       return cached;
     }
   }
@@ -205,10 +169,18 @@ export async function fetchArtistSelfProfile(
   }
 
   const artistId = artistProfile.id as string;
-  const activeBannerType = artistProfile.bannerType || 'FOUR_IMAGES';
+  const activeBannerType = artistProfile.bannerType || "FOUR_IMAGES";
 
   // Step 2: parallel dependent queries (treat errors as empty for resilience)
-  const [banner2, favStyles2, services2, collectionsQ, allBodyPartsQ, artistBodyParts2, locationQ] = await Promise.all([
+  const [
+    banner2,
+    favStyles2,
+    services2,
+    collectionsQ,
+    allBodyPartsQ,
+    artistBodyParts2,
+    locationQ,
+  ] = await Promise.all([
     supabase
       .from("artist_banner_media")
       .select("mediaType,mediaUrl,order")
@@ -239,20 +211,26 @@ export async function fetchArtistSelfProfile(
       .eq("artistId", artistId),
     supabase
       .from("user_locations")
-      .select(`
+      .select(
+        `
         id,
         address,
         isPrimary,
         provinces(id,name,code),
         municipalities(id,name)
-      `)
+      `
+      )
       .eq("userId", userId)
       .eq("isPrimary", true)
       .maybeSingle(),
   ]);
 
   // Build collections thumbnails (first 4 post media)
-  const collections = (collectionsQ?.data || []) as { id: string; name: string; isPortfolioCollection: boolean }[];
+  const collections = (collectionsQ?.data || []) as {
+    id: string;
+    name: string;
+    isPortfolioCollection: boolean;
+  }[];
   const thumbsPerCollection: Record<string, string[]> = {};
   if (collections.length > 0) {
     const postsInCollections = await supabase
@@ -262,15 +240,22 @@ export async function fetchArtistSelfProfile(
         "collectionId",
         collections.map((c) => c.id)
       );
-    if (!postsInCollections.error && postsInCollections.data && postsInCollections.data.length) {
-      const postIds = Array.from(new Set(postsInCollections.data.map((r: any) => r.postId)));
+    if (
+      !postsInCollections.error &&
+      postsInCollections.data &&
+      postsInCollections.data.length
+    ) {
+      const postIds = Array.from(
+        new Set(postsInCollections.data.map((r: any) => r.postId))
+      );
       if (postIds.length) {
         const mediaQ = await supabase
           .from("post_media")
           .select("postId, mediaUrl, order")
           .in("postId", postIds)
           .order("order", { ascending: true });
-        const byPost: Record<string, { mediaUrl: string; order: number }[]> = {};
+        const byPost: Record<string, { mediaUrl: string; order: number }[]> =
+          {};
         if (!mediaQ.error && mediaQ.data) {
           for (const m of mediaQ.data as any[]) {
             byPost[m.postId] = byPost[m.postId] || [];
@@ -278,9 +263,12 @@ export async function fetchArtistSelfProfile(
           }
         }
         for (const cp of postsInCollections.data as any[]) {
-          const first = (byPost[cp.postId] || []).sort((a, b) => a.order - b.order)[0];
+          const first = (byPost[cp.postId] || []).sort(
+            (a, b) => a.order - b.order
+          )[0];
           if (first) {
-            thumbsPerCollection[cp.collectionId] = thumbsPerCollection[cp.collectionId] || [];
+            thumbsPerCollection[cp.collectionId] =
+              thumbsPerCollection[cp.collectionId] || [];
             if (thumbsPerCollection[cp.collectionId].length < 4) {
               thumbsPerCollection[cp.collectionId].push(first.mediaUrl);
             }
@@ -290,7 +278,9 @@ export async function fetchArtistSelfProfile(
     }
   }
 
-  const workedIds = new Set((artistBodyParts2?.data || []).map((r: any) => r.bodyPartId));
+  const workedIds = new Set(
+    (artistBodyParts2?.data || []).map((r: any) => r.bodyPartId)
+  );
   const bodyPartsNotWorkedOn = (allBodyPartsQ?.data || [])
     .filter((bp: any) => !workedIds.has(bp.id))
     .map((bp: any) => ({ id: bp.id, name: bp.name }));
@@ -299,7 +289,9 @@ export async function fetchArtistSelfProfile(
     id: r.tattoo_styles?.id,
     name: r.tattoo_styles?.name,
     imageUrl: r.tattoo_styles?.imageUrl,
-    isMain: artistProfile.mainStyleId ? r.tattoo_styles?.id === artistProfile.mainStyleId : false,
+    isMain: artistProfile.mainStyleId
+      ? r.tattoo_styles?.id === artistProfile.mainStyleId
+      : false,
   }));
 
   // Place main style first
@@ -314,8 +306,19 @@ export async function fetchArtistSelfProfile(
   }));
 
   const collectionsOut = collections
-    .map((c) => ({ id: c.id, name: c.name, isPortfolioCollection: c.isPortfolioCollection, thumbnails: (thumbsPerCollection[c.id] || []).slice(0, 4) }))
-    .sort((a, b) => (a.isPortfolioCollection === b.isPortfolioCollection ? 0 : a.isPortfolioCollection ? -1 : 1));
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      isPortfolioCollection: c.isPortfolioCollection,
+      thumbnails: (thumbsPerCollection[c.id] || []).slice(0, 4),
+    }))
+    .sort((a, b) =>
+      a.isPortfolioCollection === b.isPortfolioCollection
+        ? 0
+        : a.isPortfolioCollection
+          ? -1
+          : 1
+    );
 
   // Process location data
   const locationData = locationQ?.data as any;
@@ -336,7 +339,7 @@ export async function fetchArtistSelfProfile(
       }
     : undefined;
 
-  const profile: ArtistSelfProfile = {
+  const profile: ArtistSelfProfileInterface = {
     user: {
       id: userRow.id,
       email: userRow.email,
@@ -373,7 +376,9 @@ export async function fetchArtistSelfProfile(
 /**
  * Force refresh profile from Supabase and update cache
  */
-export async function syncProfileToCache(userId: string): Promise<ArtistSelfProfile> {
+export async function syncProfileToCache(
+  userId: string
+): Promise<ArtistSelfProfileInterface> {
   return fetchArtistSelfProfile(userId, true);
 }
 
@@ -403,7 +408,8 @@ export async function fetchFollowingUsers(userId: string): Promise<{
   // Fetch all follows for the user
   const { data: follows, error: followsError } = await supabase
     .from("follows")
-    .select(`
+    .select(
+      `
       followingId,
       following:users!follows_followingId_fkey(
         id,
@@ -413,7 +419,8 @@ export async function fetchFollowingUsers(userId: string): Promise<{
         avatar,
         role
       )
-    `)
+    `
+    )
     .eq("followerId", userId);
 
   if (followsError) throw new Error(followsError.message);
@@ -427,21 +434,25 @@ export async function fetchFollowingUsers(userId: string): Promise<{
   // Fetch primary locations for all following users
   const { data: locations } = await supabase
     .from("user_locations")
-    .select(`
+    .select(
+      `
       userId,
       municipalities(name),
       provinces(name,code)
-    `)
+    `
+    )
     .in("userId", followingUserIds)
     .eq("isPrimary", true);
 
   // Fetch subscriptions for all following users
   const { data: subscriptions } = await supabase
     .from("user_subscriptions")
-    .select(`
+    .select(
+      `
       userId,
       subscription_plans(type)
-    `)
+    `
+    )
     .in("userId", followingUserIds)
     .eq("status", "ACTIVE");
 
@@ -483,8 +494,8 @@ export async function fetchFollowingUsers(userId: string): Promise<{
     .filter(Boolean) as FollowingUser[];
 
   // Separate artists and tattoo lovers
-  const artists = followingUsers.filter(u => u.role === "ARTIST");
-  const tattooLovers = followingUsers.filter(u => u.role === "TATTOO_LOVER");
+  const artists = followingUsers.filter((u) => u.role === "ARTIST");
+  const tattooLovers = followingUsers.filter((u) => u.role === "TATTOO_LOVER");
 
   return { artists, tattooLovers };
 }
@@ -515,14 +526,24 @@ export type TattooLoverSelfProfile = {
     thumbnailUrl?: string;
     caption?: string;
     createdAt: string;
-    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+    media: {
+      id: string;
+      mediaType: "IMAGE" | "VIDEO";
+      mediaUrl: string;
+      order: number;
+    }[];
   }[];
   likedPosts: {
     id: string;
     thumbnailUrl?: string;
     caption?: string;
     createdAt: string;
-    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+    media: {
+      id: string;
+      mediaType: "IMAGE" | "VIDEO";
+      mediaUrl: string;
+      order: number;
+    }[];
   }[];
   followedArtists: FollowingUser[];
   followedTattooLovers: FollowingUser[];
@@ -543,7 +564,9 @@ export async function fetchTattooLoverSelfProfile(
       console.log("📦 Using cached tattoo lover profile for user:", userId);
       shouldRefreshCache(userId).then((shouldRefresh) => {
         if (shouldRefresh) {
-          console.log("🔄 Cache is stale (tattoo lover), triggering background sync...");
+          console.log(
+            "🔄 Cache is stale (tattoo lover), triggering background sync..."
+          );
           fetchTattooLoverSelfProfile(userId, true).catch((err) =>
             console.error("Background sync failed (tattoo lover):", err)
           );
@@ -553,7 +576,10 @@ export async function fetchTattooLoverSelfProfile(
     }
   }
 
-  console.log("🌐 Fetching tattoo lover profile from Supabase for user:", userId);
+  console.log(
+    "🌐 Fetching tattoo lover profile from Supabase for user:",
+    userId
+  );
 
   // Fetch user basic info
   const userQ = await supabase
@@ -566,40 +592,46 @@ export async function fetchTattooLoverSelfProfile(
   const userRow: any = userQ.data;
 
   // Fetch location, favorite styles, posts, liked posts, and followed artists in parallel
-  const [locationQ, favStylesQ, postsQ, likedPostsQ, followsQ] = await Promise.all([
-    supabase
-      .from("user_locations")
-      .select(`
+  const [locationQ, favStylesQ, postsQ, likedPostsQ, followsQ] =
+    await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(
+          `
         id,
         provinces(name),
         municipalities(name)
-      `)
-      .eq("userId", userId)
-      .eq("isPrimary", true)
-      .maybeSingle(),
-    supabase
-      .from("user_favorite_styles")
-      .select("styleId, order, tattoo_styles(id, name)")
-      .eq("userId", userId)
-      .order("order", { ascending: true }),
-    supabase
-      .from("posts")
-      .select("id, caption, thumbnailUrl, createdAt")
-      .eq("authorId", userId)
-      .eq("isActive", true)
-      .order("createdAt", { ascending: false }),
-    supabase
-      .from("post_likes")
-      .select(`
+      `
+        )
+        .eq("userId", userId)
+        .eq("isPrimary", true)
+        .maybeSingle(),
+      supabase
+        .from("user_favorite_styles")
+        .select("styleId, order, tattoo_styles(id, name)")
+        .eq("userId", userId)
+        .order("order", { ascending: true }),
+      supabase
+        .from("posts")
+        .select("id, caption, thumbnailUrl, createdAt")
+        .eq("authorId", userId)
+        .eq("isActive", true)
+        .order("createdAt", { ascending: false }),
+      supabase
+        .from("post_likes")
+        .select(
+          `
         postId,
         createdAt,
         posts(id, caption, thumbnailUrl, createdAt, isActive)
-      `)
-      .eq("userId", userId)
-      .order("createdAt", { ascending: false }),
-    supabase
-      .from("follows")
-      .select(`
+      `
+        )
+        .eq("userId", userId)
+        .order("createdAt", { ascending: false }),
+      supabase
+        .from("follows")
+        .select(
+          `
         followingId,
         users:followingId (
           id,
@@ -609,10 +641,11 @@ export async function fetchTattooLoverSelfProfile(
           avatar,
           role
         )
-      `)
-      .eq("followerId", userId)
-      .order("createdAt", { ascending: false }),
-  ]);
+      `
+        )
+        .eq("followerId", userId)
+        .order("createdAt", { ascending: false }),
+    ]);
 
   // Process location
   const locationData = locationQ?.data as any;
@@ -709,35 +742,43 @@ export async function fetchTattooLoverSelfProfile(
     .map((follow: any) => follow.users)
     .filter((user: any) => user);
 
-  const followedArtistsData = followedUsersData.filter((user: any) => user.role === "ARTIST");
-  const followedTattooLoversData = followedUsersData.filter((user: any) => user.role === "TATTOO_LOVER");
+  const followedArtistsData = followedUsersData.filter(
+    (user: any) => user.role === "ARTIST"
+  );
+  const followedTattooLoversData = followedUsersData.filter(
+    (user: any) => user.role === "TATTOO_LOVER"
+  );
 
   // Get full user details with location and subscription
   let followedArtists: FollowingUser[] = [];
   let followedTattooLovers: FollowingUser[] = [];
 
   const allFollowedIds = followedUsersData.map((u: any) => u.id);
-  
+
   if (allFollowedIds.length > 0) {
     // Fetch locations and subscriptions for all followed users
     const [locationsQ, subscriptionsQ] = await Promise.all([
       supabase
         .from("user_locations")
-        .select(`
+        .select(
+          `
           userId,
           provinces(name),
           municipalities(name)
-        `)
+        `
+        )
         .in("userId", allFollowedIds)
         .eq("isPrimary", true),
       supabase
         .from("user_subscriptions")
-        .select(`
+        .select(
+          `
           userId,
           planId,
           status,
           subscription_plans(type)
-        `)
+        `
+        )
         .in("userId", allFollowedIds)
         .eq("status", "ACTIVE"),
     ]);
@@ -768,7 +809,10 @@ export async function fetchTattooLoverSelfProfile(
       avatar: user.avatar,
       role: user.role,
       location: locationsByUserId[user.id],
-      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+      subscriptionPlanType: subscriptionsByUserId[user.id] as
+        | "PREMIUM"
+        | "STUDIO"
+        | undefined,
     }));
 
     // Map tattoo lovers
@@ -780,7 +824,10 @@ export async function fetchTattooLoverSelfProfile(
       avatar: user.avatar,
       role: user.role,
       location: locationsByUserId[user.id],
-      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+      subscriptionPlanType: subscriptionsByUserId[user.id] as
+        | "PREMIUM"
+        | "STUDIO"
+        | undefined,
     }));
   }
 
@@ -837,14 +884,24 @@ export type TattooLoverProfile = {
     thumbnailUrl?: string;
     caption?: string;
     createdAt: string;
-    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+    media: {
+      id: string;
+      mediaType: "IMAGE" | "VIDEO";
+      mediaUrl: string;
+      order: number;
+    }[];
   }[];
   likedPosts: {
     id: string;
     thumbnailUrl?: string;
     caption?: string;
     createdAt: string;
-    media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+    media: {
+      id: string;
+      mediaType: "IMAGE" | "VIDEO";
+      mediaUrl: string;
+      order: number;
+    }[];
   }[];
   followedArtists: FollowingUser[];
   followedTattooLovers: FollowingUser[];
@@ -859,12 +916,19 @@ export async function fetchTattooLoverProfile(
   userId: string,
   viewerId?: string
 ): Promise<TattooLoverProfile> {
-  console.log("🌐 Fetching tattoo lover profile for:", userId, "viewer:", viewerId);
+  console.log(
+    "🌐 Fetching tattoo lover profile for:",
+    userId,
+    "viewer:",
+    viewerId
+  );
 
   // Fetch basic user info including isPublic
   const userQ = await supabase
     .from("users")
-    .select("id, username, firstName, lastName, avatar, instagram, tiktok, isPublic")
+    .select(
+      "id, username, firstName, lastName, avatar, instagram, tiktok, isPublic"
+    )
     .eq("id", userId)
     .single();
 
@@ -881,11 +945,13 @@ export async function fetchTattooLoverProfile(
   const [locationQ, favStylesQ] = await Promise.all([
     supabase
       .from("user_locations")
-      .select(`
+      .select(
+        `
         id,
         provinces(name),
         municipalities(name)
-      `)
+      `
+      )
       .eq("userId", userId)
       .eq("isPrimary", true)
       .maybeSingle(),
@@ -948,16 +1014,19 @@ export async function fetchTattooLoverProfile(
       .order("createdAt", { ascending: false }),
     supabase
       .from("post_likes")
-      .select(`
+      .select(
+        `
         postId,
         createdAt,
         posts(id, caption, thumbnailUrl, createdAt, isActive)
-      `)
+      `
+      )
       .eq("userId", userId)
       .order("createdAt", { ascending: false }),
     supabase
       .from("follows")
-      .select(`
+      .select(
+        `
         followingId,
         users:followingId (
           id,
@@ -967,7 +1036,8 @@ export async function fetchTattooLoverProfile(
           avatar,
           role
         )
-      `)
+      `
+      )
       .eq("followerId", userId)
       .order("createdAt", { ascending: false }),
   ]);
@@ -1048,33 +1118,41 @@ export async function fetchTattooLoverProfile(
     .map((follow: any) => follow.users)
     .filter((user: any) => user);
 
-  const followedArtistsData = followedUsersData.filter((user: any) => user.role === "ARTIST");
-  const followedTattooLoversData = followedUsersData.filter((user: any) => user.role === "TATTOO_LOVER");
+  const followedArtistsData = followedUsersData.filter(
+    (user: any) => user.role === "ARTIST"
+  );
+  const followedTattooLoversData = followedUsersData.filter(
+    (user: any) => user.role === "TATTOO_LOVER"
+  );
 
   let followedArtists: FollowingUser[] = [];
   let followedTattooLovers: FollowingUser[] = [];
 
   const allFollowedIds = followedUsersData.map((u: any) => u.id);
-  
+
   if (allFollowedIds.length > 0) {
     const [locationsQ, subscriptionsQ] = await Promise.all([
       supabase
         .from("user_locations")
-        .select(`
+        .select(
+          `
           userId,
           provinces(name),
           municipalities(name)
-        `)
+        `
+        )
         .in("userId", allFollowedIds)
         .eq("isPrimary", true),
       supabase
         .from("user_subscriptions")
-        .select(`
+        .select(
+          `
           userId,
           planId,
           status,
           subscription_plans(type)
-        `)
+        `
+        )
         .in("userId", allFollowedIds)
         .eq("status", "ACTIVE"),
     ]);
@@ -1104,7 +1182,10 @@ export async function fetchTattooLoverProfile(
       avatar: user.avatar,
       role: user.role,
       location: locationsByUserId[user.id],
-      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+      subscriptionPlanType: subscriptionsByUserId[user.id] as
+        | "PREMIUM"
+        | "STUDIO"
+        | undefined,
     }));
 
     followedTattooLovers = followedTattooLoversData.map((user: any) => ({
@@ -1115,7 +1196,10 @@ export async function fetchTattooLoverProfile(
       avatar: user.avatar,
       role: user.role,
       location: locationsByUserId[user.id],
-      subscriptionPlanType: subscriptionsByUserId[user.id] as "PREMIUM" | "STUDIO" | undefined,
+      subscriptionPlanType: subscriptionsByUserId[user.id] as
+        | "PREMIUM"
+        | "STUDIO"
+        | undefined,
     }));
   }
 
@@ -1147,7 +1231,7 @@ export async function fetchTattooLoverProfile(
 export async function fetchArtistProfile(
   userId: string,
   viewerId?: string
-): Promise<ArtistSelfProfile & { isFollowing?: boolean }> {
+): Promise<ArtistSelfProfileInterface & { isFollowing?: boolean }> {
   console.log("🌐 Fetching artist profile for:", userId, "viewer:", viewerId);
 
   // Check if viewer is following this artist
@@ -1164,5 +1248,3 @@ export async function fetchArtistProfile(
     isFollowing: isFollowingArtist,
   };
 }
-
-

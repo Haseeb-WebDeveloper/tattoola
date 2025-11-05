@@ -21,6 +21,7 @@ export type TypographyVariant =
   | "20"
   | "11"
   | "9"
+  | "18"
   | "2xl"
   | "3xl"
   | "4xl"
@@ -118,6 +119,11 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
   "9": {
     fontSize: scaledFont(9),
     lineHeight: scaledFont(9 * 1.3),
+    letterSpacing: -0.5,
+  },
+  "18": {
+    fontSize: scaledFont(18),
+    lineHeight: scaledFont(23),
     letterSpacing: -0.5,
   },
   "2xl": {

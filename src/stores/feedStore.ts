@@ -1,3 +1,4 @@
+import { FEED_POSTS_PER_PAGE } from '@/constants/limits';
 import { FeedPage, FeedPost, fetchFeedPage, togglePostLike } from '@/services/post.service';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -30,7 +31,7 @@ export const useFeedStore = create<FeedState>()(
       if (!userId) return;
       set({ isLoading: true });
       try {
-        const page = await fetchFeedPage({ userId, limit: 6 });
+        const page = await fetchFeedPage({ userId, limit: FEED_POSTS_PER_PAGE });
         set({
           posts: page.items,
           cursor: page.nextCursor ?? null,
@@ -46,7 +47,7 @@ export const useFeedStore = create<FeedState>()(
       if (!userId || isLoading || !hasMore) return;
       set({ isLoading: true });
       try {
-        const page = await fetchFeedPage({ userId, limit: 6, cursor });
+        const page = await fetchFeedPage({ userId, limit: FEED_POSTS_PER_PAGE, cursor });
         set((s) => ({
           posts: [...s.posts, ...page.items],
           cursor: page.nextCursor ?? null,
@@ -61,7 +62,7 @@ export const useFeedStore = create<FeedState>()(
       if (!userId) return;
       set({ isRefreshing: true });
       try {
-        const page = await fetchFeedPage({ userId, limit: 6 });
+        const page = await fetchFeedPage({ userId, limit: FEED_POSTS_PER_PAGE });
         set({ posts: page.items, cursor: page.nextCursor ?? null, hasMore: !!page.nextCursor });
       } finally {
         set({ isRefreshing: false });

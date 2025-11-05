@@ -12,7 +12,6 @@ import React, { useState } from "react";
 import { Image, ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 
-
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
   const { status, reset, pendingVerificationEmail } = useSignupStore();
@@ -21,17 +20,7 @@ export default function EmailConfirmationScreen() {
 
   const isLoading = status === "in_progress";
 
-  const handleClose = () => {
-    try {
-      reset(); // Clear signup state
-      router.replace("/(auth)/welcome");
-    } catch (error) {
-      logger.error("Error navigating to welcome:", error);
-    }
-  };
-
   logger.log("Email confirmation screen - status:", status);
-
 
   return (
     <ScrollView
@@ -77,15 +66,16 @@ export default function EmailConfirmationScreen() {
 
       {/* Resend */}
       <View className="items-center">
-        <ScaledText
-          variant="body2"
-          className="text-gray font-neueLight"
-        >
+        <ScaledText variant="body2" className="text-gray font-neueLight">
           Haven’t received the email?
         </ScaledText>
         <TouchableOpacity
           className="rounded-full border border-gray flex-row gap-2 items-center"
-          style={{ marginTop: mvs(8), paddingVertical: mvs(10), paddingHorizontal: s(24) }}
+          style={{
+            marginTop: mvs(8),
+            paddingVertical: mvs(10),
+            paddingHorizontal: s(24),
+          }}
           disabled={isResending}
           onPress={async () => {
             try {
@@ -102,7 +92,8 @@ export default function EmailConfirmationScreen() {
               );
             } catch (error: any) {
               logger.error("Error resending verification email:", error);
-              const message = error?.message || "Failed to resend verification email";
+              const message =
+                error?.message || "Failed to resend verification email";
               let toastId: any;
               toastId = toast.custom(
                 <CustomToast

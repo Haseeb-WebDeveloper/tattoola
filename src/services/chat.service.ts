@@ -1,21 +1,6 @@
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
-
-export type MessageType =
-  | "TEXT"
-  | "IMAGE"
-  | "VIDEO"
-  | "FILE"
-  | "SYSTEM"
-  | "INTAKE_QUESTION"
-  | "INTAKE_ANSWER";
-
-export type ConversationStatus =
-  | "REQUESTED"
-  | "ACTIVE"
-  | "REJECTED"
-  | "BLOCKED"
-  | "CLOSED";
+import { MessageType, ConversationStatus } from "@/types/chat";
 
 export async function createPrivateRequestConversation(
   loverId: string,
@@ -38,7 +23,7 @@ export async function createPrivateRequestConversation(
     .select("id")
     .eq("id", loverId)
     .maybeSingle();
-  
+
   if (!loverExists) {
     throw new Error(`Lover user ${loverId} not found in users table`);
   }
@@ -48,7 +33,7 @@ export async function createPrivateRequestConversation(
     .select("id")
     .eq("id", artistId)
     .maybeSingle();
-  
+
   if (!artistExists) {
     throw new Error(`Artist user ${artistId} not found in users table`);
   }
@@ -59,14 +44,15 @@ export async function createPrivateRequestConversation(
     .select("acceptPrivateRequests, rejectionMessage")
     .eq("userId", artistId)
     .maybeSingle();
-  
+
   if (profileError) {
     throw new Error(profileError.message);
   }
-  
+
   if (artistProfile && artistProfile.acceptPrivateRequests === false) {
     // Artist doesn't accept private requests - throw error with rejection message
-    const rejectionMsg = artistProfile.rejectionMessage || 
+    const rejectionMsg =
+      artistProfile.rejectionMessage ||
       "L'artista non può ricevere nuove richieste private in questo momento";
     throw new Error(rejectionMsg);
   }
@@ -234,19 +220,19 @@ export async function acceptConversation(
   conversationId: string
 ) {
   // console.log("acceptConversation starting", artistId, conversationId);
-  
+
   // Get conversation to find the loverId (receiverId for system message)
   const { data: conv, error: convFetchErr } = await supabase
     .from("conversations")
     .select("loverId")
     .eq("id", conversationId)
     .maybeSingle();
-  
+
   if (convFetchErr || !conv) {
     console.error("Failed to fetch conversation:", convFetchErr);
     throw new Error(convFetchErr?.message || "Conversation not found");
   }
-  
+
   const { error } = await supabase
     .from("conversations")
     .update({ status: "ACTIVE" })
@@ -300,19 +286,19 @@ export async function rejectConversation(
     .select("loverId")
     .eq("id", conversationId)
     .maybeSingle();
-  
+
   if (convFetchErr || !conv) {
     console.error("Failed to fetch conversation:", convFetchErr);
     throw new Error(convFetchErr?.message || "Conversation not found");
   }
-  
+
   const { error } = await supabase
     .from("conversations")
     .update({ status: "REJECTED" })
     .eq("id", conversationId)
     .eq("artistId", artistId);
   if (error) throw new Error(error.message);
-  
+
   const now = new Date().toISOString();
   const { error: mErr } = await supabase.from("messages").insert({
     id: uuidv4(),
@@ -351,10 +337,10 @@ export async function fetchConversationsPage(
   }
   const { data, error } = (await q) as any;
   if (error) throw new Error(error.message);
-  
+
   // Note: We don't filter out conversations with deletedAt here
   // Conversations always appear in inbox; deletedAt only filters messages in chat thread
-  
+
   // Fetch receipt status for last messages sent by current user
   const conversationsWithReceipts = await Promise.all(
     (data || []).map(async (conv: any) => {
@@ -366,13 +352,13 @@ export async function fetchConversationsPage(
           .eq("messageId", conv.lastMessageId)
           .neq("userId", userId) // Get the other user's receipt
           .maybeSingle();
-        
+
         return { ...conv, lastMessageReceipt: receipt };
       }
       return conv;
     })
   );
-  
+
   const nextCursor =
     data && data.length === 20
       ? {
@@ -491,9 +477,9 @@ export async function sendMessage(m: {
       .eq("conversationId", m.conversationId)
       .eq("userId", receiverId)
       .maybeSingle();
-    
+
     const currentCount = cuData?.unreadCount || 0;
-    
+
     // Increment it
     await supabase
       .from("conversation_users")
@@ -511,7 +497,7 @@ export async function markReadUpTo(
   newestMessageId: string
 ) {
   const now = new Date().toISOString();
-  
+
   // Reset unreadCount, set lastReadAt "now".
   const { error } = await supabase
     .from("conversation_users")
@@ -519,7 +505,7 @@ export async function markReadUpTo(
     .eq("conversationId", conversationId)
     .eq("userId", userId);
   if (error) throw new Error(error.message);
-  
+
   // Update messages.isRead for all messages in this conversation that the user received
   await supabase
     .from("messages")
@@ -527,7 +513,7 @@ export async function markReadUpTo(
     .eq("conversationId", conversationId)
     .eq("receiverId", userId)
     .eq("isRead", false);
-  
+
   // Update receipts to READ status
   await supabase
     .from("message_receipts")
@@ -621,36 +607,36 @@ function displayName(u?: {
 
 function getMessagePreviewText(message: any): string {
   if (!message) return "New conversation";
-  
+
   const { content, messageType, mediaUrl } = message;
-  
+
   // Handle media messages
   if (mediaUrl) {
     switch (messageType) {
-      case 'IMAGE':
-        return '📷 Photo';
-      case 'VIDEO':
-        return '🎥 Video';
-      case 'FILE':
-        return '📎 File';
+      case "IMAGE":
+        return "📷 Photo";
+      case "VIDEO":
+        return "🎥 Video";
+      case "FILE":
+        return "📎 File";
       default:
-        return 'Media';
+        return "Media";
     }
   }
-  
+
   // Handle system messages
-  if (messageType === 'SYSTEM') {
-    return content || 'System message';
+  if (messageType === "SYSTEM") {
+    return content || "System message";
   }
-  
-  if (messageType === 'INTAKE_QUESTION') {
-    return content || 'Question';
+
+  if (messageType === "INTAKE_QUESTION") {
+    return content || "Question";
   }
-  
-  if (messageType === 'INTAKE_ANSWER') {
-    return content || 'Answer';
+
+  if (messageType === "INTAKE_ANSWER") {
+    return content || "Answer";
   }
-  
+
   // Regular text message
   return content || "New conversation";
 }
@@ -660,22 +646,22 @@ export function enrichConversationForUser(row: any, userId: string) {
   const cu = (row.conversation_users || []).find(
     (r: any) => r.userId === userId
   );
-  
+
   const lastMessage = row.lastMessage;
   const lastMessageSentByMe = lastMessage?.senderId === userId;
-  
+
   // Single source of truth for read status:
   // - If message was sent BY me: use receipt status (shows if OTHER person read it)
   // - If message was sent TO me: use isRead field (shows if I read it)
   let lastMessageIsRead = false;
   if (lastMessageSentByMe) {
     // I sent it - check if receiver read it via receipt
-    lastMessageIsRead = row.lastMessageReceipt?.status === 'READ';
+    lastMessageIsRead = row.lastMessageReceipt?.status === "READ";
   } else {
     // I received it - check if I read it
     lastMessageIsRead = lastMessage?.isRead === true;
   }
-  
+
   return {
     ...row,
     peerId: peer?.id,
@@ -693,21 +679,21 @@ async function enrichConversationRow(row: any, userId: string) {
   if (row.artist && row.lover && row.lastMessage) {
     return enrichConversationForUser(row, userId);
   }
-  
+
   // console.log("🔄 Enriching conversation row:", row.id);
-  
+
   // fetch peer user to enrich minimal row
   const peerId = row.artistId === userId ? row.loverId : row.artistId;
   if (!peerId) {
     console.warn("⚠️ No peerId found for conversation:", row.id);
     return enrichConversationForUser(row, userId);
   }
-  
+
   let peer = null;
   let cu = null;
   let lastMessage = row.lastMessage;
   let lastMessageReceipt = row.lastMessageReceipt;
-  
+
   try {
     // Fetch peer user data
     const { data: peerData, error: peerError } = await supabase
@@ -715,13 +701,13 @@ async function enrichConversationRow(row: any, userId: string) {
       .select("id,username,firstName,lastName,avatar")
       .eq("id", peerId)
       .maybeSingle();
-    
+
     if (peerError) {
       console.error("❌ Failed to fetch peer user:", peerError);
     } else {
       peer = peerData;
     }
-    
+
     // Fetch conversation user data
     const { data: cuData, error: cuError } = await supabase
       .from("conversation_users")
@@ -729,26 +715,28 @@ async function enrichConversationRow(row: any, userId: string) {
       .eq("conversationId", row.id)
       .eq("userId", userId)
       .maybeSingle();
-    
+
     if (cuError) {
       console.error("❌ Failed to fetch conversation_users:", cuError);
     } else {
       cu = cuData;
     }
-    
+
     // Fetch last message if not present
     if (!lastMessage && row.lastMessageId) {
       const { data: msg, error: msgError } = await supabase
         .from("messages")
-        .select("id, senderId, receiverId, content, messageType, createdAt, mediaUrl, isRead")
+        .select(
+          "id, senderId, receiverId, content, messageType, createdAt, mediaUrl, isRead"
+        )
         .eq("id", row.lastMessageId)
         .maybeSingle();
-      
+
       if (msgError) {
         console.error("❌ Failed to fetch last message:", msgError);
       } else {
         lastMessage = msg;
-        
+
         // Fetch receipt if message was sent by current user
         if (msg && msg.senderId === userId) {
           const { data: receipt } = await supabase
@@ -764,7 +752,7 @@ async function enrichConversationRow(row: any, userId: string) {
   } catch (e) {
     console.error("❌ Error enriching conversation:", e);
   }
-  
+
   const enriched = {
     ...row,
     artist: row.artistId
@@ -777,7 +765,7 @@ async function enrichConversationRow(row: any, userId: string) {
     lastMessage,
     lastMessageReceipt,
   };
-  
+
   return enrichConversationForUser(enriched, userId);
 }
 
@@ -884,7 +872,7 @@ export async function reportUser(
     status: "PENDING",
     createdAt: new Date().toISOString(),
   });
-  
+
   if (error) throw new Error(error.message);
 }
 
@@ -903,16 +891,16 @@ export async function blockUser(
     createdAt: new Date().toISOString(),
   });
 
-  // console.log("blockError", blockError);  
+  // console.log("blockError", blockError);
   if (blockError) throw new Error(blockError.message);
-  
+
   //  console.log("starting to update conversation status to BLOCKED", conversationId);
   // Update conversation status to BLOCKED
   const { error: convError } = await supabase
     .from("conversations")
     .update({ status: "BLOCKED", updatedAt: new Date().toISOString() })
     .eq("id", conversationId);
-  
+
   // console.log("convError", convError);
   if (convError) throw new Error(convError.message);
 }
@@ -923,12 +911,12 @@ export async function deleteConversation(
   userId: string
 ) {
   const now = new Date().toISOString();
-  
+
   const { error } = await supabase
     .from("conversation_users")
     .update({ deletedAt: now })
     .eq("conversationId", conversationId)
     .eq("userId", userId);
-  
+
   if (error) throw new Error(error.message);
 }

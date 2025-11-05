@@ -7,7 +7,8 @@ import {
   SocialMediaIcons,
   StylesSection,
 } from "@/components/profile";
-import { ArtistSelfProfile, toggleFollow } from "@/services/profile.service";
+import { toggleFollow } from "@/services/profile.service";
+import { ArtistSelfProfileInterface } from "@/types/artist";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -19,7 +20,7 @@ import {
 } from "react-native";
 
 interface ArtistProfileViewProps {
-  data: ArtistSelfProfile & { isFollowing?: boolean };
+  data: ArtistSelfProfileInterface & { isFollowing?: boolean };
   currentUserId?: string;
 }
 

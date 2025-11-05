@@ -42,6 +42,7 @@ export const ScaledTextInput: React.FC<Props> = ({
         underlineColorAndroid="transparent"
         {...rest}
         placeholderTextColor={rest.placeholderTextColor ?? "#262626"}
+        // placeholderTextColor={rest.placeholderTextColor ?? "#A49A99"}
       />
       {rightAccessory}
     </View>

@@ -1,16 +1,16 @@
 import {
-    ArtistProfileView,
-    ProfileSkeleton,
-    TattooLoverOtherProfileView,
-    TattooLoverSkeleton,
+  ArtistProfileView,
+  ProfileSkeleton,
+  TattooLoverOtherProfileView,
+  TattooLoverSkeleton,
 } from "@/components/profile";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    ArtistSelfProfile,
-    fetchArtistProfile,
-    fetchTattooLoverProfile,
-    TattooLoverProfile,
+  fetchArtistProfile,
+  fetchTattooLoverProfile,
+  TattooLoverProfile,
 } from "@/services/profile.service";
+import { ArtistSelfProfileInterface } from "@/types/artist";
 import { supabase } from "@/utils/supabase";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -22,7 +22,7 @@ export default function UserProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<
-    | (ArtistSelfProfile & { isFollowing?: boolean })
+    | (ArtistSelfProfileInterface & { isFollowing?: boolean })
     | TattooLoverProfile
     | null
   >(null);
@@ -93,7 +93,7 @@ export default function UserProfileScreen() {
   if (userRole === "ARTIST") {
     return (
       <ArtistProfileView
-        data={data as ArtistSelfProfile & { isFollowing?: boolean }}
+        data={data as ArtistSelfProfileInterface & { isFollowing?: boolean }}
         currentUserId={currentUser?.id}
       />
     );

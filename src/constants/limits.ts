@@ -1,3 +1,6 @@
+// Feed limits for pagination. This is the number of posts on home screen to fetch per page.
+export const FEED_POSTS_PER_PAGE = 12;
+
 // Style selection limits
 export const TL_MAX_FAVORITE_STYLES = 4; // Tattoola Lover
 export const AR_MAX_FAVORITE_STYLES = 5; // Artist (basic plan default)

@@ -14,11 +14,11 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  ArtistSelfProfile,
   fetchArtistSelfProfile,
   fetchTattooLoverSelfProfile,
   TattooLoverSelfProfile,
 } from "@/services/profile.service";
+import { ArtistSelfProfileInterface } from "@/types/artist";
 import { mvs, s } from "@/utils/scale";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -36,23 +36,28 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ArtistSelfProfile | TattooLoverSelfProfile | null>(null);
+  const [data, setData] = useState<
+    ArtistSelfProfileInterface | TattooLoverSelfProfile | null
+  >(null);
 
   // Load profile with cache-first approach - role aware
   const loadProfile = useCallback(
     async (forceRefresh = false) => {
       try {
         if (!user) return;
-        
+
         // Fetch profile based on user role
         if (user.role === "ARTIST") {
           const profile = await fetchArtistSelfProfile(user.id, forceRefresh);
           setData(profile);
         } else if (user.role === "TATTOO_LOVER") {
-          const profile = await fetchTattooLoverSelfProfile(user.id, forceRefresh);
+          const profile = await fetchTattooLoverSelfProfile(
+            user.id,
+            forceRefresh
+          );
           setData(profile);
         }
-        
+
         setError(null);
       } catch (e: any) {
         setError(e?.message || "Failed to load profile");
@@ -106,7 +111,7 @@ export default function ProfileScreen() {
   const handleCreateNewCollection = () => {
     router.push("/upload/media" as any);
   };
-  
+
   // const handleCreateNewCollection = () => {
   //   router.push("/collection/new" as any);
   // };
@@ -178,56 +183,74 @@ export default function ProfileScreen() {
         </View>
 
         {/* Banner */}
-        <Banner banner={(data as ArtistSelfProfile)?.artistProfile?.banner || []} />
+        <Banner
+          banner={
+            (data as ArtistSelfProfileInterface)?.artistProfile?.banner || []
+          }
+        />
 
         {/* Profile Header */}
         <ProfileHeader
-          username={(data as ArtistSelfProfile)?.user?.username || ""}
-          firstName={(data as ArtistSelfProfile)?.user?.firstName}
-          lastName={(data as ArtistSelfProfile)?.user?.lastName}
-          avatar={(data as ArtistSelfProfile)?.user?.avatar}
-          businessName={(data as ArtistSelfProfile)?.artistProfile?.businessName}
-          municipality={(data as ArtistSelfProfile)?.location?.municipality?.name}
-          province={(data as ArtistSelfProfile)?.location?.province?.name}
+          username={(data as ArtistSelfProfileInterface)?.user?.username || ""}
+          firstName={(data as ArtistSelfProfileInterface)?.user?.firstName}
+          lastName={(data as ArtistSelfProfileInterface)?.user?.lastName}
+          avatar={(data as ArtistSelfProfileInterface)?.user?.avatar}
+          businessName={
+            (data as ArtistSelfProfileInterface)?.artistProfile?.businessName
+          }
+          municipality={
+            (data as ArtistSelfProfileInterface)?.location?.municipality?.name
+          }
+          province={
+            (data as ArtistSelfProfileInterface)?.location?.province?.name
+          }
         />
 
         {/* Social Media Icons */}
         <SocialMediaIcons
-          instagram={(data as ArtistSelfProfile)?.user?.instagram}
-          tiktok={(data as ArtistSelfProfile)?.user?.tiktok}
-          website={(data as ArtistSelfProfile)?.user?.website}
+          instagram={(data as ArtistSelfProfileInterface)?.user?.instagram}
+          tiktok={(data as ArtistSelfProfileInterface)?.user?.tiktok}
+          website={(data as ArtistSelfProfileInterface)?.user?.website}
           onInstagramPress={handleSocialMediaPress}
           onTiktokPress={handleSocialMediaPress}
           onWebsitePress={handleSocialMediaPress}
         />
 
         {/* Bio */}
-        {!!(data as ArtistSelfProfile)?.artistProfile?.bio && (
+        {!!(data as ArtistSelfProfileInterface)?.artistProfile?.bio && (
           <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
             <ScaledText
               allowScaling={false}
               variant="md"
               className="text-foreground font-neueLight"
             >
-              {(data as ArtistSelfProfile).artistProfile.bio}
+              {(data as ArtistSelfProfileInterface).artistProfile.bio}
             </ScaledText>
           </View>
         )}
 
         {/* Styles Section */}
-        <StylesSection styles={(data as ArtistSelfProfile)?.favoriteStyles || []} />
+        <StylesSection
+          styles={(data as ArtistSelfProfileInterface)?.favoriteStyles || []}
+        />
 
         {/* Services Section */}
-        <ServicesSection services={(data as ArtistSelfProfile)?.services || []} />
+        <ServicesSection
+          services={(data as ArtistSelfProfileInterface)?.services || []}
+        />
 
         {/* Collections Section */}
         <CollectionsSection
-          collections={(data as ArtistSelfProfile)?.collections || []}
+          collections={(data as ArtistSelfProfileInterface)?.collections || []}
           onCreateNewCollection={handleCreateNewCollection}
         />
 
         {/* Body Parts Section */}
-        <BodyPartsSection bodyParts={(data as ArtistSelfProfile)?.bodyPartsNotWorkedOn || []} />
+        <BodyPartsSection
+          bodyParts={
+            (data as ArtistSelfProfileInterface)?.bodyPartsNotWorkedOn || []
+          }
+        />
         <View style={{ height: mvs(90) }} />
       </ScrollView>
     </View>

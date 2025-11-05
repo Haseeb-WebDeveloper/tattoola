@@ -1,4 +1,4 @@
-import type { ArtistSelfProfile } from "@/services/profile.service";
+import type { ArtistSelfProfileInterface } from "@/types/artist";
 import * as SQLite from "expo-sqlite";
 
 let db: SQLite.SQLiteDatabase | null = null;
@@ -13,26 +13,26 @@ export async function initDatabase(): Promise<void> {
     // console.log("✅ SQLite database already initialized");
     return;
   }
-  
+
   if (isInitializing) {
     // console.log("⏳ SQLite database initialization already in progress...");
     // Wait for initialization to complete
     while (isInitializing) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
     if (db) {
       // console.log("✅ SQLite database initialized by another process");
       return;
     }
   }
-  
+
   try {
     isInitializing = true;
     // console.log("🗄️ Initializing SQLite database...");
-    
+
     // Open or create database
     db = await SQLite.openDatabaseAsync("tattoola.db");
-    
+
     // Create cached_profiles table
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS cached_profiles (
@@ -42,7 +42,7 @@ export async function initDatabase(): Promise<void> {
         version INTEGER DEFAULT 1
       );
     `);
-    
+
     console.log("✅ SQLite database initialized successfully");
   } catch (error) {
     console.error("❌ Error initializing database:", error);
@@ -74,14 +74,14 @@ export async function saveProfileToCache(
     const database = getDatabase();
     const dataJson = JSON.stringify(profileData);
     const timestamp = Date.now();
-    
+
     // Insert or replace profile data
     await database.runAsync(
       `INSERT OR REPLACE INTO cached_profiles (user_id, data, last_synced, version)
        VALUES (?, ?, ?, 1)`,
       [userId, dataJson, timestamp]
     );
-    
+
     console.log("💾 Profile cached successfully for user:", userId);
   } catch (error) {
     console.error("❌ Error saving profile to cache:", error);
@@ -92,28 +92,25 @@ export async function saveProfileToCache(
 /**
  * Get profile from cache
  */
-export async function getProfileFromCache(
-  userId: string
-): Promise<any | null> {
+export async function getProfileFromCache(userId: string): Promise<any | null> {
   try {
     const database = getDatabase();
-    
+
     const result = await database.getFirstAsync<{
       data: string;
       last_synced: number;
-    }>(
-      `SELECT data, last_synced FROM cached_profiles WHERE user_id = ?`,
-      [userId]
-    );
-    
+    }>(`SELECT data, last_synced FROM cached_profiles WHERE user_id = ?`, [
+      userId,
+    ]);
+
     if (!result) {
       console.log("📭 No cached profile found for user:", userId);
       return null;
     }
-    
-    const profile = JSON.parse(result.data) as ArtistSelfProfile;
+
+    const profile = JSON.parse(result.data) as ArtistSelfProfileInterface;
     console.log("📦 Profile loaded from cache for user:", userId);
-    
+
     return profile;
   } catch (error) {
     console.error("❌ Error getting profile from cache:", error);
@@ -127,12 +124,11 @@ export async function getProfileFromCache(
 export async function clearProfileCache(userId: string): Promise<void> {
   try {
     const database = getDatabase();
-    
-    await database.runAsync(
-      `DELETE FROM cached_profiles WHERE user_id = ?`,
-      [userId]
-    );
-    
+
+    await database.runAsync(`DELETE FROM cached_profiles WHERE user_id = ?`, [
+      userId,
+    ]);
+
     console.log("🗑️ Profile cache cleared for user:", userId);
   } catch (error) {
     console.error("❌ Error clearing profile cache:", error);
@@ -146,12 +142,12 @@ export async function clearProfileCache(userId: string): Promise<void> {
 export async function getLastSyncTime(userId: string): Promise<number | null> {
   try {
     const database = getDatabase();
-    
+
     const result = await database.getFirstAsync<{ last_synced: number }>(
       `SELECT last_synced FROM cached_profiles WHERE user_id = ?`,
       [userId]
     );
-    
+
     return result?.last_synced || null;
   } catch (error) {
     console.error("❌ Error getting last sync time:", error);
@@ -166,7 +162,7 @@ export async function shouldRefreshCache(userId: string): Promise<boolean> {
   try {
     const lastSync = await getLastSyncTime(userId);
     if (!lastSync) return true;
-    
+
     // Refresh if older than 24 hours
     const hoursSinceSync = (Date.now() - lastSync) / (1000 * 60 * 60);
     return hoursSinceSync > 24;
@@ -182,9 +178,9 @@ export async function shouldRefreshCache(userId: string): Promise<boolean> {
 export async function clearAllProfileCache(): Promise<void> {
   try {
     const database = getDatabase();
-    
+
     await database.runAsync(`DELETE FROM cached_profiles`);
-    
+
     console.log("🗑️ All profile cache cleared");
   } catch (error) {
     console.error("❌ Error clearing all profile cache:", error);
@@ -201,7 +197,7 @@ export async function getCacheStats(): Promise<{
 }> {
   try {
     const database = getDatabase();
-    
+
     const result = await database.getFirstAsync<{
       total: number;
       oldest: number | null;
@@ -213,7 +209,7 @@ export async function getCacheStats(): Promise<{
         MAX(last_synced) as newest
        FROM cached_profiles`
     );
-    
+
     return {
       totalProfiles: result?.total || 0,
       oldestSync: result?.oldest || null,
@@ -224,4 +220,3 @@ export async function getCacheStats(): Promise<{
     return { totalProfiles: 0, oldestSync: null, newestSync: null };
   }
 }
-

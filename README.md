@@ -51,7 +51,7 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "User signup done"
+eas update --branch preview --message "Home screen ui updates"
 
 eas build --profile development --platform android
 

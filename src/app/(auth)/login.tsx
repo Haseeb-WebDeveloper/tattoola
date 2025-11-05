@@ -172,7 +172,7 @@ function LoginScreenContent() {
               className="flex-1 text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
               placeholder="Email"
-                
+              placeholderTextColor="#A49A99"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -192,7 +192,7 @@ function LoginScreenContent() {
               className="flex-1 text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
               placeholder="Password"
-                
+              placeholderTextColor="#A49A99"
               secureTextEntry={!showPassword}
               value={formData.password}
               onChangeText={(value) => handleInputChange("password", value)}

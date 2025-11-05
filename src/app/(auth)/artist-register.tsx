@@ -25,7 +25,6 @@ export default function ArtistRegisterScreen() {
     confirmPassword: "",
     role: UserRole.ARTIST,
   });
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [focusedField, setFocusedField] = useState<
     keyof RegisterCredentials | null
@@ -144,7 +143,6 @@ export default function ArtistRegisterScreen() {
           className="flex-1 text-foreground rounded-xl"
           style={{ fontSize: s(12) }}
           placeholder="TattooKing_97"
-            
           autoCapitalize="none"
           value={formData.username}
           onChangeText={(value) => handleInputChange("username", value)}
@@ -168,7 +166,6 @@ export default function ArtistRegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="abc@gmail.com"
-              
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -195,7 +192,6 @@ export default function ArtistRegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-              
             secureTextEntry={!showPassword}
             value={formData.password}
             onChangeText={(value) => handleInputChange("password", value)}
@@ -234,7 +230,6 @@ export default function ArtistRegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-              
             secureTextEntry={!showConfirmPassword}
             value={formData.confirmPassword}
             onChangeText={(value) =>
@@ -284,7 +279,10 @@ export default function ArtistRegisterScreen() {
 
         {/* Footer link */}
         <View className="items-center mt-8 mb-8">
-          <ScaledText variant="md" className="text-[#A49A99] font-montserratLight">
+          <ScaledText
+            variant="md"
+            className="text-[#A49A99] font-montserratLight"
+          >
             Already have an account?{" "}
             <ScaledText
               variant="md"

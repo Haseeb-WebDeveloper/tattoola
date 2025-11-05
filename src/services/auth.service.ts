@@ -12,15 +12,7 @@ import { UserRole } from "../types/auth";
 import { logger } from "../utils/logger";
 import { supabase } from "../utils/supabase";
 import { buildGoogleMapsUrl } from "./location.service";
-
-// Simple UUID generator for React Native
-function generateUUID(): string {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+import { generateUUID } from "@/utils/randomUUIDValue";
 
 export class AuthService {
   /**
@@ -54,14 +46,18 @@ export class AuthService {
       if (!dbErr && dbUser && dbUser.isActive === false) {
         // Immediately sign them out and block login
         await supabase.auth.signOut();
-        throw new Error("Your account has been deactivated. Please contact support.");
+        throw new Error(
+          "Your account has been deactivated. Please contact support."
+        );
       }
     } catch (guardErr: any) {
       // Re-throw guard error messages; other errors should still block login gracefully
       if (guardErr instanceof Error) {
         throw guardErr;
       }
-      throw new Error("Unable to sign in at this time. Please try again later.");
+      throw new Error(
+        "Unable to sign in at this time. Please try again later."
+      );
     }
 
     // Construct a minimal user object based on auth user for pre-setup flow
@@ -341,7 +337,10 @@ export class AuthService {
 
     logger.log("Now adding locations");
     // Create primary user location
-    if ((data as any).step3?.provinceId && (data as any).step3?.municipalityId) {
+    if (
+      (data as any).step3?.provinceId &&
+      (data as any).step3?.municipalityId
+    ) {
       const locationAddress = buildGoogleMapsUrl(
         (data as any).step3.municipality,
         (data as any).step3.province
@@ -349,7 +348,7 @@ export class AuthService {
       logger.log("location address:", locationAddress);
       logger.log("province id:", (data as any).step3.provinceId);
       logger.log("municipality id:", (data as any).step3.municipalityId);
-      await supabase.from('user_locations').insert({
+      await supabase.from("user_locations").insert({
         id: generateUUID(),
         userId: userId,
         provinceId: (data as any).step3.provinceId,
@@ -506,11 +505,12 @@ export class AuthService {
     logger.log("updated user:", updatedUser);
 
     // Check if artist profile already exists
-    const { data: existingArtistProfile, error: existArtistError } = await supabase
-      .from("artist_profiles")
-      .select("id")
-      .eq("userId", userId)
-      .maybeSingle();
+    const { data: existingArtistProfile, error: existArtistError } =
+      await supabase
+        .from("artist_profiles")
+        .select("id")
+        .eq("userId", userId)
+        .maybeSingle();
 
     logger.log("existing artist profile:", existingArtistProfile);
 
@@ -521,77 +521,79 @@ export class AuthService {
     // Create or update artist profile
     const adminOrUserClient = supabase;
     const now2 = new Date().toISOString();
-    
+
     let artistProfile: any = null;
     if (!existingArtistProfile) {
       // Insert new artist profile
       logger.log("inserting new artist profile");
-      const { data: insertedProfile, error: artistError } = await adminOrUserClient
-        .from("artist_profiles")
-        .insert({
-          id: generateUUID(), // Generate UUID for the artist profile
-          userId: userId,
-          workArrangement: data.step4.workArrangement,
-          artistType:
-            data.step4.workArrangement === "STUDIO_OWNER"
-              ? "STUDIO_OWNER"
-              : data.step4.workArrangement === "STUDIO_EMPLOYEE"
-                ? "STUDIO_EMPLOYEE"
-                : "FREELANCE",
-          businessName: data.step5.studioName,
-          studioAddress: data.step5.studioAddress,
-          website: data.step5.website,
-          phone: data.step5.phone,
-          certificateUrl: data.step6.certificateUrl,
-          instagram: data.step7.instagram,
-          minimumPrice: data.step11.minimumPrice,
-          hourlyRate: data.step11.hourlyRate,
-          isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
-          portfolioComplete: false, // Will be set to true after portfolio projects are added
-          createdAt: now2,
-          updatedAt: now2,
-        })
-        .select()
-        .single();
+      const { data: insertedProfile, error: artistError } =
+        await adminOrUserClient
+          .from("artist_profiles")
+          .insert({
+            id: generateUUID(), // Generate UUID for the artist profile
+            userId: userId,
+            workArrangement: data.step4.workArrangement,
+            artistType:
+              data.step4.workArrangement === "STUDIO_OWNER"
+                ? "STUDIO_OWNER"
+                : data.step4.workArrangement === "STUDIO_EMPLOYEE"
+                  ? "STUDIO_EMPLOYEE"
+                  : "FREELANCE",
+            businessName: data.step5.studioName,
+            studioAddress: data.step5.studioAddress,
+            website: data.step5.website,
+            phone: data.step5.phone,
+            certificateUrl: data.step6.certificateUrl,
+            instagram: data.step7.instagram,
+            minimumPrice: data.step11.minimumPrice,
+            hourlyRate: data.step11.hourlyRate,
+            isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
+            portfolioComplete: false, // Will be set to true after portfolio projects are added
+            createdAt: now2,
+            updatedAt: now2,
+          })
+          .select()
+          .single();
 
       if (artistError) {
         throw new Error(artistError.message);
       }
-      
+
       artistProfile = insertedProfile;
       logger.log("artist profile created");
     } else {
       // Update existing artist profile
       logger.log("updating existing artist profile");
-      const { data: updatedProfile, error: artistError } = await adminOrUserClient
-        .from("artist_profiles")
-        .update({
-          workArrangement: data.step4.workArrangement,
-          artistType:
-            data.step4.workArrangement === "STUDIO_OWNER"
-              ? "STUDIO_OWNER"
-              : data.step4.workArrangement === "STUDIO_EMPLOYEE"
-                ? "STUDIO_EMPLOYEE"
-                : "FREELANCE",
-          businessName: data.step5.studioName,
-          studioAddress: data.step5.studioAddress,
-          website: data.step5.website,
-          phone: data.step5.phone,
-          certificateUrl: data.step6.certificateUrl,
-          instagram: data.step7.instagram,
-          minimumPrice: data.step11.minimumPrice,
-          hourlyRate: data.step11.hourlyRate,
-          isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
-          updatedAt: now2,
-        })
-        .eq("id", existingArtistProfile.id)
-        .select()
-        .single();
+      const { data: updatedProfile, error: artistError } =
+        await adminOrUserClient
+          .from("artist_profiles")
+          .update({
+            workArrangement: data.step4.workArrangement,
+            artistType:
+              data.step4.workArrangement === "STUDIO_OWNER"
+                ? "STUDIO_OWNER"
+                : data.step4.workArrangement === "STUDIO_EMPLOYEE"
+                  ? "STUDIO_EMPLOYEE"
+                  : "FREELANCE",
+            businessName: data.step5.studioName,
+            studioAddress: data.step5.studioAddress,
+            website: data.step5.website,
+            phone: data.step5.phone,
+            certificateUrl: data.step6.certificateUrl,
+            instagram: data.step7.instagram,
+            minimumPrice: data.step11.minimumPrice,
+            hourlyRate: data.step11.hourlyRate,
+            isStudioOwner: data.step4.workArrangement === "STUDIO_OWNER",
+            updatedAt: now2,
+          })
+          .eq("id", existingArtistProfile.id)
+          .select()
+          .single();
 
       if (artistError) {
         throw new Error(artistError.message);
       }
-      
+
       artistProfile = updatedProfile;
       logger.log("artist profile updated");
     }
@@ -602,8 +604,8 @@ export class AuthService {
         data.step5.municipality,
         data.step5.province
       );
-      
-      await adminOrUserClient.from('user_locations').insert({
+
+      await adminOrUserClient.from("user_locations").insert({
         id: generateUUID(),
         userId: userId,
         provinceId: data.step5.provinceId,
@@ -619,11 +621,12 @@ export class AuthService {
     let createdStudio: any = null;
     if (data.step4.workArrangement === "STUDIO_OWNER") {
       // Check if studio already exists for this artist
-      const { data: existingStudio, error: existStudioError } = await adminOrUserClient
-        .from("studios")
-        .select("id, slug")
-        .eq("ownerId", artistProfile.id)
-        .maybeSingle();
+      const { data: existingStudio, error: existStudioError } =
+        await adminOrUserClient
+          .from("studios")
+          .select("id, slug")
+          .eq("ownerId", artistProfile.id)
+          .maybeSingle();
 
       logger.log("existing studio:", existingStudio);
 
@@ -634,18 +637,19 @@ export class AuthService {
       if (existingStudio) {
         // Update existing studio
         logger.log("updating existing studio");
-        const { data: updatedStudio, error: updateStudioError } = await adminOrUserClient
-          .from("studios")
-          .update({
-            name: data.step5.studioName,
-            address: data.step5.studioAddress,
-            phone: data.step5.phone,
-            website: data.step5.website,
-            updatedAt: now2,
-          })
-          .eq("id", existingStudio.id)
-          .select()
-          .single();
+        const { data: updatedStudio, error: updateStudioError } =
+          await adminOrUserClient
+            .from("studios")
+            .update({
+              name: data.step5.studioName,
+              address: data.step5.studioAddress,
+              phone: data.step5.phone,
+              website: data.step5.website,
+              updatedAt: now2,
+            })
+            .eq("id", existingStudio.id)
+            .select()
+            .single();
 
         if (updateStudioError) {
           throw new Error(updateStudioError.message);
@@ -725,7 +729,7 @@ export class AuthService {
             slug = `${slugBase}-${Math.random().toString(36).slice(2, 6)}`;
           else throw new Error(studioError.message);
         }
-        
+
         if (createdStudio) {
           await adminOrUserClient.from("studio_members").insert({
             id: generateUUID(),
@@ -1001,7 +1005,7 @@ export class AuthService {
           artistId: artistProfile.id,
           mediaType: "IMAGE" as const,
           mediaUrl: url,
-          bannerType: 'FOUR_IMAGES',
+          bannerType: "FOUR_IMAGES",
           order: index,
         }));
 
@@ -1014,11 +1018,11 @@ export class AuthService {
           // Don't throw error, just log it as banner is not critical
         } else {
           logger.log("Artist banner media created successfully");
-          
+
           // Set bannerType to FOUR_IMAGES in artist_profiles
           const { error: updateBannerTypeError } = await adminOrUserClient
             .from("artist_profiles")
-            .update({ bannerType: 'FOUR_IMAGES' })
+            .update({ bannerType: "FOUR_IMAGES" })
             .eq("id", artistProfile.id);
 
           if (updateBannerTypeError) {
@@ -1033,12 +1037,12 @@ export class AuthService {
     // Create studio banner from first images of each portfolio project
     if (createdStudio && bannerMediaUrls.length > 0) {
       logger.log("Creating studio banner from portfolio projects");
-      
+
       const studioBannerMediaData = bannerMediaUrls.map((url, index) => ({
         studioId: createdStudio.id,
         mediaType: "IMAGE" as const,
         mediaUrl: url,
-        bannerType: 'FOUR_IMAGES',
+        bannerType: "FOUR_IMAGES",
         order: index,
       }));
 
@@ -1050,15 +1054,18 @@ export class AuthService {
         logger.error("Error creating studio banner media:", studioBannerError);
       } else {
         logger.log("Studio banner media created successfully");
-        
+
         // Set bannerType to FOUR_IMAGES in studios table
         const { error: updateStudioBannerTypeError } = await adminOrUserClient
           .from("studios")
-          .update({ bannerType: 'FOUR_IMAGES' })
+          .update({ bannerType: "FOUR_IMAGES" })
           .eq("id", createdStudio.id);
 
         if (updateStudioBannerTypeError) {
-          logger.error("Error setting studio bannerType:", updateStudioBannerTypeError);
+          logger.error(
+            "Error setting studio bannerType:",
+            updateStudioBannerTypeError
+          );
         } else {
           logger.log("Studio banner type set to FOUR_IMAGES");
         }
@@ -1177,10 +1184,7 @@ export class AuthService {
           });
 
         if (collectionPostError) {
-          logger.error(
-            "Error adding post to collection:",
-            collectionPostError
-          );
+          logger.error("Error adding post to collection:", collectionPostError);
         }
 
         postOrder++;
@@ -1277,9 +1281,7 @@ export class AuthService {
     try {
       // For email verification, we need to use the token directly
       // The token from Supabase email contains all necessary information
-      logger.log(
-        "AuthService.verifyEmail: Calling supabase.auth.verifyOtp"
-      );
+      logger.log("AuthService.verifyEmail: Calling supabase.auth.verifyOtp");
       const { error } = await supabase.auth.verifyOtp({
         token_hash: token,
         type: "email",
@@ -1312,19 +1314,14 @@ export class AuthService {
           .from("users")
           .update({ isVerified: true })
           .eq("id", session.session.user.id);
-        logger.log(
-          "AuthService.verifyEmail: User verification status updated"
-        );
+        logger.log("AuthService.verifyEmail: User verification status updated");
       } else {
         logger.warn(
           "AuthService.verifyEmail: No session found after verification"
         );
       }
     } catch (error) {
-      logger.error(
-        "AuthService.verifyEmail: Email verification failed",
-        error
-      );
+      logger.error("AuthService.verifyEmail: Email verification failed", error);
       throw error;
     }
   }

@@ -161,7 +161,10 @@ export default function StudioInvitationAcceptScreen() {
 
     try {
       setProcessing(true);
-      const result = await acceptStudioInvitation(invitationData.token, user.id);
+      const result = await acceptStudioInvitation(
+        invitationData.token,
+        user.id
+      );
 
       if (result.success) {
         toast.success(`You've joined ${result.studioName}!`);
@@ -186,7 +189,10 @@ export default function StudioInvitationAcceptScreen() {
 
     try {
       setProcessing(true);
-      const result = await rejectStudioInvitation(invitationData.token, user.id);
+      const result = await rejectStudioInvitation(
+        invitationData.token,
+        user.id
+      );
 
       if (result.success) {
         toast.success("Invitation declined");
@@ -358,7 +364,10 @@ export default function StudioInvitationAcceptScreen() {
           </View>
 
           {/* Buttons */}
-          <View className="flex-1 justify-end" style={{ gap: s(12), marginTop: mvs(40) }}>
+          <View
+            className="flex-1 justify-end"
+            style={{ gap: s(12), marginTop: mvs(40) }}
+          >
             <TouchableOpacity
               onPress={handleAccept}
               disabled={processing}

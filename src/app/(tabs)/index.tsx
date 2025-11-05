@@ -9,10 +9,8 @@ import React, { useCallback, useEffect } from "react";
 import {
   FlatList,
   RefreshControl,
-  TouchableOpacity,
-  View,
-  Text,
   useWindowDimensions,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -47,6 +45,9 @@ export default function HomeScreen() {
   const onRefresh = useCallback(() => {
     if (user?.id) refresh(user.id);
   }, [user?.id]);
+
+  console.log("screenHeight from index", screenHeight);
+  console.log("insets from index", insets);
 
   return (
     <View className="flex-1 bg-background">
@@ -99,18 +100,19 @@ export default function HomeScreen() {
         pagingEnabled
         decelerationRate={0.97}
         snapToAlignment="start"
-        snapToInterval={screenHeight}
+        snapToInterval={screenHeight + insets.bottom}
         disableIntervalMomentum
-        getItemLayout={(_, index) => ({
-          length: screenHeight,
-          offset: screenHeight * index,
-          index,
-        })}
+        // getItemLayout={(_, index) => ({
+        //   length: screenHeight,
+        //   offset: screenHeight * index,
+        //   index,
+        // })}
         renderItem={({ item }) => (
-          <View className="" style={{ height: screenHeight }}>
+          <View className="" style={{ height: screenHeight + insets.bottom }}>
             <FeedPostCard
               post={item}
               onPress={() => router.push(`/post/${item.id}` as any)}
+              onAuthorPress={() => router.push(`/user/${item.author.id}` as any)}
               onLikePress={() =>
                 user?.id && toggleLikeOptimistic(item.id, user.id)
               }
