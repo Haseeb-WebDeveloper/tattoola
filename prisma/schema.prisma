@@ -46,7 +46,7 @@ model User {
   likedPosts              PostLike[]
   posts                   Post[]
   studioMemberships       StudioMember[]
-  studioMemberInvitations StudioMember[] @relation("StudioMemberInviter")
+  studioMemberInvitations StudioMember[]       @relation("StudioMemberInviter")
   favoriteStyles          UserFavoriteStyle[]
   assignedSubscriptions   UserSubscription[]   @relation("AdminAssignedSubscriptions")
   subscriptions           UserSubscription[]
@@ -129,30 +129,33 @@ model AdminProfile {
 }
 
 model SubscriptionPlan {
-  id               String             @id @default(uuid())
-  name             String             @unique
-  description      String
-  features         Json
-  monthlyPrice     Float?
-  yearlyPrice      Float?
-  maxPosts         Int?
-  maxCollections   Int?
-  maxStudioMembers Int?
-  canCreateStudio  Boolean            @default(true)
-  canUploadVideos  Boolean            @default(false)
-  priority         Int                @default(0)
-  isActive         Boolean            @default(true)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  type             PlanType           @unique @default(PREMIUM)
-  isDefault        Boolean            @default(false)
-  freeTrialDays    Int?
-  subscriptions    UserSubscription[]
-  invoiceItems     InvoiceItem[]
+  id                     String             @id @default(uuid())
+  name                   String             @unique
+  description            String
+  features               Json
+  monthlyPrice           Float?
+  yearlyPrice            Float?
+  stripeMonthlyPriceId   String? // Stripe Price ID for monthly billing
+  stripeYearlyPriceId    String? // Stripe Price ID for yearly billing
+  showYearsExperience    Boolean            @default(false) // Show years of experience in the profile
+  allowMultipleLocations Boolean            @default(false) // Allow multiple locations in the profile
+  maxStyles              Int?
+  maxFavoritesStyles     Int?
+  canCreateStudio        Boolean            @default(true) // Allow creating a studio
+  isActive               Boolean            @default(true) 
+  createdAt              DateTime           @default(now()) 
+  updatedAt              DateTime           @updatedAt 
+  type                   PlanType           @unique @default(PREMIUM) 
+  isDefault              Boolean            @default(false) 
+  freeTrialDays          Int? 
+  subscriptions          UserSubscription[] 
+  invoiceItems           InvoiceItem[]
 
   @@index([name])
   @@index([type])
   @@index([isActive])
+  @@index([stripeMonthlyPriceId])
+  @@index([stripeYearlyPriceId])
   @@map("subscription_plans")
 }
 
@@ -177,11 +180,12 @@ model UserSubscription {
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // New fields for richer lifecycle
-  trialEndsAt         DateTime?
-  cancelAtPeriodEnd   Boolean            @default(false)
-  canceledAt          DateTime?
-  events              SubscriptionEvent[]
-  invoices            Invoice[]
+  trialEndsAt          DateTime?
+  cancelAtPeriodEnd    Boolean             @default(false)
+  canceledAt           DateTime?
+  stripeSubscriptionId String?
+  events               SubscriptionEvent[]
+  invoices             Invoice[]
 
   @@index([userId])
   @@index([status])
@@ -233,7 +237,7 @@ model StudioMember {
   studioId        String
   userId          String
   artistId        String
-  role            StudioRole        @default(MEMBER)
+  role            StudioRole         @default(MEMBER)
   status          StudioMemberStatus @default(PENDING)
   invitationToken String?            @unique
   invitedAt       DateTime?
@@ -1114,39 +1118,39 @@ enum StudioMemberStatus {
 // New: Billing and payments
 
 model BillingProfile {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  fullName      String?
-  companyName   String?
-  taxId         String?
-  vatId         String?
-  addressLine1  String?
-  addressLine2  String?
-  city          String?
-  state         String?
-  postalCode    String?
-  country       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  fullName     String?
+  companyName  String?
+  taxId        String?
+  vatId        String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("billing_profiles")
 }
 
 model PaymentMethod {
-  id              String   @id @default(uuid())
-  userId          String
-  provider        String   // e.g., STRIPE
-  providerRef     String   // customer payment method id at provider
-  brand           String?
-  last4           String?
-  expMonth        Int?
-  expYear         Int?
-  isDefault       Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  userId      String
+  provider    String // e.g., STRIPE
+  providerRef String // customer payment method id at provider
+  brand       String?
+  last4       String?
+  expMonth    Int?
+  expYear     Int?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerRef])
   @@index([userId])
@@ -1162,27 +1166,27 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id               String         @id @default(uuid())
-  userId           String
-  subscriptionId   String
-  number           String         @unique
-  currency         String         // ISO 4217, e.g., EUR
-  amountSubtotal   Int            // in minor units (cents)
-  amountTax        Int            @default(0)
-  amountDiscount   Int            @default(0)
-  amountTotal      Int            // in minor units (cents)
-  periodStart      DateTime
-  periodEnd        DateTime
-  dueDate          DateTime?
-  paidAt           DateTime?
-  status           InvoiceStatus  @default(OPEN)
-  pdfUrl           String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription     UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  items            InvoiceItem[]
-  payments         Payment[]
+  id             String           @id @default(uuid())
+  userId         String
+  subscriptionId String
+  number         String           @unique
+  currency       String // ISO 4217, e.g., EUR
+  amountSubtotal Int // in minor units (cents)
+  amountTax      Int              @default(0)
+  amountDiscount Int              @default(0)
+  amountTotal    Int // in minor units (cents)
+  periodStart    DateTime
+  periodEnd      DateTime
+  dueDate        DateTime?
+  paidAt         DateTime?
+  status         InvoiceStatus    @default(OPEN)
+  pdfUrl         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  items          InvoiceItem[]
+  payments       Payment[]
 
   @@index([userId])
   @@index([subscriptionId])
@@ -1191,15 +1195,15 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   invoiceId   String
   planId      String?
   description String?
-  quantity    Int      @default(1)
-  unitAmount  Int      // cents
-  amount      Int      // cents (quantity * unitAmount minus discounts)
-  createdAt   DateTime @default(now())
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  quantity    Int               @default(1)
+  unitAmount  Int // cents
+  amount      Int // cents (quantity * unitAmount minus discounts)
+  createdAt   DateTime          @default(now())
+  invoice     Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   plan        SubscriptionPlan? @relation(fields: [planId], references: [id])
 
   @@index([invoiceId])
@@ -1222,7 +1226,7 @@ model Payment {
   currency         String
   amount           Int
   status           PaymentStatus @default(REQUIRES_PAYMENT_METHOD)
-  provider         String        // e.g., STRIPE
+  provider         String // e.g., STRIPE
   providerChargeId String?
   receiptUrl       String?
   createdAt        DateTime      @default(now())
@@ -1247,12 +1251,12 @@ enum SubscriptionEventType {
 }
 
 model SubscriptionEvent {
-  id              String                  @id @default(uuid())
-  subscriptionId  String
-  type            SubscriptionEventType
-  data            Json?
-  createdAt       DateTime               @default(now())
-  subscription    UserSubscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  id             String                @id @default(uuid())
+  subscriptionId String
+  type           SubscriptionEventType
+  data           Json?
+  createdAt      DateTime              @default(now())
+  subscription   UserSubscription      @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId])
   @@map("subscription_events")

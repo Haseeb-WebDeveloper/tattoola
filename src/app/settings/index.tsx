@@ -1,10 +1,11 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { SubscriptionService } from "@/services/subscription.service";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 
@@ -126,6 +127,27 @@ export default function SettingsScreen() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [userPlanType, setUserPlanType] = useState<"PREMIUM" | "STUDIO" | null>(
+    null
+  );
+
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      if (!user?.id || user?.role !== "ARTIST") return;
+
+      try {
+        const subscription =
+          await SubscriptionService.getActiveSubscriptionWithPlan();
+        if (subscription?.subscription_plans?.type) {
+          setUserPlanType(subscription.subscription_plans.type);
+        }
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+      }
+    };
+
+    fetchUserSubscription();
+  }, [user]);
 
   const handleBack = () => {
     router.push("/(tabs)/profile" as any);
@@ -284,17 +306,6 @@ export default function SettingsScreen() {
             <>
               <View className="bg-gray" style={{ height: s(0.5) }} />
               <SettingsItem
-                title="Premium"
-                onPress={handlePremiumPress}
-                icon={
-                  <SVGIcons.DimondYellow
-                    style={{ width: s(16), height: s(16) }}
-                  />
-                }
-                iconRight={true}
-              />
-              <View className="bg-gray" style={{ height: s(0.5) }} />
-              <SettingsItem
                 title="Studio"
                 onPress={handleStudioPress}
                 icon={
@@ -391,9 +402,9 @@ export default function SettingsScreen() {
                 disabled={isDeactivating}
                 className="rounded-full items-center justify-center"
                 style={{
-                    paddingVertical: mvs(10.5),
-                    paddingLeft: s(18),
-                    paddingRight: s(20),
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
                 }}
               >
                 <ScaledText

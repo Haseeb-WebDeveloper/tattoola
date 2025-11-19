@@ -1,55 +1,59 @@
+import InvoiceFilterModal from "@/components/billing/InvoiceFilterModal";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { BillingService } from "@/services/billing.service";
-import { SubscriptionService } from "@/services/subscription.service";
-import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
+import {
+  formatCurrencyForInvoice,
+  getInvoiceStatusInfo,
+  getPlanNameFromInvoice,
+} from "@/utils/payment";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Linking,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
+type InvoiceStatusFilter = "ALL" | "PAID" | "OPEN" | "UNCOLLECTIBLE";
+
 export default function SettingsBilling() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  const [methods, setMethods] = useState<any[]>([]);
-  const [activeSub, setActiveSub] = useState<any>(null);
-  const [plans, setPlans] = useState<any[]>([]);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const { updateStep13 } = useArtistRegistrationV2Store();
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedStatuses, setSelectedStatuses] = useState<
+    InvoiceStatusFilter[]
+  >(["ALL"]);
+
+  const loadInvoices = async () => {
+    try {
+      const inv = await BillingService.getInvoices();
+      setInvoices(inv);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to load invoices");
+    }
+  };
 
   useEffect(() => {
     (async () => {
-      try {
-        const [inv, prof, pm, sub, allPlans] = await Promise.all([
-          BillingService.getInvoices(),
-          BillingService.getBillingProfile(),
-          BillingService.getPaymentMethods(),
-          SubscriptionService.getActiveSubscriptionWithPlan(),
-          SubscriptionService.fetchSubscriptionPlans(),
-        ]);
-        setInvoices(inv);
-        setProfile(prof);
-        setMethods(pm);
-        setActiveSub(sub);
-        setPlans(allPlans);
-      } catch (e: any) {
-        toast.error(e?.message || "Failed to load billing data");
-      } finally {
-        setLoading(false);
-      }
+      await loadInvoices();
+      setLoading(false);
     })();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadInvoices();
+    setRefreshing(false);
+  };
 
   const openInvoice = async (url?: string) => {
     if (!url) return;
@@ -58,6 +62,34 @@ export default function SettingsBilling() {
     } catch {
       toast.error("Could not open invoice file");
     }
+  };
+
+  // Filter invoices based on selected statuses
+  const filteredInvoices = useMemo(() => {
+    if (
+      selectedStatuses.length === 0 ||
+      (selectedStatuses.length === 1 && selectedStatuses[0] === "ALL")
+    ) {
+      return invoices;
+    }
+
+    return invoices.filter((inv) => {
+      // Map database status to filter status
+      const statusMap: Record<string, InvoiceStatusFilter> = {
+        PAID: "PAID",
+        OPEN: "OPEN",
+        DRAFT: "OPEN", // Draft invoices are treated as pending
+        UNCOLLECTIBLE: "UNCOLLECTIBLE",
+        VOID: "OPEN", // Void invoices can be shown as pending
+      };
+
+      const filterStatus = statusMap[inv.status] || "OPEN";
+      return selectedStatuses.includes(filterStatus);
+    });
+  }, [invoices, selectedStatuses]);
+
+  const handleApplyFilters = (statuses: InvoiceStatusFilter[]) => {
+    setSelectedStatuses(statuses);
   };
 
   return (
@@ -73,17 +105,16 @@ export default function SettingsBilling() {
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="flex-row items-center justify-between w-full "
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
-            marginBottom: mvs(24),
           }}
         >
           <TouchableOpacity
             onPress={() => router.back()}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
-            style={{ width: s(34), height: s(34), left: s(16), padding: s(8) }}
+            className="rounded-full bg-foreground/20 items-center justify-center"
+            style={{ width: s(34), height: s(34), padding: s(8) }}
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
           </TouchableOpacity>
@@ -94,556 +125,243 @@ export default function SettingsBilling() {
           >
             Fatturazione
           </ScaledText>
+          <TouchableOpacity
+            onPress={() => setShowFilterModal(true)}
+            className="rounded-full  items-end justify-center"
+            style={{
+              width: s(32),
+              height: s(32),
+            }}
+          >
+            <SVGIcons.Menu width={s(20)} height={s(20)} />
+          </TouchableOpacity>
         </View>
-
-        {/* Divider */}
-        <View
-          className="bg-gray"
-          style={{
-            height: s(1),
-            marginBottom: mvs(32),
-            marginHorizontal: s(16),
-          }}
-        />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: s(16),
             paddingBottom: mvs(32),
-            gap: mvs(20),
+            marginTop: mvs(24),
           }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          {/* Subscription Status */}
+          {/* Invoices */}
           <View>
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-foreground font-montserratMedium"
-              style={{ marginBottom: mvs(8) }}
-            >
-            Your current plan
-            </ScaledText>
             {loading ? (
-              <View
-                style={{
-                  height: mvs(90),
-                  backgroundColor: "#1E1E1E",
-                  borderRadius: s(8),
-                }}
-              />
-            ) : !activeSub ? (
+              <View style={{ gap: mvs(12) }}>
+                {[...Array(4)].map((_, idx) => (
+                  <View
+                    key={`loading-invoice-skeleton-${idx}`}
+                    className="flex-col bg-tat-foreground border-gray"
+                    style={{
+                      borderWidth: s(1),
+                      borderRadius: s(14),
+                      paddingHorizontal: s(16),
+                      paddingVertical: mvs(12),
+                      gap: mvs(16),
+                      opacity: 0.55,
+                    }}
+                  >
+                    {/* Top row: Plan name and validity date */}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-foreground font-neueLight"
+                      >
+                        ...
+                      </ScaledText>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="body2"
+                        className="text-gray font-neueLight"
+                      >
+                        ...
+                      </ScaledText>
+                    </View>
+
+                    {/* Bottom row: Price, Status badge, and download icon */}
+                    <View
+                      className="flex-row items-center justify-between"
+                      style={{
+                        gap: s(8),
+                      }}
+                    >
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="font-neueBold text-success"
+                      >
+                        ...
+                      </ScaledText>
+                      <View
+                        style={{
+                          backgroundColor: "#242424",
+                          borderRadius: s(6),
+                          paddingVertical: mvs(2),
+                          paddingHorizontal: s(12),
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          variant="body2"
+                          className="font-neueBold"
+                          style={{ color: "#AAA" }}
+                        >
+                          ...
+                        </ScaledText>
+                      </View>
+                      <View style={{ flex: 1 }} />
+                      <View>
+                        <SVGIcons.Download
+                          width={s(16)}
+                          height={s(16)}
+                          opacity={0.5}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : filteredInvoices.length === 0 ? (
               <ScaledText
                 allowScaling={false}
                 variant="body2"
-                className="text-gray"
+                className="text-gray text-center font-neueLight"
               >
-                No active subscription
+                No invoices found
               </ScaledText>
             ) : (
-              <View
-                style={{
-                  backgroundColor: "#100C0C",
-                  borderWidth: 1,
-                  borderColor: "#2A2A2A",
-                  borderRadius: s(8),
-                  padding: s(14),
-                }}
-              >
-                <View className="flex-row items-center justify-between">
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground font-neueBold"
-                  >
-                    {activeSub.subscription_plans?.name}{" "}
-                    {activeSub.isTrial ? "(trial)" : ""}
-                  </ScaledText>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground font-neueBold"
-                  >
-                    €
-                    {activeSub.isTrial
-                      ? 0
-                      : activeSub.billingCycle === "YEARLY"
-                        ? activeSub.subscription_plans?.yearlyPrice
-                        : activeSub.subscription_plans?.monthlyPrice}
-                  </ScaledText>
-                </View>
-                <View style={{ marginTop: mvs(6) }}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="text-gray"
-                  >
-                    Renews on{" "}
-                    {new Date(
-                      activeSub.trialEndsAt || activeSub.endDate
-                    ).toLocaleDateString(undefined, {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </ScaledText>
-                  {activeSub.endDate ? (
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-gray"
-                    >
-                      Expires on{" "}
-                      {new Date(activeSub.endDate).toLocaleDateString(
-                        undefined,
-                        { day: "2-digit", month: "long", year: "numeric" }
-                      )}
-                    </ScaledText>
-                  ) : null}
-                </View>
-                <TouchableOpacity
-                  onPress={() => setShowCancelModal(true)}
-                  style={{ marginTop: mvs(10) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="text-error font-neueBold"
-                  >
-                    Cancel subscription
-                  </ScaledText>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+              <View style={{ gap: mvs(12) }}>
+                {filteredInvoices.map((inv) => {
+                  const planName = getPlanNameFromInvoice(inv);
+                  const formattedTotal = formatCurrencyForInvoice(
+                    inv.amountTotal / 100,
+                    inv.currency
+                  );
+                  const statusInfo = getInvoiceStatusInfo(inv.status);
 
-          {/* Current Plan Card with Upgrade CTA */}
-          <View>
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-foreground font-neueBold"
-              style={{ marginBottom: mvs(8) }}
-            >
-              Current plan
-            </ScaledText>
-            {loading || !activeSub ? (
-              <View
-                style={{
-                  height: mvs(160),
-                  backgroundColor: "#1E1E1E",
-                  borderRadius: s(8),
-                }}
-              />
-            ) : (
-              <View
-                className="rounded-2xl"
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#a49a99",
-                  borderRadius: s(8),
-                }}
-              >
-                <LinearGradient
-                  colors={["#FFFFFF", "#FFCACA"]}
-                  locations={[0.0095, 0.995]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    borderRadius: s(8),
-                    paddingVertical: mvs(16),
-                    paddingHorizontal: s(16),
-                  }}
-                >
-                  <View className="mb-4">
-                    <View className="flex-row items-center">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="20"
-                        className="font-neueMedium"
-                      >
-                        Piano
-                      </ScaledText>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="20"
-                        className="font-neueMedium"
-                        style={{ color: "#AE0E0E", marginLeft: s(6) }}
-                      >
-                        {activeSub.subscription_plans?.name}
-                      </ScaledText>
-                    </View>
-                    <View className="flex-row items-end mt-2">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="6xl"
-                        className="font-neueBold "
-                        style={{ color: "#080101" }}
-                      >
-                        €
-                        {activeSub.billingCycle === "YEARLY"
-                          ? activeSub.subscription_plans?.yearlyPrice
-                          : activeSub.subscription_plans?.monthlyPrice}
-                      </ScaledText>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="lg"
-                        className="font-neueMedium"
-                        style={{ color: "#080101", marginLeft: s(2) }}
-                      >
-                        {activeSub.billingCycle === "YEARLY" ? "year" : "month"}
-                      </ScaledText>
-                    </View>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="11"
-                      className="font-neueLightItalic"
-                      style={{ color: "#080101", marginTop: mvs(6) }}
-                    >
-                      {activeSub.subscription_plans?.description}
-                    </ScaledText>
-                  </View>
+                  // Use paidAt date if available, otherwise use createdAt
+                  const paidDate = inv?.paidAt
+                    ? new Date(inv.paidAt)
+                    : inv?.createdAt
+                      ? new Date(inv.createdAt)
+                      : undefined;
+                  const formattedDate = paidDate
+                    ? paidDate
+                        .toLocaleDateString("it-IT", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                        })
+                        .replace(/20(\d{2})$/, "$1")
+                    : null;
 
-                  {/* Upgrade CTA */}
-                  <View style={{ marginTop: mvs(8) }}>
-                    {(() => {
-                      const other = plans.find(
-                        (p) => p.id !== activeSub.planId
-                      );
-                      if (!other) return null;
-                      const onUpgrade = () => {
-                        updateStep13({
-                          selectedPlanId: other.id,
-                          billingCycle: activeSub.billingCycle,
-                        });
-                        router.push("/(auth)/artist-registration/checkout");
-                      };
-                      return (
-                        <TouchableOpacity
-                          activeOpacity={0.9}
-                          onPress={onUpgrade}
-                          className="rounded-full items-center justify-center flex-row"
+                  return (
+                    <View
+                      key={inv.id}
+                      className="flex-col bg-tat-foreground border-gray"
+                      style={{
+                        borderWidth: s(1),
+                        borderRadius: s(14),
+                        paddingHorizontal: s(16),
+                        paddingVertical: mvs(12),
+                        gap: mvs(16),
+                      }}
+                    >
+                      {/* Top row: Plan name and validity date */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueLight"
+                        >
+                          Piano {planName}
+                        </ScaledText>
+                        {!!formattedDate && (
+                          <ScaledText
+                            allowScaling={false}
+                            variant="body2"
+                            className="text-gray font-neueLight"
+                          >
+                            {inv.status === "PAID" ? "Paid on" : "Created on"}{" "}
+                            {formattedDate}
+                          </ScaledText>
+                        )}
+                      </View>
+
+                      {/* Bottom row: Price, Status badge, and download icon */}
+                      <View
+                        className="flex-row items-center justify-between"
+                        style={{
+                          gap: s(8),
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className={`font-neueBold text-success`}
+                        >
+                          {formattedTotal}
+                        </ScaledText>
+                        <View
                           style={{
-                            backgroundColor: "#AE0E0E",
-                            paddingVertical: mvs(12),
-                            borderRadius: 38,
+                            backgroundColor: statusInfo.bgColor,
+                            borderRadius: s(6),
+                            paddingVertical: mvs(2),
+                            paddingHorizontal: s(12),
                           }}
                         >
                           <ScaledText
                             allowScaling={false}
                             variant="body2"
-                            style={{ color: "#FFFFFF" }}
-                            className="font-neueMedium"
+                            className="font-neueBold"
+                            style={{ color: statusInfo.textColor }}
                           >
-                            Upgrade to {other.name}
+                            {statusInfo.label}
                           </ScaledText>
-                        </TouchableOpacity>
-                      );
-                    })()}
-                  </View>
-                </LinearGradient>
-              </View>
-            )}
-          </View>
-          {/* Billing Profile */}
-          <View>
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-foreground font-neueBold"
-              style={{ marginBottom: mvs(8) }}
-            >
-              Billing details
-            </ScaledText>
-            {loading ? (
-              <View
-                style={{
-                  height: mvs(60),
-                  backgroundColor: "#1E1E1E",
-                  borderRadius: s(8),
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  backgroundColor: "#100C0C",
-                  borderWidth: 1,
-                  borderColor: "#2A2A2A",
-                  borderRadius: s(8),
-                  padding: s(12),
-                }}
-              >
-                {profile ? (
-                  <>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="body2"
-                      className="text-foreground"
-                    >
-                      {profile.fullName || profile.companyName || "—"}
-                    </ScaledText>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-gray"
-                    >
-                      {profile.addressLine1 || "—"}
-                      {profile.city ? `, ${profile.city}` : ""}
-                      {profile.country ? `, ${profile.country}` : ""}
-                    </ScaledText>
-                  </>
-                ) : (
-                  <ScaledText
-                    allowScaling={false}
-                    variant="body2"
-                    className="text-gray"
-                  >
-                    No billing profile yet
-                  </ScaledText>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* Payment Methods */}
-          <View>
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-foreground font-neueBold"
-              style={{ marginBottom: mvs(8) }}
-            >
-              Payment methods
-            </ScaledText>
-            {loading ? (
-              <View
-                style={{
-                  height: mvs(60),
-                  backgroundColor: "#1E1E1E",
-                  borderRadius: s(8),
-                }}
-              />
-            ) : methods.length === 0 ? (
-              <ScaledText
-                allowScaling={false}
-                variant="body2"
-                className="text-gray"
-              >
-                No payment methods
-              </ScaledText>
-            ) : (
-              <View style={{ gap: mvs(8) }}>
-                {methods.map((m) => (
-                  <View
-                    key={m.id}
-                    style={{
-                      backgroundColor: "#100C0C",
-                      borderWidth: 1,
-                      borderColor: "#2A2A2A",
-                      borderRadius: s(8),
-                      padding: s(12),
-                    }}
-                  >
-                    <ScaledText
-                      allowScaling={false}
-                      variant="body2"
-                      className="text-foreground"
-                    >
-                      {m.brand || m.provider} •••• {m.last4 || ""}
-                    </ScaledText>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-gray"
-                    >
-                      {m.isDefault ? "Default" : ""}{" "}
-                      {m.expMonth && m.expYear
-                        ? ` • Expires ${m.expMonth}/${m.expYear}`
-                        : ""}
-                    </ScaledText>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* Invoices */}
-          <View>
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-foreground font-neueBold"
-              style={{ marginBottom: mvs(8) }}
-            >
-              Invoices
-            </ScaledText>
-            {loading ? (
-              <View
-                style={{
-                  height: mvs(120),
-                  backgroundColor: "#1E1E1E",
-                  borderRadius: s(8),
-                }}
-              />
-            ) : invoices.length === 0 ? (
-              <ScaledText
-                allowScaling={false}
-                variant="body2"
-                className="text-gray"
-              >
-                No invoices
-              </ScaledText>
-            ) : (
-              <View style={{ gap: mvs(10) }}>
-                {invoices.map((inv) => (
-                  <View
-                    key={inv.id}
-                    style={{
-                      backgroundColor: "#100C0C",
-                      borderWidth: 1,
-                      borderColor: "#2A2A2A",
-                      borderRadius: s(8),
-                      padding: s(12),
-                      gap: mvs(4),
-                    }}
-                  >
-                    <ScaledText
-                      allowScaling={false}
-                      variant="body2"
-                      className="text-foreground"
-                    >
-                      Invoice {inv.number}
-                    </ScaledText>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-gray"
-                    >
-                      Period: {new Date(inv.periodStart).toDateString()} →{" "}
-                      {new Date(inv.periodEnd).toDateString()}
-                    </ScaledText>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-gray"
-                    >
-                      Total: {(inv.amountTotal / 100).toFixed(2)} {inv.currency}
-                    </ScaledText>
-                    <View
-                      style={{
-                        marginTop: mvs(6),
-                        flexDirection: "row",
-                        justifyContent: "flex-end",
-                      }}
-                    >
-                      <TouchableOpacity
-                        onPress={() => openInvoice(inv.pdfUrl)}
-                        className="bg-primary"
-                        style={{
-                          paddingVertical: mvs(8),
-                          paddingHorizontal: s(14),
-                          borderRadius: 999,
-                        }}
-                      >
-                        <ScaledText
-                          allowScaling={false}
-                          variant="sm"
-                          className="text-foreground"
-                        >
-                          Download
-                        </ScaledText>
-                      </TouchableOpacity>
+                        </View>
+                        <View style={{ flex: 1 }} />
+                        {inv.pdfUrl && (
+                          <TouchableOpacity
+                            onPress={() => openInvoice(inv.pdfUrl)}
+                            hitSlop={8}
+                          >
+                            <SVGIcons.Download width={s(16)} height={s(16)} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             )}
           </View>
         </ScrollView>
       </LinearGradient>
-      {/* Cancel Subscription Modal */}
-      <Modal
-        visible={showCancelModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCancelModal(false)}
-      >
-        <View
-          className="flex-1 justify-center items-center"
-          style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
-        >
-          <View
-            className="bg-[#fff] rounded-xl"
-            style={{
-              width: s(342),
-              paddingHorizontal: s(24),
-              paddingVertical: mvs(28),
-            }}
-          >
-            <View className="items-center" style={{ marginBottom: mvs(16) }}>
-              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
-            </View>
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-background font-neueBold text-center"
-              style={{ marginBottom: mvs(6) }}
-            >
-              Cancel subscription?
-            </ScaledText>
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-background text-center"
-              style={{ marginBottom: mvs(20) }}
-            >
-              You can keep access until the end of the current period.
-            </ScaledText>
-            <View
-              className="flex-row justify-center"
-              style={{ columnGap: s(10) }}
-            >
-              <TouchableOpacity
-                onPress={() => setShowCancelModal(false)}
-                className="rounded-full border-2 items-center justify-center flex-row"
-                style={{
-                  borderColor: "#AD2E2E",
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                }}
-              >
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="font-montserratMedium"
-                  style={{ color: "#AD2E2E" }}
-                >
-                  Keep plan
-                </ScaledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setShowCancelModal(false)}
-                className="rounded-full items-center justify-center flex-row"
-                style={{
-                  backgroundColor: "#AD2E2E",
-                  paddingVertical: mvs(10.5),
-                  paddingLeft: s(18),
-                  paddingRight: s(20),
-                }}
-              >
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-montserratMedium"
-                >
-                  Confirm cancel
-                </ScaledText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+
+      {/* Filter Modal */}
+      <InvoiceFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        selectedStatuses={selectedStatuses}
+        onApply={handleApplyFilters}
+      />
     </KeyboardAvoidingView>
   );
 }

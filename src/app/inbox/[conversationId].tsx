@@ -5,10 +5,10 @@ import { ScaledTextInput } from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    blockUser,
-    deleteConversation,
-    fetchConversationByIdWithPeer,
-    reportUser,
+  blockUser,
+  deleteConversation,
+  fetchConversationByIdWithPeer,
+  reportUser,
 } from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
@@ -19,11 +19,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    FlatList,
-    Image,
-    Platform,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  Platform,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -86,15 +86,13 @@ export default function ChatThreadScreen() {
       try {
         await loadLatest(conversationId, user.id);
         subscribe(conversationId, user.id);
-      } catch (e) {
-      }
+      } catch (e) {}
     })();
 
     return () => {
       try {
         unsubscribe(conversationId);
-      } catch (e) {
-      }
+      } catch (e) {}
     };
   }, [conversationId, user?.id]);
 
@@ -238,16 +236,19 @@ export default function ChatThreadScreen() {
     }
   };
 
-  const handleReport = React.useCallback(async (reason: string) => {
-    if (!user?.id || !peer?.id || !conversationId) return;
-    try {
-      await reportUser(user.id, peer.id, conversationId, reason);
-      toast.success("Report Submitted");
-    } catch (error) {
-      console.error("Error reporting user:", error);
-      toast.error("Failed to submit report");
-    }
-  }, [user?.id, peer?.id, conversationId]);
+  const handleReport = React.useCallback(
+    async (reason: string) => {
+      if (!user?.id || !peer?.id || !conversationId) return;
+      try {
+        await reportUser(user.id, peer.id, conversationId, reason);
+        toast.success("Report Submitted");
+      } catch (error) {
+        console.error("Error reporting user:", error);
+        toast.error("Failed to submit report");
+      }
+    },
+    [user?.id, peer?.id, conversationId]
+  );
 
   const handleBlock = React.useCallback(async () => {
     if (!user?.id || !peer?.id || !conversationId) return;
@@ -336,12 +337,14 @@ export default function ChatThreadScreen() {
               {TrimText(peer?.name || "", 18)}
             </ScaledText>
           </View>
-          <TouchableOpacity onPress={() => setMenuModalVisible(true)} className="rounded-full  items-end justify-center"
+          <TouchableOpacity
+            onPress={() => setMenuModalVisible(true)}
+            className="rounded-full  items-end justify-center"
             style={{
               width: s(32),
               height: s(32),
             }}
-            >
+          >
             <SVGIcons.CircleMenu width={s(20)} height={s(20)} />
           </TouchableOpacity>
         </View>
@@ -349,18 +352,18 @@ export default function ChatThreadScreen() {
 
       <View style={{ flex: 1 }}>
         {messages.length === 0 && (
-          <View 
+          <View
             className="absolute inset-0 items-center justify-center z-10 w-full h-full"
             style={{
               paddingHorizontal: s(24),
             }}
             pointerEvents="none"
           >
-            <ScaledText 
-              variant="md" 
+            <ScaledText
+              variant="md"
               className="text-gray text-center font-montserratMedium"
             >
-              Chat history deleted.{'\n'}New messages will appear here.
+              Chat history deleted.{"\n"}New messages will appear here.
             </ScaledText>
           </View>
         )}
@@ -377,7 +380,7 @@ export default function ChatThreadScreen() {
             conversationId && user?.id && loadOlder(conversationId, user.id)
           }
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ 
+          contentContainerStyle={{
             paddingVertical: mvs(1),
           }}
           ListFooterComponent={() =>
@@ -552,7 +555,6 @@ export default function ChatThreadScreen() {
                 value={text}
                 onChangeText={setText}
                 placeholder="Hello I'm looking for sketch tattoo"
-                  
                 className="text-foreground"
                 containerClassName="bg-transparent"
                 multiline={true}

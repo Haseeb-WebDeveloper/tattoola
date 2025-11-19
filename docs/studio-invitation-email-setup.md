@@ -3,6 +3,7 @@
 ## Overview
 
 The studio invitation system requires server-side email sending via Brevo SMTP. You can implement this using either:
+
 1. **Supabase Edge Function** (recommended if you don't have a Next.js backend)
 2. **Next.js API Route** (recommended if you have a Next.js app)
 
@@ -15,12 +16,14 @@ The studio invitation system requires server-side email sending via Brevo SMTP. 
 1. **Create API Route**: `pages/api/studio/send-invitation-email.ts` (or `app/api/studio/send-invitation-email/route.ts` for App Router)
 
 2. **Install Dependencies**:
+
 ```bash
 npm install nodemailer
 npm install --save-dev @types/nodemailer
 ```
 
 3. **Environment Variables** (add to `.env.local`):
+
 ```env
 BREVO_SMTP_HOST=smtp-relay.brevo.com
 BREVO_SMTP_PORT=587
@@ -34,8 +37,8 @@ NEXT_PUBLIC_API_URL=https://your-nextjs-app.com
 4. **API Route Implementation** (Pages Router - `pages/api/studio/send-invitation-email.ts`):
 
 ```typescript
-import type { NextApiRequest, NextApiResponse } from 'next';
-import nodemailer from 'nodemailer';
+import type { NextApiRequest, NextApiResponse } from "next";
+import nodemailer from "nodemailer";
 
 type ResponseData = {
   success: boolean;
@@ -46,8 +49,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res
+      .status(405)
+      .json({ success: false, error: "Method not allowed" });
   }
 
   try {
@@ -65,14 +70,14 @@ export default async function handler(
     if (!toEmail || !studioName || !senderName || !deepLink || !webLink) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields',
+        error: "Missing required fields",
       });
     }
 
     // Create transporter
     const transporter = nodemailer.createTransport({
       host: process.env.BREVO_SMTP_HOST,
-      port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
+      port: parseInt(process.env.BREVO_SMTP_PORT || "587"),
       secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.BREVO_SMTP_USERNAME,
@@ -90,7 +95,7 @@ export default async function handler(
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            ${studioLogo ? `<img src="${studioLogo}" alt="${studioName}" style="max-width: 120px; margin-bottom: 20px;" />` : ''}
+            ${studioLogo ? `<img src="${studioLogo}" alt="${studioName}" style="max-width: 120px; margin-bottom: 20px;" />` : ""}
             <h1 style="color: #CA2323; margin-top: 0;">You've been invited to join ${studioName}</h1>
             <p>Hi there,</p>
             <p><strong>${senderName}</strong> has invited you to join <strong>${studioName}</strong> on Tattoola.</p>
@@ -119,10 +124,10 @@ export default async function handler(
 
     return res.status(200).json({ success: true });
   } catch (error: any) {
-    console.error('Error sending invitation email:', error);
+    console.error("Error sending invitation email:", error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to send email',
+      error: error.message || "Failed to send email",
     });
   }
 }
@@ -131,8 +136,8 @@ export default async function handler(
 **For App Router** (`app/api/studio/send-invitation-email/route.ts`):
 
 ```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { NextRequest, NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -149,7 +154,7 @@ export async function POST(req: NextRequest) {
     // Validate required fields
     if (!toEmail || !studioName || !senderName || !deepLink || !webLink) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -157,7 +162,7 @@ export async function POST(req: NextRequest) {
     // Create transporter
     const transporter = nodemailer.createTransport({
       host: process.env.BREVO_SMTP_HOST,
-      port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
+      port: parseInt(process.env.BREVO_SMTP_PORT || "587"),
       secure: false,
       auth: {
         user: process.env.BREVO_SMTP_USERNAME,
@@ -175,7 +180,7 @@ export async function POST(req: NextRequest) {
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            ${studioLogo ? `<img src="${studioLogo}" alt="${studioName}" style="max-width: 120px; margin-bottom: 20px;" />` : ''}
+            ${studioLogo ? `<img src="${studioLogo}" alt="${studioName}" style="max-width: 120px; margin-bottom: 20px;" />` : ""}
             <h1 style="color: #CA2323; margin-top: 0;">You've been invited to join ${studioName}</h1>
             <p>Hi there,</p>
             <p><strong>${senderName}</strong> has invited you to join <strong>${studioName}</strong> on Tattoola.</p>
@@ -204,9 +209,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error sending invitation email:', error);
+    console.error("Error sending invitation email:", error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to send email' },
+      { success: false, error: error.message || "Failed to send email" },
       { status: 500 }
     );
   }
@@ -219,6 +224,7 @@ Update the service to call your Next.js API instead of Supabase Edge Function:
 
 ```typescript
 import { supabase } from "@/utils/supabase";
+import SUPABASE_FUNCTIONS_NAMES from "@/constants/supabase";
 
 interface SendStudioInvitationEmailParams {
   toEmail: string;
@@ -237,28 +243,31 @@ export async function sendStudioInvitationEmail(
   try {
     // Generate deep link
     const deepLink = `tattoola://studio-invitation?token=${params.invitationToken}`;
-    
+
     // Fallback web link (if app is not installed)
-    const webLink = `${process.env.EXPO_PUBLIC_APP_URL || 'https://tattoola.app'}/studio-invitation?token=${params.invitationToken}`;
+    const webLink = `${process.env.EXPO_PUBLIC_APP_URL || "https://tattoola.app"}/studio-invitation?token=${params.invitationToken}`;
 
     // Option 1: Use Next.js API (if available)
     const nextjsApiUrl = process.env.EXPO_PUBLIC_NEXTJS_API_URL;
     if (nextjsApiUrl) {
-      const response = await fetch(`${nextjsApiUrl}/api/studio/send-invitation-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          toEmail: params.toEmail,
-          studioName: params.studioName,
-          studioLogo: params.studioLogo,
-          senderName: params.senderName,
-          deepLink: deepLink,
-          webLink: webLink,
-          invitationToken: params.invitationToken,
-        }),
-      });
+      const response = await fetch(
+        `${nextjsApiUrl}/api/studio/send-invitation-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            toEmail: params.toEmail,
+            studioName: params.studioName,
+            studioLogo: params.studioLogo,
+            senderName: params.senderName,
+            deepLink: deepLink,
+            webLink: webLink,
+            invitationToken: params.invitationToken,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -271,17 +280,20 @@ export async function sendStudioInvitationEmail(
     }
 
     // Option 2: Fallback to Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke("send-studio-invitation-email", {
-      body: {
-        toEmail: params.toEmail,
-        studioName: params.studioName,
-        studioLogo: params.studioLogo,
-        senderName: params.senderName,
-        deepLink: deepLink,
-        webLink: webLink,
-        invitationToken: params.invitationToken,
-      },
-    });
+    const { data, error } = await supabase.functions.invoke(
+      SUPABASE_FUNCTIONS_NAMES.SEND_STUDIO_INVITATION_EMAIL,
+      {
+        body: {
+          toEmail: params.toEmail,
+          studioName: params.studioName,
+          studioLogo: params.studioLogo,
+          senderName: params.senderName,
+          deepLink: deepLink,
+          webLink: webLink,
+          invitationToken: params.invitationToken,
+        },
+      }
+    );
 
     if (error) {
       console.error("Error sending studio invitation email:", error);
@@ -291,12 +303,16 @@ export async function sendStudioInvitationEmail(
     return { success: true };
   } catch (error: any) {
     console.error("Error in sendStudioInvitationEmail:", error);
-    return { success: false, error: error.message || "Failed to send invitation email" };
+    return {
+      success: false,
+      error: error.message || "Failed to send invitation email",
+    };
   }
 }
 ```
 
 6. **Add Environment Variable to Expo App** (`.env`):
+
 ```env
 EXPO_PUBLIC_NEXTJS_API_URL=https://your-nextjs-app.com
 ```
@@ -347,13 +363,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import nodemailer from "npm:nodemailer@^6.9.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
@@ -369,12 +386,12 @@ serve(async (req) => {
 
     // Create transporter
     const transporter = nodemailer.createTransport({
-      host: Deno.env.get('BREVO_SMTP_HOST'),
-      port: parseInt(Deno.env.get('BREVO_SMTP_PORT') || '587'),
+      host: Deno.env.get("BREVO_SMTP_HOST"),
+      port: parseInt(Deno.env.get("BREVO_SMTP_PORT") || "587"),
       secure: false,
       auth: {
-        user: Deno.env.get('BREVO_SMTP_USERNAME'),
-        pass: Deno.env.get('BREVO_SMTP_PASSWORD'),
+        user: Deno.env.get("BREVO_SMTP_USERNAME"),
+        pass: Deno.env.get("BREVO_SMTP_PASSWORD"),
       },
     });
 
@@ -388,7 +405,7 @@ serve(async (req) => {
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            ${studioLogo ? `<img src="${studioLogo}" alt="${studioName}" style="max-width: 120px; margin-bottom: 20px;" />` : ''}
+            ${studioLogo ? `<img src="${studioLogo}" alt="${studioName}" style="max-width: 120px; margin-bottom: 20px;" />` : ""}
             <h1 style="color: #CA2323;">You've been invited to join ${studioName}</h1>
             <p>Hi there,</p>
             <p><strong>${senderName}</strong> has invited you to join <strong>${studioName}</strong> on Tattoola.</p>
@@ -409,23 +426,22 @@ serve(async (req) => {
 
     // Send email
     await transporter.sendMail({
-      from: `"${Deno.env.get('BREVO_FROM_NAME')}" <${Deno.env.get('BREVO_FROM_EMAIL')}>`,
+      from: `"${Deno.env.get("BREVO_FROM_NAME")}" <${Deno.env.get("BREVO_FROM_EMAIL")}>`,
       to: toEmail,
       subject: `You've been invited to join ${studioName}`,
       html: html,
     });
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
@@ -443,6 +459,7 @@ serve(async (req) => {
 ## Testing
 
 ### Next.js API Route Testing:
+
 ```bash
 curl -X POST https://your-nextjs-app.com/api/studio/send-invitation-email \
   -H "Content-Type: application/json" \
@@ -457,6 +474,7 @@ curl -X POST https://your-nextjs-app.com/api/studio/send-invitation-email \
 ```
 
 ### Supabase Edge Function Testing:
+
 ```bash
 curl -X POST https://<your-project>.supabase.co/functions/v1/send-studio-invitation-email \
   -H "Authorization: Bearer <anon-key>" \
@@ -474,4 +492,3 @@ curl -X POST https://<your-project>.supabase.co/functions/v1/send-studio-invitat
 ## Recommendation
 
 **Use Next.js API Route** if you already have a Next.js app - it's simpler to maintain and deploy alongside your existing backend. Use Supabase Edge Function only if you don't have a Next.js backend or prefer serverless functions.
-

@@ -5,10 +5,10 @@ export class BillingService {
     const { data: sessionRes } = await supabase.auth.getSession();
     const userId = sessionRes?.session?.user?.id;
     if (!userId) throw new Error('No authenticated user found');
-
+  
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, invoice_items(*), payments(*)')
+      .select('*, invoice_items(*, subscription_plans!invoice_items_planId_fkey(*)), payments(*), user_subscriptions!invoices_subscriptionId_fkey(planId, subscription_plans(*))')
       .eq('userId', userId)
       .order('createdAt', { ascending: false });
     if (error) throw new Error(error.message);

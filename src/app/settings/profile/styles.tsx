@@ -3,13 +3,14 @@ import { AR_MAX_FAVORITE_STYLES, TL_MAX_FAVORITE_STYLES } from "@/constants/limi
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    fetchArtistFavoriteStyles,
-    fetchTattooStyles,
-    fetchUserFavoriteStyles,
-    TattooStyleItem,
-    updateArtistFavoriteStyles,
-    updateUserFavoriteStyles,
+  fetchArtistFavoriteStyles,
+  fetchTattooStyles,
+  fetchUserFavoriteStyles,
+  TattooStyleItem,
+  updateArtistFavoriteStyles,
+  updateUserFavoriteStyles,
 } from "@/services/style.service";
+import { SubscriptionService } from "@/services/subscription.service";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -17,16 +18,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -74,9 +75,9 @@ export default function StylesSettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [artistId, setArtistId] = useState<string | null>(null);
+  const [maxStyles, setMaxStyles] = useState<number>(TL_MAX_FAVORITE_STYLES);
 
   const isArtist = user?.role === "ARTIST";
-  const maxStyles = isArtist ? AR_MAX_FAVORITE_STYLES : TL_MAX_FAVORITE_STYLES;
   const minStyles = isArtist ? 2 : 1;
 
   useEffect(() => {
@@ -87,6 +88,21 @@ export default function StylesSettingsScreen() {
         if (!user?.id) return;
 
         if (isArtist) {
+          // Fetch subscription plan limits for artist
+          try {
+            const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
+            if (subscription?.subscription_plans?.maxFavoritesStyles) {
+              if (mounted) setMaxStyles(subscription.subscription_plans.maxFavoritesStyles);
+            } else {
+              // Fallback to default artist limit
+              if (mounted) setMaxStyles(AR_MAX_FAVORITE_STYLES);
+            }
+          } catch (e) {
+            // No subscription - use default artist limit
+            console.log("No active subscription, using default artist limits");
+            if (mounted) setMaxStyles(AR_MAX_FAVORITE_STYLES);
+          }
+
           // Fetch artist profile to get artistId and mainStyleId
           const { data: profileData, error: profileError } = await supabase
             .from("artist_profiles")
@@ -115,6 +131,9 @@ export default function StylesSettingsScreen() {
             setInitialMainStyleId(profileData.mainStyleId);
           }
         } else {
+          // Tattoo lover - use constant limit
+          if (mounted) setMaxStyles(TL_MAX_FAVORITE_STYLES);
+
           // Tattoo lover - fetch user's favorite styles
           const [allStyles, favoriteStyleIds] = await Promise.all([
             fetchTattooStyles(),

@@ -25,10 +25,10 @@ function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress }: Pr
   // If tab bar hasn't been measured yet, use a sensible default height.
   const bottomPosition = tabBarHeight > 0 ? tabBarHeight : mvs(119);
 
-  console.log("bottomPosition from FeedPostCard", bottomPosition);
-  console.log("tabBarHeight from FeedPostCard", tabBarHeight);
-  console.log("insets.bottom from FeedPostCard", insets.bottom);
-  console.log("post.author.id from FeedPostCard", post.author.id);
+  // console.log("bottomPosition from FeedPostCard", bottomPosition);
+  // console.log("tabBarHeight from FeedPostCard", tabBarHeight);
+  // console.log("insets.bottom from FeedPostCard", insets.bottom);
+  // console.log("post.author.id from FeedPostCard", post.author.id);
 
   // Default behavior: If onAuthorPress is not passed, fallback to router.push as before
   const handleAuthorPress = () => {

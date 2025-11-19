@@ -2,9 +2,11 @@ import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { PaymentService } from "@/services/payment.service";
 import {
   SubscriptionPlan,
   SubscriptionService,
+  getPlanTypeFromName,
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step13Schema } from "@/utils/artistRegistrationValidation";
@@ -14,7 +16,7 @@ import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 
 // Skeleton that closely matches the plan card (layout, sizes, gradient)
@@ -109,28 +111,22 @@ export default function ArtistStep13V2() {
     updateStep13({ selectedPlanId: planId });
   };
 
-  const handleBillingToggle = () => {
-    const newCycle = step13.billingCycle === "MONTHLY" ? "YEARLY" : "MONTHLY";
-    updateStep13({ billingCycle: newCycle });
-  };
 
-  const handleSubscribe = async (planId: string) => {
+  const handleSubscribe = async (planId: string, action: 'trial' | 'buy' | 'studio' = 'trial') => {
     if (submitting) return;
     // Persist selected plan locally as well
     updateStep13({ selectedPlanId: planId });
 
     setSubmitting(true);
     try {
-      // Decide by plan type/name: if Studio, go to checkout screen instead of immediate subscription
       const picked = plans.find((p) => p.id === planId);
-      const planName = (picked?.name || '').toLowerCase();
+      if (!picked) {
+        throw new Error("Plan not found");
+      }
+
+      const planName = (picked.name || '').toLowerCase();
       const isStudio = planName.includes('studio');
 
-      if (isStudio) {
-        // Navigate to checkout state (no payment yet)
-        router.push('/(auth)/artist-registration/checkout');
-        return;
-      }
       // Get current user ID
       const {
         data: { session },
@@ -139,21 +135,74 @@ export default function ArtistStep13V2() {
         throw new Error("No authenticated user found");
       }
 
-      // Create subscription only (no checkout yet)
-      await SubscriptionService.createUserSubscription(
-        session.user.id,
-        planId,
-        step13.billingCycle
-      );
+      const userId = session.user.id;
 
-      // Reset store and redirect to home
-      // reset();
-      router.replace("/(tabs)");
+      // Scenario C: Studio plan - navigate to checkout screen
+      if (isStudio || action === 'studio') {
+        router.push('/(auth)/artist-registration/checkout');
+        return;
+      }
+
+      // Scenario A: Start free trial (Premium plan)
+      if (action === 'trial') {
+        // Check if user already has active subscription
+        const hasActive = await SubscriptionService.hasActiveSubscription(userId);
+        if (hasActive) {
+          toast.success("You already have an active subscription");
+          router.replace("/(tabs)");
+          return;
+        }
+
+        // Create trial subscription
+        await SubscriptionService.createUserSubscription(
+          userId,
+          planId,
+          step13.billingCycle,
+          true // isTrial: true
+        );
+
+        toast.success("Free trial started! Enjoy Premium features for 30 days.");
+        router.replace("/(tabs)");
+        return;
+      }
+
+      // Scenario B: Buy Premium (immediate payment)
+      if (action === 'buy') {
+        // Get Stripe price ID based on billing cycle
+        const isYearly = step13.billingCycle === 'YEARLY';
+        const priceId = isYearly ? picked.stripeYearlyPriceId : picked.stripeMonthlyPriceId;
+
+        if (!priceId) {
+          throw new Error("Stripe price ID not configured for this plan. Please contact support.");
+        }
+
+        // Determine plan type
+        const planType = getPlanTypeFromName(picked.name);
+        const cycle = step13.billingCycle;
+
+        // Create checkout session
+        const checkoutUrl = await PaymentService.createCheckoutSession({
+          priceId,
+          userId,
+          planType,
+          cycle,
+          returnToApp: true,
+        });
+
+        // Open Stripe checkout URL
+        const supported = await Linking.canOpenURL(checkoutUrl);
+        if (supported) {
+          await Linking.openURL(checkoutUrl);
+        } else {
+          throw new Error(`Cannot open URL: ${checkoutUrl}`);
+        }
+        return;
+      }
     } catch (error) {
       logger.error("Subscription error:", error);
 
       // Extract meaningful error message
-      let errorMessage = "Failed to create subscription. Please try again.";
+      let errorMessage = "Failed to process subscription. Please try again.";
 
       if (error instanceof Error) {
         // Check for specific error patterns
@@ -161,8 +210,7 @@ export default function ArtistStep13V2() {
           error.message.includes("duplicate") ||
           error.message.includes("already exists")
         ) {
-          errorMessage =
-            "Some information already exists. Your profile has been updated.";
+          errorMessage = "You already have an active subscription.";
         } else if (
           error.message.includes("foreign key") ||
           error.message.includes("violates")
@@ -406,47 +454,73 @@ export default function ArtistStep13V2() {
 
                   {/* CTAs */}
                   <View style={{ marginTop: mvs(16) }}>
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      onPress={() => handleSubscribe(plan.id)}
-                      disabled={submitting}
-                      style={{
-                        backgroundColor: "#AE0E0E",
-                        paddingVertical: mvs(12),
-                        borderRadius: 38,
-                        alignItems: "center",
-                      }}
-                    >
-                      <ScaledText
-                        allowScaling={false}
-                        variant="body2"
-                        style={{ color: "#FFFFFF" }}
-                        className="font-neueMedium"
-                      >
-                        {submitting ? "Saving..." : showTrialCta ? "Start free trial" : "Get started"}
-                      </ScaledText>
-                    </TouchableOpacity>
+                    {showTrialCta ? (
+                      <>
+                        {/* Start free trial button */}
+                        <TouchableOpacity
+                          activeOpacity={0.9}
+                          onPress={() => handleSubscribe(plan.id, 'trial')}
+                          disabled={submitting}
+                          style={{
+                            backgroundColor: "#AE0E0E",
+                            paddingVertical: mvs(12),
+                            borderRadius: 38,
+                            alignItems: "center",
+                          }}
+                        >
+                          <ScaledText
+                            allowScaling={false}
+                            variant="body2"
+                            style={{ color: "#FFFFFF" }}
+                            className="font-neueMedium"
+                          >
+                            {submitting ? "Saving..." : "Start free trial"}
+                          </ScaledText>
+                        </TouchableOpacity>
 
-                    {/* {showTrialCta && (
+                        {/* Buy Premium button */}
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleSubscribe(plan.id, 'buy')}
+                          disabled={submitting}
+                          style={{
+                            paddingVertical: mvs(10),
+                            alignItems: "center",
+                          }}
+                        >
+                          <ScaledText
+                            allowScaling={false}
+                            variant="body2"
+                            style={{ color: "#AE0E0E" }}
+                            className="font-neueMedium"
+                          >
+                            {submitting ? "Processing..." : "Buy Premium"}
+                          </ScaledText>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      /* Studio plan - Get started button */
                       <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => handleSubscribe(plan.id)}
+                        activeOpacity={0.9}
+                        onPress={() => handleSubscribe(plan.id, 'studio')}
                         disabled={submitting}
                         style={{
-                          paddingVertical: mvs(10),
+                          backgroundColor: "#AE0E0E",
+                          paddingVertical: mvs(12),
+                          borderRadius: 38,
                           alignItems: "center",
                         }}
                       >
                         <ScaledText
                           allowScaling={false}
                           variant="body2"
-                          style={{ color: "#AE0E0E" }}
+                          style={{ color: "#FFFFFF" }}
                           className="font-neueMedium"
                         >
-                          {submitting ? "Saving..." : "Buy Premium"}
+                          {submitting ? "Processing..." : "Get started"}
                         </ScaledText>
                       </TouchableOpacity>
-                    )} */}
+                    )}
                   </View>
                   </LinearGradient>
                 </TouchableOpacity>

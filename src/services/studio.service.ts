@@ -14,7 +14,7 @@ import { supabase } from "@/utils/supabase";
 
 /**
  * Fetch studio information for an artist user
- * Priority: 1) Check if artist owns a studio, 2) Check if artist is a member of a studio
+ * Only returns studios where the user is the owner
  * Returns studio details and user's role in the studio (only one studio for now)
  */
 export async function fetchArtistStudio(userId: string): Promise<StudioInfo | null> {
@@ -31,7 +31,7 @@ export async function fetchArtistStudio(userId: string): Promise<StudioInfo | nu
       return null;
     }
 
-    // 2. PRIORITY 1: Check if artist owns a studio
+    // 2. Check if artist owns a studio
     const { data: ownedStudio, error: ownedStudioError } = await supabase
       .from('studios')
       .select('id, name, isCompleted, ownerId')
@@ -48,38 +48,8 @@ export async function fetchArtistStudio(userId: string): Promise<StudioInfo | nu
       };
     }
 
-    // 3. PRIORITY 2: If no owned studio, check if artist is a member of any studio
-    const { data: memberRecord, error: memberError } = await supabase
-      .from('studio_members')
-      .select('studioId, role')
-      .eq('userId', userId)
-      .eq('isActive', true)
-      .limit(1)
-      .single();
-
-    if (memberError || !memberRecord) {
-      // No studio found - artist is neither owner nor member
-      return null;
-    }
-
-    // Artist is a member of a studio - fetch studio details separately
-    const { data: studio, error: studioError } = await supabase
-      .from('studios')
-      .select('id, name, isCompleted')
-      .eq('id', memberRecord.studioId)
-      .single();
-
-    if (studioError || !studio) {
-      console.error('Error fetching studio details for member:', studioError);
-      return null;
-    }
-
-    return {
-      id: studio.id,
-      name: studio.name,
-      isCompleted: studio.isCompleted,
-      userRole: memberRecord.role as 'OWNER' | 'MANAGER' | 'MEMBER',
-    };
+    // No studio found - artist is not an owner
+    return null;
   } catch (error) {
     console.error('Error in fetchArtistStudio:', error);
     return null;

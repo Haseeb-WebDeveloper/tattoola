@@ -1,4 +1,5 @@
 import { supabase } from '@/utils/supabase';
+import SUPABASE_FUNCTIONS_NAMES from '@/constants/supabase';
 
 // Simple UUID generator for React Native
 function generateUUID(): string {
@@ -29,7 +30,8 @@ export interface SubscriptionPlan {
   };
   monthlyPrice: number;
   yearlyPrice: number;
-  priority: number;
+  stripeMonthlyPriceId?: string;
+  stripeYearlyPriceId?: string;
   isActive: boolean;
   isDefault: boolean;
   freeTrialDays: number;
@@ -41,7 +43,7 @@ export class SubscriptionService {
       .from('subscription_plans')
       .select('*')
       .eq('isActive', true)
-      .order('priority', { ascending: true });
+      .order('createdAt', { ascending: false });
 
     if (error) {
       console.error('Error fetching subscription plans:', error);
@@ -54,7 +56,8 @@ export class SubscriptionService {
   static async createUserSubscription(
     userId: string,
     planId: string,
-    billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY'
+    billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY',
+    isTrial: boolean = false
   ): Promise<void> {
     const { data: plan, error: planError } = await supabase
       .from('subscription_plans')
@@ -67,39 +70,70 @@ export class SubscriptionService {
     }
 
     const startDate = new Date();
-    const endDate = new Date();
-    
-    if (billingCycle === 'YEARLY') {
-      endDate.setFullYear(endDate.getFullYear() + 1);
+    let endDate = new Date();
+    let trialEndsAt: Date | null = null;
+
+    if (isTrial) {
+      // For trial subscriptions, use freeTrialDays from plan
+      const trialDays = plan.freeTrialDays || 30;
+      trialEndsAt = new Date(startDate);
+      trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
+      endDate = new Date(trialEndsAt); // End date is same as trial end date
     } else {
-      endDate.setMonth(endDate.getMonth() + 1);
+      // For paid subscriptions, calculate based on billing cycle
+      if (billingCycle === 'YEARLY') {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
     }
 
-    // Add free trial days if available
-    if (plan.freeTrialDays > 0) {
-      endDate.setDate(endDate.getDate() + plan.freeTrialDays);
+    const subscriptionData: any = {
+      id: generateUUID(),
+      userId,
+      planId,
+      status: 'ACTIVE',
+      billingCycle,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      isTrial,
+      isFree: false,
+      isAdminAssigned: false,
+      autoRenew: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Add trialEndsAt only if it's a trial
+    if (isTrial && trialEndsAt) {
+      subscriptionData.trialEndsAt = trialEndsAt.toISOString();
     }
 
     const { error: subscriptionError } = await supabase
       .from('user_subscriptions')
-      .insert({
-        id: generateUUID(),
-        userId,
-        planId,
-        status: 'ACTIVE',
-        billingCycle,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        isAdminAssigned: false,
-        autoRenew: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+      .insert(subscriptionData);
 
     if (subscriptionError) {
       console.error('Error creating user subscription:', subscriptionError);
       throw new Error(subscriptionError.message);
     }
+  }
+
+  static async hasActiveSubscription(userId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('id')
+      .eq('userId', userId)
+      .eq('status', 'ACTIVE')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking active subscription:', error);
+      return false;
+    }
+
+    return !!data;
   }
 
   static async getActiveSubscriptionWithPlan() {
@@ -120,15 +154,55 @@ export class SubscriptionService {
   }
 
   static async toggleAutoRenew(subscriptionId: string, autoRenew: boolean) {
+    // First, update database
     const { data, error } = await supabase
       .from('user_subscriptions')
       .update({ autoRenew, updatedAt: new Date().toISOString() })
       .eq('id', subscriptionId)
       .select()
       .single();
+    
     if (error) throw new Error(error.message);
+
+    // If subscription has Stripe ID, sync with Stripe via Edge Function
+    if (data?.stripeSubscriptionId) {
+      try {
+        const { error: functionError } = await supabase.functions.invoke(
+          SUPABASE_FUNCTIONS_NAMES.UPDATE_SUBSCRIPTION,
+          {
+            body: {
+              subscriptionId,
+              autoRenew,
+            },
+          }
+        );
+
+        if (functionError) {
+          console.error('Failed to sync with Stripe:', functionError);
+          // Don't throw - database update succeeded, Stripe will sync via webhook
+        }
+      } catch (err) {
+        console.error('Error calling update-subscription function:', err);
+        // Don't throw - database update succeeded, Stripe will sync via webhook
+      }
+    }
+
     return data;
   }
 }
 
 export const subscriptionService = new SubscriptionService();
+
+/**
+ * Determine plan type (PREMIUM or STUDIO) from plan name
+ * @param planName The name of the subscription plan
+ * @returns 'PREMIUM' or 'STUDIO'
+ */
+export function getPlanTypeFromName(planName: string): 'PREMIUM' | 'STUDIO' {
+  const nameLower = planName.toLowerCase();
+  if (nameLower.includes('studio')) {
+    return 'STUDIO';
+  }
+  // Default to PREMIUM if not studio
+  return 'PREMIUM';
+}

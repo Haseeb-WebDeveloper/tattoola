@@ -186,6 +186,61 @@ export function initializeDeepLinking() {
         return;
       }
 
+      // Case 3.5: Payment success/cancel links
+      // if (url.includes("payment/success") || url.includes("payment/cancel")) {
+      //   const sessionId = urlObj.searchParams.get("session_id");
+      //   const isSuccess = url.includes("payment/success");
+
+      //   logger.log(
+      //     `Deep link: Payment ${isSuccess ? "success" : "cancel"}`,
+      //     sessionId ? `Session ID: ${sessionId}` : "No session ID"
+      //   );
+
+      //   // Get user session to check if authenticated
+      //   const { data: sessionData } = await supabase.auth.getSession();
+
+      //   if (isSuccess) {
+      //     // Payment successful - navigate to appropriate screen
+      //     if (sessionData?.session?.user) {
+      //       // Check if user has completed profile
+      //       const authUser: any = sessionData.session.user;
+      //       const { data: existingUser } = await supabase
+      //         .from("users")
+      //         .select("id, firstName")
+      //         .eq("id", authUser.id)
+      //         .maybeSingle();
+
+      //       const hasCompletedProfile = !!(existingUser && existingUser.firstName);
+
+      //       // Small delay to allow any webhook processing
+      //       setTimeout(() => {
+      //         if (hasCompletedProfile) {
+      //           // User has profile - go to home
+      //           router.replace("/(tabs)");
+      //         } else {
+      //           // User doesn't have profile - likely completing registration
+      //           // Stay on current screen or navigate to next registration step
+      //           // The webhook will handle subscription creation
+      //           router.replace("/(auth)/artist-registration/checkout" as any);
+      //         }
+      //       }, 500);
+      //     } else {
+      //       // Not authenticated - redirect to login
+      //       router.replace("/(auth)/login");
+      //     }
+      //   } else {
+      //     // Payment cancelled - stay on checkout screen or go back
+      //     // The user is already on the checkout screen, so we can just show a message
+      //     // or navigate back if needed
+      //     if (sessionData?.session?.user) {
+      //       router.replace("/(auth)/artist-registration/checkout" as any);
+      //     } else {
+      //       router.replace("/(auth)/login");
+      //     }
+      //   }
+      //   return;
+      // }
+
       // Case 4: Just opened via deep link (no code/token) - check if user has session
       const { data: sessionData } = await supabase.auth.getSession();
 

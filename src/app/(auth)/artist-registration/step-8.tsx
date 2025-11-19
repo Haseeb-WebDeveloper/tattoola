@@ -5,6 +5,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { AR_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
+import { SubscriptionService } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step8Schema } from "@/utils/artistRegistrationValidation";
 import { mvs, s } from "@/utils/scale";
@@ -72,12 +73,24 @@ export default function ArtistStep8V2() {
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [infoVisible, setInfoVisible] = useState(false);
+  const [maxFavoriteStyles, setMaxFavoriteStyles] = useState(AR_MAX_FAVORITE_STYLES);
 
   useEffect(() => {
     setCurrentStepDisplay(8);
     let mounted = true;
     (async () => {
       try {
+        // Fetch plan limits (will fallback to AR_MAX_FAVORITE_STYLES if no subscription)
+        try {
+          const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
+          if (subscription?.subscription_plans?.maxFavoritesStyles) {
+            if (mounted) setMaxFavoriteStyles(subscription.subscription_plans.maxFavoritesStyles);
+          }
+        } catch (e) {
+          // No subscription yet (normal during registration) - use default
+          console.log("No active subscription, using default limits");
+        }
+
         const data = await fetchTattooStyles();
         if (mounted) setStyles(data);
       } catch (e) {
@@ -92,7 +105,7 @@ export default function ArtistStep8V2() {
   }, []);
 
   const selected = step8.favoriteStyles || [];
-  const canSelectMore = selected.length < AR_MAX_FAVORITE_STYLES;
+  const canSelectMore = selected.length < maxFavoriteStyles;
 
   const canProceed = isValid(step8Schema, {
     favoriteStyles: selected,
@@ -134,7 +147,7 @@ export default function ArtistStep8V2() {
             paddingVertical: mvs(6),
             paddingRight: s(16),
           }}
-          onPress={() => toggleFavoriteStyle(item.id, AR_MAX_FAVORITE_STYLES)}
+          onPress={() => toggleFavoriteStyle(item.id, maxFavoriteStyles)}
         >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />

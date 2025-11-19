@@ -2,6 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchArtistStudio } from "@/services/studio.service";
+import { SubscriptionService } from "@/services/subscription.service";
 import { StudioInfo } from "@/types/studio";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,6 +11,7 @@ import React, { useEffect, useState } from "react";
 import {
   Animated,
   ImageBackground,
+  Modal,
   ScrollView,
   TouchableOpacity,
   View,
@@ -358,6 +360,8 @@ export default function StudioSettingsScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [studio, setStudio] = useState<StudioInfo | null>(null);
+  const [userPlanType, setUserPlanType] = useState<"PREMIUM" | "STUDIO" | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -377,26 +381,69 @@ export default function StudioSettingsScreen() {
     loadStudio();
   }, [user?.id]);
 
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      if (!user?.id || user?.role !== "ARTIST") return;
+      
+      try {
+        const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
+        if (subscription?.subscription_plans?.type) {
+          setUserPlanType(subscription.subscription_plans.type);
+        }
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+      }
+    };
+
+    fetchUserSubscription();
+  }, [user]);
+
   const handleBack = () => {
     router.back();
   };
 
+  const handleLockedFeature = () => {
+    if (userPlanType === "PREMIUM") {
+      setShowUpgradeModal(true);
+    }
+  };
+
   const handleStudioPagePress = () => {
+    if (userPlanType === "PREMIUM") {
+      setShowUpgradeModal(true);
+      return;
+    }
     router.push("/settings/studio/profile" as any);
   };
 
   const handleArtistsPress = () => {
+    if (userPlanType === "PREMIUM") {
+      setShowUpgradeModal(true);
+      return;
+    }
     router.push("/settings/studio/artists" as any);
   };
 
   const handlePhotosPress = () => {
+    if (userPlanType === "PREMIUM") {
+      setShowUpgradeModal(true);
+      return;
+    }
     router.push("/settings/studio/photos" as any);
   };
 
   const handleSetupPress = () => {
+    if (userPlanType === "PREMIUM") {
+      setShowUpgradeModal(true);
+      return;
+    }
     router.push("/settings/studio/step-0" as any);
   };
   const handleStudioPageViewPress = (id: string | undefined) => {
+    if (userPlanType === "PREMIUM") {
+      setShowUpgradeModal(true);
+      return;
+    }
     if (!id) {
       router.push("/settings/studio/profile" as any);
       return;
@@ -404,13 +451,21 @@ export default function StudioSettingsScreen() {
     router.push(`/studio/${id}` as any);
   };
 
+  const handleUpgradePress = () => {
+    setShowUpgradeModal(false);
+    router.push("/settings/subscription" as any);
+  };
+
   const showSetupCard =
     !loading &&
+    userPlanType === "STUDIO" &&
     (!studio ||
       (!studio.isCompleted &&
         (studio.userRole === "OWNER" || studio.userRole === "MANAGER")));
 
   const showStudioItems = !loading && studio;
+  
+  const showPremiumMessage = !loading && !studio && userPlanType === "PREMIUM";
 
   return (
     <View className="flex-1 bg-background">
@@ -487,12 +542,148 @@ export default function StudioSettingsScreen() {
           {/* Setup Card - Show when no studio OR incomplete studio for OWNER/MANAGER */}
           {showSetupCard ? (
             <SetupCard onPress={handleSetupPress} />
+          ) : showPremiumMessage ? (
+            <View
+              style={{
+                marginHorizontal: s(16),
+                marginTop: mvs(10),
+                marginBottom: mvs(24),
+                borderRadius: s(20),
+                padding: s(24),
+                borderWidth: s(1),
+                borderColor: "#a49a99",
+              }}
+              className="bg-tat-darkMaroon"
+            >
+              <View className="items-center" style={{ marginBottom: mvs(12) }}>
+                <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+              </View>
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueBold text-center"
+                style={{ marginBottom: mvs(8) }}
+              >
+                Studio Features Locked
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-gray font-neueMedium text-center"
+                style={{ marginBottom: mvs(16) }}
+              >
+                You don't have STUDIO plan. Please subscribe to Studio plan to get access to Studio features.
+              </ScaledText>
+              <TouchableOpacity
+                onPress={handleUpgradePress}
+                activeOpacity={0.85}
+                style={{
+                  borderRadius: s(100),
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingVertical: mvs(10.5),
+                  paddingHorizontal: s(20),
+                }}
+                className="bg-primary"
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="font-neueSemibold text-white"
+                >
+                  Upgrade to Studio
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
           ) : (
             <LiveCard onPress={() => handleStudioPageViewPress(studio?.id)} />
           )}
           {/* handleStudioPagePress */}
         </ScrollView>
       </LinearGradient>
+
+      {/* Upgrade Modal */}
+      <Modal
+        visible={showUpgradeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUpgradeModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(28)} height={s(28)} />
+            </View>
+
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Studio Features Locked
+            </ScaledText>
+
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(32) }}
+            >
+              You don't have STUDIO plan. Please subscribe to Studio plan to get access to Studio features.
+            </ScaledText>
+
+            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+              <TouchableOpacity
+                onPress={handleUpgradePress}
+                className="rounded-full items-center justify-center flex-row"
+                style={{
+                  backgroundColor: "#AE0E0E",
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="font-montserratMedium text-foreground"
+                >
+                  Upgrade to Studio
+                </ScaledText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowUpgradeModal(false)}
+                className="rounded-full items-center justify-center"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-montserratMedium"
+                >
+                  Cancel
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

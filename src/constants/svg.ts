@@ -33,6 +33,8 @@ import Certificate from "@/assets/icons/certificate.svg";
 // @ts-ignore
 import Upload from "@/assets/icons/upload.svg";
 // @ts-ignore
+import Download from "@/assets/icons/download.svg";
+// @ts-ignore
 import Heart from "@/assets/icons/heart.svg";
 // @ts-ignore
 import Star from "@/assets/icons/star.svg";
@@ -161,6 +163,8 @@ import MailSent from "@/assets/icons/mail-sent.svg";
 // @ts-ignore
 import Reload from "@/assets/icons/reload.svg";
 // @ts-ignore
+import ReloadGreen from "@/assets/icons/reload-green.svg";
+// @ts-ignore
 import EyeClose from "@/assets/icons/eye-close.svg";
 // @ts-ignore
 import EyeOpen from "@/assets/icons/eye-open.svg";
@@ -226,6 +230,8 @@ import Mastercard from "@/assets/icons/master-card.svg";
 import Link from "@/assets/icons/link.svg";
 // @ts-ignore
 import Pending from "@/assets/icons/pending.svg";
+// @ts-ignore
+import AutoPlay from "@/assets/icons/auto-play.svg";
 
 
 export const SVGIcons = {
@@ -306,6 +312,7 @@ export const SVGIcons = {
   Pen3,
   MailSent,
   Reload,
+  ReloadGreen,
   EyeClose,
   EyeOpen,
   Home,
@@ -343,6 +350,8 @@ export const SVGIcons = {
   Mastercard,
   Link,
   Pending,
+  AutoPlay,
+  Download,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

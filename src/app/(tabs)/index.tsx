@@ -7,10 +7,12 @@ import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect } from "react";
 import {
+  useWindowDimensions,
+  View,
   FlatList,
   RefreshControl,
-  useWindowDimensions,
-  View
+  TouchableOpacity,
+  Text
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 

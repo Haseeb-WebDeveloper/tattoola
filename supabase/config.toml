@@ -1,0 +1,5 @@
+# Supabase Configuration
+
+[functions.expire-trials]
+schedule = "0 0 * * *"  # Daily at midnight UTC
+

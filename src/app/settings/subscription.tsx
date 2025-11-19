@@ -1,55 +1,82 @@
+import FeatureDetailsModal from "@/components/billing/FeatureDetailsModal";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { SubscriptionService } from "@/services/subscription.service";
+import { PaymentService } from "@/services/payment.service";
+import {
+  SubscriptionService,
+  getPlanTypeFromName,
+} from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Linking,
+  Modal,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
 export default function SettingsSubscription() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sub, setSub] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<
+    "MONTHLY" | "YEARLY"
+  >("MONTHLY");
+  const [upgrading, setUpgrading] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<any>(null);
   const { updateStep13 } = useArtistRegistrationV2Store();
+
+  const loadSubscription = async () => {
+    try {
+      const [data, allPlans] = await Promise.all([
+        SubscriptionService.getActiveSubscriptionWithPlan(),
+        SubscriptionService.fetchSubscriptionPlans(),
+      ]);
+      setSub(data);
+      setPlans(allPlans);
+      // Set initial billing cycle from current subscription
+      if (data?.billingCycle) {
+        setSelectedBillingCycle(data.billingCycle);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to load subscription");
+    }
+  };
 
   useEffect(() => {
     (async () => {
-      try {
-        const [data, allPlans] = await Promise.all([
-          SubscriptionService.getActiveSubscriptionWithPlan(),
-          SubscriptionService.fetchSubscriptionPlans(),
-        ]);
-        setSub(data);
-        setPlans(allPlans);
-      } catch (e: any) {
-        toast.error(e?.message || "Failed to load subscription");
-      } finally {
-        setLoading(false);
-      }
+      await loadSubscription();
+      setLoading(false);
     })();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadSubscription();
+    setRefreshing(false);
+  };
 
   const toggleAutoRenew = async () => {
     if (!sub) return;
     setSaving(true);
-    const prev = sub.autoRenew;
-    setSub({ ...sub, autoRenew: !prev });
     try {
-      await SubscriptionService.toggleAutoRenew(sub.id, !prev);
+      await SubscriptionService.toggleAutoRenew(sub.id, !sub.autoRenew);
+      setSub({ ...sub, autoRenew: !sub.autoRenew });
     } catch (e: any) {
-      setSub({ ...sub, autoRenew: prev });
       toast.error(e?.message || "Failed to update auto-renew");
     } finally {
       setSaving(false);
@@ -105,6 +132,121 @@ export default function SettingsSubscription() {
   const plan = sub?.subscription_plans;
   const isTrial = !!sub?.isTrial && sub?.trialEndsAt;
   const nextDate = isTrial ? sub?.trialEndsAt : sub?.endDate;
+  const isCancelled =
+    sub?.cancelAtPeriodEnd === true || sub?.autoRenew === false;
+
+  // Find opposite plan (if Premium, show Studio; if Studio, show Premium)
+  const oppositePlan = plans.find((p) => p.id !== sub?.planId);
+  const isYearly = selectedBillingCycle === "YEARLY";
+  const currentIsMonthly = sub?.billingCycle === "MONTHLY";
+
+  const handleUpgradeToYearly = async () => {
+    if (!sub || !plan) return;
+    setUpgrading(true);
+    try {
+      // Get current user ID from session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      const priceId = plan.stripeYearlyPriceId;
+      if (!priceId) {
+        throw new Error("Stripe price ID not configured for yearly plan");
+      }
+
+      const planType = getPlanTypeFromName(plan.name);
+      const checkoutUrl = await PaymentService.createCheckoutSession({
+        priceId,
+        userId: session.user.id,
+        planType,
+        cycle: "YEARLY",
+        returnToApp: true,
+      });
+
+      const supported = await Linking.canOpenURL(checkoutUrl);
+      if (supported) {
+        await Linking.openURL(checkoutUrl);
+      } else {
+        throw new Error(`Cannot open URL: ${checkoutUrl}`);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to start upgrade");
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const handleUpgradeToOtherPlan = () => {
+    if (!oppositePlan || !sub) return;
+    // Ensure we use the selected billing cycle from the toggle
+    // Use the current state value explicitly
+    const billingCycle: "MONTHLY" | "YEARLY" =
+      selectedBillingCycle || "MONTHLY";
+
+    // Update store with both plan ID and billing cycle
+    updateStep13({
+      selectedPlanId: oppositePlan.id,
+      billingCycle: billingCycle,
+    });
+    router.push("/(auth)/artist-registration/checkout");
+  };
+
+  const handleSubscribeFromNoSubscription = (planId: string) => {
+    if (!planId) return;
+    // Ensure we use the selected billing cycle from the toggle
+    const billingCycle: "MONTHLY" | "YEARLY" =
+      selectedBillingCycle || "MONTHLY";
+
+    // Update store with both plan ID and billing cycle
+    updateStep13({
+      selectedPlanId: planId,
+      billingCycle: billingCycle,
+    });
+    router.push("/(auth)/artist-registration/checkout");
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!sub) return;
+    setCancelling(true);
+    try {
+      await SubscriptionService.toggleAutoRenew(sub.id, false);
+      toast.success("Subscription cancelled successfully");
+      // Add a small delay to ensure database updates are reflected
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await loadSubscription();
+      setShowCancelModal(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to cancel subscription");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleResumeSubscription = async () => {
+    if (!sub) return;
+    setCancelling(true);
+    try {
+      await SubscriptionService.toggleAutoRenew(sub.id, true);
+      toast.success("Subscription resumed successfully");
+      // Add a small delay to ensure database updates are reflected
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await loadSubscription();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to resume subscription");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleFeaturePress = (feature: any) => {
+    if (feature.details) {
+      setSelectedFeature(feature);
+      setShowFeatureModal(true);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -123,7 +265,6 @@ export default function SettingsSubscription() {
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
-            marginBottom: mvs(24),
           }}
         >
           <TouchableOpacity
@@ -147,8 +288,12 @@ export default function SettingsSubscription() {
           contentContainerStyle={{
             paddingHorizontal: s(16),
             paddingBottom: mvs(32),
-            gap: mvs(16),
+            gap: mvs(12),
+            marginTop: mvs(24),
           }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           {/* Status block */}
           <View>
@@ -163,13 +308,37 @@ export default function SettingsSubscription() {
             {loading ? (
               <PlanCardSkeleton />
             ) : !sub ? (
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-gray"
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderRadius: s(8),
+                  padding: s(14),
+                }}
+                className="bg-tat-darkMaroon border-gray"
               >
-                No active subscription
-              </ScaledText>
+                <View
+                  className="items-center"
+                  style={{ marginBottom: mvs(12) }}
+                >
+                  <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+                </View>
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueBold text-center"
+                  style={{ marginBottom: mvs(8) }}
+                >
+                  You haven't subscribed to any plan
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-gray font-neueMedium text-center"
+                >
+                  Please subscribe to a plan otherwise your profile will not
+                  show to public.
+                </ScaledText>
+              </View>
             ) : (
               <View
                 style={{
@@ -201,6 +370,7 @@ export default function SettingsSubscription() {
                     {sub?.isTrial ? "(trial)" : ""}
                   </ScaledText>
                 </View>
+
                 <View
                   className="flex-row items-end justify-start"
                   style={{ columnGap: s(4) }}
@@ -224,7 +394,12 @@ export default function SettingsSubscription() {
                       variant="11"
                       className="text-foreground font-neueLight"
                     >
-                      ({isTrial ? "Renews on" : "Renews on"}{" "}
+                      (
+                      {isCancelled
+                        ? "Ends on"
+                        : isTrial
+                          ? "Renews on"
+                          : "Renews on"}{" "}
                       {new Date(nextDate).toLocaleDateString(undefined, {
                         day: "2-digit",
                         month: "long",
@@ -234,210 +409,514 @@ export default function SettingsSubscription() {
                     </ScaledText>
                   ) : null}
                 </View>
+
+                {/* <TouchableOpacity
+                  onPress={toggleAutoRenew}
+                  disabled={saving}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    columnGap: s(6),
+                    marginTop: mvs(8),
+                  }}
+                >
+                  <SVGIcons.AutoPlay
+                    width={s(17)}
+                    height={s(17)}
+                    className={`${saving ? "animate-spin" : ""}`}
+                  />
+                  <ScaledText
+                    allowScaling={false}
+                    variant="11"
+                    className="text-foreground font-neueMedium"
+                  >
+                    {saving
+                      ? "Saving..."
+                      : sub?.autoRenew
+                        ? "Autopay enabled"
+                        : "Autopay disabled"}
+                  </ScaledText>
+                </TouchableOpacity> */}
               </View>
             )}
           </View>
 
           {sub?.endDate ? (
-            <ScaledText
-              allowScaling={false}
-              variant="11"
-              className="text-gray font-neueMedium"
-            >
-              Expires on{" "}
-              {new Date(sub.endDate).toLocaleDateString(undefined, {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-            </ScaledText>
+            <>
+              <ScaledText
+                allowScaling={false}
+                variant="11"
+                className="text-gray font-neueMedium"
+              >
+                Expires on{" "}
+                {new Date(sub.endDate).toLocaleDateString(undefined, {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+                {sub?.autoRenew && sub?.plan ? (
+                  <ScaledText
+                    allowScaling={false}
+                    variant="11"
+                    className="text-green font-neueMedium"
+                    style={{ marginTop: mvs(5) }}
+                  >
+                    {`Renews automatically at €${sub.plan.price} / ${sub.plan.billingPeriod?.toLowerCase() || selectedBillingCycle.toLowerCase()}`}
+                  </ScaledText>
+                ) : null}
+              </ScaledText>
+              {isCancelled && (
+                <View
+                  style={{
+                    marginTop: mvs(8),
+                    padding: s(12),
+                    borderRadius: s(8),
+                    backgroundColor: "rgba(174, 14, 14, 0.1)",
+                    borderWidth: 1,
+                    borderColor: "#AE0E0E",
+                  }}
+                >
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-error font-neueMedium text-center"
+                  >
+                    Your subscription is cancelled
+                  </ScaledText>
+                </View>
+              )}
+            </>
           ) : null}
+          {sub && (
+            <View
+              style={{
+                marginTop: mvs(12),
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              {currentIsMonthly && !isTrial && (
+                <TouchableOpacity
+                  onPress={handleUpgradeToYearly}
+                  disabled={upgrading}
+                  className="flex-row items-center justify-center"
+                  style={{ columnGap: s(4) }}
+                >
+                  <SVGIcons.Reload width={s(17)} height={s(17)} />
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-foreground font-montserratSemibold"
+                  >
+                    {upgrading ? "Processing..." : "Upgrade to yearly"}
+                  </ScaledText>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={
+                  isCancelled
+                    ? handleResumeSubscription
+                    : () => setShowCancelModal(true)
+                }
+                disabled={cancelling}
+                className="flex-row items-center justify-center"
+                style={{ columnGap: s(4), opacity: cancelling ? 0.6 : 1 }}
+              >
+                {isCancelled ? (
+                  <>
+                    <SVGIcons.ReloadGreen width={s(16)} height={s(16)} />
+                    <ScaledText
+                      allowScaling={false}
+                      variant="sm"
+                      className="text-success font-montserratSemibold"
+                    >
+                      {cancelling ? "Resuming..." : "Resume subscription"}
+                    </ScaledText>
+                  </>
+                ) : (
+                  <>
+                    <SVGIcons.CloseRed width={s(16)} height={s(16)} />
+                    <ScaledText
+                      allowScaling={false}
+                      variant="sm"
+                      className="text-error font-montserratSemibold"
+                    >
+                      Cancel subscription
+                    </ScaledText>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Line */}
           <View
-            style={{
-              marginTop: mvs(12),
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+            className="h-[0.5px] bg-gray"
+            style={{ marginVertical: mvs(12) }}
+          />
+
+          {/* Billing Cycle Toggle */}
+          <View
+            className="flex-row items-center justify-center"
+            style={{ marginBottom: mvs(10), gap: mvs(8), marginTop: mvs(12) }}
           >
             <TouchableOpacity
-              onPress={() => setShowCancelModal(true)}
-              className="flex-row items-center justify-center"
-              style={{ columnGap: s(4) }}
+              onPress={() => setSelectedBillingCycle("MONTHLY")}
+              className="rounded-full items-center justify-center"
+              style={{
+                paddingVertical: mvs(5),
+                paddingHorizontal: s(30),
+                minWidth: s(98),
+                borderWidth: 1,
+                borderColor:
+                  selectedBillingCycle === "MONTHLY"
+                    ? "transparent"
+                    : "#a49a99",
+                backgroundColor:
+                  selectedBillingCycle === "MONTHLY"
+                    ? "#AE0E0E"
+                    : "transparent",
+              }}
             >
-              <SVGIcons.CloseRed width={s(16)} height={s(16)} />
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-error font-montserratSemibold"
+                className="text-center font-neueLight"
+                style={{ color: "#FFFFFF" }}
               >
-                Cancel subscription
+                Monthly
               </ScaledText>
             </TouchableOpacity>
-            <View
+            <TouchableOpacity
+              onPress={() => setSelectedBillingCycle("YEARLY")}
+              className="rounded-full items-center justify-center"
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                columnGap: s(10),
+                paddingVertical: mvs(5),
+                paddingHorizontal: s(30),
+                minWidth: s(98),
+                borderWidth: 1,
+                borderColor:
+                  selectedBillingCycle === "YEARLY" ? "transparent" : "#a49a99",
+                backgroundColor:
+                  selectedBillingCycle === "YEARLY" ? "#AE0E0E" : "transparent",
               }}
             >
               <ScaledText
                 allowScaling={false}
-                variant="body2"
-                className="font-neueMedium"
+                variant="sm"
+                className="text-center font-neueLight"
                 style={{ color: "#FFFFFF" }}
               >
-                Auto-renew
+                Annually
               </ScaledText>
-              <TouchableOpacity
-                onPress={toggleAutoRenew}
-                disabled={saving}
-                className={sub?.autoRenew ? "bg-primary" : "bg-gray/40"}
-                style={{
-                  paddingVertical: mvs(8),
-                  paddingHorizontal: s(16),
-                  borderRadius: 999,
-                }}
-              >
-                <ScaledText
-                  allowScaling={false}
-                  variant="sm"
-                  className="font-neueMedium"
-                  style={{ color: "#FFFFFF" }}
-                >
-                  {saving ? "Saving..." : sub?.autoRenew ? "On" : "Off"}
-                </ScaledText>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
 
-          {/* Current plan card + Upgrade CTA */}
-          {!loading && sub && (
-            <View
-              className="rounded-2xl"
-              style={{
-                borderWidth: 1,
-                borderColor: "#a49a99",
-                borderRadius: s(8),
-                marginTop: mvs(24),
-              }}
-            >
-              <LinearGradient
-                colors={["#FFFFFF", "#FFCACA"]}
-                locations={[0.0095, 0.995]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  borderRadius: s(8),
-                  paddingVertical: mvs(16),
-                  paddingHorizontal: s(16),
-                }}
-              >
-                <View className="mb-4">
-                  <View className="flex-row items-center">
-                    <ScaledText
-                      allowScaling={false}
-                      variant="20"
-                      className="font-neueMedium"
-                    >
-                      Piano
-                    </ScaledText>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="20"
-                      className="font-neueMedium"
-                      style={{ color: "#AE0E0E", marginLeft: s(6) }}
-                    >
-                      {plan?.name}
-                    </ScaledText>
-                  </View>
-                  <View className="flex-row items-end mt-2">
-                    <ScaledText
-                      allowScaling={false}
-                      variant="6xl"
-                      className="font-neueBold "
-                      style={{
-                        color: "#080101",
-                        lineHeight: mvs(30),
-                        marginTop: mvs(2),
-                      }}
-                    >
-                      €
-                      {sub?.billingCycle === "YEARLY"
-                        ? plan?.yearlyPrice
-                        : plan?.monthlyPrice}
-                      /
-                    </ScaledText>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="lg"
-                      className="font-neueMedium"
-                      style={{ color: "#080101", marginLeft: s(2) }}
-                    >
-                      {sub?.billingCycle === "YEARLY" ? "year" : "month"}
-                    </ScaledText>
-                  </View>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="11"
-                    className="font-neueLightItalic"
-                    style={{ color: "#080101", marginTop: mvs(6) }}
-                  >
-                    {plan?.description}
-                  </ScaledText>
-                </View>
+          {/* Plans Display */}
+          {!loading && (
+            <>
+              {/* Show all plans when no subscription */}
+              {!sub && plans.length > 0 && (
+                <View style={{ gap: mvs(16) }}>
+                  {plans.map((plan) => {
+                    const planName = (plan.name || "").toLowerCase();
+                    const accentColor = planName.includes("premium")
+                      ? "#f79410"
+                      : planName.includes("studio")
+                        ? "#AE0E0E"
+                        : "#080101";
+                    const price = isYearly
+                      ? plan.yearlyPrice
+                      : plan.monthlyPrice;
+                    const unit = isYearly ? "year" : "month";
 
-                {/* Features */}
-                <View style={{ gap: mvs(8) }}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="11"
-                    className="font-neueSemibold"
-                    style={{ color: "#080101" }}
+                    return (
+                      <View
+                        key={plan.id}
+                        className="rounded-2xl"
+                        style={{
+                          borderWidth: 1,
+                          borderColor: "#a49a99",
+                          borderRadius: s(8),
+                        }}
+                      >
+                        <LinearGradient
+                          colors={["#FFFFFF", "#FFCACA"]}
+                          locations={[0.0095, 0.995]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={{
+                            borderRadius: s(8),
+                            paddingVertical: mvs(16),
+                            paddingHorizontal: s(16),
+                          }}
+                        >
+                          <View className="mb-4">
+                            <View className="flex-row items-center">
+                              <ScaledText
+                                allowScaling={false}
+                                variant="20"
+                                className="font-neueMedium"
+                              >
+                                Piano
+                              </ScaledText>
+                              <ScaledText
+                                allowScaling={false}
+                                variant="20"
+                                className="font-neueMedium"
+                                style={{ color: accentColor, marginLeft: s(6) }}
+                              >
+                                {plan.name}
+                              </ScaledText>
+                            </View>
+                            <View className="flex-row items-end mt-2">
+                              <ScaledText
+                                allowScaling={false}
+                                variant="6xl"
+                                className="font-neueBold "
+                                style={{
+                                  color: "#080101",
+                                  lineHeight: mvs(30),
+                                  marginTop: mvs(2),
+                                }}
+                              >
+                                €{price}/
+                              </ScaledText>
+                              <ScaledText
+                                allowScaling={false}
+                                variant="lg"
+                                className="font-neueMedium"
+                                style={{ color: "#080101", marginLeft: s(2) }}
+                              >
+                                {unit}
+                              </ScaledText>
+                            </View>
+                            <ScaledText
+                              allowScaling={false}
+                              variant="11"
+                              className="font-neueLightItalic"
+                              style={{ color: "#080101", marginTop: mvs(6) }}
+                            >
+                              {plan.description}
+                            </ScaledText>
+                          </View>
+
+                          {/* Features */}
+                          <View style={{ gap: mvs(8) }}>
+                            <ScaledText
+                              allowScaling={false}
+                              variant="11"
+                              className="font-neueSemibold"
+                              style={{ color: "#080101" }}
+                            >
+                              Includes:
+                            </ScaledText>
+                            <View>
+                              {Array.isArray(plan.features) &&
+                              plan.features.length > 0 ? (
+                                plan.features.map(
+                                  (feature: any, idx: number) => (
+                                    <TouchableOpacity
+                                      key={idx}
+                                      onPress={() => handleFeaturePress(feature)}
+                                      disabled={!feature.details}
+                                      activeOpacity={feature.details ? 0.7 : 1}
+                                      className="flex-row items-center mb-1"
+                                    >
+                                      <ScaledText
+                                        allowScaling={false}
+                                        variant="11"
+                                        className="font-neueLight text-foreground"
+                                        style={{
+                                          textDecorationLine: feature.details
+                                            ? "underline"
+                                            : "none",
+                                        }}
+                                      >
+                                        {feature.text}
+                                      </ScaledText>
+                                    </TouchableOpacity>
+                                  )
+                                )
+                              ) : (
+                                <ScaledText
+                                  allowScaling={false}
+                                  variant="11"
+                                  style={{ color: "#080101" }}
+                                >
+                                  No features listed
+                                </ScaledText>
+                              )}
+                            </View>
+                          </View>
+
+                          {/* Subscribe Button */}
+                          <View style={{ marginTop: mvs(8) }}>
+                            <TouchableOpacity
+                              activeOpacity={0.9}
+                              onPress={() =>
+                                handleSubscribeFromNoSubscription(plan.id)
+                              }
+                              className="rounded-full items-center justify-center flex-row"
+                              style={{
+                                backgroundColor: "#AE0E0E",
+                                paddingVertical: mvs(12),
+                                borderRadius: 38,
+                              }}
+                            >
+                              <ScaledText
+                                allowScaling={false}
+                                variant="body2"
+                                style={{ color: "#FFFFFF" }}
+                                className="font-neueMedium"
+                              >
+                                Subscribe
+                              </ScaledText>
+                            </TouchableOpacity>
+                          </View>
+                        </LinearGradient>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Show opposite plan when subscribed */}
+              {sub && oppositePlan && (
+                <View
+                  className="rounded-2xl"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#a49a99",
+                    borderRadius: s(8),
+                  }}
+                >
+                  <LinearGradient
+                    colors={["#FFFFFF", "#FFCACA"]}
+                    locations={[0.0095, 0.995]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      borderRadius: s(8),
+                      paddingVertical: mvs(16),
+                      paddingHorizontal: s(16),
+                    }}
                   >
-                    Includes:
-                  </ScaledText>
-                  <View>
-                    {Array.isArray(plan?.features) &&
-                    plan!.features.length > 0 ? (
-                      plan!.features.map((feature: any, idx: number) => (
-                        <View key={idx} className="flex-row items-center mb-1">
+                    <View className="mb-4">
+                      <View className="flex-row items-center">
+                        <ScaledText
+                          allowScaling={false}
+                          variant="20"
+                          className="font-neueMedium"
+                        >
+                          Piano
+                        </ScaledText>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="20"
+                          className="font-neueMedium"
+                          style={{
+                            color: oppositePlan.name
+                              ?.toLowerCase()
+                              .includes("studio")
+                              ? "#AE0E0E"
+                              : "#f79410",
+                            marginLeft: s(6),
+                          }}
+                        >
+                          {oppositePlan.name}
+                        </ScaledText>
+                      </View>
+                      <View className="flex-row items-end mt-2">
+                        <ScaledText
+                          allowScaling={false}
+                          variant="6xl"
+                          className="font-neueBold "
+                          style={{
+                            color: "#080101",
+                            lineHeight: mvs(30),
+                            marginTop: mvs(2),
+                          }}
+                        >
+                          €
+                          {isYearly
+                            ? oppositePlan.yearlyPrice
+                            : oppositePlan.monthlyPrice}
+                          /
+                        </ScaledText>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="lg"
+                          className="font-neueMedium"
+                          style={{ color: "#080101", marginLeft: s(2) }}
+                        >
+                          {isYearly ? "year" : "month"}
+                        </ScaledText>
+                      </View>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="font-neueLightItalic"
+                        style={{ color: "#080101", marginTop: mvs(6) }}
+                      >
+                        {oppositePlan.description}
+                      </ScaledText>
+                    </View>
+
+                    {/* Features */}
+                    <View style={{ gap: mvs(8) }}>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="font-neueSemibold"
+                        style={{ color: "#080101" }}
+                      >
+                        Includes:
+                      </ScaledText>
+                      <View>
+                        {Array.isArray(oppositePlan.features) &&
+                        oppositePlan.features.length > 0 ? (
+                          oppositePlan.features.map(
+                            (feature: any, idx: number) => (
+                              <TouchableOpacity
+                                key={idx}
+                                onPress={() => handleFeaturePress(feature)}
+                                disabled={!feature.details}
+                                activeOpacity={feature.details ? 0.7 : 1}
+                                className="flex-row items-center mb-1"
+                              >
+                                <ScaledText
+                                  allowScaling={false}
+                                  variant="11"
+                                  className="text-background font-neueLight"
+                                  style={{
+                                    textDecorationLine: feature.details
+                                      ? "underline"
+                                      : "none",
+                                  }}
+                                >
+                                  {feature.text}
+                                </ScaledText>
+                              </TouchableOpacity>
+                            )
+                          )
+                        ) : (
                           <ScaledText
                             allowScaling={false}
                             variant="11"
                             style={{ color: "#080101" }}
                           >
-                            {feature.text}
+                            No features listed
                           </ScaledText>
-                        </View>
-                      ))
-                    ) : (
-                      <ScaledText
-                        allowScaling={false}
-                        variant="11"
-                        style={{ color: "#080101" }}
-                      >
-                        No features listed
-                      </ScaledText>
-                    )}
-                  </View>
-                </View>
+                        )}
+                      </View>
+                    </View>
 
-                <View style={{ marginTop: mvs(8) }}>
-                  {(() => {
-                    const other = plans.find((p) => p.id !== sub?.planId);
-                    if (!other) return null;
-                    const onUpgrade = () => {
-                      updateStep13({
-                        selectedPlanId: other.id,
-                        billingCycle: sub?.billingCycle,
-                      });
-                      router.push("/(auth)/artist-registration/checkout");
-                    };
-                    return (
+                    <View style={{ marginTop: mvs(8) }}>
                       <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={onUpgrade}
+                        onPress={handleUpgradeToOtherPlan}
                         className="rounded-full items-center justify-center flex-row"
                         style={{
                           backgroundColor: "#AE0E0E",
@@ -451,14 +930,14 @@ export default function SettingsSubscription() {
                           style={{ color: "#FFFFFF" }}
                           className="font-neueMedium"
                         >
-                          Upgrade to {other.name}
+                          Upgrade to {oppositePlan.name}
                         </ScaledText>
                       </TouchableOpacity>
-                    );
-                  })()}
+                    </View>
+                  </LinearGradient>
                 </View>
-              </LinearGradient>
-            </View>
+              )}
+            </>
           )}
         </ScrollView>
       </LinearGradient>
@@ -467,9 +946,11 @@ export default function SettingsSubscription() {
         visible={showCancelModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCancelModal(false)}
+        onRequestClose={() => !cancelling && setShowCancelModal(false)}
       >
-        <View
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => !cancelling && setShowCancelModal(false)}
           className="flex-1 justify-center items-center"
           style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
         >
@@ -517,13 +998,15 @@ export default function SettingsSubscription() {
               style={{ columnGap: s(10) }}
             >
               <TouchableOpacity
-                onPress={() => setShowCancelModal(false)}
+                onPress={handleCancelSubscription}
+                disabled={cancelling}
                 className="rounded-full items-center justify-center flex-row border-primary"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
                   borderWidth: s(1),
+                  opacity: cancelling ? 0.6 : 1,
                 }}
               >
                 <ScaledText
@@ -531,16 +1014,18 @@ export default function SettingsSubscription() {
                   variant="md"
                   className="text-primary font-montserratSemibold"
                 >
-                  Cancel plan
+                  {cancelling ? "Cancelling..." : "Cancel plan"}
                 </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setShowCancelModal(false)}
+                onPress={() => !cancelling && setShowCancelModal(false)}
+                disabled={cancelling}
                 className="rounded-full items-center justify-center flex-row"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
+                  opacity: cancelling ? 0.6 : 1,
                 }}
               >
                 <ScaledText
@@ -548,13 +1033,23 @@ export default function SettingsSubscription() {
                   variant="md"
                   className="text-gray font-montserratSemibold"
                 >
-                  Don’t cancel
+                  Don't cancel
                 </ScaledText>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
+
+      {/* Feature Details Modal */}
+      <FeatureDetailsModal
+        visible={showFeatureModal}
+        onClose={() => {
+          setShowFeatureModal(false);
+          setSelectedFeature(null);
+        }}
+        feature={selectedFeature}
+      />
     </KeyboardAvoidingView>
   );
 }

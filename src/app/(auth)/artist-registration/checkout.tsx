@@ -1,18 +1,26 @@
-import AuthStepHeader from "@/components/ui/auth-step-header";
+import { CustomToast } from "@/components/ui/CustomToast";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { SubscriptionService } from "@/services/subscription.service";
+import { useAuth } from "@/providers/AuthProvider";
+import { PaymentService } from "@/services/payment.service";
+import {
+  SubscriptionService,
+  getPlanTypeFromName,
+} from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { mvs, s, scaledFont } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
+import { toast } from "sonner-native";
 
 export default function ArtistCheckoutScreen() {
   const { step13 } = useArtistRegistrationV2Store();
+  const { user } = useAuth();
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -46,6 +54,92 @@ export default function ArtistCheckoutScreen() {
     else d.setMonth(d.getMonth() + 1);
     return d;
   }, [isYearly]);
+
+  const handleCheckout = async () => {
+    // Validate user is authenticated
+    if (!user?.id) {
+      const toastId = toast.custom(
+        <CustomToast
+          message="Please sign in to continue"
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      return;
+    }
+
+    // Validate plan is selected
+    if (!plan) {
+      const toastId = toast.custom(
+        <CustomToast
+          message="Please select a subscription plan"
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      return;
+    }
+
+    // Get Stripe price ID based on billing cycle
+    const priceId = isYearly
+      ? plan.stripeYearlyPriceId
+      : plan.stripeMonthlyPriceId;
+
+    if (!priceId) {
+      const toastId = toast.custom(
+        <CustomToast
+          message="Stripe price ID not configured for this plan. Please contact support."
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 5000 }
+      );
+      return;
+    }
+
+    // Determine plan type
+    const planType = getPlanTypeFromName(plan.name);
+    const cycle = isYearly ? "YEARLY" : "MONTHLY";
+
+    setCheckoutLoading(true);
+
+    try {
+      // Create checkout session
+      const checkoutUrl = await PaymentService.createCheckoutSession({
+        priceId,
+        userId: user.id,
+        planType,
+        cycle,
+        returnToApp: true,
+      });
+
+      // Open Stripe checkout URL
+      const supported = await Linking.canOpenURL(checkoutUrl);
+      if (supported) {
+        await Linking.openURL(checkoutUrl);
+      } else {
+        throw new Error(`Cannot open URL: ${checkoutUrl}`);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to start checkout. Please try again.";
+      const toastId = toast.custom(
+        <CustomToast
+          message={errorMessage}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 5000 }
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-background">
@@ -301,15 +395,19 @@ export default function ArtistCheckoutScreen() {
           <TouchableOpacity
             activeOpacity={0.9}
             className="rounded-full items-center justify-center flex-row"
-            style={{ backgroundColor: "#AD2E2E", paddingVertical: mvs(12) }}
-            // onPress will be implemented later
+            style={{
+              backgroundColor: checkoutLoading ? "#AD2E2E80" : "#AD2E2E",
+              paddingVertical: mvs(12),
+            }}
+            onPress={handleCheckout}
+            disabled={checkoutLoading || !plan || !user}
           >
             <ScaledText
               allowScaling={false}
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              Checkout with Stripe
+              {checkoutLoading ? "Processing..." : "Checkout with Stripe"}
             </ScaledText>
           </TouchableOpacity>
 

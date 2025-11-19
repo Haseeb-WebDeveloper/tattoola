@@ -1,3 +1,4 @@
+import { generateUUID } from "@/utils/randomUUIDValue";
 import type {
   AuthSession,
   CompleteArtistRegistration,
@@ -12,7 +13,6 @@ import { UserRole } from "../types/auth";
 import { logger } from "../utils/logger";
 import { supabase } from "../utils/supabase";
 import { buildGoogleMapsUrl } from "./location.service";
-import { generateUUID } from "@/utils/randomUUIDValue";
 
 export class AuthService {
   /**

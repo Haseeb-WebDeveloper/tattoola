@@ -134,12 +134,13 @@ CREATE TABLE "subscription_plans" (
     "features" JSONB NOT NULL,
     "monthlyPrice" DOUBLE PRECISION,
     "yearlyPrice" DOUBLE PRECISION,
-    "maxPosts" INTEGER,
-    "maxCollections" INTEGER,
-    "maxStudioMembers" INTEGER,
+    "stripeMonthlyPriceId" TEXT,
+    "stripeYearlyPriceId" TEXT,
+    "showYearsExperience" BOOLEAN NOT NULL DEFAULT false,
+    "allowMultipleLocations" BOOLEAN NOT NULL DEFAULT false,
+    "maxStyles" INTEGER,
+    "maxFavoritesStyles" INTEGER,
     "canCreateStudio" BOOLEAN NOT NULL DEFAULT true,
-    "canUploadVideos" BOOLEAN NOT NULL DEFAULT false,
-    "priority" INTEGER NOT NULL DEFAULT 0,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -170,6 +171,7 @@ CREATE TABLE "user_subscriptions" (
     "trialEndsAt" TIMESTAMP(3),
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
     "canceledAt" TIMESTAMP(3),
+    "stripeSubscriptionId" TEXT,
 
     CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
 );
@@ -913,6 +915,12 @@ CREATE INDEX "subscription_plans_type_idx" ON "subscription_plans"("type");
 
 -- CreateIndex
 CREATE INDEX "subscription_plans_isActive_idx" ON "subscription_plans"("isActive");
+
+-- CreateIndex
+CREATE INDEX "subscription_plans_stripeMonthlyPriceId_idx" ON "subscription_plans"("stripeMonthlyPriceId");
+
+-- CreateIndex
+CREATE INDEX "subscription_plans_stripeYearlyPriceId_idx" ON "subscription_plans"("stripeYearlyPriceId");
 
 -- CreateIndex
 CREATE INDEX "user_subscriptions_userId_idx" ON "user_subscriptions"("userId");
