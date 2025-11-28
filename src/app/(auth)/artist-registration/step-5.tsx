@@ -12,13 +12,13 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, TouchableOpacity, View } from "react-native";
 import CountryPicker, {
-    Country,
-    CountryCode,
+  Country,
+  CountryCode,
 } from "react-native-country-picker-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 function formatPhoneForInput(phone: string, callingCode: string): string {
@@ -132,7 +132,6 @@ export default function ArtistStep5V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="Tattoo Paradise"
-              
             value={step5.studioName || ""}
             onChangeText={(v) => updateStep5({ studioName: v })}
             onFocus={() => setFocused("studioName")}
@@ -145,7 +144,7 @@ export default function ArtistStep5V2() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-error font-montserratSemibold"
+              className="text-error font-neueLight"
               style={{ marginTop: mvs(4) }}
             >
               {errors.studioName}
@@ -194,7 +193,6 @@ export default function ArtistStep5V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="Via A.G. Alaimo 139, Ancona, 60044"
-              
             value={step5.studioAddress || ""}
             onChangeText={(v) => updateStep5({ studioAddress: v })}
             onFocus={() => setFocused("studioAddress")}
@@ -207,7 +205,7 @@ export default function ArtistStep5V2() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-error font-montserratSemibold"
+              className="text-error font-neueLight"
               style={{ marginTop: mvs(4) }}
             >
               {errors.studioAddress}
@@ -230,7 +228,6 @@ export default function ArtistStep5V2() {
             className="text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="https://..."
-              
             value={step5.website || ""}
             onChangeText={(v) => updateStep5({ website: v })}
             onFocus={() => setFocused("website")}
@@ -287,7 +284,6 @@ export default function ArtistStep5V2() {
               containerClassName="flex-1 rounded-xl"
               className="text-foreground rounded-xl"
               placeholder="Numero di telefono"
-                
               value={formatPhoneForInput(
                 step5.phone || "",
                 callingCode || "39"
@@ -295,7 +291,38 @@ export default function ArtistStep5V2() {
               style={{ fontSize: s(12) }}
               onChangeText={(v) => {
                 const digits = v.replace(/[^0-9]/g, "");
-                updateStep5({ phone: `+${callingCode}${digits}` });
+                const phoneValue = `+${callingCode}${digits}`;
+                updateStep5({ phone: phoneValue });
+                // Real-time validation
+                const result = step5Schema.safeParse({
+                  studioName: step5.studioName || "",
+                  province: step5.province || "",
+                  municipality: step5.municipality || "",
+                  studioAddress: step5.studioAddress || "",
+                  website: step5.website || "",
+                  phone: phoneValue.replace(/\s+/g, ""),
+                });
+                if (!result.success) {
+                  const phoneError = result.error.issues.find(
+                    (issue) => issue.path[0] === "phone"
+                  );
+                  if (phoneError) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      phone: phoneError.message,
+                    }));
+                  } else {
+                    setErrors((prev) => {
+                      const { phone, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                } else {
+                  setErrors((prev) => {
+                    const { phone, ...rest } = prev;
+                    return rest;
+                  });
+                }
               }}
               onFocus={() => setFocused("phone")}
               onBlur={() => {
@@ -356,7 +383,7 @@ export default function ArtistStep5V2() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-error font-montserratSemibold"
+              className="text-error font-neue"
               style={{ marginTop: mvs(4) }}
             >
               {errors.phone}

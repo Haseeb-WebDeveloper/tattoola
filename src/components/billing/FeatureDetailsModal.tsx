@@ -2,13 +2,13 @@ import ScaledText from "@/components/ui/ScaledText";
 import { mvs, s } from "@/utils/scale";
 import React, { useEffect, useRef } from "react";
 import {
-    Animated,
-    Image,
-    Modal,
-    PanResponder,
-    ScrollView,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  Image,
+  Modal,
+  PanResponder,
+  ScrollView,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -112,13 +112,17 @@ export default function FeatureDetailsModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View className="flex-1">
+      <View
+        className="flex-1"
+        style={{
+          backgroundColor: "rgba(0,0,0,0.90)",
+        }}
+      >
         {/* Backdrop */}
         <TouchableWithoutFeedback onPress={handleBackdropPress}>
           <View
             style={{
               flex: 1,
-              backgroundColor: "rgba(0,0,0,0.90)",
             }}
           />
         </TouchableWithoutFeedback>
@@ -170,7 +174,8 @@ export default function FeatureDetailsModal({
             </View>
 
             {/* Feature Images */}
-            {(feature.imageUrl || (feature.imageUrls && feature.imageUrls.length > 0)) && (
+            {(feature.imageUrl ||
+              (feature.imageUrls && feature.imageUrls.length > 0)) && (
               <View style={{ marginBottom: mvs(16) }}>
                 {feature.imageUrls && feature.imageUrls.length > 0 ? (
                   // Multiple images in a grid (2x2)
@@ -241,4 +246,3 @@ export default function FeatureDetailsModal({
     </Modal>
   );
 }
-

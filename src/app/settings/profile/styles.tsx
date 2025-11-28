@@ -1,5 +1,5 @@
 import ScaledText from "@/components/ui/ScaledText";
-import { AR_MAX_FAVORITE_STYLES, TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
+import { AR_MAX_FAVORITE_STYLES, AR_MAX_STYLES, TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -64,18 +64,19 @@ export default function StylesSettingsScreen() {
   const { user } = useAuth();
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
-  const [mainStyleId, setMainStyleId] = useState<string | null>(null);
+  const [favoriteStyleIds, setFavoriteStyleIds] = useState<string[]>([]);
   const [initialSelectedStyles, setInitialSelectedStyles] = useState<string[]>(
     []
   );
-  const [initialMainStyleId, setInitialMainStyleId] = useState<string | null>(
-    null
-  );
+  const [initialFavoriteStyleIds, setInitialFavoriteStyleIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [artistId, setArtistId] = useState<string | null>(null);
+  // For artists: maxStyles = total styles, maxFavoriteStyles = favorite styles
+  // For tattoo lovers: maxStyles = favorite styles (same concept)
   const [maxStyles, setMaxStyles] = useState<number>(TL_MAX_FAVORITE_STYLES);
+  const [maxFavoriteStyles, setMaxFavoriteStyles] = useState<number>(AR_MAX_FAVORITE_STYLES);
 
   const isArtist = user?.role === "ARTIST";
   const minStyles = isArtist ? 2 : 1;
@@ -91,22 +92,34 @@ export default function StylesSettingsScreen() {
           // Fetch subscription plan limits for artist
           try {
             const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
-            if (subscription?.subscription_plans?.maxFavoritesStyles) {
-              if (mounted) setMaxStyles(subscription.subscription_plans.maxFavoritesStyles);
-            } else {
-              // Fallback to default artist limit
-              if (mounted) setMaxStyles(AR_MAX_FAVORITE_STYLES);
+            const planMaxStyles = subscription?.subscription_plans?.maxStyles;
+            const planMaxFavoriteStyles = subscription?.subscription_plans?.maxFavoritesStyles;
+            
+            if (mounted) {
+              setMaxStyles(
+                planMaxStyles !== null && planMaxStyles !== undefined
+                  ? planMaxStyles
+                  : AR_MAX_STYLES
+              );
+              setMaxFavoriteStyles(
+                planMaxFavoriteStyles !== null && planMaxFavoriteStyles !== undefined
+                  ? planMaxFavoriteStyles
+                  : AR_MAX_FAVORITE_STYLES
+              );
             }
           } catch (e) {
-            // No subscription - use default artist limit
+            // No subscription - use default artist limits
             console.log("No active subscription, using default artist limits");
-            if (mounted) setMaxStyles(AR_MAX_FAVORITE_STYLES);
+            if (mounted) {
+              setMaxStyles(AR_MAX_STYLES);
+              setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);
+            }
           }
 
-          // Fetch artist profile to get artistId and mainStyleId
+          // Fetch artist profile to get artistId
           const { data: profileData, error: profileError } = await supabase
             .from("artist_profiles")
-            .select("id, mainStyleId")
+            .select("id")
             .eq("userId", user.id)
             .single();
 
@@ -117,18 +130,18 @@ export default function StylesSettingsScreen() {
           const artistProfileId = profileData.id;
           setArtistId(artistProfileId);
 
-          // Fetch all styles and artist's favorite styles in parallel
-          const [allStyles, favoriteStyleIds] = await Promise.all([
+          // Fetch all styles and artist's styles (all + favorites) in parallel
+          const [allStyles, artistStylesData] = await Promise.all([
             fetchTattooStyles(),
             fetchArtistFavoriteStyles(artistProfileId),
           ]);
 
           if (mounted) {
             setStyles(allStyles);
-            setSelectedStyles(favoriteStyleIds);
-            setInitialSelectedStyles(favoriteStyleIds);
-            setMainStyleId(profileData.mainStyleId);
-            setInitialMainStyleId(profileData.mainStyleId);
+            setSelectedStyles(artistStylesData.allStyles);
+            setFavoriteStyleIds(artistStylesData.favoriteStyles);
+            setInitialSelectedStyles(artistStylesData.allStyles);
+            setInitialFavoriteStyleIds(artistStylesData.favoriteStyles);
           }
         } else {
           // Tattoo lover - use constant limit
@@ -144,9 +157,6 @@ export default function StylesSettingsScreen() {
             setStyles(allStyles);
             setSelectedStyles(favoriteStyleIds);
             setInitialSelectedStyles(favoriteStyleIds);
-            // No main style for tattoo lovers
-            setMainStyleId(null);
-            setInitialMainStyleId(null);
           }
         }
       } catch (error: any) {
@@ -170,7 +180,8 @@ export default function StylesSettingsScreen() {
   const hasUnsavedChanges = isArtist
     ? JSON.stringify([...selectedStyles].sort()) !==
         JSON.stringify([...initialSelectedStyles].sort()) ||
-      mainStyleId !== initialMainStyleId
+      JSON.stringify([...favoriteStyleIds].sort()) !==
+        JSON.stringify([...initialFavoriteStyleIds].sort())
     : JSON.stringify([...selectedStyles].sort()) !==
         JSON.stringify([...initialSelectedStyles].sort());
 
@@ -194,10 +205,8 @@ export default function StylesSettingsScreen() {
   const toggleStyle = (styleId: string) => {
     setSelectedStyles((prev) => {
       if (prev.includes(styleId)) {
-        // Deselecting - if it's the main style, clear main style
-        if (isArtist && mainStyleId === styleId) {
-          setMainStyleId(null);
-        }
+        // Deselecting - also remove from favorites if it was favorited
+        setFavoriteStyleIds((favs) => favs.filter((id) => id !== styleId));
         return prev.filter((id) => id !== styleId);
       } else {
         // Selecting - check if we can select more
@@ -210,20 +219,32 @@ export default function StylesSettingsScreen() {
     });
   };
 
-  const handleSetPrimary = (styleId: string) => {
-    if (isArtist && selectedStyles.includes(styleId)) {
-      setMainStyleId(styleId);
-    }
+  const toggleFavorite = (styleId: string) => {
+    if (!isArtist || !selectedStyles.includes(styleId)) return;
+    
+    setFavoriteStyleIds((prev) => {
+      if (prev.includes(styleId)) {
+        // Unmark as favorite
+        return prev.filter((id) => id !== styleId);
+      } else {
+        // Mark as favorite - check limit
+        if (prev.length >= maxFavoriteStyles) {
+          toast.error(`You can mark up to ${maxFavoriteStyles} styles as favorites`);
+          return prev;
+        }
+        return [...prev, styleId];
+      }
+    });
   };
 
   const canProceed = isArtist
-    ? selectedStyles.length >= minStyles && mainStyleId !== null
+    ? selectedStyles.length >= minStyles
     : selectedStyles.length >= minStyles;
 
   const handleSave = async () => {
     if (!canProceed) {
       if (isArtist) {
-        toast.error("Please select at least 2 styles and mark one as primary");
+        toast.error("Please select at least 1 styles");
       } else {
         toast.error("Please select at least 1 style");
       }
@@ -244,7 +265,8 @@ export default function StylesSettingsScreen() {
 
     try {
       if (isArtist && artistId) {
-        await updateArtistFavoriteStyles(artistId, selectedStyles, mainStyleId);
+        // For artists, pass all styles and favorite style IDs
+        await updateArtistFavoriteStyles(artistId, selectedStyles, favoriteStyleIds);
       } else {
         await updateUserFavoriteStyles(user!.id, selectedStyles);
       }
@@ -283,7 +305,7 @@ export default function StylesSettingsScreen() {
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = selectedStyles.includes(item.id);
-    const isPrimary = isArtist && mainStyleId === item.id;
+    const isFavorite = isArtist && favoriteStyleIds.includes(item.id);
     const img = resolveImageUrl(item.imageUrl);
 
     return (
@@ -331,14 +353,14 @@ export default function StylesSettingsScreen() {
           </ScaledText>
         </View>
 
-        {/* Primary star - only for artists */}
+        {/* Favorite star - only for artists */}
         {isArtist && (
           <TouchableOpacity
-            onPress={() => handleSetPrimary(item.id)}
+            onPress={() => toggleFavorite(item.id)}
             style={{ paddingRight: s(16) }}
             disabled={!isSelected}
           >
-            {isPrimary ? (
+            {isFavorite ? (
               <SVGIcons.StartCircleFilled
                 style={{ width: s(24), height: s(24) }}
               />
@@ -410,7 +432,7 @@ export default function StylesSettingsScreen() {
             className="text-white font-montserratMedium"
           >
             {isArtist
-              ? "Choose at least 2 styles. Then mark one as your primary style (★)"
+              ? `Choose at least 1 styles (max ${maxStyles}). You can mark up to ${maxFavoriteStyles} as your favorite styles (★)`
               : "Choose your favorite tattoo styles (at least 1)"}
           </ScaledText>
         </View>

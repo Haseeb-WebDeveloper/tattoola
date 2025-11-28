@@ -89,6 +89,8 @@ import Style from "@/assets/icons/style.svg";
 // @ts-ignore
 import Check from "@/assets/icons/check.svg";
 // @ts-ignore
+import CheckGreen from "@/assets/icons/check-green.svg";
+// @ts-ignore
 import CheckedCheckbox from "@/assets/icons/checked-checkbox.svg";
 // @ts-ignore
 import UncheckedCheckbox from "@/assets/icons/unchecked-checkbox.svg";
@@ -129,6 +131,8 @@ import Trash from "@/assets/icons/trash.svg";
 // @ts-ignore
 import Delete from "@/assets/icons/delete.svg";
 // @ts-ignore
+import DeletePrimary from "@/assets/icons/delete-primary.svg";
+// @ts-ignore
 import EditUser from "@/assets/icons/edit-user.svg";
 // @ts-ignore
 import EditBrush from "@/assets/icons/edit-brush.svg";
@@ -168,6 +172,8 @@ import ReloadGreen from "@/assets/icons/reload-green.svg";
 import EyeClose from "@/assets/icons/eye-close.svg";
 // @ts-ignore
 import EyeOpen from "@/assets/icons/eye-open.svg";
+// @ts-ignore
+import Eye from "@/assets/icons/eye.svg";
 // @ts-ignore
 import Home from "@/assets/icons/home.svg";
 // @ts-ignore
@@ -232,6 +238,8 @@ import Link from "@/assets/icons/link.svg";
 import Pending from "@/assets/icons/pending.svg";
 // @ts-ignore
 import AutoPlay from "@/assets/icons/auto-play.svg";
+// @ts-ignore
+import Locked from "@/assets/icons/locked.svg";
 
 
 export const SVGIcons = {
@@ -266,6 +274,7 @@ export const SVGIcons = {
   Pen2,
   Pen1,
   PenRed,
+  CheckGreen,
   Search,
   Search2,
   Style,
@@ -290,6 +299,7 @@ export const SVGIcons = {
   HeartFilled,
   Trash,
   Delete,
+  DeletePrimary,
   EditUser,
   EditBrush,
   Subscription,
@@ -315,6 +325,7 @@ export const SVGIcons = {
   ReloadGreen,
   EyeClose,
   EyeOpen,
+  Eye,
   Home,
   Plus,
   Inbox,
@@ -352,6 +363,7 @@ export const SVGIcons = {
   Pending,
   AutoPlay,
   Download,
+  Locked,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

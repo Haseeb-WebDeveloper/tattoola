@@ -129,7 +129,7 @@ export default function ProfileSettingsScreen() {
     { title: "Tariffa minima", onPress: handleRatesPress },
     { title: "Modalita di lavoro", onPress: handleWorkModalityPress },
     { title: "Richieste private", onPress: handlePrivateRequestsPress },
-    { title: "Banner", onPress: handleBannerPress },
+    { title: "Cover", onPress: handleBannerPress },
     { title: "Esperienza", onPress: handleExperiencePress },
   ];
 

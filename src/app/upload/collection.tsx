@@ -1,4 +1,5 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
+import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { createCollection } from "@/services/collection.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
@@ -18,7 +19,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { s, mvs } from "@/utils/scale";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { StylePills } from "@/components/ui/stylePills";
 type SimpleCollection = {
   id: string;
   name: string;
@@ -38,6 +41,12 @@ export default function UploadCollectionStep() {
   const styleId = usePostUploadStore((s) => s.styleId);
   const [styleName, setStyleName] = useState<string | null>(null);
   const canProceed = !!collectionId;
+  const redirectToCollectionId = usePostUploadStore((s) => s.redirectToCollectionId);
+  const setRedirectToCollectionId = usePostUploadStore((s) => s.setRedirectToCollectionId);
+
+  // This is our added state for create button disable logic
+  const isCreateDisabled = newName.trim().length === 0;
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -71,7 +80,19 @@ export default function UploadCollectionStep() {
             thumbnails: medias.slice(0, 4),
           };
         });
-        if (mounted) setCollections(mapped);
+        if (mounted) {
+          setCollections(mapped);
+          // If collectionId is already set in store (from route params), keep it
+          // Otherwise, if we have a collectionId from store, verify it exists in fetched collections
+          if (collectionId && !mapped.find((c) => c.id === collectionId)) {
+            // Collection doesn't exist, clear it
+            setCollectionId(undefined);
+            setRedirectToCollectionId(undefined);
+          } else if (collectionId && !redirectToCollectionId) {
+            // Store the collection ID for redirect after post creation
+            setRedirectToCollectionId(collectionId);
+          }
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -118,6 +139,10 @@ export default function UploadCollectionStep() {
       ...prev,
     ]);
     setCollectionId(created.id);
+    // If no redirect collection ID is set, use the newly created one
+    if (!redirectToCollectionId) {
+      setRedirectToCollectionId(created.id);
+    }
     setNewName("");
     setShowCreateModal(false);
   };
@@ -225,14 +250,16 @@ export default function UploadCollectionStep() {
             </View>
             {/* caption */}
             <View className="flex-1">
-              <Text
+              <ScaledText
                 numberOfLines={3}
-                className="tat-body-3 text-gray text-left"
+                className="text-gray text-left font-neueMedium"
+                allowScaling={false}
+                variant="sm"
                 style={{ textAlignVertical: "top", width: "100%" }}
               >
                 {caption ||
                   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus blandit augue et rhoncus consectetur....."}
-              </Text>
+              </ScaledText>
               <Pressable
                 onPress={() => router.push("/upload/description")}
                 className="absolute right-3 bottom-3 w-6 h-6 items-center justify-center"
@@ -243,17 +270,20 @@ export default function UploadCollectionStep() {
           </View>
           {/* styles chip at bottom right under caption */}
           <View className="flex flex-row justify-start mt-2">
-            {styleName && (
-              <View className="px-3 py-1 rounded-full border border-foreground/40">
-                <Text className="text-foreground tat-body-4">{styleName}</Text>
-              </View>
-            )}
+            <StylePills styles={[{ id: styleId, name: styleName }]} />
           </View>
         </View>
 
-        <Text className="text-foreground tat-body-1 font-neueBold mb-4">
+        <ScaledText
+          allowScaling={false}
+          variant="lg"
+          className="text-foreground font-neueBold"
+          style={{
+            marginBottom: mvs(8),
+          }}
+        >
           Add to collection
-        </Text>
+        </ScaledText>
         {/* Grid of collections */}
         <View className="mb-4">
           {loading ? (
@@ -319,17 +349,17 @@ export default function UploadCollectionStep() {
                             )}
                           </View>
                         </View>
-                        <Text
+                        <ScaledText
+                          allowScaling={false}
+                          variant="sm"
+                          className="text-foreground font-neueMedium"
                           style={{
-                            color: "#fff",
-                            fontSize: 13,
-                            marginTop: 8,
-                            fontFamily: "Montserrat-SemiBold",
+                            marginTop: mvs(8),
                           }}
                           numberOfLines={1}
                         >
                           {c.name}
-                        </Text>
+                        </ScaledText>
                       </TouchableOpacity>
                     ))}
                     {row.length < 2 ? (
@@ -341,18 +371,21 @@ export default function UploadCollectionStep() {
               <TouchableOpacity
                 onPress={() => setShowCreateModal(true)}
                 activeOpacity={0.8}
-                className="aspect-square items-center justify-center gap-2 border-2 border-dashed border-primary bg-primary/20 rounded-xl mt-4 mb-20"
+                className="aspect-square items-center justify-center gap-2 border-dashed border-primary bg-tat-darkMaroon rounded-xl mt-4 mb-20"
                 style={{
                   width: itemWidth,
+                  borderWidth: s(1),
                 }}
               >
-                <SVGIcons.AddRed className="w-8 h-8" />
+                <SVGIcons.AddRed width={s(24)} height={s(24)} />
 
-                <Text
-                  style={{ color: "#fff", textAlign: "center", fontSize: 15 }}
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground text-center font-neueMedium"
                 >
                   Create new collection
-                </Text>
+                </ScaledText>
               </TouchableOpacity>
             </View>
           )}
@@ -378,31 +411,70 @@ export default function UploadCollectionStep() {
           className="flex-1 items-center justify-center"
           style={{ backgroundColor: "rgba(0,0,0,0.9)" }}
         >
-          <View className="w-11/12 rounded-2xl bg-background p-5 border border-gray">
-            <Text className="text-foreground tat-body-1 font-neueBold mb-3">
+          <View className="w-11/12 rounded-2xl bg-tat-foreground p-5 border border-gray flex-col justify-between">
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-foreground font-neueBold"
+              style={{ marginBottom: mvs(8) }}
+            >
               Create new collection
-            </Text>
-            <View className="rounded-2xl bg-black/40 border border-gray mb-4">
-              <TextInput
-                value={newName}
-                onChangeText={setNewName}
-                placeholder="Collection name"
-                  
-                className="px-4 py-3 text-base text-foreground"
-              />
-            </View>
-            <View className="flex-row justify-end gap-3">
+            </ScaledText>
+            <ScaledTextInput
+              containerClassName="rounded-xl border border-gray"
+              className="text-foreground rounded-xl font-montserratSemibold"
+              style={{ fontSize: s(12) }}
+              placeholder="Collection name"
+              value={newName}
+              onChangeText={setNewName}
+            />
+            <View
+              className="flex-row gap-3"
+              style={{
+                marginTop: mvs(16),
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setShowCreateModal(false)}
-                className="rounded-full border border-foreground px-5 py-2"
+                activeOpacity={0.7}
+                className="rounded-full border items-center flex-1 flex-row justify-center text-center border-foreground"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                  gap: s(15),
+                  backgroundColor: "transparent",
+                  opacity: 1,
+                }}
               >
-                <Text className="text-foreground">Cancel</Text>
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-foreground font-neueSemibold text-center"
+                >
+                  Cancel
+                </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handleCreate}
-                className="rounded-full bg-primary px-5 py-2"
+                onPress={isCreateDisabled ? undefined : handleCreate}
+                activeOpacity={0.7}
+                disabled={isCreateDisabled}
+                className="rounded-full items-center flex-1 flex-row justify-center text-center bg-primary"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(25),
+                  paddingRight: s(20),
+                  gap: s(15),
+                  opacity: isCreateDisabled ? 0.5 : 1,
+                }}
               >
-                <Text className="text-foreground">Create</Text>
+                <ScaledText
+                  allowScaling={false}
+                  variant="sm"
+                  className="text-foreground font-neueSemibold text-center"
+                >
+                  Create
+                </ScaledText>
               </TouchableOpacity>
             </View>
           </View>

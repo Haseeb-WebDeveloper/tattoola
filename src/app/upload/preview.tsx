@@ -6,17 +6,20 @@ import { clearProfileCache } from "@/utils/database";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
+import { mvs, s } from "@/utils/scale";
+import { ScaledText } from "@/components/ui/ScaledText";
 import NextBackFooter from "@/components/ui/NextBackFooter";
+
 export default function UploadPreviewStep() {
-  const { media, caption, styleId, collectionId, reset, setSubmitting } =
+  const { media, caption, styleId, collectionId, redirectToCollectionId, reset, setSubmitting } =
     usePostUploadStore();
   const { user } = useAuth();
   const mainImage = media[0]?.cloud || media[0]?.uri;
@@ -35,14 +38,21 @@ export default function UploadPreviewStep() {
         })),
         collectionId,
       });
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
       }
-      
+
+      // Redirect to collection page if we came from there
+      const redirectId = redirectToCollectionId || collectionId;
       reset();
-      router.replace(`/post/${postId}`);
+      
+      if (redirectId) {
+        router.replace(`/collection/${redirectId}` as any);
+      } else {
+        router.replace(`/post/${postId}`);
+      }
     } catch (e) {
       console.error("onSubmit failed", e);
       setSubmitting(false);
@@ -73,12 +83,14 @@ export default function UploadPreviewStep() {
       {/* Caption and user info near bottom like mockup */}
       <View className="absolute left-2 bottom-[60px]">
         {!!caption && (
-          <Text
-            className="text-foreground text-[10px] font-neueBold"
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-foreground font-neueBold"
             numberOfLines={1}
           >
             {caption}
-          </Text>
+          </ScaledText>
         )}
         <View className="flex-row items-center gap-2 mt-1">
           {user?.avatar ? (
@@ -89,9 +101,14 @@ export default function UploadPreviewStep() {
           ) : (
             <View className="w-4 h-4 rounded-full bg-background/80 border-[0.51px] border-error" />
           )}
-          <Text className="text-foreground/90 text-[10px]" numberOfLines={1}>
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-foreground/90 font-neueBold"
+            numberOfLines={1}
+          >
             {DisplayName}
-          </Text>
+          </ScaledText>
         </View>
       </View>
     </View>
@@ -113,16 +130,43 @@ export default function UploadPreviewStep() {
         pointerEvents="none"
       />
       <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false}>
-        <View className="items-center mb-4">
-          <Text className="text-foreground section-title">Preview</Text>
+        <View
+          className="items-center flex-row justify-center"
+          style={{
+            marginBottom: mvs(16),
+            gap: s(8),
+          }}
+        >
+          <SVGIcons.Eye width={s(20)} height={s(20)} />
+          <ScaledText
+            allowScaling={false}
+            variant="lg"
+            className="text-foreground font-neueBold"
+          >
+            Preview
+          </ScaledText>
         </View>
         <View className="flex flex-row" style={{ gap: betweenGap }}>
           <View style={{ width: cardWidth }}>
-            <Text className="text-foreground/80 mb-2">Feed view</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-foreground/80 font-neueBold text-center"
+              style={{ marginBottom: mvs(6) }}
+            >
+              Feed view
+            </ScaledText>
             <PreviewCard />
           </View>
           <View style={{ width: cardWidth }}>
-            <Text className="text-foreground/80 mb-2">Detailed view</Text>
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-foreground/80 font-neueBold text-center"
+              style={{ marginBottom: mvs(6) }}
+            >
+              Detailed view
+            </ScaledText>
             <PreviewCard />
           </View>
         </View>
@@ -134,7 +178,6 @@ export default function UploadPreviewStep() {
         nextLabel="Publish"
         backLabel="Back"
       />
-
     </View>
   );
 }

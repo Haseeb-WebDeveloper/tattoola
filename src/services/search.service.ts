@@ -1,10 +1,10 @@
+import { SEARCH_RESULTS_PER_PAGE } from "@/constants/limits";
 import type {
-  ArtistSearchResult,
-  SearchFilters,
-  StudioSearchResult,
+    ArtistSearchResult,
+    SearchFilters,
+    StudioSearchResult,
 } from "@/types/search";
 import { supabase } from "@/utils/supabase";
-import { SEARCH_RESULTS_PER_PAGE } from "@/constants/limits";
 
 type SearchArtistsParams = {
   filters: SearchFilters;
@@ -55,8 +55,9 @@ export async function searchArtists({
             plan:subscription_plans(name, type)
           )
         ),
-        favoriteStyles:artist_favorite_styles(
+        styles:artist_styles(
           order,
+          isFavorite,
           style:tattoo_styles(id, name)
         ),
         services:artist_services(
@@ -76,7 +77,7 @@ export async function searchArtists({
 
     // Apply style filter
     if (filters.styleIds.length > 0) {
-      query = query.in("favoriteStyles.style.id", filters.styleIds);
+      query = query.in("styles.style.id", filters.styleIds);
     }
 
     // Apply service filter
@@ -150,8 +151,13 @@ export async function searchArtists({
             }
           : null,
         styles:
-          artist.favoriteStyles
-            ?.sort((a: any, b: any) => a.order - b.order)
+          artist.styles
+            ?.sort((a: any, b: any) => {
+              // Sort by isFavorite first (favorites first), then by order
+              if (a.isFavorite && !b.isFavorite) return -1;
+              if (!a.isFavorite && b.isFavorite) return 1;
+              return a.order - b.order;
+            })
             .slice(0, 2)
             .map((fs: any) => ({
               id: fs.style?.id || "",

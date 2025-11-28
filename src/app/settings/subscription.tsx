@@ -7,6 +7,7 @@ import {
   getPlanTypeFromName,
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
+import { logger } from "@/utils/logger";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,7 +48,15 @@ export default function SettingsSubscription() {
         SubscriptionService.fetchSubscriptionPlans(),
       ]);
       setSub(data);
-      setPlans(allPlans);
+      
+      // Sort plans: default plan first (similar to step-13)
+      const sortedPlans = [...allPlans].sort((a, b) => {
+        if (a.isDefault && !b.isDefault) return -1;
+        if (!a.isDefault && b.isDefault) return 1;
+        return 0;
+      });
+      setPlans(sortedPlans);
+      
       // Set initial billing cycle from current subscription
       if (data?.billingCycle) {
         setSelectedBillingCycle(data.billingCycle);
@@ -194,6 +203,96 @@ export default function SettingsSubscription() {
     router.push("/(auth)/artist-registration/checkout");
   };
 
+  const handleStartFreeTrial = async (planId: string) => {
+    if (!planId) return;
+    
+    try {
+      // Get current user ID
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      const userId = session.user.id;
+
+      // Check if user already has active subscription
+      const hasActive = await SubscriptionService.hasActiveSubscription(userId);
+      if (hasActive) {
+        toast.success("You already have an active subscription");
+        await loadSubscription();
+        return;
+      }
+
+      // Create trial subscription
+      await SubscriptionService.createUserSubscription(
+        userId,
+        planId,
+        selectedBillingCycle || "MONTHLY",
+        true // isTrial: true
+      );
+
+      toast.success("Free trial started! Enjoy Premium features for 30 days.");
+      await loadSubscription();
+    } catch (error: any) {
+      logger.error("Free trial error:", error);
+      toast.error(error?.message || "Failed to start free trial");
+    }
+  };
+
+  const handleBuyPlan = async (planId: string) => {
+    if (!planId) return;
+    const picked = plans.find((p) => p.id === planId);
+    if (!picked) {
+      toast.error("Plan not found");
+      return;
+    }
+
+    // Get Stripe price ID based on billing cycle
+    const priceId = isYearly ? picked.stripeYearlyPriceId : picked.stripeMonthlyPriceId;
+
+    if (!priceId) {
+      toast.error("Stripe price ID not configured for this plan. Please contact support.");
+      return;
+    }
+
+    // Get current user ID
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      toast.error("No authenticated user found");
+      return;
+    }
+
+    const userId = session.user.id;
+    const planType = getPlanTypeFromName(picked.name);
+    const cycle = selectedBillingCycle || "MONTHLY";
+
+    try {
+      // Create checkout session
+      const checkoutUrl = await PaymentService.createCheckoutSession({
+        priceId,
+        userId,
+        planType,
+        cycle,
+        returnToApp: true,
+      });
+
+      // Open Stripe checkout URL
+      const supported = await Linking.canOpenURL(checkoutUrl);
+      if (supported) {
+        await Linking.openURL(checkoutUrl);
+      } else {
+        throw new Error(`Cannot open URL: ${checkoutUrl}`);
+      }
+    } catch (error: any) {
+      logger.error("Checkout error:", error);
+      toast.error(error?.message || "Failed to start checkout");
+    }
+  };
+
   const handleSubscribeFromNoSubscription = (planId: string) => {
     if (!planId) return;
     // Ensure we use the selected billing cycle from the toggle
@@ -326,17 +425,16 @@ export default function SettingsSubscription() {
                   allowScaling={false}
                   variant="lg"
                   className="text-foreground font-neueBold text-center"
-                  style={{ marginBottom: mvs(8) }}
+                  style={{ marginBottom: mvs(4) }}
                 >
                   You haven't subscribed to any plan
                 </ScaledText>
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-gray font-neueMedium text-center"
+                  className="text-error font-neueMedium text-center"
                 >
-                  Please subscribe to a plan otherwise your profile will not
-                  show to public.
+                  Your profile will not be visible to public.
                 </ScaledText>
               </View>
             ) : (
@@ -630,6 +728,8 @@ export default function SettingsSubscription() {
                       ? plan.yearlyPrice
                       : plan.monthlyPrice;
                     const unit = isYearly ? "year" : "month";
+                    const isDefaultPlan = plan.isDefault;
+                    const showTrialCta = isDefaultPlan;
 
                     return (
                       <View
@@ -713,67 +813,117 @@ export default function SettingsSubscription() {
                               Includes:
                             </ScaledText>
                             <View>
-                              {Array.isArray(plan.features) &&
-                              plan.features.length > 0 ? (
-                                plan.features.map(
-                                  (feature: any, idx: number) => (
-                                    <TouchableOpacity
-                                      key={idx}
-                                      onPress={() => handleFeaturePress(feature)}
-                                      disabled={!feature.details}
-                                      activeOpacity={feature.details ? 0.7 : 1}
-                                      className="flex-row items-center mb-1"
-                                    >
-                                      <ScaledText
-                                        allowScaling={false}
-                                        variant="11"
-                                        className="font-neueLight text-foreground"
-                                        style={{
-                                          textDecorationLine: feature.details
-                                            ? "underline"
-                                            : "none",
-                                        }}
+                              {(() => {
+                                const features = isYearly ? plan.yearlyFeatures : plan.monthlyFeatures;
+                                return Array.isArray(features) &&
+                                features.length > 0 ? (
+                                  features.map(
+                                    (feature: any, idx: number) => (
+                                      <TouchableOpacity
+                                        key={idx}
+                                        onPress={() => handleFeaturePress(feature)}
+                                        disabled={!feature.details}
+                                        activeOpacity={feature.details ? 0.7 : 1}
+                                        className="flex-row items-center mb-1"
                                       >
-                                        {feature.text}
-                                      </ScaledText>
-                                    </TouchableOpacity>
+                                        <ScaledText
+                                          allowScaling={false}
+                                          variant="11"
+                                          className="font-neueLight text-background"
+                                          style={{
+                                            textDecorationLine: feature.details
+                                              ? "underline"
+                                              : "none",
+                                          }}
+                                        >
+                                          {feature.text}
+                                        </ScaledText>
+                                      </TouchableOpacity>
+                                    )
                                   )
-                                )
-                              ) : (
-                                <ScaledText
-                                  allowScaling={false}
-                                  variant="11"
-                                  style={{ color: "#080101" }}
-                                >
-                                  No features listed
-                                </ScaledText>
-                              )}
+                                ) : (
+                                  <ScaledText
+                                    allowScaling={false}
+                                    variant="11"
+                                    style={{ color: "#080101" }}
+                                  >
+                                    No features listed
+                                  </ScaledText>
+                                );
+                              })()}
                             </View>
                           </View>
 
-                          {/* Subscribe Button */}
-                          <View style={{ marginTop: mvs(8) }}>
-                            <TouchableOpacity
-                              activeOpacity={0.9}
-                              onPress={() =>
-                                handleSubscribeFromNoSubscription(plan.id)
-                              }
-                              className="rounded-full items-center justify-center flex-row"
-                              style={{
-                                backgroundColor: "#AE0E0E",
-                                paddingVertical: mvs(12),
-                                borderRadius: 38,
-                              }}
-                            >
-                              <ScaledText
-                                allowScaling={false}
-                                variant="body2"
-                                style={{ color: "#FFFFFF" }}
-                                className="font-neueMedium"
+                          {/* CTAs */}
+                          <View style={{ marginTop: mvs(16) }}>
+                            {showTrialCta ? (
+                              <>
+                                {/* Start free trial button */}
+                                <TouchableOpacity
+                                  activeOpacity={0.9}
+                                  onPress={() => handleStartFreeTrial(plan.id)}
+                                  disabled={upgrading}
+                                  style={{
+                                    backgroundColor: "#AE0E0E",
+                                    paddingVertical: mvs(12),
+                                    borderRadius: 38,
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <ScaledText
+                                    allowScaling={false}
+                                    variant="body2"
+                                    style={{ color: "#FFFFFF" }}
+                                    className="font-neueMedium"
+                                  >
+                                    {upgrading ? "Processing..." : "Start free trial"}
+                                  </ScaledText>
+                                </TouchableOpacity>
+
+                                {/* Buy Premium button */}
+                                <TouchableOpacity
+                                  activeOpacity={0.8}
+                                  onPress={() => handleBuyPlan(plan.id)}
+                                  disabled={upgrading}
+                                  style={{
+                                    paddingVertical: mvs(10),
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <ScaledText
+                                    allowScaling={false}
+                                    variant="body2"
+                                    style={{ color: "#AE0E0E" }}
+                                    className="font-neueMedium"
+                                  >
+                                    {upgrading ? "Processing..." : "Buy Premium"}
+                                  </ScaledText>
+                                </TouchableOpacity>
+                              </>
+                            ) : (
+                              /* Subscribe button for non-default plans */
+                              <TouchableOpacity
+                                activeOpacity={0.9}
+                                onPress={() =>
+                                  handleSubscribeFromNoSubscription(plan.id)
+                                }
+                                className="rounded-full items-center justify-center flex-row"
+                                style={{
+                                  backgroundColor: "#AE0E0E",
+                                  paddingVertical: mvs(12),
+                                  borderRadius: 38,
+                                }}
                               >
-                                Subscribe
-                              </ScaledText>
-                            </TouchableOpacity>
+                                <ScaledText
+                                  allowScaling={false}
+                                  variant="body2"
+                                  style={{ color: "#FFFFFF" }}
+                                  className="font-neueMedium"
+                                >
+                                  Subscribe
+                                </ScaledText>
+                              </TouchableOpacity>
+                            )}
                           </View>
                         </LinearGradient>
                       </View>
@@ -875,41 +1025,44 @@ export default function SettingsSubscription() {
                         Includes:
                       </ScaledText>
                       <View>
-                        {Array.isArray(oppositePlan.features) &&
-                        oppositePlan.features.length > 0 ? (
-                          oppositePlan.features.map(
-                            (feature: any, idx: number) => (
-                              <TouchableOpacity
-                                key={idx}
-                                onPress={() => handleFeaturePress(feature)}
-                                disabled={!feature.details}
-                                activeOpacity={feature.details ? 0.7 : 1}
-                                className="flex-row items-center mb-1"
-                              >
-                                <ScaledText
-                                  allowScaling={false}
-                                  variant="11"
-                                  className="text-background font-neueLight"
-                                  style={{
-                                    textDecorationLine: feature.details
-                                      ? "underline"
-                                      : "none",
-                                  }}
+                        {(() => {
+                          const features = isYearly ? oppositePlan.yearlyFeatures : oppositePlan.monthlyFeatures;
+                          return Array.isArray(features) &&
+                          features.length > 0 ? (
+                            features.map(
+                              (feature: any, idx: number) => (
+                                <TouchableOpacity
+                                  key={idx}
+                                  onPress={() => handleFeaturePress(feature)}
+                                  disabled={!feature.details}
+                                  activeOpacity={feature.details ? 0.7 : 1}
+                                  className="flex-row items-center mb-1"
                                 >
-                                  {feature.text}
-                                </ScaledText>
-                              </TouchableOpacity>
+                                  <ScaledText
+                                    allowScaling={false}
+                                    variant="11"
+                                    className="text-background font-neueLight"
+                                    style={{
+                                      textDecorationLine: feature.details
+                                        ? "underline"
+                                        : "none",
+                                    }}
+                                  >
+                                    {feature.text}
+                                  </ScaledText>
+                                </TouchableOpacity>
+                              )
                             )
-                          )
-                        ) : (
-                          <ScaledText
-                            allowScaling={false}
-                            variant="11"
-                            style={{ color: "#080101" }}
-                          >
-                            No features listed
-                          </ScaledText>
-                        )}
+                          ) : (
+                            <ScaledText
+                              allowScaling={false}
+                              variant="11"
+                              style={{ color: "#080101" }}
+                            >
+                              No features listed
+                            </ScaledText>
+                          );
+                        })()}
                       </View>
                     </View>
 

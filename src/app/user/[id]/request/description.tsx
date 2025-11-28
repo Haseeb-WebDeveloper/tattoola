@@ -7,6 +7,7 @@ import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import NextBackFooter from "@/components/ui/NextBackFooter";
+import { descriptionQuestion } from "@/constants/request-questions";
 
 export default function DescriptionStep() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -35,7 +36,7 @@ export default function DescriptionStep() {
               paddingHorizontal: s(16),
             }}
           >
-            Describe your tattoo design in brief
+            {descriptionQuestion}
           </ScaledText>
           <ScaledTextInput
             containerClassName="rounded-2xl border border-gray text-foreground"

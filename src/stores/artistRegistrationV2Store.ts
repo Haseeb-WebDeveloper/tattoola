@@ -32,8 +32,10 @@ export interface ArtistV2Step7 {
 }
 
 export interface ArtistV2Step8 {
-  favoriteStyles: string[]; // up to AR_MAX_FAVORITE_STYLES
-  mainStyleId?: string; // one of favoriteStyles
+  // All styles selected via checkboxes (total styles artist works in)
+  styles: string[];
+  // Subset of styles marked as favorites via star icons
+  favoriteStyles: string[];
 }
 
 export interface ArtistV2Step9 {
@@ -90,7 +92,7 @@ interface ArtistV2RegistrationState {
   updateStep7: (data: Partial<ArtistV2Step7>) => void;
   updateStep8: (data: Partial<ArtistV2Step8>) => void;
   toggleFavoriteStyle: (styleId: string, max: number) => void;
-  setPrimaryStyle: (styleId: string) => void;
+  setPrimaryStyle: (styleId: string, maxFavorites: number) => void;
   updateStep9: (data: Partial<ArtistV2Step9>) => void;
   toggleService: (serviceId: string) => void;
   updateStep10: (data: Partial<ArtistV2Step10>) => void;
@@ -108,7 +110,7 @@ const initialState: Pick<ArtistV2RegistrationState, 'step3'|'step4'|'step5'|'ste
   step4: {},
   step5: { studioName: '', province: '', provinceId: '', municipality: '', municipalityId: '', studioAddress: '', phone: '', website: '' },
   step7: {},
-  step8: { favoriteStyles: [] },
+  step8: { styles: [], favoriteStyles: [] },
   step9: { servicesOffered: [] },
   step10: { bodyParts: [] },
   step11: {},
@@ -158,19 +160,62 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           console.log('[ArtistRegistrationV2Store] Step 8 updated:', data);
           set((s) => ({ step8: { ...s.step8, ...data } }));
         },
+        // Toggle a style in the overall selected list (checkbox)
         toggleFavoriteStyle: (styleId, max) => {
           set((s) => {
-            const current = s.step8.favoriteStyles || [];
+            const current = s.step8.styles || [];
             const exists = current.includes(styleId);
-            const next = exists ? current.filter((id) => id !== styleId) : (current.length < max ? [...current, styleId] : current);
-            const mainValid = s.step8.mainStyleId && next.includes(s.step8.mainStyleId) ? s.step8.mainStyleId : undefined;
-            return { step8: { ...s.step8, favoriteStyles: next, mainStyleId: mainValid } } as any;
+            let next = current;
+            if (exists) {
+              // Remove from selected and also from favourites subset
+              next = current.filter((id) => id !== styleId);
+            } else if (current.length < max) {
+              next = [...current, styleId];
+            }
+
+            const currentFavs = s.step8.favoriteStyles || [];
+            const nextFavs = currentFavs.filter((id) => next.includes(id));
+
+            return {
+              step8: {
+                ...s.step8,
+                styles: next,
+                favoriteStyles: nextFavs,
+              },
+            } as any;
           });
         },
-        setPrimaryStyle: (styleId) => {
+        // Toggle a style as favourite (star) within the selected list,
+        // respecting max allowed favourites
+        setPrimaryStyle: (styleId, maxFavorites) => {
           set((s) => {
-            if (!(s.step8.favoriteStyles || []).includes(styleId)) return s as any;
-            return { step8: { ...s.step8, mainStyleId: styleId } } as any;
+            const selected = s.step8.styles || [];
+            if (!selected.includes(styleId)) return s as any;
+
+            const currentFavs = s.step8.favoriteStyles || [];
+            const isFav = currentFavs.includes(styleId);
+
+            if (isFav) {
+              // Unmark as favourite
+              return {
+                step8: {
+                  ...s.step8,
+                  favoriteStyles: currentFavs.filter((id) => id !== styleId),
+                },
+              } as any;
+            }
+
+            if (currentFavs.length >= maxFavorites) {
+              // Cannot add more favourites
+              return s as any;
+            }
+
+            return {
+              step8: {
+                ...s.step8,
+                favoriteStyles: [...currentFavs, styleId],
+              },
+            } as any;
           });
         },
         updateStep9: (data) => {

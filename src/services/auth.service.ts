@@ -431,21 +431,47 @@ export class AuthService {
     logger.log("user id:", userId);
 
     // Ensure a users row exists for this auth user
-    const { data: existingUser, error: existUserError } = await supabase
+    const email = session.session.user.email || "";
+    
+    // Check if user exists by ID first
+    const { data: existingUserById, error: existUserByIdError } = await supabase
       .from("users")
       .select("id")
       .eq("id", userId)
       .maybeSingle();
 
-    logger.log("existing user:", existingUser);
+    logger.log("existing user by id:", existingUserById);
 
-    if (existUserError) {
-      throw new Error(existUserError.message);
+    if (existUserByIdError) {
+      throw new Error(existUserByIdError.message);
     }
 
-    let baseUserRow: any = existingUser;
+    let baseUserRow: any = existingUserById;
+    
+    // If user doesn't exist by ID, check by email (in case email exists from previous registration)
+    if (!baseUserRow && email) {
+      const { data: existingUserByEmail, error: existUserByEmailError } = await supabase
+        .from("users")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      logger.log("existing user by email:", existingUserByEmail);
+
+      if (existUserByEmailError && !existUserByEmailError.message.includes("No rows")) {
+        throw new Error(existUserByEmailError.message);
+      }
+
+      // If user exists by email, use that user (even if ID doesn't match auth user ID)
+      // This handles cases where user was created previously but auth user ID changed
+      if (existingUserByEmail) {
+        logger.log("User exists by email, will update existing user record");
+        baseUserRow = existingUserByEmail;
+      }
+    }
+
+    // If still no user found, create new one
     if (!baseUserRow) {
-      const email = session.session.user.email || "";
       const username =
         session.session.user.user_metadata?.username ||
         email.split("@")[0] ||
@@ -473,14 +499,58 @@ export class AuthService {
         .single();
 
       if (insertUserError) {
-        throw new Error(insertUserError.message);
-      }
+        // If insert fails due to duplicate email, fetch and update existing user
+        if (insertUserError.message.includes("duplicate key") && insertUserError.message.includes("email")) {
+          logger.log("Duplicate email detected, fetching and updating existing user");
+          const { data: existingUser, error: fetchError } = await supabase
+            .from("users")
+            .select("*")
+            .eq("email", email)
+            .single();
 
-      baseUserRow = insertedUser;
+          if (fetchError || !existingUser) {
+            throw new Error("User with this email already exists but could not be retrieved. Please contact support.");
+          }
+
+          // Update the existing user with new registration data
+          const { data: updatedUser, error: updateError } = await supabase
+            .from("users")
+            .update({
+              firstName: data.step3.firstName,
+              lastName: data.step3.lastName,
+              avatar: data.step3.avatar,
+              bio: data.step7.bio,
+              instagram: data.step7.instagram,
+              tiktok: data.step7.tiktok,
+              role: UserRole.ARTIST,
+              isActive: true,
+              isVerified: !!session.session.user.email_confirmed_at,
+              updatedAt: new Date().toISOString(),
+            })
+            .eq("id", existingUser.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            logger.log("Error updating existing user:", updateError);
+            // Fall back to existing user if update fails
+            baseUserRow = existingUser;
+          } else {
+            baseUserRow = updatedUser;
+          }
+        } else {
+          throw new Error(insertUserError.message);
+        }
+      } else {
+        baseUserRow = insertedUser;
+      }
     }
 
     logger.log("base user row:", baseUserRow);
     logger.log("Updating user profile with this data:", data);
+
+    // Use the actual user ID from baseUserRow (might differ from auth userId if user was found by email)
+    const actualUserId = baseUserRow.id;
 
     // Update user profile
     const { data: updatedUser, error: userError } = await supabase
@@ -494,7 +564,7 @@ export class AuthService {
         tiktok: data.step7.tiktok,
         updatedAt: new Date().toISOString(),
       })
-      .eq("id", userId)
+      .eq("id", actualUserId)
       .select()
       .single();
 
@@ -509,7 +579,7 @@ export class AuthService {
       await supabase
         .from("artist_profiles")
         .select("id")
-        .eq("userId", userId)
+        .eq("userId", actualUserId)
         .maybeSingle();
 
     logger.log("existing artist profile:", existingArtistProfile);
@@ -531,7 +601,7 @@ export class AuthService {
           .from("artist_profiles")
           .insert({
             id: generateUUID(), // Generate UUID for the artist profile
-            userId: userId,
+            userId: actualUserId,
             workArrangement: data.step4.workArrangement,
             artistType:
               data.step4.workArrangement === "STUDIO_OWNER"
@@ -541,8 +611,8 @@ export class AuthService {
                   : "FREELANCE",
             businessName: data.step5.studioName,
             studioAddress: data.step5.studioAddress,
-            website: data.step5.website,
             phone: data.step5.phone,
+            website: data.step5.website,
             certificateUrl: data.step6.certificateUrl,
             instagram: data.step7.instagram,
             minimumPrice: data.step11.minimumPrice,
@@ -607,7 +677,7 @@ export class AuthService {
 
       await adminOrUserClient.from("user_locations").insert({
         id: generateUUID(),
-        userId: userId,
+        userId: actualUserId,
         provinceId: data.step5.provinceId,
         municipalityId: data.step5.municipalityId,
         address: locationAddress,
@@ -663,7 +733,7 @@ export class AuthService {
           .from("studio_members")
           .select("id")
           .eq("studioId", createdStudio.id)
-          .eq("userId", userId)
+          .eq("userId", actualUserId)
           .maybeSingle();
 
         if (!existingMember) {
@@ -671,7 +741,7 @@ export class AuthService {
           await adminOrUserClient.from("studio_members").insert({
             id: generateUUID(),
             studioId: createdStudio.id,
-            userId: userId,
+            userId: actualUserId,
             artistId: artistProfile.id,
             role: "OWNER",
             isActive: true,
@@ -734,7 +804,7 @@ export class AuthService {
           await adminOrUserClient.from("studio_members").insert({
             id: generateUUID(),
             studioId: createdStudio.id,
-            userId: userId,
+            userId: actualUserId,
             artistId: artistProfile.id,
             role: "OWNER",
             isActive: true,
@@ -749,46 +819,21 @@ export class AuthService {
       }
     }
 
-    logger.log("creating favourite style");
+    logger.log("creating artist styles");
 
-    // Validate mainStyleId exists before using it
-    let validMainStyleId = null;
-    logger.log("Validating mainStyleId:", data.step8.mainStyleId);
-    if (data.step8.mainStyleId) {
-      const { data: mainStyle, error: mainStyleError } = await supabase
-        .from("tattoo_styles")
-        .select("id")
-        .eq("id", data.step8.mainStyleId)
-        .single();
+    // Add artist styles - validate against existing tattoo_styles and avoid duplicates.
+    // favoriteStyles is a subset of styles that should be marked as favourite.
+    const allStyles = data.step8.styles || [];
+    const favouriteStyleIds = data.step8.favoriteStyles || [];
 
-      logger.log("Main style validation result:", {
-        mainStyle,
-        mainStyleError,
-      });
-      if (mainStyleError || !mainStyle) {
-        logger.warn(
-          "Main style ID not found, skipping mainStyleId:",
-          data.step8.mainStyleId
-        );
-      } else {
-        validMainStyleId = data.step8.mainStyleId;
-        logger.log("Valid mainStyleId found:", validMainStyleId);
-      }
-    }
+    logger.log("Processing artist styles:", {
+      allStyles,
+      favouriteStyleIds,
+    });
 
-    // Update artist profile with valid mainStyleId
-    if (validMainStyleId) {
-      await supabase
-        .from("artist_profiles")
-        .update({ mainStyleId: validMainStyleId })
-        .eq("id", artistProfile.id);
-    }
-
-    // Add favorite styles - validate against existing tattoo_styles and avoid duplicates
-    logger.log("Processing favorite styles:", data.step8.favoriteStyles);
-    if (data.step8.favoriteStyles.length > 0) {
+    if (allStyles.length > 0) {
       const uniqueRequestedStyleIds = Array.from(
-        new Set(data.step8.favoriteStyles.filter(Boolean))
+        new Set(allStyles.filter(Boolean))
       );
       logger.log("Unique requested style IDs:", uniqueRequestedStyleIds);
 
@@ -811,19 +856,20 @@ export class AuthService {
       if (validStyleIds.length > 0) {
         // Optional: clear existing to avoid unique violations on re-run
         await supabase
-          .from("artist_favorite_styles")
+          .from("artist_styles")
           .delete()
           .eq("artistId", artistProfile.id);
 
-        const favoriteStylesData = validStyleIds.map((styleId, index) => ({
+        const stylesData = validStyleIds.map((styleId, index) => ({
           artistId: artistProfile.id,
           styleId: styleId,
           order: index,
+          isFavorite: favouriteStyleIds.includes(styleId),
         }));
 
         const { error: stylesError } = await supabase
-          .from("artist_favorite_styles")
-          .insert(favoriteStylesData);
+          .from("artist_styles")
+          .insert(stylesData);
 
         if (stylesError) {
           throw new Error(stylesError.message);
@@ -1118,6 +1164,7 @@ export class AuthService {
         const thumbnailUrl = project.photos?.[0] || project.videos?.[0];
 
         // Create post
+        const firstFavoriteStyle = (data.step8.favoriteStyles || [])[0] || null;
         const { data: post, error: postError } = await adminOrUserClient
           .from("posts")
           .insert({
@@ -1125,7 +1172,7 @@ export class AuthService {
             authorId: userId,
             caption: project.description || project.title,
             thumbnailUrl: thumbnailUrl,
-            styleId: data.step8.mainStyleId || null,
+            styleId: firstFavoriteStyle || null,
             projectId: ref.id,
             isActive: true,
             likesCount: 0,
@@ -1367,7 +1414,6 @@ export class AuthService {
             hourlyRate: dbUser.artist_profiles.hourlyRate,
             coverPhoto: dbUser.artist_profiles.coverPhoto,
             coverVideo: dbUser.artist_profiles.coverVideo,
-            mainStyleId: dbUser.artist_profiles.mainStyleId,
             bannerMedia: dbUser.artist_profiles.artist_banner_media || [],
             createdAt: dbUser.artist_profiles.createdAt,
             updatedAt: dbUser.artist_profiles.updatedAt,

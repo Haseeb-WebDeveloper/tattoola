@@ -19,7 +19,30 @@ export const step5Schema = z.object({
   municipality: z.string().trim().min(1, "Required"),
   studioAddress: z.string().trim().min(1, "Required"),
   website: z.string().url().optional().or(z.literal("")).optional(),
-  phone: z.string().trim().min(5, "Invalid phone"),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required")
+    .refine(
+      (val) => {
+        // Remove + and spaces, count only digits
+        const digits = val.replace(/[^0-9]/g, "");
+        // Minimum 10 digits (country code + number), maximum 15 digits (E.164 standard)
+        return digits.length >= 10 && digits.length <= 15;
+      },
+      {
+        message: "Phone number must be between 10 and 15 digits",
+      }
+    )
+    .refine(
+      (val) => {
+        // Must start with + and country code
+        return /^\+[1-9]\d+$/.test(val);
+      },
+      {
+        message: "Invalid phone number format",
+      }
+    ),
 });
 
 export const step6Schema = z.object({
@@ -33,11 +56,10 @@ export const step7Schema = z.object({
 });
 
 export const step8Schema = z.object({
-  favoriteStyles: z.array(z.string()).min(2, "Pick at least 2"),
-  mainStyleId: z.string().trim().min(1, "Choose a primary style"),
-}).refine((v) => v.favoriteStyles.includes(v.mainStyleId), {
-  message: "Primary must be within favorites",
-  path: ["mainStyleId"],
+  // All styles selected via checkboxes
+  styles: z.array(z.string()).min(1, "Pick at least 1 styles"),
+  // Optional subset marked as favorites via star icons
+  favoriteStyles: z.array(z.string()).optional(),
 });
 
 export const step9Schema = z.object({

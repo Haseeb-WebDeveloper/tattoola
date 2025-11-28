@@ -115,7 +115,7 @@ export default function CustomTabBar({
         style={{
           paddingHorizontal: s(12),
           paddingBottom: mvs(8),
-          paddingTop: mvs(48),
+          paddingTop: mvs(32),
         }}
       >
         <View className="rounded-full" style={{ overflow: "visible" }}>

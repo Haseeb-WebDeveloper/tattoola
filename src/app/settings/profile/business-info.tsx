@@ -1,9 +1,9 @@
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import LocationPicker from "@/components/shared/LocationPicker";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
-    Image,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -21,15 +20,17 @@ import {
     View,
 } from "react-native";
 import { toast } from "sonner-native";
+import * as DocumentPicker from "expo-document-picker";
 
 export default function BusinessInfoSettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
 
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const [artistId, setArtistId] = useState<string | null>(null);
 
@@ -39,6 +40,16 @@ export default function BusinessInfoSettingsScreen() {
   const [website, setWebsite] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<{
+    name: string;
+    size: number;
+    uri: string;
+  } | null>(null);
+
+  // Location fields
+  const [primaryProvinceId, setPrimaryProvinceId] = useState<string | null>(null);
+  const [primaryMunicipalityId, setPrimaryMunicipalityId] = useState<string | null>(null);
+  const [locationLabel, setLocationLabel] = useState<string>("Not set");
 
   // Initial snapshot for dirty check
   const [initial, setInitial] = useState({
@@ -47,10 +58,9 @@ export default function BusinessInfoSettingsScreen() {
     website: "",
     phone: "",
     certificateUrl: null as string | null,
+    provinceId: null as string | null,
+    municipalityId: null as string | null,
   });
-
-  // Display-only
-  const [locationLabel, setLocationLabel] = useState<string>("Not set");
 
   const hasUnsavedChanges = useMemo(() => {
     return (
@@ -58,9 +68,11 @@ export default function BusinessInfoSettingsScreen() {
       studioAddress.trim() !== initial.studioAddress.trim() ||
       website.trim() !== initial.website.trim() ||
       phone.trim() !== initial.phone.trim() ||
-      certificateUrl !== initial.certificateUrl
+      certificateUrl !== initial.certificateUrl ||
+      primaryProvinceId !== initial.provinceId ||
+      primaryMunicipalityId !== initial.municipalityId
     );
-  }, [businessName, studioAddress, website, phone, certificateUrl, initial]);
+  }, [businessName, studioAddress, website, phone, certificateUrl, primaryProvinceId, primaryMunicipalityId, initial]);
 
   useEffect(() => {
     let mounted = true;
@@ -87,13 +99,15 @@ export default function BusinessInfoSettingsScreen() {
         setWebsite(ap.website || "");
         setPhone(ap.phone || "");
         setCertificateUrl(ap.certificateUrl || null);
-        setInitial({
-          businessName: ap.businessName || "",
-          studioAddress: ap.studioAddress || "",
-          website: ap.website || "",
-          phone: ap.phone || "",
-          certificateUrl: ap.certificateUrl || null,
-        });
+        
+        // Set selected document if certificate exists
+        if (ap.certificateUrl) {
+          setSelectedDocument({
+            name: ap.certificateUrl.split("/").pop() || "Certificate",
+            size: 0,
+            uri: ap.certificateUrl,
+          });
+        }
 
         // Resolve primary location per spec
         let municipalityId: string | null = null;
@@ -148,12 +162,25 @@ export default function BusinessInfoSettingsScreen() {
           ]);
           if (mun?.name && prov?.name) {
             setLocationLabel(`${mun.name}, ${prov.name}`);
+            setPrimaryProvinceId(provinceId);
+            setPrimaryMunicipalityId(municipalityId);
           } else {
             setLocationLabel("Not set");
           }
         } else {
           setLocationLabel("Not set");
         }
+
+        // Set initial state
+        setInitial({
+          businessName: ap.businessName || "",
+          studioAddress: ap.studioAddress || "",
+          website: ap.website || "",
+          phone: ap.phone || "",
+          certificateUrl: ap.certificateUrl || null,
+          provinceId: provinceId,
+          municipalityId: municipalityId,
+        });
       } catch (error: any) {
         console.error("Error loading business info:", error);
         toast.error(error.message || "Failed to load business info");
@@ -207,36 +234,72 @@ export default function BusinessInfoSettingsScreen() {
 
   const handlePickCertificate = async () => {
     try {
-      const files = await pickFiles({
-        mediaType: "image",
-        allowsMultipleSelection: false,
-        maxFiles: 1,
-        cloudinaryOptions: cloudinaryService.getPortfolioUploadOptions("image"),
+      setUploading(true);
+      
+      // Pick document (PDF, DOC, DOCX, etc.)
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+        copyToCacheDirectory: true,
+        multiple: false,
       });
-      if (!files || files.length === 0) return;
 
-      const file = files[0];
-      const maxSize = 10 * 1024 * 1024;
-      if (file.fileSize && file.fileSize > maxSize) {
-        toast.error("Image size must be less than 10MB");
+      if (result.canceled) {
+        setUploading(false);
         return;
       }
 
-      const uploaded = await uploadToCloudinary(
-        [file],
-        cloudinaryService.getPortfolioUploadOptions("image")
-      );
-      if (uploaded && uploaded[0]?.cloudinaryResult?.secureUrl) {
-        setCertificateUrl(uploaded[0].cloudinaryResult.secureUrl);
+      const file = result.assets[0];
+      
+      // Check file size (10MB limit for documents)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size && file.size > maxSize) {
+        toast.error("File size must be less than 10MB");
+        setUploading(false);
+        return;
       }
-    } catch (err: any) {
-      console.error("Error uploading certificate:", err);
-      toast.error(err.message || "Failed to upload certificate");
+
+      // Set selected document for preview
+      setSelectedDocument({
+        name: file.name || "Document",
+        size: file.size || 0,
+        uri: file.uri,
+      });
+
+      // Upload to Cloudinary using the service method
+      const uploadOptions = cloudinaryService.getCertificateUploadOptions();
+      const uploadResult = await cloudinaryService.uploadFile(
+        {
+          uri: file.uri,
+          type: file.mimeType || "application/pdf",
+          fileName: file.name || "certificate.pdf",
+        },
+        uploadOptions
+      );
+      
+      const certificateUrl = uploadResult.secureUrl;
+      setCertificateUrl(certificateUrl);
+      
+      toast.success("Certificate uploaded successfully");
+    } catch (error: any) {
+      console.error("Error uploading certificate:", error);
+      toast.error(error.message || "Failed to upload certificate");
+      setSelectedDocument(null);
+    } finally {
+      setUploading(false);
     }
   };
 
+  const handleRemoveCertificate = () => {
+    setSelectedDocument(null);
+    setCertificateUrl(null);
+  };
+
   const handleSave = async () => {
-    if (!artistId) {
+    if (!artistId || !user?.id) {
       toast.error("Artist profile not found");
       return;
     }
@@ -248,6 +311,7 @@ export default function BusinessInfoSettingsScreen() {
 
     setIsSaving(true);
     try {
+      // Update artist profile
       const { error } = await supabase
         .from("artist_profiles")
         .update({
@@ -260,7 +324,47 @@ export default function BusinessInfoSettingsScreen() {
         .eq("id", artistId);
       if (error) throw error;
 
-      await clearProfileCache(user!.id);
+      // Update primary location if changed
+      if (primaryProvinceId && primaryMunicipalityId) {
+        // Check if location changed
+        if (
+          primaryProvinceId !== initial.provinceId ||
+          primaryMunicipalityId !== initial.municipalityId
+        ) {
+          // Update primary user location
+          const { data: existingLocation } = await supabase
+            .from("user_locations")
+            .select("id")
+            .eq("userId", user.id)
+            .eq("isPrimary", true)
+            .maybeSingle();
+
+          if (existingLocation) {
+            // Update existing primary location
+            const { error: updateError } = await supabase
+              .from("user_locations")
+              .update({
+                provinceId: primaryProvinceId,
+                municipalityId: primaryMunicipalityId,
+              })
+              .eq("id", existingLocation.id);
+            if (updateError) throw updateError;
+          } else {
+            // Create new primary location
+            const { error: insertError } = await supabase
+              .from("user_locations")
+              .insert({
+                userId: user.id,
+                provinceId: primaryProvinceId,
+                municipalityId: primaryMunicipalityId,
+                isPrimary: true,
+              });
+            if (insertError) throw insertError;
+          }
+        }
+      }
+
+      await clearProfileCache(user.id);
       toast.success("Business info updated successfully");
 
       setTimeout(() => {
@@ -376,18 +480,20 @@ export default function BusinessInfoSettingsScreen() {
             "Es. Black Rose Tattoo"
           )}
 
-          {/* Location (read-only) */}
+          {/* Location (editable) */}
           <View style={{ marginBottom: mvs(24) }}>
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-gray font-montserratMedium"
+              className="text-tat font-montserratSemibold"
               style={{ marginBottom: mvs(8) }}
             >
               Posizione primaria
             </ScaledText>
-            <View
-              className="flex-row items-center rounded-xl border border-gray"
+            <TouchableOpacity
+              onPress={() => setShowLocationPicker(true)}
+              disabled={loading || isSaving}
+              className="rounded-xl border border-gray"
               style={{
                 backgroundColor: "#100C0C",
                 paddingHorizontal: s(16),
@@ -397,11 +503,11 @@ export default function BusinessInfoSettingsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-montserratMedium"
+                className={locationLabel === "Not set" ? "text-[#A49A99]" : "text-foreground font-montserratMedium"}
               >
                 {loading ? "Loading..." : locationLabel}
               </ScaledText>
-            </View>
+            </TouchableOpacity>
           </View>
 
           {renderTextInput(
@@ -437,45 +543,80 @@ export default function BusinessInfoSettingsScreen() {
             >
               Certificato
             </ScaledText>
-            {certificateUrl ? (
-              <View className="relative">
-                <Image
-                  source={{ uri: certificateUrl }}
-                  style={{
-                    width: "100%",
-                    height: mvs(140),
-                    borderRadius: s(8),
-                    backgroundColor: "#100C0C",
-                  }}
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  onPress={handlePickCertificate}
-                  disabled={uploading || loading || isSaving}
-                  className="absolute bg-foreground rounded-full items-center justify-center"
-                  style={{
-                    width: s(28),
-                    height: s(28),
-                    right: s(10),
-                    top: s(10),
-                  }}
-                >
-                  <SVGIcons.PenRed width={s(14)} height={s(14)} />
-                </TouchableOpacity>
-              </View>
-            ) : (
+            
+            {/* Upload area */}
+            <View
+              className="rounded-2xl items-center bg-primary/20 border-dashed border-error/70"
+              style={{
+                paddingVertical: mvs(24),
+                paddingHorizontal: s(16),
+                borderWidth: s(1),
+                marginBottom: selectedDocument ? mvs(12) : 0,
+              }}
+            >
+              <SVGIcons.Upload width={s(42)} height={s(42)} />
               <TouchableOpacity
                 onPress={handlePickCertificate}
                 disabled={uploading || loading || isSaving}
-                className="bg-[#100C0C] border-dashed border-primary rounded-xl items-center justify-center"
-                style={{ height: mvs(100), borderWidth: s(1) }}
+                className="bg-primary text-background rounded-full"
+                style={{
+                  paddingVertical: mvs(8),
+                  paddingHorizontal: s(20),
+                  borderRadius: s(70),
+                  marginTop: mvs(12),
+                }}
               >
-                {uploading ? (
-                  <ActivityIndicator color="#AD2E2E" />
-                ) : (
-                  <SVGIcons.AddRed width={s(24)} height={s(32)} />
-                )}
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueSemibold"
+                >
+                  {uploading ? "Uploading..." : "Upload Certificate"}
+                </ScaledText>
               </TouchableOpacity>
+              <ScaledText
+                allowScaling={false}
+                variant="11"
+                className="text-gray text-center font-neueSemibold"
+                style={{ marginTop: mvs(12) }}
+              >
+                Supporta PDF, DOC, DOCX. Max size 10MB
+              </ScaledText>
+            </View>
+
+            {/* Document preview */}
+            {selectedDocument && (
+              <View
+                className="bg-primary/10 rounded-lg border border-primary/30"
+                style={{
+                  paddingHorizontal: mvs(16),
+                  paddingVertical: mvs(10),
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <SVGIcons.Certificate width={s(18)} height={s(18)} />
+                <View style={{ marginLeft: s(12), flex: 1 }}>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueSemibold"
+                    numberOfLines={1}
+                  >
+                    {selectedDocument.name}
+                  </ScaledText>
+                </View>
+                <TouchableOpacity
+                  onPress={handleRemoveCertificate}
+                  style={{
+                    padding: s(4),
+                    marginLeft: s(8),
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <SVGIcons.CloseGray width={s(12)} height={s(12)} />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </ScrollView>
@@ -605,6 +746,20 @@ export default function BusinessInfoSettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Location Picker */}
+      <LocationPicker
+        visible={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        initialProvinceId={primaryProvinceId}
+        initialMunicipalityId={primaryMunicipalityId}
+        onSelect={({ province, provinceId, municipality, municipalityId }) => {
+          setPrimaryProvinceId(provinceId);
+          setPrimaryMunicipalityId(municipalityId);
+          setLocationLabel(`${municipality}, ${province}`);
+          setShowLocationPicker(false);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }

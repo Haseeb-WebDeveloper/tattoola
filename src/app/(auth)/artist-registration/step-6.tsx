@@ -1,16 +1,17 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { useFileUpload } from "@/hooks/useFileUpload";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step6Schema } from "@/utils/artistRegistrationValidation";
 import { mvs, s } from "@/utils/scale";
+import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, ScrollView, TouchableOpacity, View } from "react-native";
-import NextBackFooter from "@/components/ui/NextBackFooter";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { toast } from "sonner-native";
 
 export default function ArtistStep6V2() {
   const {
@@ -20,45 +21,91 @@ export default function ArtistStep6V2() {
     totalStepsDisplay,
     currentStepDisplay,
   } = useArtistRegistrationV2Store();
-  const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
-  const [localPreview, setLocalPreview] = useState<string | undefined>(
-    undefined
-  );
+  const [uploading, setUploading] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{
+    name: string;
+    size: number;
+    uri: string;
+  } | null>(null);
 
   useEffect(() => {
     if (step4?.certificateUrl) {
-      setLocalPreview(step4.certificateUrl);
+      // If we have a certificate URL, we'll show it as uploaded
+      setSelectedDocument({
+        name: step4.certificateUrl.split("/").pop() || "Certificate",
+        size: 0,
+        uri: step4.certificateUrl,
+      });
     }
     setCurrentStepDisplay(6);
   }, []);
 
   const handlePickCertificate = async () => {
-    const files = await pickFiles({
-      mediaType: "all",
-      allowsMultipleSelection: true,
-      maxFiles: 5,
-      quality: 0.9,
-      cloudinaryOptions: cloudinaryService.getCertificateUploadOptions(),
-    });
-    if (files.length === 0) return;
+    try {
+      setUploading(true);
+      
+      // Pick document (PDF, DOC, DOCX, etc.)
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
 
-    // Show first local preview immediately (for images only)
-    setLocalPreview(files[0].uri);
+      if (result.canceled) {
+        setUploading(false);
+        return;
+      }
 
-    // Upload in background
-    const uploaded = await uploadToCloudinary(
-      files,
-      cloudinaryService.getCertificateUploadOptions()
-    );
-    // Prefer secureUrl if available, fallback to publicId URL
-    const first = uploaded[0];
-    if (first?.cloudinaryResult?.publicId) {
-      const url =
-        first.cloudinaryResult.secureUrl ||
-        `${first.cloudinaryResult.publicId}`;
-      updateStep4({ certificateUrl: url });
-      setLocalPreview(url);
+      const file = result.assets[0];
+      
+      // Check file size (10MB limit for documents)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size && file.size > maxSize) {
+        toast.error("File size must be less than 10MB");
+        setUploading(false);
+        return;
+      }
+
+      // Set selected document for preview
+      setSelectedDocument({
+        name: file.name || "Document",
+        size: file.size || 0,
+        uri: file.uri,
+      });
+
+      // Upload to Cloudinary using the service method
+      const uploadOptions = cloudinaryService.getCertificateUploadOptions();
+      const uploadResult = await cloudinaryService.uploadFile(
+        {
+          uri: file.uri,
+          type: file.mimeType || "application/pdf",
+          fileName: file.name || "certificate.pdf",
+        },
+        uploadOptions
+      );
+      
+      const certificateUrl = uploadResult.secureUrl;
+
+      // Update store with certificate URL
+      updateStep4({ certificateUrl });
+      
+      toast.success("Certificate uploaded successfully");
+    } catch (error: any) {
+      console.error("Error uploading certificate:", error);
+      toast.error(error.message || "Failed to upload certificate");
+      setSelectedDocument(null);
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const handleRemoveDocument = () => {
+    setSelectedDocument(null);
+    updateStep4({ certificateUrl: undefined });
   };
 
   const canProceed = isValid(step6Schema, {
@@ -122,14 +169,13 @@ export default function ArtistStep6V2() {
               className="text-gray text-center font-neueSemibold"
               style={{ marginTop: mvs(12) }}
             >
-              Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}Fino a 2
-              video, supporta MOV, MP4, AVI. Max size 10MB
+              Supporta PDF, DOC, DOCX. Max size 10MB
             </ScaledText>
           </View>
         </View>
 
-        {/* Preview (first file) */}
-        {localPreview && (
+        {/* Document preview */}
+        {selectedDocument && (
           <View
             style={{
               paddingHorizontal: s(24),
@@ -137,11 +183,47 @@ export default function ArtistStep6V2() {
               paddingBottom: mvs(64),
             }}
           >
-            <Image
-              source={{ uri: localPreview }}
-              className="w-full rounded-lg h-fit aspect-square"
-              resizeMode="contain"
-            />
+            <View
+              className="bg-primary/10 rounded-lg border border-primary/30"
+              style={{
+                paddingHorizontal: mvs(16),
+                paddingVertical: mvs(10),
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <SVGIcons.Certificate width={s(18)} height={s(18)} />
+              <View style={{ marginLeft: s(12), flex: 1 }}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueSemibold"
+                  numberOfLines={1}
+                >
+                  {selectedDocument.name}
+                </ScaledText>
+                {/* {selectedDocument.size > 0 && (
+                  <ScaledText
+                    allowScaling={false}
+                    variant="11"
+                    className="text-gray font-neueLight"
+                    style={{ marginTop: mvs(4) }}
+                  >
+                    {(selectedDocument.size / 1024 / 1024).toFixed(2)} MB
+                  </ScaledText>
+                )} */}
+              </View>
+              <TouchableOpacity
+                onPress={handleRemoveDocument}
+                style={{
+                  padding: s(4),
+                  marginLeft: s(8),
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <SVGIcons.CloseGray width={s(12)} height={s(12)} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>

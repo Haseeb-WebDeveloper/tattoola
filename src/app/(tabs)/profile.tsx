@@ -11,6 +11,7 @@ import {
   TattooLoverSkeleton,
 } from "@/components/profile";
 import ScaledText from "@/components/ui/ScaledText";
+import { DISPLAY_NAME_AR } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -19,7 +20,9 @@ import {
   TattooLoverSelfProfile,
 } from "@/services/profile.service";
 import { ArtistSelfProfileInterface } from "@/types/artist";
+import { WorkArrangement } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -39,6 +42,7 @@ export default function ProfileScreen() {
   const [data, setData] = useState<
     ArtistSelfProfileInterface | TattooLoverSelfProfile | null
   >(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   // Load profile with cache-first approach - role aware
   const loadProfile = useCallback(
@@ -59,8 +63,40 @@ export default function ProfileScreen() {
         }
 
         setError(null);
+        setDisplayName(null);
       } catch (e: any) {
-        setError(e?.message || "Failed to load profile");
+        const errorMessage = e?.message || "Failed to load profile";
+        const errorCode = e?.code || e?.error?.code;
+        
+        // Check if error is "Cannot coerce the result to a single JSON object" or similar
+        // This happens when .single() is called but no rows are found (user doesn't exist in database)
+        const isUserNotFoundError =
+          errorCode === "PGRST116" ||
+          errorMessage.includes("Cannot coerce") ||
+          errorMessage.includes("JSON object") ||
+          errorMessage.includes("multiple (or no) rows returned");
+        
+        if (isUserNotFoundError) {
+          // User not found in database, check auth user metadata for displayName
+          try {
+            const {
+              data: { user: authUser },
+            } = await supabase.auth.getUser();
+            
+            if (authUser) {
+              const displayNameValue =
+                (authUser as any).user_metadata?.displayName || null;
+              setDisplayName(displayNameValue);
+              setError(null); // Clear error since we'll show registration button
+            } else {
+              setError(errorMessage);
+            }
+          } catch (authError) {
+            setError(errorMessage);
+          }
+        } else {
+          setError(errorMessage);
+        }
       } finally {
         setLoading(false);
       }
@@ -122,6 +158,48 @@ export default function ProfileScreen() {
       return <TattooLoverSkeleton />;
     }
     return <ProfileSkeleton />;
+  }
+
+  // Show registration button if user not found and we have displayName
+  if (!error && displayName) {
+    const isArtist = displayName === DISPLAY_NAME_AR;
+    const registrationPath = isArtist
+      ? "/(auth)/artist-registration/step-3"
+      : "/(auth)/user-registration/step-3";
+
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <View style={{ paddingHorizontal: s(24), alignItems: "center" }}>
+          <ScaledText
+            allowScaling={false}
+            variant="body1"
+            className="text-foreground text-center font-neueLight"
+            style={{ marginBottom: mvs(16) }}
+          >
+            Please complete your registration to view your profile.
+          </ScaledText>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => router.push(registrationPath as any)}
+            className="items-center justify-center"
+            style={{
+              backgroundColor: "#AD2E2E",
+              paddingHorizontal: s(28),
+              paddingVertical: mvs(10),
+              borderRadius: s(100),
+            }}
+          >
+            <ScaledText
+              allowScaling={false}
+              variant="body1"
+              className="text-white font-neueSemibold"
+            >
+              Complete Registration
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
 
   if (error) {
@@ -190,21 +268,21 @@ export default function ProfileScreen() {
         />
 
         {/* Profile Header */}
-        <ProfileHeader
-          username={(data as ArtistSelfProfileInterface)?.user?.username || ""}
-          firstName={(data as ArtistSelfProfileInterface)?.user?.firstName}
-          lastName={(data as ArtistSelfProfileInterface)?.user?.lastName}
-          avatar={(data as ArtistSelfProfileInterface)?.user?.avatar}
-          businessName={
-            (data as ArtistSelfProfileInterface)?.artistProfile?.businessName
-          }
-          municipality={
-            (data as ArtistSelfProfileInterface)?.location?.municipality?.name
-          }
-          province={
-            (data as ArtistSelfProfileInterface)?.location?.province?.name
-          }
-        />
+        {(() => {
+          const artistData = data as ArtistSelfProfileInterface;
+          return (
+            <ProfileHeader
+              username={artistData?.user?.username || ""}
+              firstName={artistData?.user?.firstName}
+              lastName={artistData?.user?.lastName}
+              avatar={artistData?.user?.avatar}
+              businessName={artistData?.artistProfile?.businessName}
+              municipality={artistData?.location?.municipality?.name}
+              province={artistData?.location?.province?.name}
+              workArrangement={artistData?.artistProfile?.workArrangement as WorkArrangement}
+            />
+          );
+        })()}
 
         {/* Social Media Icons */}
         <SocialMediaIcons

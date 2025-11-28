@@ -92,10 +92,20 @@ export default function ArtistStep13V2() {
   const fetchPlans = async () => {
     try {
       const fetchedPlans = await SubscriptionService.fetchSubscriptionPlans();
-      setPlans(fetchedPlans);
+      
+      // Sort plans: default plan (with free trial) first
+      const sortedPlans = [...fetchedPlans].sort((a, b) => {
+        // If one is default and the other isn't, default comes first
+        if (a.isDefault && !b.isDefault) return -1;
+        if (!a.isDefault && b.isDefault) return 1;
+        // If both are default or both aren't, maintain original order
+        return 0;
+      });
+      
+      setPlans(sortedPlans);
 
       // Auto-select Premium plan (default)
-      const premiumPlan = fetchedPlans.find((p) => p.isDefault);
+      const premiumPlan = sortedPlans.find((p) => p.isDefault);
       if (premiumPlan) {
         updateStep13({ selectedPlanId: premiumPlan.id });
       }
@@ -427,28 +437,31 @@ export default function ArtistStep13V2() {
                       Includes:
                     </ScaledText>
                     <View>
-                      {Array.isArray(plan.features) && plan.features.length > 0 ? (
-                        plan.features.map((feature: any, idx: number) => (
-                          <View key={idx} className="flex-row items-center mb-1">
-                            <ScaledText
-                              allowScaling={false}
-                              variant="11"
-                              className="font-neueLight"
-                              style={{ color: "#080101" }}
-                            >
-                              {feature.text}
-                            </ScaledText>
-                          </View>
-                        ))
-                      ) : (
-                        <ScaledText
-                          allowScaling={false}
-                          variant="11"
-                          style={{ color: "#080101" }}
-                        >
-                          No features listed
-                        </ScaledText>
-                      )}
+                      {(() => {
+                        const features = isYearly ? plan.yearlyFeatures : plan.monthlyFeatures;
+                        return Array.isArray(features) && features.length > 0 ? (
+                          features.map((feature: any, idx: number) => (
+                            <View key={idx} className="flex-row items-center mb-1">
+                              <ScaledText
+                                allowScaling={false}
+                                variant="11"
+                                className="font-neueLight"
+                                style={{ color: "#080101" }}
+                              >
+                                {feature.text}
+                              </ScaledText>
+                            </View>
+                          ))
+                        ) : (
+                          <ScaledText
+                            allowScaling={false}
+                            variant="11"
+                            style={{ color: "#080101" }}
+                          >
+                            No features listed
+                          </ScaledText>
+                        );
+                      })()}
                     </View>
                   </View>
 

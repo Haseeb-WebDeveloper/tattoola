@@ -8,7 +8,7 @@ interface Style {
   id: string;
   name: string;
   imageUrl?: string | null;
-  isMain?: boolean;
+  isFavorite?: boolean;
 }
 
 interface StylesSectionProps {

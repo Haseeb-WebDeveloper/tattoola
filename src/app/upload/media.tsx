@@ -6,13 +6,12 @@ import {
   usePostUploadStore,
 } from "@/stores/postUploadStore";
 import { TrimText } from "@/utils/text-trim";
-import { router } from "expo-router";
-import React, { useMemo } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useMemo } from "react";
 import {
   Image,
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -23,13 +22,23 @@ import { getFileNameFromUri } from "@/utils/get-file-name";
 import { LinearGradient } from "expo-linear-gradient";
 import ScaledText from "@/components/ui/ScaledText";
 import NextBackFooter from "@/components/ui/NextBackFooter";
+import { s } from "@/utils/scale";
 
 export default function UploadMediaStep() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
+  const params = useLocalSearchParams<{ collectionId?: string }>();
   const media = usePostUploadStore((s) => s.media);
   const setMedia = usePostUploadStore((s) => s.setMedia);
   const addMedia = usePostUploadStore((s) => s.addMedia);
   const removeMediaAt = usePostUploadStore((s) => s.removeMediaAt);
+  const setCollectionId = usePostUploadStore((s) => s.setCollectionId);
+
+  // Set collection ID from route params if provided
+  useEffect(() => {
+    if (params.collectionId) {
+      setCollectionId(params.collectionId);
+    }
+  }, [params.collectionId, setCollectionId]);
 
   const canProceed = useMemo(
     () => canProceedFromMedia(usePostUploadStore.getState()),
@@ -135,9 +144,10 @@ export default function UploadMediaStep() {
           </View>
           {/* Filename */}
           <View style={{ flex: 1 }}>
-            <Text
-              className="text-foreground"
-              style={{ fontSize: 16, fontWeight: "400" }}
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-foreground font-neueLight"
             >
               {(() => {
                 const fullName = getFileNameFromUri(item.uri);
@@ -150,7 +160,7 @@ export default function UploadMediaStep() {
                 }
                 return `${TrimText(base, 15)}${ext}`;
               })()}
-            </Text>
+            </ScaledText>
           </View>
           {/* Trash/Delete */}
           <TouchableOpacity
@@ -188,41 +198,96 @@ export default function UploadMediaStep() {
         <View style={{ flex: 1 }}>
           <View className="px-6 pt-6">
             <View className="">
-              <Text className="text-foreground tat-body-1 font-neueBold mb-0.5">
-                Carica foto e video
-              </Text>
-              <Text className="tat-body-4 text-gray mb-6">
-                You need to select atleast{" "}
-                <Text className="text-[#FF7F56]">one photo</Text> and 3
-                photos/videos
-              </Text>
-            </View>
-
-            <View className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center py-10 mb-6">
-              <SVGIcons.Upload className="w-16 h-16" />
-              <TouchableOpacity
-                onPress={handlePickMedia}
-                disabled={uploading}
-                className="bg-primary rounded-full py-3 px-6 mt-4"
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueBold mb-0.5"
               >
+                Carica foto e video
+              </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="11"
+                className="text-gray font-neueMedium mb-6"
+              >
+                You need to select atleast{" "}
                 <ScaledText
                   allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueBold"
+                  variant="11"
+                  className="text-[#FF7F56] font-neueMedium"
                 >
-                  {uploading ? "Uploading..." : "Upload files"}
-                </ScaledText>
-              </TouchableOpacity>
-              <Text className="text-foreground/80 mt-6 text-center px-4">
-                JPG/PNG up to 5MB. MP4/MOV/AVI up to 10MB. Drag to reorder.
-              </Text>
+                  one photo
+                </ScaledText>{" "}
+                and 3 photos/videos
+              </ScaledText>
+            </View>
+
+            <View
+              className="border-dashed border-error/70 rounded-2xl bg-primary/20 items-center"
+              style={{
+                paddingVertical: s(24),
+                paddingHorizontal: s(16),
+                borderWidth: s(1),
+              }}
+            >
+              <SVGIcons.Upload className="w-16 h-16" />
+              {uploading ? (
+                <View
+                  className="rounded-full border-warning border-r-gray animate-spin-slow"
+                  style={{
+                    width: s(24),
+                    height: s(24),
+                    borderWidth: s(2),
+                    marginTop: s(12),
+                  }}
+                />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    onPress={handlePickMedia}
+                    disabled={uploading}
+                    className="bg-primary rounded-full"
+                    style={{
+                      marginTop: s(12),
+                      paddingVertical: s(8),
+                      paddingHorizontal: s(20),
+                    }}
+                  >
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-neueBold"
+                    >
+                      Upload files
+                    </ScaledText>
+                  </TouchableOpacity>
+                </>
+              )}
+              <ScaledText
+                allowScaling={false}
+                variant="11"
+                className="text-foreground/80 text-center font-neueBold"
+                style={{
+                  marginTop: s(12),
+                  paddingHorizontal: s(16),
+                }}
+              >
+                JPG/PNG up to 5MB. MP4/MOV/AVI up to 10MB.
+              </ScaledText>
             </View>
 
             {media.length > 0 && (
               <View className="">
-                <Text className="text-foreground tat-body-2-med pb-2">
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-foreground font-montserratMedium"
+                  style={{
+                    marginTop: s(16),
+                  }}
+                >
                   Uploaded files
-                </Text>
+                </ScaledText>
                 <View style={{ maxHeight: 350 }}>
                   <DraggableFlatList
                     data={media}

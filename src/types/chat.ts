@@ -5,7 +5,8 @@ export type MessageType =
   | "FILE"
   | "SYSTEM"
   | "INTAKE_QUESTION"
-  | "INTAKE_ANSWER";
+  | "INTAKE_ANSWER"
+  | "ADMIN_POST_REJECTION";
 
 export type ConversationStatus =
   | "REQUESTED"

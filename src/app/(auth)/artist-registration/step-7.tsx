@@ -128,13 +128,13 @@ export default function ArtistStep7V2() {
           Inserisci il link al tuo account Instagram (facoltativo)
         </ScaledText>
         <View
-          className={`flex-row items-center rounded-xl bg-black/40 ${focused === "instagram" ? "border-2 border-foreground" : "border border-gray"}`}
+          className={`flex-row items-center rounded-xl bg-tat-foreground ${focused === "instagram" ? "border-2 border-foreground" : "border border-gray"}`}
         >
-          <View style={{ paddingLeft: s(16) }} className="bg-tat-foreground">
+          <View style={{ paddingLeft: s(14) }} className="bg-tat-foreground">
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-gray font-montserratSemibold bg-tat-foreground"
+              className="text-foreground font-montserratSemibold bg-tat-foreground"
             >
               @
             </ScaledText>
@@ -168,13 +168,13 @@ export default function ArtistStep7V2() {
           Inserisci il link al tuo account Tiktok (facoltativo)
         </ScaledText>
         <View
-          className={`flex-row items-center rounded-xl bg-black/40 ${focused === "tiktok" ? "border-2 border-foreground" : "border border-gray"}`}
+          className={`flex-row items-center rounded-xl bg-tat-foreground ${focused === "tiktok" ? "border-2 border-foreground" : "border border-gray"}`}
         >
-          <View style={{ paddingLeft: s(16) }} className="bg-tat-foreground">
+          <View style={{ paddingLeft: s(14) }} className="bg-tat-foreground">
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-gray font-montserratSemibold bg-tat-foreground"
+              className="text-foreground font-montserratSemibold bg-tat-foreground"
             >
               @
             </ScaledText>

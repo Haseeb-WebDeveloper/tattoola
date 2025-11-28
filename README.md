@@ -51,41 +51,31 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "Home screen ui updates"
+eas update --branch preview --message "Test 1 Bugs fixed"
 
 eas build --profile development --platform android
 
 eas build --profile preview --platform android
 
+<!-- For ios -->
+
+eas build --profile development --platform ios
+
+eas build --profile preview --platform ios
+
+
+
+# If you used preview profile
+eas submit --platform ios --profile preview
+
+# If you used production profile
+eas submit --platform ios --profile production
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+todo
+if o current profile do ot show user to other
 
 at user Signup we have login and are you artist links
 user signup step 4 logo upload icon

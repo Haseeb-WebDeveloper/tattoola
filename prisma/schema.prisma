@@ -3,9 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {
@@ -21,6 +19,7 @@ model User {
   tiktok                  String?
   isActive                Boolean              @default(true)
   isVerified              Boolean              @default(false)
+  isSuspended             Boolean              @default(false)
   isPublic                Boolean              @default(true)
   role                    UserRole             @default(TATTOO_LOVER)
   createdAt               DateTime             @default(now())
@@ -29,6 +28,7 @@ model User {
   adminProfile            AdminProfile?
   artistProfile           ArtistProfile?
   collections             Collection[]
+  collectionMemberships   CollectionUser[]     @relation("CollectionUsers")
   comments                Comment[]
   receivedPrivateRequests PrivateRequest[]     @relation("PrivateRequestReceiver")
   sentPrivateRequests     PrivateRequest[]     @relation("PrivateRequestSender")
@@ -64,6 +64,8 @@ model User {
   paymentMethods          PaymentMethod[]
   invoices                Invoice[]
   payments                Payment[]
+  helpArticles            HelpArticle[]
+  feedItems               FeedItem[]
 
   @@index([email])
   @@index([username])
@@ -73,10 +75,10 @@ model User {
 }
 
 model ArtistProfile {
-  id                    String                @id @default(uuid())
-  userId                String                @unique
+  id                    String              @id @default(uuid())
+  userId                String              @unique
   certificateUrl        String?
-  portfolioComplete     Boolean               @default(false)
+  portfolioComplete     Boolean             @default(false)
   yearsExperience       Int?
   specialties           String[]
   businessName          String?
@@ -86,30 +88,29 @@ model ArtistProfile {
   phone                 String?
   workArrangement       WorkArrangement?
   artistType            ArtistType?
-  isStudioOwner         Boolean               @default(false)
+  isStudioOwner         Boolean             @default(false)
   minimumPrice          Float?
   hourlyRate            Float?
-  mainStyleId           String?
-  acceptPrivateRequests Boolean               @default(true)
+  acceptPrivateRequests Boolean             @default(true)
   rejectionMessage      String?
-  bannerType            BannerType?           @default(FOUR_IMAGES)
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
+  bannerType            BannerType?         @default(FOUR_IMAGES)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
   bodyParts             ArtistBodyPart[]
-  favoriteStyles        ArtistFavoriteStyle[]
-  mainStyle             TattooStyle?          @relation("ArtistMainStyle", fields: [mainStyleId], references: [id])
-  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  styles                ArtistStyle[]
+  collectionMemberships CollectionArtist[]
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   services              ArtistService[]
   portfolioProjects     PortfolioProject[]
   studioMemberships     StudioMember[]
-  ownedStudios          Studio[]              @relation("StudioOwner")
+  ownedStudios          Studio[]            @relation("StudioOwner")
   bannerMedia           ArtistBannerMedia[]
+  feedItems             FeedItem[]
 
   @@index([userId])
   @@index([portfolioComplete])
   @@index([workArrangement])
   @@index([artistType])
-  @@index([mainStyleId])
   @@index([yearsExperience])
   @@index([minimumPrice])
   @@index([hourlyRate])
@@ -128,11 +129,62 @@ model AdminProfile {
   @@map("admin_profiles")
 }
 
+model FeedItem {
+  id              String          @id @default(uuid())
+  position        Int
+  publicationType PublicationType @default(PUBLISHED)
+  publicationDate DateTime        @default(now())
+  contentType     FeedContentType
+  magazineId      String?
+  bannerId        String?
+  artistId        String?
+  userId          String?
+  collectionId    String?
+  postId          String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  magazine   Magazine?      @relation(fields: [magazineId], references: [id], onDelete: Cascade)
+  banner     AdminBanner?   @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+  artist     ArtistProfile? @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  user       User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection Collection?    @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  post       Post?          @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([position])
+  @@index([contentType])
+  @@index([publicationDate])
+  @@index([magazineId])
+  @@index([bannerId])
+  @@index([artistId])
+  @@index([userId])
+  @@index([collectionId])
+  @@index([postId])
+  @@map("feed_items")
+}
+
+enum FeedContentType {
+  MAGAZINE
+  BANNER
+  ARTIST
+  USER
+  ADMIN_COLLECTION
+}
+
+enum PublicationType {
+  PUBLISHED
+  SCHEDULED
+  DRAFT
+}
+
 model SubscriptionPlan {
   id                     String             @id @default(uuid())
   name                   String             @unique
   description            String
-  features               Json
+  monthlyFeatures        Json               @default("[]") // Default to an empty JSON array
+  yearlyFeatures         Json               @default("[]") // Default to an empty JSON array
   monthlyPrice           Float?
   yearlyPrice            Float?
   stripeMonthlyPriceId   String? // Stripe Price ID for monthly billing
@@ -142,14 +194,16 @@ model SubscriptionPlan {
   maxStyles              Int?
   maxFavoritesStyles     Int?
   canCreateStudio        Boolean            @default(true) // Allow creating a studio
-  isActive               Boolean            @default(true) 
-  createdAt              DateTime           @default(now()) 
-  updatedAt              DateTime           @updatedAt 
-  type                   PlanType           @unique @default(PREMIUM) 
-  isDefault              Boolean            @default(false) 
-  freeTrialDays          Int? 
-  subscriptions          UserSubscription[] 
+  isActive               Boolean            @default(true)
+  type                   PlanType           @unique @default(PREMIUM)
+  isDefault              Boolean            @default(false)
+  freeTrialDays          Int?
+  primaryCTA             String?
+  secondaryCTA           String?
+  subscriptions          UserSubscription[]
   invoiceItems           InvoiceItem[]
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
 
   @@index([name])
   @@index([type])
@@ -338,26 +392,56 @@ model StudioBannerMedia {
   @@map("studio_banner_media")
 }
 
+model AdminBanner {
+  id           String     @id @default(uuid())
+  title        String
+  size         BannerSize @default(SMALL)
+  thumbnailUrl String?
+  redirectUrl  String
+  isActive     Boolean    @default(true)
+  feedItems    FeedItem[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("banners")
+}
+
+enum BannerSize {
+  SMALL
+  LARGE
+}
+
+enum PostStatus {
+  PUBLISHED
+  ON_HOLD
+  REJECTED
+}
+
 model Post {
-  id            String            @id @default(uuid())
-  authorId      String
-  caption       String?
-  thumbnailUrl  String?
-  styleId       String?
-  projectId     String?
-  isActive      Boolean           @default(true)
-  likesCount    Int               @default(0)
-  commentsCount Int               @default(0)
-  showInFeed    Boolean           @default(false)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  media         PostMedia[]
-  collections   CollectionPost[]
-  comments      Comment[]
-  likes         PostLike[]
-  author        User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  style         TattooStyle?      @relation(fields: [styleId], references: [id])
-  project       PortfolioProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  id                 String            @id @default(uuid())
+  authorId           String
+  caption            String?
+  thumbnailUrl       String?
+  styleId            String?
+  projectId          String?
+  isActive           Boolean           @default(true)
+  status             PostStatus        @default(PUBLISHED)
+  likesCount         Int               @default(0)
+  commentsCount      Int               @default(0)
+  showInFeed         Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  media              PostMedia[]
+  collections        CollectionPost[]
+  comments           Comment[]
+  likes              PostLike[]
+  author             User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  style              TattooStyle?      @relation(fields: [styleId], references: [id])
+  project            PortfolioProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  adminConversations Conversation[]    @relation("AdminPostConversations")
+  feedItems          FeedItem[]
 
   @@index([authorId])
   @@index([styleId])
@@ -393,6 +477,7 @@ model Magazine {
   views         MagazineView[]
   author        User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
   style         TattooStyle?      @relation(fields: [styleId], references: [id])
+  feedItems     FeedItem[]
 
   @@index([authorId])
   @@index([styleId])
@@ -487,21 +572,55 @@ model Comment {
 }
 
 model Collection {
-  id                    String           @id @default(uuid())
+  id                    String             @id @default(uuid())
   name                  String
   description           String?
+  thumbnailUrl          String?
   ownerId               String
-  isPrivate             Boolean          @default(false)
-  isPortfolioCollection Boolean          @default(false)
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
+  collectionType        CollectionType     @default(TATTOO)
+  isPrivate             Boolean            @default(false)
+  isPortfolioCollection Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   posts                 CollectionPost[]
-  owner                 User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  users                 CollectionUser[]
+  artists               CollectionArtist[]
+  owner                 User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  feedItems             FeedItem[]
 
   @@index([ownerId])
   @@index([isPrivate])
   @@index([isPortfolioCollection])
+  @@index([collectionType])
   @@map("collections")
+}
+
+model CollectionUser {
+  id           String     @id @default(uuid())
+  collectionId String
+  userId       String
+  addedAt      DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User       @relation("CollectionUsers", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, userId])
+  @@index([collectionId])
+  @@index([userId])
+  @@map("collection_users")
+}
+
+model CollectionArtist {
+  id           String        @id @default(uuid())
+  collectionId String
+  artistId     String
+  addedAt      DateTime      @default(now())
+  collection   Collection    @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  artist       ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, artistId])
+  @@index([collectionId])
+  @@index([artistId])
+  @@map("collection_artists")
 }
 
 model CollectionPost {
@@ -519,48 +638,60 @@ model CollectionPost {
 }
 
 model PrivateRequest {
-  id         String        @id @default(uuid())
-  senderId   String
-  receiverId String
-  message    String?
-  status     RequestStatus @default(PENDING)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  receiver   User          @relation("PrivateRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  sender     User          @relation("PrivateRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  id             String        @id @default(uuid())
+  senderId       String
+  receiverId     String
+  conversationId String?       @unique
+  message        String?
+  status         RequestStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  receiver       User          @relation("PrivateRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender         User          @relation("PrivateRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  conversation   Conversation? @relation("PrivateRequestConversation", fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@unique([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
   @@index([status])
+  @@index([conversationId])
   @@map("private_requests")
 }
 
 model Conversation {
-  id            String              @id @default(uuid())
-  artistId      String?
-  loverId       String?
-  status        ConversationStatus  @default(REQUESTED)
-  requestedBy   String?
-  requestedAt   DateTime            @default(now())
-  acceptedAt    DateTime?
-  rejectedAt    DateTime?
-  closedAt      DateTime?
-  lastMessageAt DateTime?
-  lastMessageId String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  participants  ConversationUser[]
-  messages      Message[]
-  lastMessage   Message?            @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
-  artist        User?               @relation("ConversationArtist", fields: [artistId], references: [id])
-  lover         User?               @relation("ConversationLover", fields: [loverId], references: [id])
-  intake        ConversationIntake?
-  reports       Report[]
+  id                  String              @id @default(uuid())
+  artistId            String?
+  loverId             String?
+  status              ConversationStatus  @default(REQUESTED)
+  requestedBy         String?
+  requestedAt         DateTime            @default(now())
+  acceptedAt          DateTime?
+  rejectedAt          DateTime?
+  closedAt            DateTime?
+  lastMessageAt       DateTime?
+  lastMessageId       String?
+  isLocked            Boolean             @default(false)
+  lockedAt            DateTime?
+  lockedBy            String?
+  isAdminConversation Boolean             @default(false)
+  adminPostId         String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  participants        ConversationUser[]
+  messages            Message[]
+  lastMessage         Message?            @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
+  artist              User?               @relation("ConversationArtist", fields: [artistId], references: [id])
+  lover               User?               @relation("ConversationLover", fields: [loverId], references: [id])
+  intake              ConversationIntake?
+  privateRequest      PrivateRequest?     @relation("PrivateRequestConversation")
+  reports             Report[]
+  adminPost           Post?               @relation("AdminPostConversations", fields: [adminPostId], references: [id], onDelete: SetNull)
 
   @@unique([artistId, loverId])
   @@index([status])
   @@index([lastMessageAt])
+  @@index([isAdminConversation])
+  @@index([adminPostId])
   @@map("conversations")
 }
 
@@ -661,19 +792,20 @@ model UserFavoriteStyle {
   @@map("user_favorite_styles")
 }
 
-model ArtistFavoriteStyle {
-  id       String        @id @default(dbgenerated("uuid_generate_v4()"))
-  artistId String
-  styleId  String
-  order    Int           @default(0)
-  artist   ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  style    TattooStyle   @relation(fields: [styleId], references: [id], onDelete: Cascade)
+model ArtistStyle {
+  id         String        @id @default(dbgenerated("uuid_generate_v4()"))
+  artistId   String
+  styleId    String
+  order      Int           @default(0)
+  isFavorite Boolean       @default(false)
+  artist     ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  style      TattooStyle   @relation(fields: [styleId], references: [id], onDelete: Cascade)
 
   @@unique([artistId, styleId])
   @@index([artistId])
   @@index([styleId])
   @@index([artistId, styleId])
-  @@map("artist_favorite_styles")
+  @@map("artist_styles")
 }
 
 model BodyPart {
@@ -791,14 +923,13 @@ model TattooStyle {
   isActive          Boolean                 @default(true)
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
-  artistFavorites   ArtistFavoriteStyle[]
-  artistMainStyles  ArtistProfile[]         @relation("ArtistMainStyle")
   magazines         Magazine[]
   portfolioProjects PortfolioProjectStyle[]
   posts             Post[]
   services          Service[]
   userFavorites     UserFavoriteStyle[]
   studioStyles      StudioStyle[]
+  artistStyles      ArtistStyle[]
 
   @@index([name])
   @@index([isActive])
@@ -991,6 +1122,10 @@ enum UserRole {
   ADMIN
   ARTIST
   TATTOO_LOVER
+  AMBASSADOR
+  EXPERT
+  TATTOO_MODEL
+  CONTENT_CREATOR
 }
 
 enum AdminLevel {
@@ -1037,6 +1172,8 @@ enum MessageType {
   SYSTEM
   INTAKE_QUESTION
   INTAKE_ANSWER
+  ADMIN_POST_REJECTION
+  ADMIN_SYSTEM
 }
 
 enum ConversationStatus {
@@ -1113,6 +1250,12 @@ enum StudioMemberStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum CollectionType {
+  TATTOO
+  USER
+  ARTIST
 }
 
 // New: Billing and payments
@@ -1260,4 +1403,53 @@ model SubscriptionEvent {
 
   @@index([subscriptionId])
   @@map("subscription_events")
+}
+
+enum HelpCategoryType {
+  USER
+  ARTIST
+}
+
+enum HelpArticleType {
+  USER
+  ARTIST
+}
+
+model HelpCategory {
+  id            String           @id @default(uuid())
+  type          HelpCategoryType
+  title         String
+  loginRequired Boolean          @default(false)
+  order         Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  articles      HelpArticle[]
+
+  @@index([type])
+  @@index([loginRequired])
+  @@index([order])
+  @@map("help_categories")
+}
+
+model HelpArticle {
+  id          String          @id @default(uuid())
+  publication Boolean         @default(true)
+  type        HelpArticleType
+  categoryId  String
+  title       String
+  slug        String          @unique
+  description String          @db.Text
+  authorId    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  category    HelpCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  author      User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([publication])
+  @@index([type])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("help_articles")
 }

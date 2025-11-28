@@ -3,6 +3,7 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
+import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
@@ -10,21 +11,23 @@ import { UserRole } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
 
 export default function ArtistRegisterScreen() {
   const { signUp, loading } = useAuth();
-  const { setInProgress, setSuccess, setError, reset } = useSignupStore();
-  const [formData, setFormData] = useState<RegisterCredentials>({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: UserRole.ARTIST,
-  });
+  const { setInProgress, setSuccess, setError, reset, formData: storedFormData } = useSignupStore();
+  const [formData, setFormData] = useState<RegisterCredentials>(
+    storedFormData || {
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: UserRole.ARTIST,
+    }
+  );
   const [errors, setErrors] = useState<FormErrors>({});
   const [focusedField, setFocusedField] = useState<
     keyof RegisterCredentials | null
@@ -32,12 +35,22 @@ export default function ArtistRegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Username validation hook
+  const usernameValidation = useUsernameValidation(formData.username);
+
   const totalSteps = 13;
   const currentStep = 1;
   const steps = useMemo(
     () => Array.from({ length: totalSteps }, (_, i) => i + 1),
     []
   );
+
+  // Restore form data from store on mount if available
+  useEffect(() => {
+    if (storedFormData) {
+      setFormData(storedFormData);
+    }
+  }, []);
 
   const handleInputChange = (
     field: keyof RegisterCredentials,
@@ -51,7 +64,7 @@ export default function ArtistRegisterScreen() {
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = async (): Promise<boolean> => {
     const validationRules = {
       ...RegisterValidationSchema,
       confirmPassword: {
@@ -67,17 +80,26 @@ export default function ArtistRegisterScreen() {
 
     const formErrors = ValidationUtils.validateForm(formData, validationRules);
 
+    // Check username availability if format is valid
+    if (!formErrors.username && formData.username.trim().length >= 3) {
+      const isAvailable = await usernameValidation.manualCheck();
+      if (!isAvailable) {
+        formErrors.username = "This username is already taken";
+      }
+    }
+
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
   };
 
   const handleRegister = async () => {
-    if (!validateForm()) {
+    const isValid = await validateForm();
+    if (!isValid) {
       return;
     }
 
     // Navigate immediately to email confirmation and start background signup
-    setInProgress(formData.email);
+    setInProgress(formData.email, formData);
     router.push("/(auth)/email-confirmation");
 
     try {
@@ -138,20 +160,75 @@ export default function ArtistRegisterScreen() {
         >
           Username (inserisci un nome univoco)
         </ScaledText>
-        <ScaledTextInput
-          containerClassName={`flex-row items-center rounded-xl bg-gray-foreground ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
-          className="flex-1 text-foreground rounded-xl"
-          style={{ fontSize: s(12) }}
-          placeholder="TattooKing_97"
-          autoCapitalize="none"
-          value={formData.username}
-          onChangeText={(value) => handleInputChange("username", value)}
-          onFocus={() => setFocusedField("username")}
-          onBlur={() => setFocusedField(null)}
-        />
-        {!!errors.username && (
-          <Text className="text-xs text-error mt-1">{errors.username}</Text>
+        <View className="relative">
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl bg-gray-foreground ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"} ${usernameValidation.isFormatValid && usernameValidation.available === true ? "border-success" : ""} ${usernameValidation.available === false ? "border-red-500" : ""}`}
+            className="flex-1 text-foreground rounded-xl"
+            style={{ fontSize: s(12) }}
+            placeholder="TattooKing_97"
+            autoCapitalize="none"
+            value={formData.username}
+            onChangeText={(value) => handleInputChange("username", value)}
+            onFocus={() => setFocusedField("username")}
+            onBlur={() => setFocusedField(null)}
+            rightAccessory={
+              formData.username.trim().length > 0 ? (
+                <View className="px-3">
+                  {usernameValidation.checking ? (
+                    <ActivityIndicator size="small" color="#A49A99" />
+                  ) : usernameValidation.isFormatValid &&
+                    usernameValidation.available === true ? (
+                    <SVGIcons.CheckGreen
+                      width={s(18)}
+                      height={s(18)}
+                      className="text-success"
+                    />
+                  ) : usernameValidation.available === false ? (
+                    <SVGIcons.Error width={s(18)} height={s(18)} />
+                  ) : null}
+                </View>
+              ) : null
+            }
+          />
+        </View>
+        {/* Show format error or availability error */}
+        {usernameValidation.formatError && (
+          <ScaledText
+            variant="sm"
+            className="text-xs text-error mt-1 font-neueLight"
+          >
+            {usernameValidation.formatError}
+          </ScaledText>
         )}
+        {!usernameValidation.formatError &&
+          usernameValidation.available === false && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              This username is already taken
+            </ScaledText>
+          )}
+        {!usernameValidation.formatError &&
+          usernameValidation.available === true && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-success mt-1 font-neueLight"
+            >
+              Username is available
+            </ScaledText>
+          )}
+        {/* Show form validation errors (from form submit) */}
+        {!!errors.username &&
+          !usernameValidation.formatError &&
+          usernameValidation.available !== false && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.username}
+            </ScaledText>
+          )}
 
         {/* Email */}
         <View style={{ marginTop: mvs(15) }}>
@@ -175,7 +252,12 @@ export default function ArtistRegisterScreen() {
             onBlur={() => setFocusedField(null)}
           />
           {!!errors.email && (
-            <Text className="text-xs text-error mt-1">{errors.email}</Text>
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.email}
+            </ScaledText>
           )}
         </View>
 
@@ -213,7 +295,12 @@ export default function ArtistRegisterScreen() {
             }
           />
           {!!errors.password && (
-            <Text className="text-xs text-error mt-1">{errors.password}</Text>
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.password}
+            </ScaledText>
           )}
         </View>
 
@@ -244,7 +331,7 @@ export default function ArtistRegisterScreen() {
                 onPress={() => setShowConfirmPassword((v) => !v)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                {showPassword ? (
+                {showConfirmPassword ? (
                   <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
                 ) : (
                   <SVGIcons.EyeClose width={s(18)} height={s(18)} />
@@ -253,9 +340,12 @@ export default function ArtistRegisterScreen() {
             }
           />
           {!!errors.confirmPassword && (
-            <Text className="text-xs text-error mt-1">
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
               {errors.confirmPassword}
-            </Text>
+            </ScaledText>
           )}
         </View>
 

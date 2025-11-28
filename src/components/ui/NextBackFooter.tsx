@@ -8,6 +8,7 @@ type Props = {
   onBack?: () => void;
   onNext?: () => void;
   nextDisabled?: boolean;
+  backDisabled?: boolean;
   showBack?: boolean;
   containerStyle?: ViewStyle;
   nextLabel?: string;
@@ -18,6 +19,7 @@ export default function NextBackFooter({
   onBack,
   onNext,
   nextDisabled,
+  backDisabled = false,
   showBack = true,
   containerStyle,
   nextLabel = "Next",
@@ -39,12 +41,14 @@ export default function NextBackFooter({
       {showBack ? (
         <TouchableOpacity
           onPress={onBack}
-          className="rounded-full border border-foreground items-center flex-row"
+          disabled={backDisabled}
+          className={`rounded-full border items-center flex-row ${backDisabled ? "border-gray/40" : "border-foreground"}`}
           style={{
             paddingVertical: mvs(10.5),
             paddingLeft: s(18),
             paddingRight: s(20),
             gap: s(15),
+            opacity: backDisabled ? 0.5 : 1,
           }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />

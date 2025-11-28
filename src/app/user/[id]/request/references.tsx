@@ -1,5 +1,6 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
+import { MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST, referancesQuestion } from "@/constants/request-questions";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { cloudinaryService } from "@/services/cloudinary.service";
@@ -15,7 +16,6 @@ import {
   View,
 } from "react-native";
 
-const MAX_IMAGES = 5;
 const NUM_COLUMNS = 2;
 
 type ReferenceMedia = {
@@ -47,20 +47,20 @@ export default function ReferencesStep() {
   const setReferences = usePrivateRequestStore((s) => s.setReferences);
 
   const canProceed = useMemo(() => media.length > 0, [media]);
-  const canAddMore = media.length < MAX_IMAGES;
+  const canAddMore = media.length < MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST;
 
   const handlePick = async () => {
-    // Only allow adding until MAX_IMAGES total
+    // Only allow adding until MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST total
     const files = await pickFiles({
       mediaType: "image",
       allowsMultipleSelection: true,
-      maxFiles: MAX_IMAGES - media.length,
+      maxFiles: MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST - media.length,
       cloudinaryOptions: cloudinaryService.getPortfolioUploadOptions("image"),
     });
     if (!files || files.length === 0) return;
 
     const locals: ReferenceMedia[] = files
-      .slice(0, MAX_IMAGES - media.length)
+      .slice(0, MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST - media.length)
       .map((f: any) => ({
         id: f.uri,
         uri: f.uri,
@@ -101,8 +101,7 @@ export default function ReferencesStep() {
               paddingHorizontal: s(16),
             }}
           >
-            Can you post some examples of tattoos that resemble the result you'd
-            like?
+            {referancesQuestion}
           </ScaledText>
           {media.length === 0 ? (
             // Initial upload box (existing UI)

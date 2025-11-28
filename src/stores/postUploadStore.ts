@@ -13,6 +13,7 @@ interface PostUploadState {
   caption?: string;
   styleId?: string;
   collectionId?: string;
+  redirectToCollectionId?: string; // Collection ID to redirect to after post creation
 
   // UI helpers
   isSubmitting: boolean;
@@ -24,15 +25,17 @@ interface PostUploadState {
   setCaption: (text?: string) => void;
   setStyleId: (id?: string) => void;
   setCollectionId: (id?: string) => void;
+  setRedirectToCollectionId: (id?: string) => void;
   setSubmitting: (v: boolean) => void;
   reset: () => void;
 }
 
-const initialState: Pick<PostUploadState, 'media' | 'caption' | 'styleId' | 'collectionId' | 'isSubmitting'> = {
+const initialState: Pick<PostUploadState, 'media' | 'caption' | 'styleId' | 'collectionId' | 'redirectToCollectionId' | 'isSubmitting'> = {
   media: [],
   caption: undefined,
   styleId: undefined,
   collectionId: undefined,
+  redirectToCollectionId: undefined,
   isSubmitting: false,
 };
 
@@ -51,6 +54,7 @@ export const usePostUploadStore = create<PostUploadState>()(
         setCaption: (text) => set({ caption: text }),
         setStyleId: (id) => set({ styleId: id }),
         setCollectionId: (id) => set({ collectionId: id }),
+        setRedirectToCollectionId: (id) => set({ redirectToCollectionId: id }),
         setSubmitting: (v) => set({ isSubmitting: v }),
         reset: () => set(initialState),
       }),
@@ -68,7 +72,13 @@ export const usePostUploadStore = create<PostUploadState>()(
             await AsyncStorage.removeItem(name);
           },
         },
-        partialize: (state) => ({ media: state.media, caption: state.caption, styleId: state.styleId, collectionId: state.collectionId }),
+        partialize: (state) => ({ 
+          media: state.media, 
+          caption: state.caption, 
+          styleId: state.styleId, 
+          collectionId: state.collectionId,
+          redirectToCollectionId: state.redirectToCollectionId,
+        }),
       }
     ),
     { name: 'post-upload-store' }

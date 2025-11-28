@@ -211,7 +211,7 @@ export default function AvatarSettingsScreen() {
             </ScaledText>
 
             {/* Avatar Display */}
-            <View style={{ marginBottom: mvs(28), position: "relative" }}>
+            <View style={{ marginBottom: mvs(40), position: "relative" }}>
               <View
                 className="rounded-full overflow-hidden border-2 border-gray/30"
                 style={{ width: s(180), height: s(180) }}
@@ -238,7 +238,7 @@ export default function AvatarSettingsScreen() {
                   width: s(25),
                   height: s(25),
                   left: (s(180) - s(25)) / 2, // Center button within avatar width
-                  bottom: -s(8),
+                  bottom: -s(11),
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.25,

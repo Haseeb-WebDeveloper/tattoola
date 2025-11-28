@@ -36,12 +36,24 @@ export default function EmailConfirmationScreen() {
         totalSteps={13}
         name="Verification email sent"
         icon={<SVGIcons.MailSent className="w-7 h-7" />}
-        description="Check your inbox → Tap Confirm email → You’re all set! ✅"
+        description="Check your inbox → Tap Confirm email → You're all set! ✅"
         nameVariant="2xl"
         descriptionVariant="md"
         NameFont="font-neueBold"
         DescriptionFont="font-montserratLight"
       />
+
+      {/* Email address display */}
+      {!isLoading && pendingVerificationEmail && (
+        <View className="items-center mb-4">
+          <ScaledText
+            variant="sm"
+            className="text-gray font-montserratLight text-center"
+          >
+            Email sent to {pendingVerificationEmail}
+          </ScaledText>
+        </View>
+      )}
 
       {/* Loading ring or image preview */}
       <View className="items-center mb-8">
@@ -134,7 +146,8 @@ export default function EmailConfirmationScreen() {
               textDecorationLine: "underline",
             }}
             onPress={() => {
-              reset(); // Clear signup state
+              // Don't reset form data - keep it so user can edit email
+              // Only reset status, not formData
               router.replace("/(auth)/artist-register");
             }}
           >

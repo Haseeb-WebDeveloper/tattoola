@@ -16,66 +16,64 @@ export async function fetchTattooStyles(): Promise<TattooStyleItem[]> {
 }
 
 /**
- * Fetch favorite styles for an artist
+ * Fetch all styles for an artist (returns all style IDs and favorite style IDs)
  */
-export async function fetchArtistFavoriteStyles(artistId: string): Promise<string[]> {
+export async function fetchArtistFavoriteStyles(artistId: string): Promise<{
+  allStyles: string[];
+  favoriteStyles: string[];
+}> {
   const { data, error } = await supabase
-    .from('artist_favorite_styles')
-    .select('styleId')
+    .from('artist_styles')
+    .select('styleId, isFavorite')
     .eq('artistId', artistId)
     .order('order', { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data || []).map(item => item.styleId);
+  
+  const allStyles = (data || []).map(item => item.styleId);
+  const favoriteStyles = (data || [])
+    .filter(item => item.isFavorite)
+    .map(item => item.styleId);
+  
+  return { allStyles, favoriteStyles };
 }
 
 /**
- * Update artist's favorite styles and main style
+ * Update artist's styles and favorite styles
  */
 export async function updateArtistFavoriteStyles(
   artistId: string,
   styleIds: string[],
-  mainStyleId: string | null
+  favoriteStyleIds: string[] | null
 ): Promise<void> {
-  // First, delete all existing favorite styles for this artist
+  // First, delete all existing styles for this artist
   const { error: deleteError } = await supabase
-    .from('artist_favorite_styles')
+    .from('artist_styles')
     .delete()
     .eq('artistId', artistId);
 
   if (deleteError) throw new Error(deleteError.message);
 
-  // If no styles selected, just update mainStyleId and return
+  // If no styles selected, just return
   if (styleIds.length === 0) {
-    const { error: updateError } = await supabase
-      .from('artist_profiles')
-      .update({ mainStyleId: null })
-      .eq('id', artistId);
-
-    if (updateError) throw new Error(updateError.message);
     return;
   }
 
-  // Insert new favorite styles with order
+  const favoriteSet = new Set(favoriteStyleIds || []);
+  
+  // Insert new styles with order and isFavorite flag
   const { error: insertError } = await supabase
-    .from('artist_favorite_styles')
+    .from('artist_styles')
     .insert(
       styleIds.map((styleId, index) => ({
         artistId,
         styleId,
         order: index,
+        isFavorite: favoriteSet.has(styleId),
       }))
     );
 
   if (insertError) throw new Error(insertError.message);
-
-  // Update mainStyleId in artist_profiles
-  const { error: updateError } = await supabase
-    .from('artist_profiles')
-    .update({ mainStyleId })
-    .eq('id', artistId);
-
-  if (updateError) throw new Error(updateError.message);
 }
 
 /**

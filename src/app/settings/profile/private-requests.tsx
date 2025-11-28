@@ -134,8 +134,10 @@ export default function PrivateRequestsSettingsScreen() {
   };
 
   const handleNext = () => {
-    // Always go to step 2 to allow user to configure rejection message
-    setStep(2);
+    // Only go to step 2 if user doesn't want to receive requests
+    if (!acceptRequests) {
+      setStep(2);
+    }
   };
 
   const handleSave = async () => {
@@ -427,7 +429,7 @@ export default function PrivateRequestsSettingsScreen() {
                 {/* Custom Message Option */}
                 <TouchableOpacity
                   onPress={() => setSelectedMessage("custom")}
-                  // className={`rounded-xl border ${selectedMessage === "custom" ? "border-foreground" : "border-gray"} bg-[#100C0C]`}
+                  className={`rounded-xl border ${selectedMessage === "custom" ? "border-foreground" : "border-gray"} bg-[#100C0C]`}
                   style={{
                     paddingHorizontal: s(16),
                     paddingVertical: mvs(16),
@@ -565,7 +567,7 @@ export default function PrivateRequestsSettingsScreen() {
               <>
                 <View style={{ flex: 1 }} />
                 <TouchableOpacity
-                  onPress={handleNext}
+                  onPress={acceptRequests ? handleSave : handleNext}
                   disabled={!!(isLoading || loading)}
                   className={`rounded-full items-center flex-row ${!(isLoading || loading) ? "bg-primary" : "bg-gray/40"}`}
                   style={{
@@ -580,9 +582,11 @@ export default function PrivateRequestsSettingsScreen() {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    {loading ? "Loading..." : "Next"}
+                    {loading ? "Loading..." : acceptRequests ? "Save" : "Next"}
                   </ScaledText>
-                  <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
+                  {acceptRequests ? null : (
+                    <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
+                  )}
                 </TouchableOpacity>
               </>
             )}

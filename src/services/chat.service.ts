@@ -1,6 +1,7 @@
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { MessageType, ConversationStatus } from "@/types/chat";
+import { sizeOptions, colorOptions, ageOptions } from "@/constants/request-questions";
 
 export async function createPrivateRequestConversation(
   loverId: string,
@@ -75,6 +76,22 @@ export async function createPrivateRequestConversation(
 
   // console.log("conversation inserted");
 
+  // Create PrivateRequest record
+  const { error: prErr } = await supabase.from("private_requests").insert({
+    id: uuidv4(),
+    senderId: loverId,
+    receiverId: artistId,
+    conversationId: conversationId,
+    message: intake.desc || null,
+    status: "PENDING",
+    createdAt: now,
+    updatedAt: now,
+  });
+  if (prErr) {
+    console.error("PrivateRequest insert error:", prErr);
+    throw new Error(prErr.message);
+  }
+
   // Conversation users
   const { error: cuErr } = await supabase.from("conversation_users").insert([
     {
@@ -124,9 +141,31 @@ export async function createPrivateRequestConversation(
 
   // console.log("intake record inserted");
 
-  // Synthesize intake messages for continuity
+  // Helper functions to get human-readable labels
+  const getSizeLabel = (key: string) => {
+    return sizeOptions.find((opt) => opt.key === key)?.label || key;
+  };
+  
+  const getColorLabel = (key: string) => {
+    return colorOptions.find((opt) => opt.key === key)?.label || key;
+  };
+  
+  const getAgeLabel = (isAdult: boolean) => {
+    return ageOptions.find((opt) => opt.key === isAdult)?.label || (isAdult ? "+18" : "-18");
+  };
+
+  // Synthesize intake messages for continuity with proper ordering
   const msgs: any[] = [];
+  let messageOrder = 0; // Sequence counter for guaranteed order
+  
+  const getTimestamp = () => {
+    // Add milliseconds offset to ensure proper ordering
+    const baseTime = new Date(now).getTime();
+    return new Date(baseTime + messageOrder++).toISOString();
+  };
+  
   const pushQA = (qKey: string, qText: string, aText?: string) => {
+    const qTimestamp = getTimestamp();
     msgs.push({
       id: uuidv4(),
       conversationId,
@@ -134,10 +173,11 @@ export async function createPrivateRequestConversation(
       receiverId: loverId,
       content: qText,
       messageType: "INTAKE_QUESTION",
-      createdAt: now,
-      updatedAt: now,
+      createdAt: qTimestamp,
+      updatedAt: qTimestamp,
     });
     if (aText) {
+      const aTimestamp = getTimestamp();
       msgs.push({
         id: uuidv4(),
         conversationId,
@@ -145,18 +185,22 @@ export async function createPrivateRequestConversation(
         receiverId: artistId,
         content: aText,
         messageType: "INTAKE_ANSWER",
-        createdAt: now,
-        updatedAt: now,
+        createdAt: aTimestamp,
+        updatedAt: aTimestamp,
         intakeFieldKey: qKey,
       });
     }
   };
+  
+  // 1. Size question and answer
   pushQA(
     "size",
     "Approximately what size would you like the tattoo to be?",
-    intake.size
+    intake.size ? getSizeLabel(intake.size) : undefined
   );
-  // References: one question, then one answer per media with mediaUrl
+  
+  // 2. References question and answers (with images)
+  const qTimestamp = getTimestamp();
   msgs.push({
     id: uuidv4(),
     conversationId,
@@ -165,10 +209,11 @@ export async function createPrivateRequestConversation(
     content:
       "Can you post some examples of tattoos that resemble the result you'd like?",
     messageType: "INTAKE_QUESTION",
-    createdAt: now,
-    updatedAt: now,
+    createdAt: qTimestamp,
+    updatedAt: qTimestamp,
   });
   for (const ref of intake.references || []) {
+    const aTimestamp = getTimestamp();
     msgs.push({
       id: uuidv4(),
       conversationId,
@@ -177,21 +222,27 @@ export async function createPrivateRequestConversation(
       content: "",
       messageType: "INTAKE_ANSWER",
       mediaUrl: ref,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: aTimestamp,
+      updatedAt: aTimestamp,
       intakeFieldKey: "references",
     });
   }
+  
+  // 3. Color question and answer
   pushQA(
     "color",
     "Would you like a color or black and white tattoo?",
-    intake.color
+    intake.color ? getColorLabel(intake.color) : undefined
   );
+  
+  // 4. Description question and answer
   pushQA("description", "Describe your tattoo design in brief", intake.desc);
+  
+  // 5. Age question and answer
   pushQA(
     "age",
     "Potresti confermare la tua età?",
-    intake.isAdult ? "+18" : "-18"
+    intake.isAdult !== undefined ? getAgeLabel(intake.isAdult) : undefined
   );
 
   // console.log("intake messages inserted");
@@ -244,6 +295,16 @@ export async function acceptConversation(
   }
 
   // console.log("conversation updated now accepting lover");
+
+  // Update PrivateRequest status to ACCEPTED
+  const { error: prUpdateErr } = await supabase
+    .from("private_requests")
+    .update({ status: "ACCEPTED", updatedAt: new Date().toISOString() })
+    .eq("conversationId", conversationId);
+  if (prUpdateErr) {
+    console.error("PrivateRequest update error:", prUpdateErr);
+    // Don't throw, just log - this is not critical for conversation flow
+  }
 
   // enable lover canSend, keep artist row as-is
   const { error: cuErr } = await supabase
@@ -329,7 +390,7 @@ export async function fetchConversationsPage(
     `
     )
     .or(`artistId.eq.${userId},loverId.eq.${userId}`)
-    .in("status", ["REQUESTED", "ACTIVE"] as any)
+    .in("status", ["REQUESTED", "ACTIVE", "BLOCKED"] as any)
     .order("lastMessageAt", { ascending: false, nullsFirst: false })
     .limit(20);
   if (cursor) {

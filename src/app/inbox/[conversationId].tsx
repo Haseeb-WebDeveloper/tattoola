@@ -21,6 +21,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
+  Modal,
   Platform,
   TouchableOpacity,
   View,
@@ -52,6 +53,7 @@ export default function ChatThreadScreen() {
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [menuModalVisible, setMenuModalVisible] = useState(false);
+  const [showMessageRestrictionModal, setShowMessageRestrictionModal] = useState(false);
   const listRef = useRef<FlatList>(null);
   const rawMessages = messagesByConv[conversationId || ""] || [];
 
@@ -278,6 +280,23 @@ export default function ChatThreadScreen() {
     setMenuModalVisible(false);
   }, []);
 
+  const handleInputPress = React.useCallback(() => {
+    // Check if conversation is blocked
+    if (conv?.status === "BLOCKED") {
+      setShowMessageRestrictionModal(true);
+      return;
+    }
+    // Check if conversation is in requested status and user is not the artist
+    if (conv?.status === "REQUESTED" && user?.id !== conv?.artistId) {
+      setShowMessageRestrictionModal(true);
+      return;
+    }
+  }, [conv?.status, conv?.artistId, user?.id]);
+
+  const handleCloseRestrictionModal = React.useCallback(() => {
+    setShowMessageRestrictionModal(false);
+  }, []);
+
   const renderItem = ({ item, index }: any) => (
     <MessageItem
       item={item}
@@ -318,18 +337,34 @@ export default function ChatThreadScreen() {
               gap: s(12),
             }}
           >
-            <Image
-              source={{
-                uri:
-                  peer?.avatar ||
-                  `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0]}`,
-              }}
-              className="rounded-full"
-              style={{
-                width: s(36),
-                height: s(36),
-              }}
-            />
+            <View className="relative">
+              <Image
+                source={{
+                  uri:
+                    peer?.avatar ||
+                    `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0]}`,
+                }}
+                className="rounded-full"
+                style={{
+                  width: s(36),
+                  height: s(36),
+                }}
+              />
+              {conv?.status === "BLOCKED" && (
+                <View
+                  className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
+                  style={{
+                    width: s(36),
+                    height: s(36),
+                    top: 0,
+                    left: 0,
+                  }}
+                >
+                  <SVGIcons.Locked width={s(16)} height={s(16)} />
+                </View>
+              )}
+            </View>
+
             <ScaledText
               variant="md"
               className="text-foreground font-montserratMedium"
@@ -536,21 +571,35 @@ export default function ChatThreadScreen() {
               onPress={handlePickFile}
               disabled={
                 uploading ||
-                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId) ||
+                conv?.status === "BLOCKED"
               }
               style={{
                 marginRight: s(4),
                 paddingBottom: mvs(10),
                 opacity:
                   uploading ||
-                  (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                  (conv?.status === "REQUESTED" &&
+                    user?.id !== conv?.artistId) ||
+                  conv?.status === "BLOCKED"
                     ? 0.4
                     : 1,
               }}
             >
               <SVGIcons.Attachment width={s(20)} height={s(20)} />
             </TouchableOpacity>
-            <View style={{ flex: 1 }}>
+            <TouchableOpacity
+              style={{ flex: 1 }}
+              activeOpacity={1}
+              onPress={handleInputPress}
+              disabled={
+                !uploading &&
+                !(
+                  conv?.status === "REQUESTED" && user?.id !== conv?.artistId
+                ) &&
+                conv?.status !== "BLOCKED"
+              }
+            >
               <ScaledTextInput
                 value={text}
                 onChangeText={setText}
@@ -575,15 +624,19 @@ export default function ChatThreadScreen() {
                 }}
                 editable={
                   !uploading &&
-                  !(conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                  !(
+                    conv?.status === "REQUESTED" && user?.id !== conv?.artistId
+                  ) &&
+                  conv?.status !== "BLOCKED"
                 }
                 scrollEnabled={true}
               />
-            </View>
+            </TouchableOpacity>
             <TouchableOpacity
               disabled={
                 uploading ||
-                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId) ||
+                conv?.status === "BLOCKED"
               }
               onPress={handleSend}
               className="items-center justify-center rounded-full"
@@ -617,6 +670,79 @@ export default function ChatThreadScreen() {
         onBlock={handleBlock}
         onDelete={handleDelete}
       />
+
+      {/* Message Restriction Modal */}
+      <Modal
+        visible={showMessageRestrictionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseRestrictionModal}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            {/* Warning Icon */}
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+
+            {/* Title */}
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              {conv?.status === "BLOCKED"
+                ? "Conversation is blocked"
+                : "Request pending"}
+            </ScaledText>
+
+            {/* Subtitle */}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(18) }}
+            >
+              {conv?.status === "BLOCKED"
+                ? "You cannot send messages in a blocked conversation."
+                : "You cannot send messages until the artist accepts your request."}
+            </ScaledText>
+
+            {/* Action Button */}
+            <View className="flex-row justify-center">
+              <TouchableOpacity
+                onPress={handleCloseRestrictionModal}
+                className="rounded-full items-center justify-center bg-primary"
+                style={{
+                  paddingVertical: mvs(8),
+                  paddingLeft: s(24),
+                  paddingRight: s(24),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-montserratSemibold"
+                >
+                  OK
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
+

@@ -24,15 +24,17 @@ export default function ArtistStep11V2() {
     setCurrentStepDisplay(11);
   }, []);
 
+  // Only minimumPrice is required, hourlyRate is optional
   const canProceed = isValid(step11Schema, {
     minimumPrice: step11.minimumPrice ?? 0,
-    hourlyRate: step11.hourlyRate ?? 0,
+    // Don't provide default for hourlyRate, allow undefined to be valid
+    hourlyRate: step11.hourlyRate, 
   });
 
   const validateAll = () => {
     const result = step11Schema.safeParse({
       minimumPrice: step11.minimumPrice ?? 0,
-      hourlyRate: step11.hourlyRate ?? 0,
+      hourlyRate: step11.hourlyRate,
     });
     if (!result.success) {
       const errs: any = {};
@@ -55,17 +57,31 @@ export default function ArtistStep11V2() {
     label: string,
     value: number | undefined,
     onChange: (n?: number) => void,
-    field: string
+    field: string,
+    required?: boolean
   ) => (
     <View style={{ paddingHorizontal: s(24), marginBottom: mvs(12) }}>
-      <ScaledText
-        allowScaling={false}
-        variant="sm"
-        className="text-tat font-montserratSemibold"
-        style={{ marginBottom: mvs(4) }}
+      <View
+        className="flex-row items-center"
+        style={{ marginBottom: mvs(4), gap: s(4) }}
       >
-        {label}
-      </ScaledText>
+        <ScaledText
+          allowScaling={false}
+          variant="sm"
+          className="text-tat font-montserratSemibold"
+        >
+          {label}
+        </ScaledText>
+        {required ? (
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-error font-montserratSemibold"
+          >
+            *
+          </ScaledText>
+        ) : null}
+      </View>
       <View
         className={`flex-row items-center rounded-xl bg-tat-foreground ${focused === field ? "border-2 border-foreground" : "border border-gray"}`}
       >
@@ -83,7 +99,6 @@ export default function ArtistStep11V2() {
           className="text-foreground rounded-xl font-montserratSemibold bg-tat-foreground"
           style={{ fontSize: s(12), paddingHorizontal: s(4) }}
           placeholder="0"
-            
           keyboardType="numeric"
           value={value !== undefined ? String(value) : ""}
           onChangeText={(v) => {
@@ -94,15 +109,6 @@ export default function ArtistStep11V2() {
           onBlur={() => setFocused(null)}
           maxLength={6}
         />
-        {/* <View style={{ paddingRight: s(16) }} className="bg-tat-foreground">
-          <ScaledText
-            allowScaling={false}
-            variant="sm"
-            className="text-gray font-montserratSemibold bg-tat-foreground"
-          >
-            EUR
-          </ScaledText>
-        </View> */}
       </View>
     </View>
   );
@@ -117,7 +123,7 @@ export default function ArtistStep11V2() {
         currentStep={11}
         totalSteps={totalStepsDisplay}
         name=" Set your pricing"
-        description="Enter your minimum price and hourly rate to guide clients."
+        description="Enter your minimum price and optionally your hourly rate to guide clients."
         icon={<SVGIcons.Pricing width={19} height={19} />}
         nameVariant="2xl"
       />
@@ -126,13 +132,15 @@ export default function ArtistStep11V2() {
         "Minimum rate",
         step11.minimumPrice,
         (n) => updateStep11({ minimumPrice: n }),
-        "min"
+        "min",
+        true // Required
       )}
       {renderCurrencyInput(
-        "Hourly rate",
+        "Hourly rate (optional)",
         step11.hourlyRate,
         (n) => updateStep11({ hourlyRate: n }),
-        "hourly"
+        "hourly",
+        false // Not required
       )}
 
       {/* Footer */}

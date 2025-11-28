@@ -43,6 +43,8 @@ export default function LocationSettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [locationToDelete, setLocationToDelete] = useState<string | null>(null);
   const [editingLocationId, setEditingLocationId] = useState<string | null>(
     null
   );
@@ -138,29 +140,68 @@ export default function LocationSettingsScreen() {
     };
     setLocations([...locations, newLocation]);
     setEditingLocationId(newLocation.id);
+    toast.success("New location added");
   };
 
   const handleRemoveLocation = (locationId: string) => {
-    const updatedLocations = locations.filter((loc) => loc.id !== locationId);
+    setLocationToDelete(locationId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmRemoveLocation = () => {
+    if (!locationToDelete) return;
+    
+    const locationToRemove = locations.find((loc) => loc.id === locationToDelete);
+    const updatedLocations = locations.filter((loc) => loc.id !== locationToDelete);
 
     // If we removed the primary location and there are others, make the first one primary
     if (
-      locations.find((loc) => loc.id === locationId)?.isPrimary &&
+      locationToRemove?.isPrimary &&
       updatedLocations.length > 0
     ) {
       updatedLocations[0].isPrimary = true;
     }
 
     setLocations(updatedLocations);
+    setShowDeleteModal(false);
+    setLocationToDelete(null);
+    
+    // Show toast if it was a saved location (not a new one)
+    if (locationToRemove && !locationToRemove.isNew && !locationToRemove.id.startsWith("temp-")) {
+      toast.success("Location removed");
+    }
   };
 
   const handleSetPrimary = (locationId: string) => {
-    setLocations(
-      locations.map((loc) => ({
-        ...loc,
-        isPrimary: loc.id === locationId,
-      }))
-    );
+    const previousPrimary = locations.find((loc) => loc.isPrimary);
+    const newPrimary = locations.find((loc) => loc.id === locationId);
+    
+    // Only show toast if actually changing primary (not setting the same one)
+    if (previousPrimary && previousPrimary.id !== locationId) {
+      setLocations(
+        locations.map((loc) => ({
+          ...loc,
+          isPrimary: loc.id === locationId,
+        }))
+      );
+      toast.success("Primary location changed");
+    } else if (!previousPrimary && newPrimary) {
+      // Setting first primary location
+      setLocations(
+        locations.map((loc) => ({
+          ...loc,
+          isPrimary: loc.id === locationId,
+        }))
+      );
+    } else {
+      // Already primary, just update state
+      setLocations(
+        locations.map((loc) => ({
+          ...loc,
+          isPrimary: loc.id === locationId,
+        }))
+      );
+    }
   };
 
   const handleUpdateLocation = (
@@ -305,7 +346,7 @@ export default function LocationSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Multilocations
+            Dove ti Trovi
           </ScaledText>
         </View>
 
@@ -506,6 +547,99 @@ export default function LocationSettingsScreen() {
           </TouchableOpacity>
         </View>
       </LinearGradient>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowDeleteModal(false);
+          setLocationToDelete(null);
+        }}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {
+            setShowDeleteModal(false);
+            setLocationToDelete(null);
+          }}
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl max-w-[90vw]"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(28),
+            }}
+          >
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(6) }}
+            >
+              Remove location?
+            </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-background text-center font-montserratSemibold"
+              style={{ marginBottom: mvs(20) }}
+            >
+              This location will be removed from your profile.
+            </ScaledText>
+            <View
+              className="flex-row justify-center"
+              style={{ columnGap: s(10) }}
+            >
+              <TouchableOpacity
+                onPress={confirmRemoveLocation}
+                className="rounded-full items-center justify-center flex-row border-primary"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                  borderWidth: s(1),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-primary font-montserratSemibold"
+                >
+                  Remove
+                </ScaledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowDeleteModal(false);
+                  setLocationToDelete(null);
+                }}
+                className="rounded-full items-center justify-center flex-row"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-montserratSemibold"
+                >
+                  Cancel
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Unsaved Changes Modal */}
       <Modal

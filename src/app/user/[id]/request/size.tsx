@@ -1,18 +1,13 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { sizeOptions } from "@/constants/request-questions";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
 import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
-const options = [
-  { key: "credit_card", label: "Le dimensioni di una carta di credito  💳" },
-  { key: "palm", label: "Le dimensioni di un palmo di mano ✊" },
-  { key: "hand", label: "Le dimensioni di una mano 🖐️" },
-  { key: "half_sleeve", label: "“Mezza manica” 💪" },
-] as const;
 
 export default function SizeStep() {
   const router = useRouter();
@@ -47,7 +42,7 @@ export default function SizeStep() {
           </ScaledText>
 
           <View style={{ gap: s(16) }}>
-            {options.map((opt) => {
+            {sizeOptions.map((opt) => {
               const isSelected = size === opt.key;
               return (
                 <Pressable

@@ -1,14 +1,15 @@
-import React from "react";
-import { Modal, TouchableOpacity, View } from "react-native";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
+import React from "react";
+import { Modal, TouchableOpacity, View } from "react-native";
 
 type DeleteConfirmModalProps = {
   visible: boolean;
   caption?: string;
   onCancel: () => void;
   onConfirm: () => void;
+  deleting?: boolean;
 };
 
 export default function DeleteConfirmModal({
@@ -16,94 +17,107 @@ export default function DeleteConfirmModal({
   caption,
   onCancel,
   onConfirm,
+  deleting = false,
 }: DeleteConfirmModalProps) {
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={() => !deleting && onCancel()}
     >
-      <View
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => !deleting && onCancel()}
         className="flex-1 justify-center items-center"
         style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
       >
         <View
-          className="bg-tat-darkMaroon  w-full"
+          className="bg-[#fff] rounded-xl max-w-[90vw]"
           style={{
+            width: s(342),
             paddingHorizontal: s(24),
-            paddingVertical: mvs(40),
+            paddingVertical: mvs(28),
           }}
         >
-          <View className="items-center" style={{ marginBottom: mvs(12) }}>
-            <SVGIcons.Trash width={s(16)} height={s(16)} />
+          <View className="items-center" style={{ marginBottom: mvs(16) }}>
+            <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
           </View>
-
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-foreground font-neueSemibold text-center"
-            style={{ marginBottom: mvs(8) }}
+            className="text-background font-neueBold text-center"
+            style={{ marginBottom: mvs(6) }}
           >
             Remove from collection?
           </ScaledText>
-
-          {!!caption && (
+          {/* {!!caption && (
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-gray text-center font-neueLight"
+              variant="sm"
+              className="text-background text-center font-montserratSemibold"
               style={{ marginBottom: mvs(20) }}
             >
               "{caption}"
             </ScaledText>
-          )}
-
-          <View className="flex-row justify-center" style={{ gap: s(8), marginTop: mvs(16) }}>
+          )} */}
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-background text-center font-montserratSemibold"
+            style={{ marginBottom: mvs(20) }}
+          >
+            This tattoo will be removed from this collection but won’t be
+            deleted from your profile.
+          </ScaledText>
+          <View
+            className="flex-row justify-center"
+            style={{ columnGap: s(10) }}
+          >
             <TouchableOpacity
-              onPress={onCancel}
-              className="rounded-full border items-center justify-center flex-row"
+              onPress={onConfirm}
+              disabled={deleting}
+              className="rounded-full items-center justify-center flex-row border-primary"
               style={{
-                borderColor: "#AD2E2E",
                 paddingVertical: mvs(10.5),
                 paddingLeft: s(18),
                 paddingRight: s(20),
-                gap: s(8),
+                borderWidth: s(1),
+                opacity: deleting ? 0.6 : 1,
+                gap: s(4),
               }}
             >
-              <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
+              <SVGIcons.DeletePrimary width={s(16)} height={s(16)} />
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-neueSemibold"
+                className="text-primary font-montserratSemibold"
+              >
+                {deleting ? "Removing..." : "Remove"}
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => !deleting && onCancel()}
+              disabled={deleting}
+              className="rounded-full items-center justify-center flex-row"
+              style={{
+                paddingVertical: mvs(10.5),
+                paddingLeft: s(18),
+                paddingRight: s(20),
+                opacity: deleting ? 0.6 : 1,
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-gray font-montserratSemibold"
               >
                 Cancel
               </ScaledText>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={onConfirm}
-              className="rounded-full items-center justify-center flex-row"
-              style={{
-                backgroundColor: "#AD2E2E",
-                paddingVertical: mvs(10.5),
-                paddingLeft: s(18),
-                paddingRight: s(20),
-                gap: s(8),
-              }}
-            >
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueSemibold"
-              >
-                Remove
-              </ScaledText>
-              <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
-            </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </Modal>
   );
 }

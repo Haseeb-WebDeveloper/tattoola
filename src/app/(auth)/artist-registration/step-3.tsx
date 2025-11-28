@@ -142,7 +142,7 @@ export default function ArtistStep3V2() {
               <Image
                 source={{ uri: step3.avatar }}
                 className="rounded-full border-2 border-dashed border-error/70 "
-                style={{ width: s(180), height: s(180) }}
+                style={{ width: s(180), height: s(180), }}
                 resizeMode="cover"
               />
             ) : (
@@ -194,7 +194,6 @@ export default function ArtistStep3V2() {
             className="flex-1 text-foreground"
             style={{ fontSize: s(12) }}
             placeholder="John"
-              
             value={step3?.firstName || ""}
             onChangeText={(v) => updateStep3({ firstName: v })}
             onFocus={() => setFocused("firstName")}
@@ -235,7 +234,6 @@ export default function ArtistStep3V2() {
               className="flex-1 text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
               placeholder="Doe"
-                
               value={step3?.lastName || ""}
               onChangeText={(v) => updateStep3({ lastName: v })}
               onFocus={() => setFocused("lastName")}

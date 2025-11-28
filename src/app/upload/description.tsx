@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 
 export default function UploadDescriptionStep() {
@@ -33,7 +33,7 @@ export default function UploadDescriptionStep() {
         <Text className="text-foreground tat-body-1 font-neueBold mb-0.5">
           Descrizione
         </Text>
-        <Text className="tat-body-4 text-gray mb-6">
+        <Text className="tat-body-4 text-gray mb-6 font-neueMedium">
           Describe your post in a few words
         </Text>
 
@@ -61,18 +61,27 @@ export default function UploadDescriptionStep() {
         )}
 
         {/* Description input with edit icon */}
-        <View className="rounded-2xl bg-black/40 border border-gray relative">
-          <View className="absolute left-2 top-3 w-6 h-6  items-center justify-center z-10">
-            <SVGIcons.Pen1 className="w-5 h-5 " />
+        <View className="rounded-2xl border border-gray relative">
+          <View
+            className="absolute items-center justify-center z-10"
+            style={{
+              top: s(12),
+              left: s(16),
+            }}
+          >
+            <SVGIcons.Pen1 width={s(20)} height={s(20)} />
           </View>
           <TextInput
             multiline
             numberOfLines={6}
             textAlignVertical="top"
-            className="text-foreground bg-tat-darkMaroon rounded-2xl min-h-[180px]"
-            style={{ fontSize: s(12) }}
+            className="text-foreground bg-tat-darkMaroon rounded-2xl min-h-[180px] font-neueMedium"
+            style={{
+              fontSize: s(12),
+              paddingHorizontal: s(42),
+              paddingVertical: s(12),
+            }}
             placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit....."
-              
             value={caption || ""}
             onChangeText={(v) => setCaption(v)}
           />

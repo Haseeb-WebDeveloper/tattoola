@@ -81,20 +81,23 @@ export default function ArtistStep10V2() {
   const renderItem = ({ item }: { item: BodyPartItem }) => {
     const isSelected = selected.includes(item.id);
     return (
-      <View
+      <Pressable
         className="flex-row items-center tat-foreground-gray border-gray"
-        style={{ paddingHorizontal: s(16), paddingVertical: mvs(14), borderBottomWidth: s(0.5), gap: s(8) }}
+        style={{
+          paddingHorizontal: s(10),
+          paddingVertical: mvs(14),
+          borderBottomWidth: s(0.5),
+          gap: s(8),
+        }}
+        onPress={() => toggleBodyPart(item.id)}
       >
-        <Pressable
-          className="items-center"
-          onPress={() => toggleBodyPart(item.id)}
-        >
+        <View className="items-center">
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(17)} height={s(17)} />
           )}
-        </Pressable>
+        </View>
         <View className="flex-1">
           <ScaledText
             allowScaling={false}
@@ -115,7 +118,7 @@ export default function ArtistStep10V2() {
             </ScaledText>
           )} */}
         </View>
-      </View>
+      </Pressable>
     );
   };
 

@@ -8,8 +8,8 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import {
-    PortfolioProjectInput,
-    useArtistRegistrationV2Store,
+  PortfolioProjectInput,
+  useArtistRegistrationV2Store,
 } from "@/stores/artistRegistrationV2Store";
 import type { CompleteArtistRegistration } from "@/types/auth";
 import { WorkArrangement } from "@/types/auth";
@@ -20,15 +20,15 @@ import { TrimText } from "@/utils/text-trim";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import DraggableFlatList, {
-    RenderItemParams,
+  RenderItemParams,
 } from "react-native-draggable-flatlist";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -306,8 +306,10 @@ export default function ArtistStep12V2() {
           tiktok: step7.tiktok || "",
         },
         step8: {
+          // All styles selected via checkboxes
+          styles: step8.styles || [],
+          // Subset marked as favorites via star icons
           favoriteStyles: step8.favoriteStyles || [],
-          mainStyleId: step8.mainStyleId || "",
         },
         step9: {
           servicesOffered: step9.servicesOffered || [],
@@ -335,6 +337,8 @@ export default function ArtistStep12V2() {
           billingCycle: "MONTHLY",
         },
       };
+
+      console.log("registrationData", registrationData);
 
       await completeArtistRegistration(registrationData);
       router.replace("/(auth)/artist-registration/step-13");
@@ -485,6 +489,7 @@ export default function ArtistStep12V2() {
       <NextBackFooter
         onNext={handleSaveAndProceed}
         nextDisabled={!canProceed || submitting || uploading}
+        backDisabled={submitting || uploading}
         nextLabel={submitting ? "Saving..." : "Almost there!"}
         backLabel="Back"
         onBack={() => router.back()}
@@ -592,7 +597,7 @@ export default function ArtistStep12V2() {
                           variant="md"
                           className="text-foreground font-neueSemibold"
                         >
-                          {uploading ? "Uploading..." : "Upload Certificate"}
+                          {uploading ? "Uploading..." : "Upload files"}
                         </ScaledText>
                       </TouchableOpacity>
                       <ScaledText

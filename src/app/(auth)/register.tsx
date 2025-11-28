@@ -3,6 +3,7 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
+import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
@@ -11,7 +12,7 @@ import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
 
@@ -33,6 +34,9 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Username validation hook
+  const usernameValidation = useUsernameValidation(formData.username);
+
   const totalSteps = 8; // TL flow ends at step-8 (completion)
   const currentStep = 1;
   const steps = useMemo(
@@ -52,7 +56,7 @@ export default function RegisterScreen() {
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = async (): Promise<boolean> => {
     const validationRules = {
       ...RegisterValidationSchema,
       confirmPassword: {
@@ -68,6 +72,14 @@ export default function RegisterScreen() {
 
     const formErrors = ValidationUtils.validateForm(formData, validationRules);
 
+    // Check username availability if format is valid
+    if (!formErrors.username && formData.username.trim().length >= 3) {
+      const isAvailable = await usernameValidation.manualCheck();
+      if (!isAvailable) {
+        formErrors.username = "This username is already taken";
+      }
+    }
+
     if (!acceptedTerms) {
       formErrors.terms = "You must accept the Terms of Use and Privacy Policy";
     }
@@ -77,7 +89,8 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
-    if (!validateForm()) {
+    const isValid = await validateForm();
+    if (!isValid) {
       return;
     }
 
@@ -136,21 +149,75 @@ export default function RegisterScreen() {
         >
           Username (inserisci un nome univoco)
         </ScaledText>
-        <ScaledTextInput
-          containerClassName={`flex-row items-center rounded-xl ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"}`}
-          className="flex-1 text-foreground rounded-xl"
-          style={{ fontSize: s(12) }}
-          placeholder="TattooLover_97"
-            
-          autoCapitalize="none"
-          value={formData.username}
-          onChangeText={(value) => handleInputChange("username", value)}
-          onFocus={() => setFocusedField("username")}
-          onBlur={() => setFocusedField(null)}
-        />
-        {!!errors.username && (
-          <Text className="text-xs text-error mt-1">{errors.username}</Text>
+        <View className="relative">
+          <ScaledTextInput
+            containerClassName={`flex-row items-center rounded-xl ${focusedField === "username" ? "border-2 border-foreground" : "border border-gray"} ${usernameValidation.isFormatValid && usernameValidation.available === true ? "border-success" : ""} ${usernameValidation.available === false ? "border-red-500" : ""}`}
+            className="flex-1 text-foreground rounded-xl"
+            style={{ fontSize: s(12) }}
+            placeholder="TattooLover_97"
+            autoCapitalize="none"
+            value={formData.username}
+            onChangeText={(value) => handleInputChange("username", value)}
+            onFocus={() => setFocusedField("username")}
+            onBlur={() => setFocusedField(null)}
+            rightAccessory={
+              formData.username.trim().length > 0 ? (
+                <View className="px-3">
+                  {usernameValidation.checking ? (
+                    <ActivityIndicator size="small" color="#A49A99" />
+                  ) : usernameValidation.isFormatValid &&
+                    usernameValidation.available === true ? (
+                    <SVGIcons.CheckGreen
+                      width={s(18)}
+                      height={s(18)}
+                      className="text-success"
+                    />
+                  ) : usernameValidation.available === false ? (
+                    <SVGIcons.Error width={s(18)} height={s(18)} />
+                  ) : null}
+                </View>
+              ) : null
+            }
+          />
+        </View>
+        {/* Show format error or availability error */}
+        {usernameValidation.formatError && (
+          <ScaledText
+            variant="sm"
+            className="text-xs text-error mt-1 font-neueLight"
+          >
+            {usernameValidation.formatError}
+          </ScaledText>
         )}
+        {!usernameValidation.formatError &&
+          usernameValidation.available === false && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              This username is already taken
+            </ScaledText>
+          )}
+        {!usernameValidation.formatError &&
+          usernameValidation.available === true && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-success mt-1 font-neueLight"
+            >
+              Username is available
+            </ScaledText>
+          )}
+        {/* Show form validation errors (from form submit) */}
+        {!!errors.username &&
+          !usernameValidation.formatError &&
+          usernameValidation.available !== false && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.username}
+            </ScaledText>
+          )}
 
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
@@ -164,7 +231,6 @@ export default function RegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="abc@gmail.com"
-              
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -174,7 +240,12 @@ export default function RegisterScreen() {
             onBlur={() => setFocusedField(null)}
           />
           {!!errors.email && (
-            <Text className="text-xs text-error mt-1">{errors.email}</Text>
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.email}
+            </ScaledText>
           )}
         </View>
 
@@ -190,7 +261,6 @@ export default function RegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-              
             secureTextEntry={!showPassword}
             value={formData.password}
             onChangeText={(value) => handleInputChange("password", value)}
@@ -212,7 +282,12 @@ export default function RegisterScreen() {
             }
           />
           {!!errors.password && (
-            <Text className="text-xs text-error mt-1">{errors.password}</Text>
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.password}
+            </ScaledText>
           )}
         </View>
 
@@ -228,7 +303,6 @@ export default function RegisterScreen() {
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"
-              
             secureTextEntry={!showConfirmPassword}
             value={formData.confirmPassword}
             onChangeText={(value) =>
@@ -252,9 +326,12 @@ export default function RegisterScreen() {
             }
           />
           {!!errors.confirmPassword && (
-            <Text className="text-xs text-error mt-1">
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
               {errors.confirmPassword}
-            </Text>
+            </ScaledText>
           )}
         </View>
 

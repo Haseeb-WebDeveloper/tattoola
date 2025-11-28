@@ -129,6 +129,18 @@ export default function InboxScreen() {
                 borderColor: "#0F0202",
               }}
             />
+            {/* Lock icon overlay for blocked conversations */}
+            {item.status === "BLOCKED" && (
+              <View
+                className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
+                style={{
+                  width: s(40),
+                  height: s(40),
+                }}
+              >
+                <SVGIcons.Locked width={s(16)} height={s(16)} />
+              </View>
+            )}
           </View>
           <View className="flex-1">
             {/* name and unread badge */}

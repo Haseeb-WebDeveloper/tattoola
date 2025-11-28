@@ -37,6 +37,8 @@ export default function RatesSettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [artistId, setArtistId] = useState<string | null>(null);
+  const [minPriceTouched, setMinPriceTouched] = useState(false);
+  const [minPriceError, setMinPriceError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -80,9 +82,33 @@ export default function RatesSettingsScreen() {
     };
   }, [user?.id]);
 
+  // Validate minimum price
+  useEffect(() => {
+    // Only show error if the field has been touched or is being submitted
+    if (minPriceTouched || isLoading) {
+      if (
+        minimumPrice === undefined ||
+        minimumPrice === null ||
+        minimumPrice === 0
+      ) {
+        setMinPriceError("Prezzo minimo è obbligatorio");
+      } else {
+        setMinPriceError(null);
+      }
+    }
+  }, [minimumPrice, minPriceTouched, isLoading]);
+
   // Check if there are unsaved changes
   const hasUnsavedChanges =
     minimumPrice !== initialMinimumPrice || hourlyRate !== initialHourlyRate;
+
+  const isSaveDisabled =
+    isLoading ||
+    loading ||
+    !hasUnsavedChanges ||
+    minimumPrice === undefined ||
+    minimumPrice === null ||
+    minimumPrice === 0;
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -102,8 +128,18 @@ export default function RatesSettingsScreen() {
   };
 
   const handleSave = async () => {
+    setMinPriceTouched(true);
     if (!artistId || !hasUnsavedChanges) {
       router.back();
+      return;
+    }
+    if (
+      minimumPrice === undefined ||
+      minimumPrice === null ||
+      minimumPrice === 0
+    ) {
+      setMinPriceError("Prezzo minimo è obbligatorio");
+      toast.error("Il prezzo minimo è obbligatorio.");
       return;
     }
 
@@ -113,7 +149,7 @@ export default function RatesSettingsScreen() {
       const { error } = await supabase
         .from("artist_profiles")
         .update({
-          minimumPrice: minimumPrice ?? null,
+          minimumPrice: minimumPrice,
           hourlyRate: hourlyRate ?? null,
         })
         .eq("id", artistId);
@@ -141,17 +177,30 @@ export default function RatesSettingsScreen() {
     label: string,
     value: number | undefined,
     onChange: (n?: number) => void,
-    field: string
+    field: string,
+    required: boolean = false,
+    errorMsg: string | null = null
   ) => (
     <View style={{ marginBottom: mvs(24) }}>
-      <ScaledText
-        allowScaling={false}
-        variant="md"
-        className="text-gray font-montserratMedium"
-        style={{ marginBottom: mvs(8) }}
-      >
-        {label}
-      </ScaledText>
+      <View className="flex-row" style={{ gap: s(4) }}>
+        <ScaledText
+          allowScaling={false}
+          variant="md"
+          className="text-gray font-montserratMedium"
+          style={{ marginBottom: mvs(8) }}
+        >
+          {label}
+        </ScaledText>
+        {required && (
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-error font-montserratSemibold"
+          >
+            *
+          </ScaledText>
+        )}
+      </View>
       <View
         className={`flex-row items-center rounded-xl ${
           focused === field
@@ -181,10 +230,14 @@ export default function RatesSettingsScreen() {
           className="text-foreground font-neueMedium"
           placeholder="0"
           keyboardType="numeric"
-          value={value !== undefined ? String(value) : ""}
+          value={value !== undefined && value !== null ? String(value) : ""}
           onChangeText={(v) => {
             const digits = v.replace(/[^0-9]/g, "");
-            onChange(digits ? Number(digits) : undefined);
+            const num = digits ? Number(digits) : undefined;
+            onChange(num);
+            if (field === "minimum") {
+              setMinPriceTouched(true);
+            }
           }}
           onFocus={() => setFocused(field)}
           onBlur={() => setFocused(null)}
@@ -205,6 +258,16 @@ export default function RatesSettingsScreen() {
           </ScaledText>
         </View>
       </View>
+      {errorMsg ? (
+        <ScaledText
+          allowScaling={false}
+          variant="sm"
+          className="font-montserratMedium"
+          style={{ color: "#AD2E2E", marginTop: 4 }}
+        >
+          {errorMsg}
+        </ScaledText>
+      ) : null}
     </View>
   );
 
@@ -275,13 +338,17 @@ export default function RatesSettingsScreen() {
                 "Prezzo minimo (es. 100€, 200€)",
                 0,
                 setMinimumPrice,
-                "minimum"
+                "minimum",
+                true,
+                null
               )}
               {renderCurrencyInput(
                 "Tua tariffa oraria (facoltativo)",
                 0,
                 setHourlyRate,
-                "hourly"
+                "hourly",
+                false,
+                null
               )}
             </>
           ) : (
@@ -290,13 +357,17 @@ export default function RatesSettingsScreen() {
                 "Prezzo minimo (es. 100€, 200€)",
                 minimumPrice,
                 setMinimumPrice,
-                "minimum"
+                "minimum",
+                true,
+                minPriceTouched && minPriceError ? minPriceError : null
               )}
               {renderCurrencyInput(
                 "Tua tariffa oraria (facoltativo)",
                 hourlyRate,
                 setHourlyRate,
-                "hourly"
+                "hourly",
+                false,
+                null
               )}
             </>
           )}
@@ -312,13 +383,10 @@ export default function RatesSettingsScreen() {
         >
           <TouchableOpacity
             onPress={handleSave}
-            disabled={isLoading || loading || !hasUnsavedChanges}
+            disabled={isSaveDisabled}
             className="rounded-full items-center justify-center flex-row"
             style={{
-              backgroundColor:
-                isLoading || loading || !hasUnsavedChanges
-                  ? "#6B2C2C"
-                  : "#AD2E2E",
+              backgroundColor: isSaveDisabled ? "#6B2C2C" : "#AD2E2E",
               paddingVertical: mvs(10.5),
               paddingLeft: s(18),
               paddingRight: s(20),

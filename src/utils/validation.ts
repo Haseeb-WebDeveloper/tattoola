@@ -19,6 +19,8 @@ export class ValidationUtils {
       }
 
       if (rules.pattern && !rules.pattern.test(value)) {
+        // For username, we provide specific error in custom validation
+        // For other fields, use generic message
         return 'Invalid format';
       }
     }
@@ -93,9 +95,30 @@ export const ValidationRules = {
     pattern: /^[a-zA-Z0-9_]+$/,
     custom: (value: string) => {
       if (!value) return true;
+      
+      // Check for spaces
+      if (/\s/.test(value)) {
+        return 'Spaces are not allowed';
+      }
+      
+      // Check if starts with a letter
       if (!/^[a-zA-Z]/.test(value)) {
         return 'Username must start with a letter';
       }
+      
+      // Check for invalid characters (pattern check happens before custom, but we provide specific message)
+      if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+        return 'Only letters, numbers, and underscores are allowed';
+      }
+      
+      // Check length (minLength and maxLength are checked before custom, but we provide specific message)
+      if (value.length < 3) {
+        return 'Username must be at least 3 characters';
+      }
+      if (value.length > 30) {
+        return 'Username must be no more than 30 characters';
+      }
+      
       return true;
     },
   },

@@ -38,7 +38,6 @@ export interface ArtistProfile {
   hourlyRate?: number;
   coverPhoto?: string;
   coverVideo?: string;
-  mainStyleId?: string;
   bannerMedia?: ArtistBannerMedia[];
   createdAt: string;
   updatedAt: string;
@@ -217,10 +216,12 @@ export interface ArtistRegistrationStep7 {
   tiktok?: string;
 }
 
-// step-8: favorite styles
+// step-8: styles and favorites
 export interface ArtistRegistrationStep8 {
-  favoriteStyles: string[];
-  mainStyleId?: string;
+  // All styles selected via checkboxes (total styles artist works in)
+  styles: string[];
+  // Subset of styles marked as favorites via star icons
+  favoriteStyles?: string[];
 }
 
 // step-9: services offered

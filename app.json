@@ -23,7 +23,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.haseebahmedrazakhan.tattoola",
+      "bundleIdentifier": "com.figmentalabs.tattoola",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "The app accesses your photos to let you share them with your friends.",

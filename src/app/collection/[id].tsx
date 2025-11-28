@@ -81,7 +81,11 @@ export default function CollectionDetailsScreen() {
   const previousPostsRef = useRef<CollectionPost[] | null>(null);
   const [selectModalVisible, setSelectModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<{
+    id: string;
+    caption: string;
+  } | null>(null);
   const [allUserPosts, setAllUserPosts] = useState<
     { id: string; caption?: string; thumbnailUrl?: string }[]
   >([]);
@@ -173,6 +177,7 @@ export default function CollectionDetailsScreen() {
 
   const confirmDeletePost = async () => {
     if (!postToDelete || !collection) return;
+    setDeleting(true);
     try {
       await removePostFromCollection(collection.id, postToDelete.id);
       setPosts((prev) => prev.filter((p) => p.postId !== postToDelete.id));
@@ -180,12 +185,19 @@ export default function CollectionDetailsScreen() {
       if (user?.id) {
         await clearProfileCache(user.id);
       }
+      setDeleteModalVisible(false);
+      setPostToDelete(null);
     } catch (err: any) {
       const toastId = toast.custom(
-        <CustomToast message={err.message || "Failed to remove post"} iconType="error" onClose={() => toast.dismiss(toastId)} />,
+        <CustomToast
+          message={err.message || "Failed to remove post"}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
         { duration: 4000 }
       );
     } finally {
+      setDeleting(false);
       setDeleteModalVisible(false);
       setPostToDelete(null);
     }
@@ -332,7 +344,9 @@ export default function CollectionDetailsScreen() {
           isActive={isActive}
           onPress={() => handlePostPress(item.postId)}
           onDragHandlePressIn={editMode ? drag : undefined}
-          onDeletePress={() => handleDeletePost(item.postId, item.caption || "")}
+          onDeletePress={() =>
+            handleDeletePost(item.postId, item.caption || "")
+          }
           width={POST_WIDTH}
           marginLeft={marginLeft}
           marginRight={marginRight}
@@ -501,6 +515,7 @@ export default function CollectionDetailsScreen() {
           onToggle={toggleSelect}
           onClose={() => setSelectModalVisible(false)}
           onConfirm={confirmAdd}
+          collectionId={id}
         />
 
         {/* Delete Confirm Modal */}
@@ -508,8 +523,10 @@ export default function CollectionDetailsScreen() {
           visible={deleteModalVisible}
           caption={postToDelete?.caption}
           onCancel={() => {
-            setDeleteModalVisible(false);
-            setPostToDelete(null);
+            if (!deleting) {
+              setDeleteModalVisible(false);
+              setPostToDelete(null);
+            }
           }}
           onConfirm={confirmDeletePost}
         />

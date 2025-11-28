@@ -1,16 +1,14 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { colorOptions } from "@/constants/request-questions";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
 import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
-const options = [
-  { key: "black_white", label: "In bianco e nero ◾◽" },
-  { key: "color", label: "A colori 🎨" },
-] as const;
+
 
 export default function ColorStep() {
   const router = useRouter();
@@ -41,7 +39,7 @@ export default function ColorStep() {
           </ScaledText>
 
           <View style={{ gap: s(16) }}>
-            {options.map((opt) => {
+            {colorOptions.map((opt) => {
               const isSelected = color === opt.key;
               return (
                 <Pressable

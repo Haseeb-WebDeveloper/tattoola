@@ -18,7 +18,141 @@ async function main() {
       name: "Premium",
       type: PlanType.PREMIUM,
       description: "Advanced features for professional artists",
-      features: [
+      monthlyFeatures: [
+        {
+          index: 1,
+          text: "🎨 Add up to 3 styles",
+          details: "Add up to 3 styles to your profile",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 2,
+          text: "⭐ Feature 2 favourites as premium",
+          details: "Feature 2 favourites as premium",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 3,
+          text: "🏆 Show years of experience",
+          details: "Show your years of experience to your clients",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 4,
+          text: "🌍 Multi-location support",
+          details: "Support multiple locations in your profile",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 5,
+          text: "📂 Create collections of your work",
+          details: "Create collections of your work to showcase your best work",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+      ],
+      yearlyFeatures: [
+        {
+          index: 1,
+          text: "🎨 Add up to 3 styles",
+          details: "Add up to 3 styles to your profile",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 2,
+          text: "⭐ Feature 2 favourites as premium",
+          details: "Feature 2 favourites as premium",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 3,
+          text: "🏆 Show years of experience",
+          details: "Show your years of experience to your clients",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 4,
+          text: "🌍 Multi-location support",
+          details: "Support multiple locations in your profile",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 5,
+          text: "📂 Create collections of your work",
+          details: "Create collections of your work to showcase your best work",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+      ],
+      monthlyPrice: 19.0,
+      yearlyPrice: 190.0, // 2 months free
+      stripeMonthlyPriceId: "price_1QZQZQZQZQZQZQZQZQZQZQZQ",
+      stripeYearlyPriceId: "price_1QZQZQZQZQZQZQZQZQZQZQZQ",
+      showYearsExperience: true,
+      allowMultipleLocations: true,
+      maxStyles: 3,
+      maxFavoritesStyles: 2,
+      canCreateStudio: false,
+      isActive: true,
+      isDefault: true,
+      freeTrialDays: 30, // 1 month free trial
+    },
+  });
+
+  // Create Studio Plan
+  const studioPlan = await prisma.subscriptionPlan.upsert({
+    where: { name: "Studio" },
+    update: {},
+    create: {
+      name: "Studio",
+      type: PlanType.STUDIO,
+      description: "Complete studio management solution",
+      monthlyFeatures: [
+        {
+          index: 1,
+          text: "🎨 Add up to 3 styles",
+          details: "Add up to 3 styles to your profile",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 2,
+          text: "⭐ Feature 2 favourites as premium",
+          details: "Feature 2 favourites as premium",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 3,
+          text: "🏆 Show years of experience",
+          details: "Show your years of experience to your clients",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 4,
+          text: "🌍 Multi-location support",
+          details: "Support multiple locations in your profile",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+        {
+          index: 5,
+          text: "📂 Create collections of your work",
+          details: "Create collections of your work to showcase your best work",
+          imageUrl:
+            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png",
+        },
+      ],
+      yearlyFeatures: [
         {
           "index": 1,
           "text": "🎨 Add up to 3 styles",
@@ -51,66 +185,6 @@ async function main() {
           "index": 5,
           "text": "📂 Create collections of your work",
           "details": "Create collections of your work to showcase your best work",
-          "imageUrl":
-            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png"
-        }
-      ],
-      monthlyPrice: 19.0,
-      yearlyPrice: 190.0, // 2 months free
-      stripeMonthlyPriceId: "price_1QZQZQZQZQZQZQZQZQZQZQZQ",
-      stripeYearlyPriceId: "price_1QZQZQZQZQZQZQZQZQZQZQZQ",
-      showYearsExperience: true,
-      allowMultipleLocations: true,
-      maxStyles: 3,
-      maxFavoritesStyles: 2,
-      canCreateStudio: false,
-      isActive: true,
-      isDefault: true,
-      freeTrialDays: 30, // 1 month free trial
-    },
-  });
-
-  // Create Studio Plan
-  const studioPlan = await prisma.subscriptionPlan.upsert({
-    where: { name: "Studio" },
-    update: {},
-    create: {
-      name: "Studio",
-      type: PlanType.STUDIO,
-      description: "Complete studio management solution",
-      features: [
-        {
-          "index": 1,
-          "text": "🎨 Add up to 5 styles",
-          "details": "Add up to 5 styles to your profile",
-          "imageUrl":
-            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png"
-        },
-        {
-          "index": 2,
-          "text": "⭐ Feature 2 favourites as premium",
-          "details": "Feature 2 favourites as premium",
-          "imageUrl":
-            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png"
-        },
-        {
-          "index": 3,
-          "text": "🏆 Show years of experience",
-          "details": "Show your years of experience to your clients",
-          "imageUrl":
-            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png"
-        },
-        {
-          "index": 4,
-          "text": "🌍 Multi-location support",
-          "details": "Support multiple locations in your profile",
-          "imageUrl":
-            "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png"
-        },
-        {
-          "index": 5,
-          "text": "📂 Create a dedicated studio page",
-          "details": "Create a dedicated studio page to showcase your studio",
           "imageUrl":
             "https://tattooing101.com/wp-content/uploads/2023/04/sgushonka_-watercolor-tattoo.png"
         }

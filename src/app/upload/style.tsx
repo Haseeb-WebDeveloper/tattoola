@@ -9,11 +9,12 @@ import {
   Image,
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import NextBackFooter from "@/components/ui/NextBackFooter";
+import { ScaledText } from "@/components/ui/ScaledText";
+import { s, mvs } from "@/utils/scale";
 
 export default function UploadStyleStep() {
   const styleId = usePostUploadStore((s) => s.styleId);
@@ -45,32 +46,54 @@ export default function UploadStyleStep() {
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = styleId === item.id;
     return (
-      <View className="flex-row items-center px-4 border-b border-gray/20">
-        <Pressable
-          className="w-10 items-center"
-          onPress={() => setStyleId(item.id)}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => setStyleId(item.id)}
+        className="w-full flex-row items-center"
+        style={{}}
+      >
+        {/* Left select box */}
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: mvs(6),
+            paddingRight: s(16),
+          }}
         >
           {isSelected ? (
-            <SVGIcons.CheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
-            <SVGIcons.UncheckedCheckbox className="w-5 h-5" />
+            <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </Pressable>
+        </View>
+
+        {/* Image */}
         {item.imageUrl ? (
           <Image
             source={{ uri: item.imageUrl }}
-            className="w-36 h-28"
+            className="border-b border-gray/20"
+            style={{ width: s(120), height: mvs(72) }}
             resizeMode="cover"
           />
         ) : (
-          <View className="w-36 h-28 bg-gray/30" />
+          <View
+            className="bg-gray/30"
+            style={{ width: s(155), height: mvs(72) }}
+          />
         )}
-        <View className="flex-1 px-4">
-          <Text className="text-foreground tat-body-1 font-neueBold">
+
+        {/* Name */}
+        <View className="flex-1" style={{ paddingLeft: s(16) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="sm"
+            className="text-foreground font-neueMedium"
+          >
             {item.name}
-          </Text>
+          </ScaledText>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -176,14 +199,15 @@ export default function UploadStyleStep() {
                   justifyContent: "flex-start",
                 }}
               >
-                <Text
+                <ScaledText
+                  variant="sm"
                   numberOfLines={3}
-                  className="tat-body-3 text-gray text-left"
+                  className="text-gray text-left font-neueMedium"
                   style={{ textAlignVertical: "top", width: "100%" }}
                 >
                   {caption ||
                     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus blandit augue et rhoncus consectetur....."}
-                </Text>
+                </ScaledText>
               </View>
             </View>
           </View>
@@ -195,10 +219,20 @@ export default function UploadStyleStep() {
           </Pressable>
         </View>
       </View>
-      <View className="px-6 mb-4">
-        <Text className="text-foreground tat-body-1 font-neueBold mb-0.5">
+      <View
+        className=""
+        style={{
+          paddingHorizontal: s(16),
+          paddingVertical: mvs(8),
+        }}
+      >
+        <ScaledText
+          allowScaling={false}
+          variant="lg"
+          className="text-foreground font-neueBold"
+        >
           Select styles
-        </Text>
+        </ScaledText>
       </View>
 
       <View className="flex-1">

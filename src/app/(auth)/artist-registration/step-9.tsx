@@ -82,7 +82,7 @@ export default function ArtistStep9V2() {
   const renderItem = ({ item }: { item: ServiceItem }) => {
     const isSelected = selected.includes(item.id);
     return (
-      <View
+      <Pressable
         className="flex-row items-center tat-foreground-gray border-gray"
         style={{
           paddingHorizontal: s(16),
@@ -90,17 +90,15 @@ export default function ArtistStep9V2() {
           borderBottomWidth: s(0.5),
           gap: s(8),
         }}
+        onPress={() => toggleService(item.id)}
       >
-        <Pressable
-          className="items-center"
-          onPress={() => toggleService(item.id)}
-        >
+        <View className="items-center">
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(17)} height={s(17)} />
           )}
-        </Pressable>
+        </View>
         <View className="flex-1">
           <ScaledText
             allowScaling={false}
@@ -110,7 +108,7 @@ export default function ArtistStep9V2() {
             {item.name}
           </ScaledText>
         </View>
-      </View>
+      </Pressable>
     );
   };
 

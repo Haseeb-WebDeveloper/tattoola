@@ -47,10 +47,11 @@ export const getArtistProfile = async (artistId: string) => {
     .select(`
       *,
       users(*),
-      artist_favorite_styles(
+      styles:artist_styles(
         styleId,
         order,
-        tattoo_styles(*)
+        isFavorite,
+        style:tattoo_styles(*)
       ),
       artist_services(
         *,

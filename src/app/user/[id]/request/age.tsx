@@ -1,6 +1,7 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { ageOptions } from "@/constants/request-questions";
 import { useAuth } from "@/providers/AuthProvider";
 import { createPrivateRequestConversation } from "@/services/chat.service";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
@@ -10,15 +11,13 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
 
-const options = [
-  { key: true, label: "Ho più di 18 anni" },
-  { key: false, label: "Ho meno di 18 anni" },
-] as const;
+
 
 export default function AgeStep() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const reset = usePrivateRequestStore((s) => s.reset);
   const isAdult = usePrivateRequestStore((s) => s.answers.isAdult);
   const setIsAdult = usePrivateRequestStore((s) => s.setIsAdult);
   const answers = usePrivateRequestStore((s) => s.answers);
@@ -42,6 +41,9 @@ export default function AgeStep() {
         isAdult,
         references: (referenceMedia || []).map((m: any) => m.cloud || m.uri),
       });
+
+      // reset the store
+      reset();
       
       toast.success("Request sent successfully");
       router.replace(`/(tabs)/inbox?conversationId=${conversation.conversationId}` as any);
@@ -73,7 +75,7 @@ export default function AgeStep() {
             Potresti confermare la tua età?
           </ScaledText>
           <View style={{ gap: s(16) }}>
-            {options.map((opt) => {
+            {ageOptions.map((opt) => {
               const isSelected = isAdult === opt.key;
               return (
                 <Pressable

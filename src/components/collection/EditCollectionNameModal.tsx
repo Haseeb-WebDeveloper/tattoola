@@ -1,6 +1,7 @@
 import React from "react";
-import { Modal, TextInput, TouchableOpacity, View } from "react-native";
+import { Modal, TouchableOpacity, View } from "react-native";
 import ScaledText from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { mvs, s } from "@/utils/scale";
 
 type EditCollectionNameModalProps = {
@@ -18,6 +19,8 @@ export default function EditCollectionNameModal({
   onCancel,
   onSave,
 }: EditCollectionNameModalProps) {
+  const isSaveDisabled = !value.trim();
+
   return (
     <Modal
       visible={visible}
@@ -26,64 +29,71 @@ export default function EditCollectionNameModal({
       onRequestClose={onCancel}
     >
       <View
-        className="flex-1 justify-center items-center"
-        style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: "rgba(0,0,0,0.9)" }}
       >
-        <View
-          className="bg-tat-darkMaroon w-full"
-          style={{
-            paddingHorizontal: s(24),
-            paddingVertical: mvs(32),
-          }}
-        >
+        <View className="w-11/12 rounded-2xl bg-tat-foreground p-5 border border-gray flex-col justify-between">
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-foreground font-neueLight"
+            className="text-foreground font-neueBold"
             style={{ marginBottom: mvs(8) }}
           >
             Edit collection name
           </ScaledText>
-
-          <TextInput
+          <ScaledTextInput
+            containerClassName="rounded-xl border border-gray"
+            className="text-foreground rounded-xl font-montserratSemibold"
+            style={{ fontSize: s(12) }}
+            placeholder="Collection name"
             value={value}
             onChangeText={onChangeValue}
-            placeholder="Collection name"
-            placeholderTextColor="#A49A99"
-            className="text-foreground bg-tat-foreground rounded-lg border border-gray"
-            style={{
-              paddingHorizontal: s(16),
-              paddingVertical: mvs(12),
-              marginBottom: mvs(24),
-              fontSize: s(14),
-              fontFamily: "NeueHaasDisplay-Medium",
-            }}
             autoFocus
           />
-
-          <View className="flex-row" style={{ gap: mvs(12),  }}>
+          <View
+            className="flex-row gap-3"
+            style={{
+              marginTop: mvs(16),
+            }}
+          >
             <TouchableOpacity
               onPress={onCancel}
-              className="flex-1 rounded-full border border-foreground items-center justify-center"
-              style={{ paddingVertical: mvs(10.5) }}
+              activeOpacity={0.7}
+              className="rounded-full border items-center flex-1 flex-row justify-center text-center border-foreground"
+              style={{
+                paddingVertical: mvs(10.5),
+                paddingLeft: s(18),
+                paddingRight: s(20),
+                gap: s(15),
+                backgroundColor: "transparent",
+                opacity: 1,
+              }}
             >
               <ScaledText
                 allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueSemibold"
+                variant="sm"
+                className="text-foreground font-neueSemibold text-center"
               >
                 Cancel
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={onSave}
-              className="flex-1 rounded-full items-center justify-center"
-              style={{ backgroundColor: "#AD2E2E", paddingVertical: mvs(10.5) }}
+              onPress={isSaveDisabled ? undefined : onSave}
+              activeOpacity={0.7}
+              disabled={isSaveDisabled}
+              className="rounded-full items-center flex-1 flex-row justify-center text-center bg-primary"
+              style={{
+                paddingVertical: mvs(10.5),
+                paddingLeft: s(25),
+                paddingRight: s(20),
+                gap: s(15),
+                opacity: isSaveDisabled ? 0.5 : 1,
+              }}
             >
               <ScaledText
                 allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueMedium"
+                variant="sm"
+                className="text-foreground font-neueSemibold text-center"
               >
                 Save
               </ScaledText>

@@ -45,8 +45,19 @@ export type FeedPost = {
   commentsCount: number;
   isLiked: boolean;
   style?: { id: string; name: string };
-  author: { id: string; username: string; firstName?: string; lastName?: string; avatar?: string };
-  media: { id: string; mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
+  author: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+  };
+  media: {
+    id: string;
+    mediaType: "IMAGE" | "VIDEO";
+    mediaUrl: string;
+    order: number;
+  }[];
 };
 
 export type FeedPage = {
@@ -85,7 +96,9 @@ export async function fetchFeedPage(args: {
     const createdAt = cursor.createdAt;
     const id = cursor.id;
     // @ts-ignore - PostgREST filter string
-    query = query.or(`and(createdAt.eq.${createdAt},id.lt.${id}),createdAt.lt.${createdAt}`);
+    query = query.or(
+      `and(createdAt.eq.${createdAt},id.lt.${id}),createdAt.lt.${createdAt}`
+    );
   }
 
   const { data, error } = await query;
@@ -123,7 +136,9 @@ export async function fetchFeedPage(args: {
     likesCount: r.likesCount,
     commentsCount: r.commentsCount,
     isLiked: !!likedMap[r.id],
-    style: r.tattoo_styles ? { id: r.tattoo_styles.id, name: r.tattoo_styles.name } : undefined,
+    style: r.tattoo_styles
+      ? { id: r.tattoo_styles.id, name: r.tattoo_styles.name }
+      : undefined,
     author: {
       id: r.users.id,
       username: r.users.username,
@@ -131,7 +146,9 @@ export async function fetchFeedPage(args: {
       lastName: r.users.lastName,
       avatar: r.users.avatar,
     },
-    media: (r.post_media || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)),
+    media: (r.post_media || []).sort(
+      (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
+    ),
   }));
 
   return { items, nextCursor };
@@ -140,11 +157,15 @@ export async function fetchFeedPage(args: {
 /**
  * Fetch detailed post information
  */
-export async function fetchPostDetails(postId: string, userId: string): Promise<PostDetail> {
+export async function fetchPostDetails(
+  postId: string,
+  userId: string
+): Promise<PostDetail> {
   // Fetch post with all related data
   const { data: post, error: postError } = await supabase
     .from("posts")
-    .select(`
+    .select(
+      `
       id,
       caption,
       thumbnailUrl,
@@ -156,55 +177,71 @@ export async function fetchPostDetails(postId: string, userId: string): Promise<
       tattoo_styles(id,name,imageUrl),
       users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
       post_media(id,mediaType,mediaUrl,order)
-    `)
+    `
+    )
     .eq("id", postId)
     .single();
 
   if (postError) throw new Error(postError.message);
 
-  // Fetch author's location separately
-  const { data: locationData } = await supabase
-    .from("user_locations")
-    .select(`
-      municipalities(name),
-      provinces(name)
-    `)
-    .eq("userId", (post as any).users.id)
-    .eq("isPrimary", true)
-    .maybeSingle();
+  const authorId = (post as any).users.id;
 
-  // Check if current user liked this post
-  const { data: likeData } = await supabase
-    .from("post_likes")
-    .select("id")
-    .eq("postId", postId)
-    .eq("userId", userId)
-    .single();
+  // Run all 4 queries in parallel for faster loading
+  const [locationResult, likeResult, likesResult, followResult] =
+    await Promise.all([
+      // Fetch author's location
+      supabase
+        .from("user_locations")
+        .select(
+          `
+        municipalities(name),
+        provinces(name)
+      `
+        )
+        .eq("userId", authorId)
+        .eq("isPrimary", true)
+        .maybeSingle(),
 
-  // Fetch recent likes (first 10)
-  const { data: likesData } = await supabase
-    .from("post_likes")
-    .select(`
-      id,
-      users!post_likes_userId_fkey(id,username,avatar)
-    `)
-    .eq("postId", postId)
-    .order("createdAt", { ascending: false })
-    .limit(10);
+      // Check if current user liked this post
+      supabase
+        .from("post_likes")
+        .select("id")
+        .eq("postId", postId)
+        .eq("userId", userId)
+        .maybeSingle(),
+
+      // Fetch recent likes (first 10)
+      supabase
+        .from("post_likes")
+        .select(
+          `
+        id,
+        users!post_likes_userId_fkey(id,username,avatar)
+      `
+        )
+        .eq("postId", postId)
+        .order("createdAt", { ascending: false })
+        .limit(10),
+
+      // Check follow state (does viewer follow author?)
+      supabase
+        .from("follows")
+        .select("id")
+        .eq("followerId", userId)
+        .eq("followingId", authorId)
+        .maybeSingle(),
+    ]);
+
+  const locationData = locationResult.data;
+  const likeData = likeResult.data;
+  const likesData = likesResult.data;
+  const followData = followResult.data;
 
   const likes = (likesData || []).map((like: any) => ({
     id: like.id,
     username: like.users.username,
     avatar: like.users.avatar,
   }));
-
-  // Check follow state (does viewer follow author?)
-  const { data: followData } = await supabase
-    .from("follows")
-    .select("id")
-    .eq("followerId", userId)
-    .eq("followingId", (post as any).users.id)
-    .maybeSingle();
 
   const style = (post as any).tattoo_styles;
   const author = (post as any).users;
@@ -215,7 +252,9 @@ export async function fetchPostDetails(postId: string, userId: string): Promise<
     likesCount: (post as any).likesCount,
     commentsCount: (post as any).commentsCount,
     createdAt: (post as any).createdAt,
-    media: ((post as any).post_media || []).sort((a: any, b: any) => a.order - b.order),
+    media: ((post as any).post_media || []).sort(
+      (a: any, b: any) => a.order - b.order
+    ),
     style: style
       ? {
           id: style.id,
@@ -301,13 +340,25 @@ export async function togglePostLike(
   return { isLiked: true, likesCount: newLikesCount };
 }
 
-export async function createPost(args: { caption?: string; styleId?: string; authorId: string }): Promise<{ id: string }> {
+export async function createPost(args: {
+  caption?: string;
+  styleId?: string;
+  authorId: string;
+  thumbnailUrl?: string;
+}): Promise<{ id: string }> {
   const newId = uuidv4();
   const nowIso = new Date().toISOString();
   const { error } = await supabase
-    .from('posts')
-    .insert({ id: newId, authorId: args.authorId, caption: args.caption, styleId: args.styleId, updatedAt: nowIso })
-    .select('id')
+    .from("posts")
+    .insert({
+      id: newId,
+      authorId: args.authorId,
+      caption: args.caption,
+      styleId: args.styleId,
+      thumbnailUrl: args.thumbnailUrl,
+      updatedAt: nowIso,
+    })
+    .select("id")
     .single();
   if (error) throw new Error(error.message);
   return { id: newId };
@@ -315,44 +366,77 @@ export async function createPost(args: { caption?: string; styleId?: string; aut
 
 export async function addPostMedia(
   postId: string,
-  media: Array<{ mediaUrl: string; mediaType: 'IMAGE' | 'VIDEO'; order: number }>
+  media: Array<{
+    mediaUrl: string;
+    mediaType: "IMAGE" | "VIDEO";
+    order: number;
+  }>
 ): Promise<void> {
   if (!media.length) return;
-  const rows = media.map((m) => ({ id: uuidv4(), postId, mediaUrl: m.mediaUrl, mediaType: m.mediaType, order: m.order }));
-  const { error } = await supabase.from('post_media').insert(rows);
+  const rows = media.map((m) => ({
+    id: uuidv4(),
+    postId,
+    mediaUrl: m.mediaUrl,
+    mediaType: m.mediaType,
+    order: m.order,
+  }));
+  const { error } = await supabase.from("post_media").insert(rows);
   if (error) throw new Error(error.message);
 }
 
-export async function addPostToCollection(postId: string, collectionId: string): Promise<void> {
+export async function addPostToCollection(
+  postId: string,
+  collectionId: string
+): Promise<void> {
   const { error } = await supabase
-    .from('collection_posts')
-    .insert({ id: uuidv4(), collectionId, postId, addedAt: new Date().toISOString() });
+    .from("collection_posts")
+    .insert({
+      id: uuidv4(),
+      collectionId,
+      postId,
+      addedAt: new Date().toISOString(),
+    });
   if (error) throw new Error(error.message);
 }
 
 export async function createPostWithMediaAndCollection(args: {
   caption?: string;
   styleId?: string;
-  media: Array<{ mediaUrl: string; mediaType: 'IMAGE' | 'VIDEO'; order: number }>;
+  media: Array<{
+    mediaUrl: string;
+    mediaType: "IMAGE" | "VIDEO";
+    order: number;
+  }>;
   collectionId?: string;
 }): Promise<{ postId: string }> {
   try {
     const { data: session } = await supabase.auth.getUser();
     const authorId = session.user?.id;
-    if (!authorId) throw new Error('Not authenticated');
+    if (!authorId) throw new Error("Not authenticated");
 
-    console.log('[createPostWithMediaAndCollection] args', args);
-    const { id: postId } = await createPost({ caption: args.caption, styleId: args.styleId, authorId });
-    console.log('[createPostWithMediaAndCollection] postId', postId);
+    // Extract thumbnail from first image media item
+    const firstImage = args.media.find(
+      (m) => m.mediaType === "IMAGE" && m.order === 0
+    ) || args.media.find((m) => m.mediaType === "IMAGE");
+    const thumbnailUrl = firstImage?.mediaUrl;
+
+    const { id: postId } = await createPost({
+      caption: args.caption,
+      styleId: args.styleId,
+      authorId,
+      thumbnailUrl,
+    });
     await addPostMedia(postId, args.media);
-    console.log('[createPostWithMediaAndCollection] mediaCount', args.media.length);
     if (args.collectionId) {
       await addPostToCollection(postId, args.collectionId);
-      console.log('[createPostWithMediaAndCollection] addedToCollection', args.collectionId);
+      console.log(
+        "[createPostWithMediaAndCollection] addedToCollection",
+        args.collectionId
+      );
     }
     return { postId };
   } catch (e) {
-    console.error('[createPostWithMediaAndCollection] error', e);
+    console.error("[createPostWithMediaAndCollection] error", e);
     throw e;
   }
 }
@@ -373,11 +457,15 @@ export type LikedPost = {
 /**
  * Fetch all posts liked by the user
  */
-export async function fetchLikedPosts(userId: string, styleId?: string | null): Promise<LikedPost[]> {
+export async function fetchLikedPosts(
+  userId: string,
+  styleId?: string | null
+): Promise<LikedPost[]> {
   // Build query
   let query = supabase
     .from("post_likes")
-    .select(`
+    .select(
+      `
       postId,
       createdAt,
       posts!post_likes_postId_fkey(
@@ -388,7 +476,8 @@ export async function fetchLikedPosts(userId: string, styleId?: string | null): 
         styleId,
         post_media(id,mediaType,mediaUrl,order)
       )
-    `)
+    `
+    )
     .eq("userId", userId)
     .order("createdAt", { ascending: false });
 
@@ -411,7 +500,9 @@ export async function fetchLikedPosts(userId: string, styleId?: string | null): 
         caption: post.caption,
         thumbnailUrl: post.thumbnailUrl,
         createdAt: post.createdAt,
-        media: (post.post_media || []).sort((a: any, b: any) => a.order - b.order),
+        media: (post.post_media || []).sort(
+          (a: any, b: any) => a.order - b.order
+        ),
       };
     })
     .filter(Boolean) as LikedPost[];

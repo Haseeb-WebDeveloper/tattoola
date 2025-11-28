@@ -1,12 +1,12 @@
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { fetchPostDetails, togglePostLike } from "@/services/post.service";
+import { FeedPost, fetchPostDetails, togglePostLike } from "@/services/post.service";
 import { toggleFollow } from "@/services/profile.service";
 import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -54,29 +54,70 @@ interface PostDetail {
   }[];
 }
 
+// Convert FeedPost to partial PostDetail for instant render
+function convertFeedPostToPartialDetail(feedPost: FeedPost): PostDetail {
+  return {
+    id: feedPost.id,
+    caption: feedPost.caption,
+    thumbnailUrl: feedPost.media?.[0]?.mediaUrl,
+    likesCount: feedPost.likesCount,
+    commentsCount: feedPost.commentsCount,
+    createdAt: feedPost.createdAt,
+    media: feedPost.media,
+    style: feedPost.style ? { ...feedPost.style, imageUrl: undefined } : undefined,
+    author: {
+      ...feedPost.author,
+      municipality: undefined,
+      province: undefined,
+    },
+    isLiked: feedPost.isLiked,
+    isFollowingAuthor: false, // Will be fetched
+    likes: [], // Will be fetched
+  };
+}
+
 export default function PostDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, initialData } = useLocalSearchParams<{ id: string; initialData?: string }>();
   const router = useRouter();
   const { user } = useAuth();
 
-  const [loading, setLoading] = useState(true);
+  // Parse initial data from feed (if available) for instant render
+  const parsedInitial = useMemo(() => {
+    if (!initialData) return null;
+    try {
+      const feedPost = JSON.parse(initialData) as FeedPost;
+      return convertFeedPostToPartialDetail(feedPost);
+    } catch {
+      return null;
+    }
+  }, [initialData]);
+
+  // If we have initial data, show content immediately (no loading state)
+  const [loading, setLoading] = useState(!parsedInitial);
   const [error, setError] = useState<string | null>(null);
-  const [post, setPost] = useState<PostDetail | null>(null);
+  const [post, setPost] = useState<PostDetail | null>(parsedInitial);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   const loadPost = useCallback(async () => {
     if (!id || !user) return;
 
     try {
-      setLoading(true);
+      // Only show loading if we don't have initial data
+      if (!parsedInitial) {
+        setLoading(true);
+      }
       const data = await fetchPostDetails(id, user.id);
       setPost(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load post");
+      // Only show error if we don't have initial data to display
+      if (!parsedInitial) {
+        setError(err.message || "Failed to load post");
+      }
+      console.error("Failed to load post details:", err);
     } finally {
       setLoading(false);
     }
-  }, [id, user]);
+  }, [id, user, parsedInitial]);
 
   useEffect(() => {
     loadPost();
@@ -141,56 +182,135 @@ export default function PostDetailScreen() {
   };
 
   if (loading) {
-    // Skeleton matching post detail layout
+    // Skeleton matching post detail layout exactly
     return (
       <View className="flex-1 bg-background relative">
-        {/* Header back btn */}
+        {/* Header with functional back button */}
         <View className="absolute top-4 left-4 z-10">
-          <View className="w-10 h-10 rounded-full bg-foreground/20" />
+          <TouchableOpacity
+            onPress={handleBack}
+            className="w-10 h-10 rounded-full bg-foreground/20 items-center justify-center"
+          >
+            <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
+          </TouchableOpacity>
         </View>
+
         <ScrollView
           className="flex-1"
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 32 }}
         >
-          {/* Media skeleton */}
-          <View className="aspect-[9/16] w-full bg-foreground/10" />
+          {/* Media Carousel skeleton */}
+          <View className="bg-[#230808]">
+            <View
+              className="relative w-full bg-[#230808] rounded-b-[40px] overflow-hidden"
+              style={{ height: (screenWidth * 16) / 9 }}
+            >
+              {/* Image placeholder */}
+              <View className="w-full h-full bg-foreground/10" />
 
-          <View className="px-4 py-4">
-            {/* Caption row */}
-            <View className="flex-row items-start justify-between mb-4">
-              <View className="flex-1 mr-4">
-                <View className="h-5 bg-foreground/10 rounded w-3/4 mb-2" />
-                <View className="h-6 bg-foreground/10 rounded w-24" />
-              </View>
-              <View className="w-8 h-8 rounded-full bg-foreground/10" />
-            </View>
+              {/* Top fade gradient */}
+              <LinearGradient
+                colors={["rgba(0,0,0,0.6)", "transparent"]}
+                locations={[0, 1]}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: 140,
+                  zIndex: 1,
+                }}
+                pointerEvents="none"
+                className="rounded-b-[40px]"
+              />
 
-            {/* Author info */}
-            <View className="flex-row items-center justify-between mb-4">
-              <View className="flex-row items-center flex-1">
-                <View className="w-10 h-10 rounded-full mr-3 bg-foreground/10" />
-                <View className="flex-1">
-                  <View className="h-4 bg-foreground/10 rounded w-1/2 mb-1" />
-                  <View className="h-4 bg-foreground/10 rounded w-1/3 mb-1" />
-                  <View className="h-4 bg-foreground/10 rounded w-1/4" />
-                </View>
-              </View>
-              <View className="rounded-lg px-4 py-2 w-20 h-9 bg-foreground/10" />
-            </View>
+              {/* Bottom fade gradient */}
+              <LinearGradient
+                colors={["transparent", "rgba(0,0,0,0.7)"]}
+                locations={[0, 1]}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 180,
+                  zIndex: 1,
+                  borderBottomLeftRadius: 30,
+                  borderBottomRightRadius: 30,
+                }}
+                pointerEvents="none"
+              />
 
-            {/* Likes info */}
-            <View className="mb-6">
-              <View className="h-4 bg-foreground/10 rounded w-1/3 mb-3" />
-              <View className="flex-row flex-wrap gap-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <View key={i} className="flex-row items-center">
-                    <View className="w-6 h-6 rounded-full mr-2 bg-foreground/10" />
-                    <View className="h-4 bg-foreground/10 rounded w-16" />
-                  </View>
-                ))}
+              {/* Carousel indicator placeholder */}
+              <View
+                className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2"
+                style={{ zIndex: 2 }}
+              >
+                <View className="w-2 h-2 rounded-full bg-white" />
+                <View className="w-2 h-2 rounded-full bg-white/50" />
+                <View className="w-2 h-2 rounded-full bg-white/50" />
               </View>
             </View>
           </View>
+
+          <LinearGradient
+            colors={["rgba(35,8,8,1)", "transparent"]}
+            locations={[0, 1]}
+            pointerEvents="box-none"
+          >
+            {/* Content below media */}
+            <View className="px-4 py-4">
+              {/* Caption and like button */}
+              <View className="flex-row items-start justify-between mb-6">
+                <View className="flex-1 mr-4">
+                  <View className="h-6 bg-foreground/10 rounded w-4/5 mb-2" />
+                  <View className="h-5 bg-foreground/10 rounded w-3/5" />
+                </View>
+                <View
+                  className="bg-foreground/10 rounded"
+                  style={{ width: s(26), height: s(26) }}
+                />
+              </View>
+
+              {/* Author info */}
+              <View className="flex-row items-center justify-between mb-8">
+                <View className="flex-row items-center flex-1">
+                  <View
+                    className="rounded-full mr-3 bg-foreground/10"
+                    style={{ width: s(40), height: s(40) }}
+                  />
+                  <View className="flex-1">
+                    <View className="h-3 bg-foreground/10 rounded w-1/2 mb-1" />
+                    <View className="h-3 bg-foreground/10 rounded w-1/3 mb-1" />
+                    <View className="h-3 bg-foreground/10 rounded w-1/4" />
+                  </View>
+                </View>
+                <View className="border border-gray rounded-full px-4 py-2 flex-row items-center gap-2">
+                  <View className="w-4 h-4 bg-foreground/10 rounded" />
+                  <View className="h-4 bg-foreground/10 rounded w-12" />
+                </View>
+              </View>
+
+              {/* Divider */}
+              <View className="h-[0.5px] w-full bg-[#A49A99] mb-6" />
+
+              {/* Likes info */}
+              <View className="mb-6">
+                <View className="h-4 bg-foreground/10 rounded w-1/3 mb-3" />
+
+                {/* Recent likers skeleton */}
+                <View className="flex-col items-start justify-start gap-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <View key={i} className="flex-row items-center">
+                      <View className="w-10 h-10 border-2 border-primary rounded-full mr-2 bg-foreground/10" />
+                      <View className="h-4 bg-foreground/10 rounded w-24" />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
         </ScrollView>
       </View>
     );
@@ -414,7 +534,7 @@ export default function PostDetailScreen() {
 
               {/* Recent likers */}
               {post.likes.length > 0 && (
-                <View className="flex-row flex-wrap gap-3">
+                <View className="flex-col items-start justify-start gap-3">
                   {post.likes.slice(0, 6).map((like) => (
                     <View key={like.id} className="flex-row items-center">
                       <Image

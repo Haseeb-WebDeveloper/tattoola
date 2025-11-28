@@ -1,8 +1,8 @@
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import {
-  getProfileFromCache,
-  saveProfileToCache,
-  shouldRefreshCache,
+    getProfileFromCache,
+    saveProfileToCache,
+    shouldRefreshCache,
 } from "@/utils/database";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -104,7 +104,16 @@ export async function fetchArtistSelfProfile(
   if (!forceRefresh) {
     const cached = await getProfileFromCache(userId);
     if (cached) {
+      const cachedWorkArrangement = (cached as ArtistSelfProfileInterface)?.artistProfile?.workArrangement;
       console.log("📦 Using cached profile for user:", userId);
+      console.log("🔍 Cached profile workArrangement:", cachedWorkArrangement);
+
+      // If cached profile is missing workArrangement, force refresh to get it
+      if (cachedWorkArrangement === undefined) {
+        console.log("⚠️ Cached profile missing workArrangement, forcing refresh...");
+        // Force refresh to get workArrangement from database
+        return await fetchArtistSelfProfile(userId, true);
+      }
 
       // Optionally trigger background sync if cache is stale
       shouldRefreshCache(userId).then((shouldRefresh) => {
@@ -124,24 +133,51 @@ export async function fetchArtistSelfProfile(
   console.log("🌐 Fetching profile from Supabase for user:", userId);
 
   // Step 2: fetch user + artist profile from Supabase
+  // First, let's verify workArrangement exists by querying artist_profiles directly
+  const { data: directProfileCheck, error: directError } = await supabase
+    .from("artist_profiles")
+    .select("id, workArrangement, businessName")
+    .eq("userId", userId)
+    .single();
+  
+  console.log("🔍 Direct artist_profiles query - workArrangement:", directProfileCheck?.workArrangement);
+  console.log("🔍 Direct artist_profiles query - full data:", JSON.stringify(directProfileCheck, null, 2));
+  
   const userQ = await supabase
     .from("users")
     .select(
       `id,email,username,firstName,lastName,avatar,bio,instagram,tiktok,
-       artist_profiles(id,businessName,instagram,website,phone,mainStyleId,bannerType)`
+       artist_profiles(id,businessName,instagram,website,phone,bannerType,workArrangement)`
     )
     .eq("id", userId)
     .single();
 
-  if (userQ.error) throw new Error(userQ.error.message);
+  if (userQ.error) {
+    console.error("❌ Error fetching user profile:", userQ.error);
+    throw new Error(userQ.error.message);
+  }
+  
   const userRow: any = userQ.data;
+  console.log("🔍 Profile Service - Raw userRow.artist_profiles:", JSON.stringify(userRow?.artist_profiles, null, 2));
+  
   const artistProfile = Array.isArray(userRow?.artist_profiles)
     ? userRow.artist_profiles[0]
     : userRow?.artist_profiles;
+  
+  // Debug: log workArrangement from database
+  console.log("🔍 Profile Service - Extracted artistProfile:", JSON.stringify(artistProfile, null, 2));
+  console.log("🔍 Profile Service - artistProfile.workArrangement:", artistProfile?.workArrangement);
+  console.log("🔍 Profile Service - workArrangement type:", typeof artistProfile?.workArrangement);
+  
+  // Use workArrangement from direct query if nested query doesn't have it
+  if (!artistProfile?.workArrangement && directProfileCheck?.workArrangement) {
+    console.log("⚠️ workArrangement missing from nested query, using direct query value:", directProfileCheck.workArrangement);
+    artistProfile.workArrangement = directProfileCheck.workArrangement;
+  }
 
   if (!artistProfile) {
     // Return a safe empty profile instead of throwing so UI can render gracefully
-    return {
+    const emptyProfile: ArtistSelfProfileInterface = {
       user: {
         id: userRow.id,
         email: userRow.email,
@@ -157,15 +193,16 @@ export async function fetchArtistSelfProfile(
         id: "",
         businessName: undefined,
         bio: undefined,
-        mainStyleId: null,
+        workArrangement: undefined,
         banner: [],
-      },
+      } as ArtistSelfProfileInterface["artistProfile"],
       location: undefined,
       favoriteStyles: [],
       services: [],
       collections: [],
       bodyPartsNotWorkedOn: [],
     };
+    return emptyProfile;
   }
 
   const artistId = artistProfile.id as string;
@@ -188,8 +225,8 @@ export async function fetchArtistSelfProfile(
       .eq("bannerType", activeBannerType)
       .order("order", { ascending: true }),
     supabase
-      .from("artist_favorite_styles")
-      .select("styleId,order, tattoo_styles(id,name,imageUrl)")
+      .from("artist_styles")
+      .select("styleId,order, isFavorite, tattoo_styles(id,name,imageUrl)")
       .eq("artistId", artistId)
       .order("order", { ascending: true }),
     supabase
@@ -285,17 +322,13 @@ export async function fetchArtistSelfProfile(
     .filter((bp: any) => !workedIds.has(bp.id))
     .map((bp: any) => ({ id: bp.id, name: bp.name }));
 
-  const favoriteStyles = (favStyles2?.data || []).map((r: any) => ({
+  // Return all styles with isFavorite flag (not just favorites)
+  const allStyles = (favStyles2?.data || []).map((r: any) => ({
     id: r.tattoo_styles?.id,
     name: r.tattoo_styles?.name,
     imageUrl: r.tattoo_styles?.imageUrl,
-    isMain: artistProfile.mainStyleId
-      ? r.tattoo_styles?.id === artistProfile.mainStyleId
-      : false,
+    isFavorite: r.isFavorite || false,
   }));
-
-  // Place main style first
-  favoriteStyles.sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
 
   const services = (services2?.data || []).map((r: any) => ({
     id: r.services?.id,
@@ -355,15 +388,18 @@ export async function fetchArtistSelfProfile(
       id: artistId,
       businessName: artistProfile.businessName,
       bio: userRow.bio,
-      mainStyleId: artistProfile.mainStyleId || null,
+      workArrangement: (artistProfile.workArrangement || undefined) as "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | undefined,
       banner: (banner2?.data || []) as any[],
-    },
+    } as ArtistSelfProfileInterface["artistProfile"],
     location,
-    favoriteStyles,
+    favoriteStyles: allStyles,
     services,
     collections: collectionsOut,
     bodyPartsNotWorkedOn,
   };
+  
+  // Debug: log the final profile workArrangement
+  console.log("🔍 Profile Service - Final profile.artistProfile.workArrangement:", profile.artistProfile.workArrangement);
 
   // Step 3: Save to cache for next time
   saveProfileToCache(userId, profile).catch((err) =>

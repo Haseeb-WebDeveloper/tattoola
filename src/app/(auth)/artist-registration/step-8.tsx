@@ -2,7 +2,10 @@ import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
-import { AR_MAX_FAVORITE_STYLES } from "@/constants/limits";
+import {
+    AR_MAX_FAVORITE_STYLES,
+    AR_MAX_STYLES,
+} from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { SubscriptionService } from "@/services/subscription.service";
@@ -12,15 +15,13 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  FlatList,
-  Image,
-  Modal,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    Modal,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 function StyleSkeleton() {
   return (
     <View className="flex-row items-center">
@@ -61,7 +62,6 @@ function StyleSkeleton() {
 }
 
 export default function ArtistStep8V2() {
-  const insets = useSafeAreaInsets();
   const {
     step8,
     updateStep8,
@@ -69,26 +69,51 @@ export default function ArtistStep8V2() {
     setPrimaryStyle,
     setCurrentStepDisplay,
     totalStepsDisplay,
+    reset
   } = useArtistRegistrationV2Store();
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [infoVisible, setInfoVisible] = useState(false);
-  const [maxFavoriteStyles, setMaxFavoriteStyles] = useState(AR_MAX_FAVORITE_STYLES);
+  // How many styles user can pick in total (checkboxes)
+  const [maxStyles, setMaxStyles] = useState(AR_MAX_STYLES);
+  // How many styles user can mark as favourite/primary (stars)
+  const [maxFavoriteStyles, setMaxFavoriteStyles] = useState(
+    AR_MAX_FAVORITE_STYLES
+  );
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
     setCurrentStepDisplay(8);
     let mounted = true;
     (async () => {
       try {
-        // Fetch plan limits (will fallback to AR_MAX_FAVORITE_STYLES if no subscription)
+        // Fetch plan limits (will fallback to AR_MAX_* constants if no subscription)
         try {
           const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
-          if (subscription?.subscription_plans?.maxFavoritesStyles) {
-            if (mounted) setMaxFavoriteStyles(subscription.subscription_plans.maxFavoritesStyles);
+          const planMaxStyles = subscription?.subscription_plans?.maxStyles;
+          const planMaxFavoriteStyles =
+            subscription?.subscription_plans?.maxFavoritesStyles;
+
+          if (mounted) {
+            setMaxStyles(
+              planMaxStyles !== null && planMaxStyles !== undefined
+                ? planMaxStyles
+                : AR_MAX_STYLES
+            );
+            setMaxFavoriteStyles(
+              planMaxFavoriteStyles !== null &&
+                planMaxFavoriteStyles !== undefined
+                ? planMaxFavoriteStyles
+                : AR_MAX_FAVORITE_STYLES
+            );
           }
         } catch (e) {
           // No subscription yet (normal during registration) - use default
           console.log("No active subscription, using default limits");
+          if (mounted) {
+            setMaxStyles(AR_MAX_STYLES);
+            setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);
+          }
         }
 
         const data = await fetchTattooStyles();
@@ -104,12 +129,13 @@ export default function ArtistStep8V2() {
     };
   }, []);
 
-  const selected = step8.favoriteStyles || [];
-  const canSelectMore = selected.length < maxFavoriteStyles;
+  const selected = step8.styles || [];
+  const favouriteIds = step8.favoriteStyles || [];
+  const canSelectMore = selected.length < maxStyles;
 
   const canProceed = isValid(step8Schema, {
-    favoriteStyles: selected,
-    mainStyleId: step8.mainStyleId || "",
+    styles: selected,
+    favoriteStyles: favouriteIds,
   });
 
   const onNext = () => {
@@ -133,28 +159,54 @@ export default function ArtistStep8V2() {
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = selected.includes(item.id);
-    const isPrimary = step8.mainStyleId === item.id;
+    const isFavourite = favouriteIds.includes(item.id);
     const img = resolveImageUrl(item.imageUrl);
+
+    // Handle row press: toggle selection (if not max reached)
+    const handleRowPress = () => {
+      // If trying to add a new style and limit is reached, show popup
+      if (!isSelected) {
+        // Check if we've reached the maximum allowed styles
+        if (selected.length >= maxStyles) {
+          setShowLimitModal(true);
+          return;
+        }
+      }
+      
+      toggleFavoriteStyle(item.id, maxStyles);
+    };
+
+    // Handle star press: toggle favourite within selected list
+    const handleStarPress = () => {
+      if (!isSelected) return;
+      // maxFavoriteStyles is enforced inside the store action; cast to satisfy TS
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      setPrimaryStyle(item.id, maxFavoriteStyles);
+    };
+
     return (
-      <View
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={handleRowPress}
         className="flex-row items-center"
+        style={{}}
       >
         {/* Left select box */}
-        <TouchableOpacity
+        <View
           style={{
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: mvs(6),
             paddingRight: s(16),
           }}
-          onPress={() => toggleFavoriteStyle(item.id, maxFavoriteStyles)}
         >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </TouchableOpacity>
+        </View>
 
         {/* Image */}
         {img ? (
@@ -172,7 +224,7 @@ export default function ArtistStep8V2() {
         )}
 
         {/* Name */}
-        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+        <View className="flex-1" style={{ paddingLeft: s(16) }}>
           <ScaledText
             allowScaling={false}
             style={{ fontSize: 12.445 }}
@@ -184,17 +236,18 @@ export default function ArtistStep8V2() {
 
         {/* Primary star */}
         <TouchableOpacity
-          onPress={() => isSelected && setPrimaryStyle(item.id)}
+          onPress={handleStarPress}
           style={{ paddingRight: s(16) }}
           disabled={!isSelected}
+          accessibilityRole="button"
         >
-          {isPrimary ? (
+          {isFavourite ? (
             <SVGIcons.StartCircleFilled className="w-5 h-5" />
           ) : (
             <SVGIcons.StartCircle className="w-5 h-5" />
           )}
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -209,7 +262,7 @@ export default function ArtistStep8V2() {
           currentStep={8}
           totalSteps={totalStepsDisplay}
           name="Your preferred styles"
-          description="Choose at least 2 styles. Then mark one as your primary style (★)"
+          description={`Choose at least 1 styles (max ${maxStyles}). You can mark up to ${maxFavoriteStyles} as your favourite styles (★)`}
           descriptionVariant="md"
           icon={<SVGIcons.Style width={19} height={19} />}
           isIconPressable={true}
@@ -355,6 +408,75 @@ export default function ArtistStep8V2() {
                 davvero la tua visione e il tuo gusto estetico.
               </ScaledText>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Limit Exceeded Modal */}
+      <Modal
+        visible={showLimitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLimitModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            {/* Warning Icon */}
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+
+            {/* Title */}
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Style Limit Reached
+            </ScaledText>
+
+            {/* Subtitle */}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(16) }}
+            >
+              You can only select {maxStyles} {maxStyles === 1 ? "style" : "styles"}.
+            </ScaledText>
+
+            {/* Action Button */}
+            <View className="flex-row justify-center">
+              <TouchableOpacity
+                onPress={() => setShowLimitModal(false)}
+                className="rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: "#AD2E2E",
+                  paddingVertical: mvs(8),
+                  paddingLeft: s(32),
+                  paddingRight: s(32),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-white font-neueSemibold"
+                >
+                  OK
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

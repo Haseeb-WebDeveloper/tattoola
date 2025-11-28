@@ -14,7 +14,7 @@ export type ArtistSelfProfileInterface = {
     id: string;
     businessName?: string;
     bio?: string;
-    mainStyleId?: string | null;
+    workArrangement?: "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE";
     banner: { mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
   };
   location?: {
@@ -35,7 +35,7 @@ export type ArtistSelfProfileInterface = {
     id: string;
     name: string;
     imageUrl?: string | null;
-    isMain?: boolean;
+    isFavorite?: boolean;
   }[];
   services: { id: string; name: string; description?: string | null }[];
   collections: Array<{
