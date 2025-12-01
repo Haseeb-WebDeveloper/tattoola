@@ -7,7 +7,7 @@ import { useStudioSetupStore } from "@/stores/studioSetupStore";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, View } from "react-native";
+import { FlatList, Pressable, ScrollView, TouchableOpacity, View } from "react-native";
 
 function ServiceSkeleton() {
   return (
@@ -101,6 +101,10 @@ export default function StudioStep7() {
     const isSelected = selectedServices.includes(item.id);
 
     return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => toggleService(item.id)}
+      >
       <View
         className="flex-row items-center border-b border-gray/20"
         style={{
@@ -112,7 +116,6 @@ export default function StudioStep7() {
         <Pressable
           className="items-center"
           style={{ width: s(40) }}
-          onPress={() => toggleService(item.id)}
         >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox style={{ width: s(20), height: s(20) }} />
@@ -132,6 +135,7 @@ export default function StudioStep7() {
           </ScaledText>
         </View>
       </View>
+      </TouchableOpacity>
     );
   };
 

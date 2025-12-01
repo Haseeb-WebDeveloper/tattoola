@@ -21,6 +21,7 @@ import React, { useEffect, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-get-random-values"; // Import polyfill for crypto functions
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -104,21 +105,20 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <AuthProvider>
-          <SafeAreaView className="flex-1 text-foreground bg-background font-neue">
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
+        <KeyboardProvider>
+          <AuthProvider>
+            <SafeAreaView className="flex-1 text-foreground bg-background font-neue">
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              >
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="(studio-invitation)" />
               <Stack.Screen name="post/[id]" />
               <Stack.Screen name="user/[id]" />
               <Stack.Screen name="collection/[id]" />
-              <Stack.Screen name="settings" />
-              <Stack.Screen name="modal" />
             </Stack>
             <Toaster
             position="top-center"
@@ -184,6 +184,7 @@ export default function RootLayout() {
           />
         </SafeAreaView>
       </AuthProvider>
+    </KeyboardProvider>
     </GestureHandlerRootView>
     </ErrorBoundary>
   );

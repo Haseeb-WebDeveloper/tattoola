@@ -2,7 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { BannerMedia } from "@/types/banner";
 import { mvs, s } from "@/utils/scale";
-import { ResizeMode, Video } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
 
@@ -26,6 +26,15 @@ export function SingleMediaUpload({
   uploadLabel,
 }: SingleMediaUploadProps) {
   const media = bannerMedia[0];
+  const shouldUseVideo = media && mediaType === "video";
+  // Always call hook at top level
+  const videoPlayer = useVideoPlayer(shouldUseVideo ? media.mediaUrl : '', (player) => {
+    if (shouldUseVideo) {
+      player.loop = true;
+      player.muted = true;
+      player.play();
+    }
+  });
 
   return (
     <View>
@@ -49,19 +58,17 @@ export function SingleMediaUpload({
       {/* Preview Banner */}
       {media && (
         <View style={{ marginBottom: mvs(24) }}>
-          {mediaType === "video" ? (
-            <Video
-              source={{ uri: media.mediaUrl }}
+          {shouldUseVideo ? (
+            <VideoView
+              player={videoPlayer}
               style={{
                 width: "100%",
                 height: mvs(180),
               }}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isLooping
-              isMuted
+              contentFit="cover"
+              nativeControls={false}
             />
-          ) : (
+          ) : mediaType === "image" ? (
             <Image
               source={{ uri: media.mediaUrl }}
               style={{
@@ -70,7 +77,7 @@ export function SingleMediaUpload({
               }}
               resizeMode="cover"
             />
-          )}
+          ) : null}
         </View>
       )}
 
@@ -86,21 +93,19 @@ export function SingleMediaUpload({
 
       {media ? (
         <View className="relative" style={{ paddingHorizontal: s(16) }}>
-          {mediaType === "video" ? (
-            <Video
-              source={{ uri: media.mediaUrl }}
+          {shouldUseVideo ? (
+            <VideoView
+              player={videoPlayer}
               style={{
                 width: "100%",
                 height: mvs(100),
                 borderRadius: s(8),
                 opacity: 0.6,
               }}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isLooping
-              isMuted
+              contentFit="cover"
+              nativeControls={false}
             />
-          ) : (
+          ) : mediaType === "image" ? (
             <Image
               source={{ uri: media.mediaUrl }}
               style={{
@@ -111,7 +116,7 @@ export function SingleMediaUpload({
               }}
               resizeMode="cover"
             />
-          )}
+          ) : null}
           <TouchableOpacity
             onPress={() => onPickMedia(0, mediaType)}
             disabled={uploading}
@@ -137,7 +142,7 @@ export function SingleMediaUpload({
           <TouchableOpacity
             onPress={() => onPickMedia(0, mediaType)}
             disabled={uploading}
-            className="bg-[#100C0C]  border-dashed border-primary rounded-xl items-center justify-center"
+            className="bg-tat-darkMaroon  border-dashed border-primary rounded-xl items-center justify-center"
             style={{
               height: mvs(100),
               borderWidth: s(1),

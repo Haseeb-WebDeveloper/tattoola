@@ -9,9 +9,18 @@ export const StylePills = ({
 }: {
   styles: { id: string; name: string; isFavorite?: boolean }[];
 }) => {
+  // Filter out invalid styles (where id or name is missing)
+  const validStyles = styles.filter(
+    (style) => style.id && style.name
+  );
+
+  if (validStyles.length === 0) {
+    return null;
+  }
+
   return (
     <View className="flex-row flex-wrap gap-2" style={{ marginTop: mvs(8) }}>
-      {styles.map((style) => (
+      {validStyles.map((style) => (
         <View
           key={style.id}
           className=" rounded-full relative"

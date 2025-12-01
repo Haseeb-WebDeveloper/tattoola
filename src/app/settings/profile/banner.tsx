@@ -1,9 +1,9 @@
 import {
-    BannerSkeleton,
-    BannerTypeSelector,
-    FourImagesUpload,
-    SingleMediaUpload,
-    UnsavedChangesModal,
+  BannerSkeleton,
+  BannerTypeSelector,
+  FourImagesUpload,
+  SingleMediaUpload,
+  UnsavedChangesModal,
 } from "@/components/settings/banner";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -19,11 +19,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -317,13 +317,13 @@ export default function BannerSettingsScreen() {
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-background"
+        style={{ flex: 1, backgroundColor: "#000" }}
       >
         <LinearGradient
           colors={["#000000", "#0F0202"]}
           start={{ x: 0.4, y: 0 }}
           end={{ x: 0.6, y: 1 }}
-          className="flex-1"
+          style={{ flex: 1 }}
         >
           {/* Header */}
           <View
@@ -366,7 +366,7 @@ export default function BannerSettingsScreen() {
 
           {/* Content Skeleton */}
           <ScrollView
-            className="flex-1"
+            style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: mvs(120) }}
           >
@@ -380,13 +380,13 @@ export default function BannerSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      style={{ flex: 1, backgroundColor: "#000" }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View
@@ -430,7 +430,7 @@ export default function BannerSettingsScreen() {
 
         {/* Content */}
         <ScrollView
-          className="flex-1"
+          className=""
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: mvs(120) }}
         >

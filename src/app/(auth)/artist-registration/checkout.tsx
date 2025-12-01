@@ -142,7 +142,12 @@ export default function ArtistCheckoutScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <View
+      className="bg-background"
+      style={{
+        flex: 1,
+      }}
+    >
       {/* Header */}
       <View className="px-4" style={{ marginTop: mvs(15) }}>
         <View className="flex flex-row items-center justify-start">
@@ -243,7 +248,7 @@ export default function ArtistCheckoutScreen() {
                     allowScaling={false}
                     variant="6xl"
                     className="font-neueBold"
-                    style={{ lineHeight: scaledFont(30) }}
+                    style={{ lineHeight: mvs(40) }}
                   >
                     €{price}
                   </ScaledText>

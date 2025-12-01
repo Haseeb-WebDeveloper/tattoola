@@ -20,7 +20,7 @@ export async function sendStudioInvitationEmail(
     const deepLink = `tattoola://studio-invitation?token=${params.invitationToken}`;
 
     // Fallback web link (if app is not installed)
-    const webLink = `${process.env.EXPO_PUBLIC_APP_URL || "https://tattoola.app"}/studio-invitation?token=${params.invitationToken}`;
+    const webLink = `${process.env.EXPO_PUBLIC_APP_URL || "https://tattoola-admin.vercel.app"}/studio-invitation?token=${params.invitationToken}`;
 
     // Option 1: Use Next.js API (if available)
     const nextjsApiUrl = process.env.EXPO_PUBLIC_NEXTJS_API_URL;

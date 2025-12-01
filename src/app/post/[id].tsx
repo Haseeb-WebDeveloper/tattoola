@@ -1,7 +1,11 @@
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { FeedPost, fetchPostDetails, togglePostLike } from "@/services/post.service";
+import {
+  FeedPost,
+  fetchPostDetails,
+  togglePostLike,
+} from "@/services/post.service";
 import { toggleFollow } from "@/services/profile.service";
 import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
@@ -64,7 +68,9 @@ function convertFeedPostToPartialDetail(feedPost: FeedPost): PostDetail {
     commentsCount: feedPost.commentsCount,
     createdAt: feedPost.createdAt,
     media: feedPost.media,
-    style: feedPost.style ? { ...feedPost.style, imageUrl: undefined } : undefined,
+    style: feedPost.style
+      ? { ...feedPost.style, imageUrl: undefined }
+      : undefined,
     author: {
       ...feedPost.author,
       municipality: undefined,
@@ -77,7 +83,10 @@ function convertFeedPostToPartialDetail(feedPost: FeedPost): PostDetail {
 }
 
 export default function PostDetailScreen() {
-  const { id, initialData } = useLocalSearchParams<{ id: string; initialData?: string }>();
+  const { id, initialData } = useLocalSearchParams<{
+    id: string;
+    initialData?: string;
+  }>();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -203,7 +212,7 @@ export default function PostDetailScreen() {
           {/* Media Carousel skeleton */}
           <View className="bg-[#230808]">
             <View
-              className="relative w-full bg-[#230808] rounded-b-[40px] overflow-hidden"
+              className="relative w-full  rounded-b-[40px] overflow-hidden"
               style={{ height: (screenWidth * 16) / 9 }}
             >
               {/* Image placeholder */}
@@ -485,12 +494,14 @@ export default function PostDetailScreen() {
               >
                 <Image
                   source={{
-                    uri: post.author.avatar || "https://via.placeholder.com/40",
+                    uri:
+                      post.author.avatar ||
+                      `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`,
                   }}
                   className="rounded-full mr-3"
                   style={{ width: s(40), height: s(40) }}
                 />
-                <View className="flex-1">
+                <View className="flex-1 justify-center">
                   <ScaledText
                     variant="11"
                     className="text-foreground font-neueMedium"
@@ -500,9 +511,14 @@ export default function PostDetailScreen() {
                   <ScaledText variant="11" className="text-gray font-neueLight">
                     @{post.author.username}
                   </ScaledText>
-                  <ScaledText variant="11" className="text-gray font-neueLight">
-                    {getLocationString()}
-                  </ScaledText>
+                  {getLocationString() && (
+                    <ScaledText
+                      variant="11"
+                      className="text-gray font-neueLight"
+                    >
+                      {getLocationString()}
+                    </ScaledText>
+                  )}
                 </View>
               </TouchableOpacity>
 
@@ -539,7 +555,9 @@ export default function PostDetailScreen() {
                     <View key={like.id} className="flex-row items-center">
                       <Image
                         source={{
-                          uri: like.avatar || "https://via.placeholder.com/24",
+                          uri:
+                            like.avatar ||
+                            `https://api.dicebear.com/7.x/initials/png?seed=${like.username?.[0] || "u"}`,
                         }}
                         className="w-10 h-10 border-2 border-primary rounded-full mr-2"
                       />

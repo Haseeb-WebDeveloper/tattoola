@@ -193,13 +193,16 @@ export default function PasswordSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      className="bg-background h-screen"
+      style={{
+        flex: 1,
+      }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View
@@ -233,8 +236,7 @@ export default function PasswordSettingsScreen() {
 
         {/* Content */}
         <ScrollView
-          className="flex-1"
-          style={{ paddingHorizontal: s(16) }}
+          style={{ flex: 1, paddingHorizontal: s(16) }}
           showsVerticalScrollIndicator={false}
         >
           {/* Current Password */}

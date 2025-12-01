@@ -185,13 +185,13 @@ export default function PrivateRequestsSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      style={{ flex: 1, backgroundColor: "#000" }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View
@@ -235,7 +235,7 @@ export default function PrivateRequestsSettingsScreen() {
 
         {/* Content */}
         <ScrollView
-          className="flex-1"
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: s(16),
@@ -569,7 +569,7 @@ export default function PrivateRequestsSettingsScreen() {
                 <TouchableOpacity
                   onPress={acceptRequests ? handleSave : handleNext}
                   disabled={!!(isLoading || loading)}
-                  className={`rounded-full items-center flex-row ${!(isLoading || loading) ? "bg-primary" : "bg-gray/40"}`}
+                  className={`rounded-full w-full justify-center items-center flex-row ${!(isLoading || loading) ? "bg-primary" : "bg-gray/40"}`}
                   style={{
                     paddingVertical: mvs(10.5),
                     paddingLeft: s(25),
@@ -584,9 +584,7 @@ export default function PrivateRequestsSettingsScreen() {
                   >
                     {loading ? "Loading..." : acceptRequests ? "Save" : "Next"}
                   </ScaledText>
-                  {acceptRequests ? null : (
-                    <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
-                  )}
+                 
                 </TouchableOpacity>
               </>
             )}

@@ -51,7 +51,7 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "Test 1 Bugs fixed"
+eas update --branch preview --message "For now showing all artists in search"
 
 eas build --profile development --platform android
 
@@ -60,7 +60,6 @@ eas build --profile preview --platform android
 <!-- For ios -->
 
 eas build --profile development --platform ios
-
 eas build --profile preview --platform ios
 
 
@@ -80,3 +79,46 @@ if o current profile do ot show user to other
 at user Signup we have login and are you artist links
 user signup step 4 logo upload icon
 user ame input @
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+plan
+post show
+tab bar icons 
+gap on studio profile between icons and text
+
+
+
+
+
+
+
+todo
+// .eq("portfolioComplete", true)

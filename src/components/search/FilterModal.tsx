@@ -4,13 +4,13 @@ import { useSearchStore } from "@/stores/searchStore";
 import { mvs, s } from "@/utils/scale";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Modal,
-    PanResponder,
-    ScrollView,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  Modal,
+  PanResponder,
+  ScrollView,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LocationPicker from "../shared/LocationPicker";
@@ -32,9 +32,11 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     province: string;
     municipality: string;
   } | null>(null);
+  const [internalVisible, setInternalVisible] = useState(visible);
 
   useEffect(() => {
     if (visible) {
+      setInternalVisible(true);
       setTempFilters(filters);
       // Get location names from store if they exist
       const { locationDisplay } = useSearchStore.getState();
@@ -48,7 +50,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   // --- Animated sliding mechanics ---
   const translateY = useRef(new Animated.Value(0)).current;
+  const backdropOpacity = useRef(new Animated.Value(1)).current;
   const dragOffset = useRef(0);
+  const isClosingRef = useRef(false);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -71,13 +75,26 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         dragOffset.current = 0;
         if (gestureState.dy > 85) {
           // If dragged sufficiently downward, close the modal
-          Animated.timing(translateY, {
-            toValue: 600,
-            duration: 140,
-            useNativeDriver: true,
-          }).start(() => {
-            translateY.setValue(0);
-            onClose();
+          isClosingRef.current = true;
+          Animated.parallel([
+            Animated.timing(translateY, {
+              toValue: 600,
+              duration: 140,
+              useNativeDriver: true,
+            }),
+            Animated.timing(backdropOpacity, {
+              toValue: 0,
+              duration: 140,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            // Set internal visible to false first to hide the modal
+            setInternalVisible(false);
+            // Use setTimeout to ensure animation is fully complete before closing
+            setTimeout(() => {
+              isClosingRef.current = false;
+              onClose();
+            }, 50);
           });
         } else {
           Animated.spring(translateY, {
@@ -96,10 +113,19 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   ).current;
 
   useEffect(() => {
-    if (visible) {
+    if (internalVisible) {
+      // Only reset when opening, not when closing
+      if (!isClosingRef.current) {
+        translateY.setValue(0);
+        backdropOpacity.setValue(1);
+      }
+    } else {
+      // Reset when modal is closed (for next open)
+      isClosingRef.current = false;
       translateY.setValue(0);
+      backdropOpacity.setValue(1);
     }
-  }, [visible, translateY]);
+  }, [internalVisible, translateY, backdropOpacity]);
 
   // --- End animated sliding mechanics ---
 
@@ -156,7 +182,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   const handleApply = () => {
     updateFilters(tempFilters);
-    
+
     // Update location display in search store (without triggering search)
     if (locationNames && tempFilters.provinceId && tempFilters.municipalityId) {
       // Set location display without triggering search
@@ -165,7 +191,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       // Clear location display without triggering search
       useSearchStore.setState({ locationDisplay: null });
     }
-    
+
     search();
     onClose();
   };
@@ -178,25 +204,48 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   // Close on tap-outside
   const handleBackdropPress = () => {
-    onClose();
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: 600,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setInternalVisible(false);
+      setTimeout(() => {
+        isClosingRef.current = false;
+        onClose();
+      }, 50);
+    });
   };
 
   return (
     <>
       <Modal
-        visible={visible}
+        visible={internalVisible}
         transparent
-        animationType="fade"
-        onRequestClose={onClose}
+        animationType="none"
+        onRequestClose={handleBackdropPress}
       >
-        <View className="flex-1">
+        <Animated.View
+          className="flex-1"
+          style={{
+            backgroundColor: "rgba(24,18,18,0.5)",
+            opacity: backdropOpacity,
+          }}
+        >
           {/* Backdrop */}
           <TouchableWithoutFeedback onPress={handleBackdropPress}>
             <View
               style={{
                 flex: 1,
-                backgroundColor: "rgba(24,18,18,0.5)",
-                // ('background/50' may not work outside tailwind context, set rgba directly)
               }}
             />
           </TouchableWithoutFeedback>
@@ -358,7 +407,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                     variant="md"
                     className="text-gray font-montserratMedium"
                   >
-                    {locationNames && tempFilters.provinceId && tempFilters.municipalityId
+                    {locationNames &&
+                    tempFilters.provinceId &&
+                    tempFilters.municipalityId
                       ? `${locationNames.municipality}, ${locationNames.province}`
                       : "Seleziona posizione"}
                   </ScaledText>
@@ -399,7 +450,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               </View>
             </ScrollView>
           </Animated.View>
-        </View>
+        </Animated.View>
       </Modal>
       <LocationPicker
         visible={showLocationPicker}

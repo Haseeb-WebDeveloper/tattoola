@@ -207,13 +207,13 @@ export default function ServicesSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      style={{ flex: 1, backgroundColor: "#000" }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View

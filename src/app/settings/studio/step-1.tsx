@@ -292,7 +292,7 @@ export default function StudioStep1() {
                             <ScaledText
                               allowScaling={false}
                               variant="sm"
-                              className="text-gray"
+                              className="text-gray font-neueLight"
                               style={{ marginTop: mvs(4) }}
                             >
                               {index + 1}

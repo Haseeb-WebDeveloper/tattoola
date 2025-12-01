@@ -650,7 +650,7 @@ model PrivateRequest {
   sender         User          @relation("PrivateRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
   conversation   Conversation? @relation("PrivateRequestConversation", fields: [conversationId], references: [id], onDelete: SetNull)
 
-  @@unique([senderId, receiverId])
+  @@index([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
   @@index([status])
@@ -687,7 +687,8 @@ model Conversation {
   reports             Report[]
   adminPost           Post?               @relation("AdminPostConversations", fields: [adminPostId], references: [id], onDelete: SetNull)
 
-  @@unique([artistId, loverId])
+  @@index([artistId, loverId])
+  @@index([loverId, artistId])
   @@index([status])
   @@index([lastMessageAt])
   @@index([isAdminConversation])

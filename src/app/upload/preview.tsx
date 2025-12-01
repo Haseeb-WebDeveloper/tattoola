@@ -45,14 +45,16 @@ export default function UploadPreviewStep() {
       }
 
       // Redirect to collection page if we came from there
-      const redirectId = redirectToCollectionId || collectionId;
+      // const redirectId = redirectToCollectionId || collectionId;
       reset();
+
+      router.replace(`/post/${postId}`);
       
-      if (redirectId) {
-        router.replace(`/collection/${redirectId}` as any);
-      } else {
-        router.replace(`/post/${postId}`);
-      }
+      // if (redirectId) {
+      //   router.replace(`/collection/${redirectId}` as any);
+      // } else {
+      //   router.replace(`/post/${postId}`);
+      // }
     } catch (e) {
       console.error("onSubmit failed", e);
       setSubmitting(false);

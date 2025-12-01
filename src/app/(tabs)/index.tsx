@@ -1,7 +1,7 @@
 import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { FeedPost } from "@/services/post.service";
+import { FeedEntry } from "@/services/feed.service";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
 import { mvs, s } from "@/utils/scale";
@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const posts = useFeedStore((s) => s.posts);
+  const feedEntries = useFeedStore((s) => s.posts);
   const isLoading = useFeedStore((s) => s.isLoading);
   const isRefreshing = useFeedStore((s) => s.isRefreshing);
   const hasMore = useFeedStore((s) => s.hasMore);
@@ -49,8 +49,8 @@ export default function HomeScreen() {
     if (user?.id) refresh(user.id);
   }, [user?.id]);
 
-  // Track currently visible post for overlay
-  const [currentPost, setCurrentPost] = useState<FeedPost | null>(null);
+  // Track currently visible post ID for overlay
+  const [currentPostId, setCurrentPostId] = useState<string | null>(null);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -59,17 +59,36 @@ export default function HomeScreen() {
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0 && viewableItems[0].item) {
-        setCurrentPost(viewableItems[0].item as FeedPost);
+        const entry = viewableItems[0].item as FeedEntry;
+        if (entry.kind === "post") {
+          setCurrentPostId(entry.post.id);
+        } else {
+          setCurrentPostId(null);
+        }
       }
     }
   ).current;
 
-  // Set initial post when posts load
+  // Set initial post ID when posts load
   useEffect(() => {
-    if (posts.length > 0 && !currentPost) {
-      setCurrentPost(posts[0]);
+    if (feedEntries.length > 0 && !currentPostId) {
+      const firstPostEntry = feedEntries.find((e) => e.kind === "post");
+      if (firstPostEntry && firstPostEntry.kind === "post") {
+        setCurrentPostId(firstPostEntry.post.id);
+      }
     }
-  }, [posts]);
+  }, [feedEntries, currentPostId]);
+
+  // Get current post from store (always up-to-date)
+  const currentPost =
+    currentPostId != null
+      ? (() => {
+          const entry = feedEntries.find(
+            (e) => e.kind === "post" && e.post.id === currentPostId
+          ) as Extract<FeedEntry, { kind: "post" }> | undefined;
+          return entry ? entry.post : null;
+        })()
+      : null;
 
   // console.log("screenHeight from index", screenHeight);
   // console.log("insets from index", insets);
@@ -119,8 +138,10 @@ export default function HomeScreen() {
       {/* FlatList container - scrollable content */}
       <View style={{ flex: 1 }}>
         <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
+          data={feedEntries}
+          keyExtractor={(item) =>
+            item.kind === "post" ? `post-${item.post.id}` : `banner-${item.banner.id}`
+          }
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.5}
           onEndReached={handleEndReached}
@@ -136,18 +157,56 @@ export default function HomeScreen() {
           //   offset: screenHeight * index,
           //   index,
           // })}
-          renderItem={({ item }) => (
-            <View className="" style={{ height: screenHeight + insets.bottom }}>
-              <FeedPostCard
-                post={item}
-                onPress={() => router.push({
-                  pathname: `/post/${item.id}`,
-                  params: { initialData: JSON.stringify(item) }
-                } as any)}
-                hideOverlay // Hide bottom content, it's rendered at screen level
-              />
-            </View>
-          )}
+          renderItem={({ item }) => {
+            const entry = item as FeedEntry;
+            return (
+              <View
+                className=""
+                style={{ height: screenHeight + insets.bottom }}
+              >
+                {entry.kind === "post" ? (
+                  <FeedPostCard
+                    post={entry.post}
+                    onPress={() =>
+                      router.push({
+                        pathname: `/post/${entry.post.id}`,
+                        params: { initialData: JSON.stringify(entry.post) },
+                      } as any)
+                    }
+                    hideOverlay // Hide bottom content, it's rendered at screen level
+                  />
+                ) : (
+                  // Simple banner representation in the feed
+                  <FeedPostCard
+                    post={{
+                      // Minimal shape to satisfy the card; actual content reads from banner
+                      id: entry.banner.id,
+                      caption: entry.banner.title,
+                      createdAt: "",
+                      likesCount: 0,
+                      commentsCount: 0,
+                      isLiked: false,
+                      style: undefined,
+                      author: {
+                        id: "",
+                        username: "",
+                        firstName: undefined,
+                        lastName: undefined,
+                        avatar: entry.banner.thumbnailUrl || undefined,
+                      },
+                      media: [],
+                    }}
+                    onPress={() => {
+                      const cleaned = entry.banner.redirectUrl.replace(/^\/?/, "");
+                      const path = `/${cleaned}`;
+                      router.push(path as any);
+                    }}
+                    hideOverlay
+                  />
+                )}
+              </View>
+            );
+          }}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -204,9 +263,12 @@ export default function HomeScreen() {
         <FeedPostOverlay
           post={currentPost}
           onAuthorPress={() => router.push(`/user/${currentPost.author.id}` as any)}
-          onLikePress={() =>
-            user?.id && toggleLikeOptimistic(currentPost.id, user.id)
-          }
+          onLikePress={() => {
+            console.log("onLikePress", currentPost.id, user?.id);
+            if (user?.id) {
+              toggleLikeOptimistic(currentPost.id, user.id);
+            }
+          }}
         />
       )}
 

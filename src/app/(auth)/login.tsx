@@ -12,13 +12,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -148,7 +148,14 @@ function LoginScreenContent() {
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               className="absolute w-full top-0 left-0 right-0 bottom-0 z-10"
-              style={{ height: scaledVSize(230) }}
+              style={{
+                height: scaledVSize(230),
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+              }}
+              pointerEvents="none"
             />
 
             {/* Headline */}

@@ -270,7 +270,7 @@ export default function ArtistRegisterScreen() {
             Password (min. 8 caratteri, di cui almeno un numero)
           </ScaledText>
           <ScaledTextInput
-            containerClassName={`flex-row items-center rounded-xl ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
+            containerClassName={`flex-row items-center rounded-xl bg-transparent ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
             className="flex-1 text-foreground rounded-xl"
             style={{ fontSize: s(12) }}
             placeholder="*************"

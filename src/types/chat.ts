@@ -14,3 +14,5 @@ export type ConversationStatus =
   | "REJECTED"
   | "BLOCKED"
   | "CLOSED";
+
+export type ConversationRole = "ARTIST" | "LOVER";

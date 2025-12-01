@@ -280,7 +280,10 @@ export default function EmailSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      className="bg-background h-screen"
+      style={{
+        flex: 1,
+      }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
@@ -320,8 +323,7 @@ export default function EmailSettingsScreen() {
 
         {/* Content */}
         <ScrollView
-          className="flex-1"
-          style={{ paddingHorizontal: s(16) }}
+          style={{ flex: 1, paddingHorizontal: s(16) }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >

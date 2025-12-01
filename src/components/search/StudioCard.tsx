@@ -2,7 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
-import { ResizeMode, Video } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
@@ -19,7 +19,17 @@ export default function StudioCard({ studio }: StudioCardProps) {
     router.push(`/studio/${studio.id}`);
   };
 
-  console.log(studio);
+  const videoMedia = studio.bannerMedia.find(
+    (b) => b.mediaType === "VIDEO"
+  );
+  // Always call hook at top level
+  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || '', (player) => {
+    if (videoMedia) {
+      player.loop = true;
+      player.muted = true;
+      player.play();
+    }
+  });
 
   return (
     <TouchableOpacity
@@ -167,23 +177,18 @@ export default function StudioCard({ studio }: StudioCardProps) {
 
       {/* Banner - Video or Images */}
       {(() => {
-        const videoMedia = studio.bannerMedia.find(
-          (b) => b.mediaType === "VIDEO"
-        );
         const imageMedia = studio.bannerMedia.filter(
           (b) => b.mediaType === "IMAGE"
         );
 
         // Video banner - autoplay, looping, no controls
-        if (videoMedia) {
+        if (videoMedia && videoPlayer) {
           return (
-            <Video
-              source={{ uri: videoMedia.mediaUrl }}
+            <VideoView
+              player={videoPlayer}
               style={{ width: "100%", height: mvs(180) }}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isLooping
-              isMuted
+              contentFit="cover"
+              nativeControls={false}
             />
           );
         }

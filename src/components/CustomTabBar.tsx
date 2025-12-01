@@ -27,7 +27,7 @@ const routeIconMap: Record<string, keyof typeof SVGIcons> = {
 // React Native's Image component has built-in caching (memory + disk cache)
 const ProfileAvatar = memo(
   ({ avatar, isFocused }: { avatar?: string; isFocused: boolean }) => {
-    const size = s(24);
+    const size = s(26);
 
     if (avatar) {
       return (
@@ -38,8 +38,8 @@ const ProfileAvatar = memo(
             height: size,
             borderRadius: size / 2,
             opacity: isFocused ? 1 : 0.7,
-            borderWidth: isFocused ? 1.5 : 0,
-            borderColor: isFocused ? "#ffffff" : "transparent",
+            // borderWidth: isFocused ? 1.5 : 0,
+            // borderColor: isFocused ? "#ffffff" : "transparent",
           }}
           resizeMode="cover"
           fadeDuration={0} // Instant display from cache
@@ -93,12 +93,16 @@ export default function CustomTabBar({
     );
   };
 
+  // Find the upload route for the floating button
+  const uploadRoute = state.routes.find((route: any) => route.name === "upload");
+  const uploadOptions = uploadRoute ? descriptors[uploadRoute.key].options : {};
+
+  const handleUploadPress = () => {
+    router.push("/upload/media");
+  };
+
   return (
-    <LinearGradient
-      colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
-      locations={[0, 0.3, 1]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
+    <View
       style={{
         position: "absolute",
         left: 0,
@@ -107,28 +111,60 @@ export default function CustomTabBar({
         zIndex: 100,
       }}
     >
-      <View
-        onLayout={(event) => {
-          const { height } = event.nativeEvent.layout;
-          setTabBarHeight(height);
-        }}
+      {/* Floating + button - positioned outside the clipping container */}
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={uploadOptions.tabBarAccessibilityLabel}
+        testID={uploadOptions.tabBarTestID}
+        onPress={handleUploadPress}
         style={{
-          paddingHorizontal: s(12),
-          paddingBottom: mvs(8),
-          paddingTop: mvs(32),
+          position: "absolute",
+          alignSelf: "center",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 400,
+          width: s(56),
+          height: s(56),
+          borderRadius: s(28),
+          backgroundColor: "#AE0E0E",
+          top: mvs(20),
+          shadowColor: "#AE0E0E",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
         }}
       >
-        <View className="rounded-full" style={{ overflow: "visible" }}>
+        {getIcon("upload", true)}
+      </TouchableOpacity>
+
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
+        locations={[0, 0.3, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      >
+        <View
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            setTabBarHeight(height);
+          }}
+          style={{
+            paddingHorizontal: s(12),
+            paddingBottom: mvs(8),
+            paddingTop: mvs(32),
+          }}
+        >
           <LinearGradient
             colors={["#3a0000ec", "#000000f5"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="flex-row items-center justify-around backdrop-blur-xl"
             style={{
+              flexDirection: "row",
+              alignItems: "center",
               borderRadius: 9999,
               paddingHorizontal: s(16),
               paddingVertical: mvs(16),
-              overflow: "visible",
             }}
           >
             {state.routes.map((route: any, index: number) => {
@@ -143,9 +179,8 @@ export default function CustomTabBar({
               const isFocused = state.index === index;
 
               const onPress = () => {
-                // Intercept Upload tab to open the upload wizard directly, without showing the tab screen
+                // Skip upload - it's handled by the floating button
                 if (route.name === "upload") {
-                  router.push("/upload/media");
                   return;
                 }
 
@@ -167,32 +202,16 @@ export default function CustomTabBar({
                 });
               };
 
-              // Special styling for the Upload button
+              // Render a spacer for the upload position to maintain layout
               if (route.name === "upload") {
                 return (
-                  <TouchableOpacity
+                  <View
                     key={route.key}
-                    accessibilityRole="button"
-                    accessibilityLabel={options.tabBarAccessibilityLabel}
-                    testID={options.tabBarTestID}
-                    onPress={onPress}
-                    onLongPress={onLongPress}
-                    className="items-center justify-center z-[300]"
                     style={{
                       width: s(56),
-                      height: s(56),
-                      borderRadius: s(28),
-                      backgroundColor: "#AE0E0E",
-                      marginTop: mvs(-32),
-                      shadowColor: "#AE0E0E",
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
-                      elevation: 8,
+                      height: s(24),
                     }}
-                  >
-                    {getIcon(route.name, true)}
-                  </TouchableOpacity>
+                  />
                 );
               }
 
@@ -205,7 +224,11 @@ export default function CustomTabBar({
                   testID={options.tabBarTestID}
                   onPress={onPress}
                   onLongPress={onLongPress}
-                  className="items-center justify-center flex-1"
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: 1,
+                  }}
                 >
                   {getIcon(route.name, isFocused)}
                   <ScaledText
@@ -222,7 +245,7 @@ export default function CustomTabBar({
             })}
           </LinearGradient>
         </View>
-      </View>
-    </LinearGradient>
+      </LinearGradient>
+    </View>
   );
 }

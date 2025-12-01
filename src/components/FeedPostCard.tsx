@@ -74,13 +74,15 @@ function FeedPostOverlayComponent({ post, onLikePress, onAuthorPress }: OverlayP
             </View>
           </View>
           <TouchableOpacity
+            activeOpacity={1}
             onPress={handleAuthorPress}
             className="flex-row items-center"
             style={{ marginTop: mvs(12), width: "100%" }}
           >
             <Image
               source={{
-                uri: post.author.avatar || "https://via.placeholder.com/40",
+                uri: post.author.avatar ||
+                  `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`
               }}
               className="rounded-full"
               style={{
@@ -98,6 +100,7 @@ function FeedPostOverlayComponent({ post, onLikePress, onAuthorPress }: OverlayP
           </TouchableOpacity>
         </View>
         <TouchableOpacity
+          activeOpacity={1}
           onPress={onLikePress}
           className="rounded-full items-center justify-center"
           style={{
@@ -215,13 +218,15 @@ function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress, hide
                   </View>
                 </View>
                 <TouchableOpacity
+                  activeOpacity={1}
                   onPress={handleAuthorPress}
                   className="flex-row items-center"
                   style={{ marginTop: mvs(12), width: "100%" }}
                 >
                   <Image
                     source={{
-                      uri: post.author.avatar || "https://via.placeholder.com/40",
+                      uri: post.author.avatar ||
+                        `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`
                     }}
                     className="rounded-full"
                     style={{
@@ -239,6 +244,7 @@ function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress, hide
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
+                activeOpacity={1}
                 onPress={onLikePress}
                 className="rounded-full items-center justify-center"
                 style={{

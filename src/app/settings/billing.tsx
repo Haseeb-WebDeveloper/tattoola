@@ -95,7 +95,10 @@ export default function SettingsBilling() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      className="bg-background min-h-screen"
+      style={{
+        flex: 1,
+      }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}

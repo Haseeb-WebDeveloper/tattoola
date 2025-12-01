@@ -91,7 +91,7 @@ export default function CommunitySettingsScreen() {
 
         {/* Community Settings List */}
         <ScrollView
-          className="flex-1"
+          className="w-full h-full"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: mvs(32) }}
         >

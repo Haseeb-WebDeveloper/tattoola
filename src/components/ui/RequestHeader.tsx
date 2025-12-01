@@ -154,12 +154,12 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                 {profile?.user?.username}
               </ScaledText> */}
               <View className="flex-row items-center" style={{ gap: s(4) }}>
-                <SVGIcons.Studio width={s(12)} height={s(12)} />
+                <SVGIcons.Studio width={s(10)} height={s(10)} />
                 {!!profile?.artistProfile?.businessName && (
                   <ScaledText
                     allowScaling={false}
                     variant="11"
-                    className="text-foreground"
+                    className="text-foreground font-neueLight"
                   >
                     Titolare di Studio{" "}
                     <ScaledText
@@ -173,11 +173,11 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                 )}
               </View>
               <View className="flex-row items-center" style={{ gap: s(4) }}>
-                <SVGIcons.Location width={s(14)} height={s(14)} />
+                <SVGIcons.Location width={s(12)} height={s(12)} />
                 <ScaledText
                   allowScaling={false}
                   variant="11"
-                  className="text-foreground"
+                  className="text-foreground font-neueLight"
                 >
                   {profile?.location?.municipality?.name}
                   {profile?.location?.province?.name

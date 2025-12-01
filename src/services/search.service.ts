@@ -71,8 +71,7 @@ export async function searchArtists({
         )
       `
       )
-      .eq("portfolioComplete", true)
-      .eq("user.isActive", true)
+      // .eq("portfolioComplete", true)
       .order("createdAt", { ascending: false });
 
     // Apply style filter
@@ -110,9 +109,9 @@ export async function searchArtists({
       }
     }
 
-    // Apply pagination
+    // Apply pagination (Supabase ranges are inclusive, so we subtract 1)
     const from = page * SEARCH_RESULTS_PER_PAGE;
-    const to = from + SEARCH_RESULTS_PER_PAGE;
+    const to = from + SEARCH_RESULTS_PER_PAGE - 1;
     query = query.range(from, to);
 
     const { data, error } = await query;
@@ -186,7 +185,7 @@ export async function searchArtists({
 
     return {
       data: artists,
-      hasMore: data?.length === SEARCH_RESULTS_PER_PAGE + 1,
+      hasMore: (data?.length || 0) === SEARCH_RESULTS_PER_PAGE,
     };
   } catch (error: any) {
     console.error("Unexpected error searching artists:", error);
@@ -287,9 +286,9 @@ export async function searchStudios({
       }
     }
 
-    // Apply pagination
+    // Apply pagination (Supabase ranges are inclusive, so we subtract 1)
     const from = page * SEARCH_RESULTS_PER_PAGE;
-    const to = from + SEARCH_RESULTS_PER_PAGE;
+    const to = from + SEARCH_RESULTS_PER_PAGE - 1;
     query = query.range(from, to);
 
     const { data, error } = await query;
@@ -350,7 +349,7 @@ export async function searchStudios({
 
     return {
       data: studios,
-      hasMore: data?.length === SEARCH_RESULTS_PER_PAGE + 1,
+      hasMore: (data?.length || 0) === SEARCH_RESULTS_PER_PAGE,
     };
   } catch (error: any) {
     console.error("Unexpected error searching studios:", error);

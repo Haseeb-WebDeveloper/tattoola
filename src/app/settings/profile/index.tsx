@@ -1,11 +1,11 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import { useAuth } from "@/providers/AuthProvider";
 
 interface ProfileSettingsItemProps {
   title: string;
@@ -137,17 +137,20 @@ export default function ProfileSettingsScreen() {
     user?.role === "ARTIST" ? artistItems : tattooLoverItems;
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
           style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
             marginBottom: mvs(24),
@@ -155,11 +158,15 @@ export default function ProfileSettingsScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
             style={{
+              position: "absolute",
+              left: s(16),
               width: s(34),
               height: s(34),
-              left: s(16),
+              borderRadius: s(17),
+              backgroundColor: "rgba(255,255,255,0.2)",
+              alignItems: "center",
+              justifyContent: "center",
               padding: s(8),
             }}
           >
@@ -176,9 +183,9 @@ export default function ProfileSettingsScreen() {
 
         {/* Profile Settings List */}
         <ScrollView
-          className="flex-1"
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: mvs(32) }}
+          bounces={true}
         >
           {itemsToShow.map((item, idx) => (
             <ProfileSettingsItem

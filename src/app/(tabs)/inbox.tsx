@@ -263,7 +263,9 @@ export default function InboxScreen() {
       colors={["#000000", "#0F0202"]}
       start={{ x: 0.4, y: 0 }}
       end={{ x: 0.6, y: 1 }}
-      className="flex-1"
+      style={{
+        flex: 1,
+      }}
     >
       {/* Header */}
       <View
@@ -274,11 +276,12 @@ export default function InboxScreen() {
           paddingBottom: mvs(28),
         }}
       >
-        <View className="rounded-full items-center justify-center"
-        style={{
-          width: s(20),
-          height: s(20),
-        }}
+        <View
+          className="rounded-full items-center justify-center"
+          style={{
+            width: s(20),
+            height: s(20),
+          }}
         >
           {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
         </View>
@@ -308,7 +311,6 @@ export default function InboxScreen() {
           <SVGIcons.Search width={s(18)} height={s(18)} />
           <ScaledTextInput
             placeholder="Search conversations..."
-              
             className="text-foreground w-full"
             value={query}
             onChangeText={setQuery}

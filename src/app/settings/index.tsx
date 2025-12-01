@@ -227,7 +227,12 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <View
+      className="bg-background h-screen"
+      style={{
+        flex: 1,
+      }}
+    >
       {/* Header */}
       <View
         className="flex-row items-center justify-center relative"
@@ -258,7 +263,7 @@ export default function SettingsScreen() {
         </ScaledText>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="h-full" showsVerticalScrollIndicator={false}>
         {/* Account Management */}
         <SettingsSection
           title="Account Management"

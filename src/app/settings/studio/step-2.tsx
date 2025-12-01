@@ -125,7 +125,7 @@ export default function StudioStep2() {
           <ScaledText
             allowScaling={false}
             variant="sm"
-            className="text-gray"
+            className="text-gray font-neueLight"
             style={{ marginBottom: mvs(24) }}
           >
             Supporta JPG, PNG, max size 5MB

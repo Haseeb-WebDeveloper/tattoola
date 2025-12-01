@@ -46,9 +46,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const isVerified = !!authUser.email_confirmed_at;
             const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
 
-            logger.log('Auth user:', authUser);
-            logger.log('Auth user is verified:', isVerified);
-            logger.log('Auth user role:', role);
+            // logger.log('Auth user:', authUser);
+            // logger.log('Auth user is verified:', isVerified);
+            // logger.log('Auth user role:', role);
             
             // Only fetch from database on meaningful auth events
             // Skip on TOKEN_REFRESHED to avoid unnecessary queries
@@ -187,9 +187,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const isVerified = !!authUser.email_confirmed_at;
         const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
 
-        logger.log('AuthProvider: Auth user:', authUser);
-        logger.log('AuthProvider: Auth user is verified:', isVerified);
-        logger.log('AuthProvider: Auth user role:', role);
+        // logger.log('AuthProvider: Auth user:', authUser);
+        // logger.log('AuthProvider: Auth user is verified:', isVerified);
+        // logger.log('AuthProvider: Auth user role:', role);
         
         // Try to fetch full user profile from database to get avatar and other fields
         try {
@@ -205,12 +205,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (dbError) {
             logger.log('INIT AUTH: Database error details:', dbError);
           }
-          logger.log('AuthProvider: Database user:', dbUser);
-          logger.log('AuthProvider: Database error:', dbError);
+          // logger.log('AuthProvider: Database user:', dbUser);
+          // logger.log('AuthProvider: Database error:', dbError);
           
           if (dbUser) {
             // User exists in database, use full profile
-            logger.log('AuthProvider: Loaded full user profile from database');
+            // logger.log('AuthProvider: Loaded full user profile from database');
             setUser(dbUser as any);
             setSession({
               user: dbUser as any,
@@ -263,7 +263,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Do NOT run checkProfileCompletion here, only after login
-        logger.log('AuthProvider: Set user from session');
+        // logger.log('AuthProvider: Set user from session');
       } else {
         // No session, ensure user is null
         logger.log('AuthProvider: No session, setting user to null');

@@ -3,33 +3,33 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    fetchLikedPosts,
-    LikedPost,
-    togglePostLike,
+  fetchLikedPosts,
+  LikedPost,
+  togglePostLike,
 } from "@/services/post.service";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import BottomSheet, {
-    BottomSheetBackdrop,
-    BottomSheetScrollView,
-    BottomSheetView,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    Animated,
-    Dimensions,
-    Image,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -182,9 +182,8 @@ const PostCard: React.FC<PostCardProps> = ({
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-white"
+                className="text-foreground font-neueMedium"
                 numberOfLines={2}
-                style={{ fontWeight: "400" }}
               >
                 {post.caption}
               </ScaledText>
@@ -261,7 +260,10 @@ export default function LikesScreen() {
     setTempSelectedStyleId(selectedStyleId);
     setDropdownOpen(false);
     setFilterModalVisible(true);
-    bottomSheetRef.current?.snapToIndex(0);
+    // Snap to first index (50%) when opening to show more content by default
+    setTimeout(() => {
+      bottomSheetRef.current?.snapToIndex(0);
+    }, 100);
   };
 
   const handleCloseFilter = useCallback(() => {
@@ -291,8 +293,12 @@ export default function LikesScreen() {
 
   // Update BottomSheet snap when dropdown state changes
   useEffect(() => {
-    if (filterModalVisible) {
-      bottomSheetRef.current?.snapToIndex(0);
+    if (filterModalVisible && bottomSheetRef.current) {
+      // Snap to index 1 (85%) when dropdown opens, index 0 (35%) when it closes
+      const targetIndex = dropdownOpen ? 1 : 0;
+      setTimeout(() => {
+        bottomSheetRef.current?.snapToIndex(targetIndex);
+      }, 100);
     }
   }, [dropdownOpen, filterModalVisible]);
 
@@ -378,11 +384,9 @@ export default function LikesScreen() {
     }
   });
 
-  // BottomSheet configuration
-  const snapPoints = useMemo(
-    () => (dropdownOpen ? ["85%"] : ["35%"]),
-    [dropdownOpen]
-  );
+  // BottomSheet configuration - provide both snap points upfront
+  // First snap point (collapsed) set higher to show more content by default
+  const snapPoints = useMemo(() => ["50%", "85%"], []);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -411,7 +415,12 @@ export default function LikesScreen() {
   }, [tempSelectedStyleId, tattooStyles]);
 
   return (
-    <View className="flex-1 bg-background">
+    <View
+      className="bg-background min-h-screen"
+      style={{
+        flex: 1,
+      }}
+    >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
@@ -510,7 +519,7 @@ export default function LikesScreen() {
         )} */}
         {/* Content */}
         <ScrollView
-          className="flex-1"
+          className="h-full"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: s(16),
@@ -595,6 +604,7 @@ export default function LikesScreen() {
           index={-1}
           snapPoints={snapPoints}
           enablePanDownToClose
+          enableDynamicSizing={false}
           backdropComponent={renderBackdrop}
           backgroundStyle={{
             backgroundColor: "#000000",
@@ -783,7 +793,10 @@ export default function LikesScreen() {
                     {tempSelectedStyleId === style.id ? (
                       <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />
                     ) : (
-                      <SVGIcons.UncheckedCheckbox width={s(17)} height={s(17)} />
+                      <SVGIcons.UncheckedCheckbox
+                        width={s(17)}
+                        height={s(17)}
+                      />
                     )}
                   </TouchableOpacity>
                 ))}

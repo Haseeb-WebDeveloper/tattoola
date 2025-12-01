@@ -269,9 +269,11 @@ export default function UploadCollectionStep() {
             </View>
           </View>
           {/* styles chip at bottom right under caption */}
-          <View className="flex flex-row justify-start mt-2">
-            <StylePills styles={[{ id: styleId, name: styleName }]} />
-          </View>
+          {styleId && styleName && (
+            <View className="flex flex-row justify-start mt-2">
+              <StylePills styles={[{ id: styleId, name: styleName }]} />
+            </View>
+          )}
         </View>
 
         <ScaledText

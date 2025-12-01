@@ -22,6 +22,7 @@
       "url": "https://u.expo.dev/624fc895-19a3-4765-9329-1f3ecb47aa61"
     },
     "ios": {
+      "buildNumber": "2",
       "supportsTablet": true,
       "bundleIdentifier": "com.figmentalabs.tattoola",
       "infoPlist": {
@@ -31,7 +32,7 @@
       }
     },
     "android": {
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./src/assets/images/android-icon-foreground.png",
@@ -71,7 +72,8 @@
         }
       ],
       "expo-font",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

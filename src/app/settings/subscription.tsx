@@ -350,7 +350,10 @@ export default function SettingsSubscription() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      className="bg-background min-h-screen"
+      style={{
+        flex: 1,
+      }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
@@ -777,7 +780,7 @@ export default function SettingsSubscription() {
                                 className="font-neueBold "
                                 style={{
                                   color: "#080101",
-                                  lineHeight: mvs(30),
+                                  lineHeight: mvs(40),
                                   marginTop: mvs(2),
                                 }}
                               >
@@ -985,7 +988,7 @@ export default function SettingsSubscription() {
                           className="font-neueBold "
                           style={{
                             color: "#080101",
-                            lineHeight: mvs(30),
+                            lineHeight: mvs(40),
                             marginTop: mvs(2),
                           }}
                         >

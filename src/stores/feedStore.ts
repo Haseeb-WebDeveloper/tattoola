@@ -1,12 +1,13 @@
 import { FEED_POSTS_PER_PAGE } from '@/constants/limits';
-import { FeedPage, FeedPost, fetchFeedPage, togglePostLike } from '@/services/post.service';
+import { togglePostLike } from '@/services/post.service';
+import { FeedEntry, FeedItemsPage, fetchFeedItemsPage } from '@/services/feed.service';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-type Cursor = FeedPage['nextCursor'];
+type Cursor = FeedItemsPage['nextOffset'];
 
 interface FeedState {
-  posts: FeedPost[];
+  posts: FeedEntry[];
   cursor: Cursor;
   isLoading: boolean;
   isRefreshing: boolean;
@@ -31,11 +32,11 @@ export const useFeedStore = create<FeedState>()(
       if (!userId) return;
       set({ isLoading: true });
       try {
-        const page = await fetchFeedPage({ userId, limit: FEED_POSTS_PER_PAGE });
+        const page = await fetchFeedItemsPage({ userId, limit: FEED_POSTS_PER_PAGE, offset: 0 });
         set({
           posts: page.items,
-          cursor: page.nextCursor ?? null,
-          hasMore: !!page.nextCursor,
+          cursor: page.nextOffset ?? null,
+          hasMore: page.nextOffset !== null,
         });
       } finally {
         set({ isLoading: false });
@@ -47,11 +48,15 @@ export const useFeedStore = create<FeedState>()(
       if (!userId || isLoading || !hasMore) return;
       set({ isLoading: true });
       try {
-        const page = await fetchFeedPage({ userId, limit: FEED_POSTS_PER_PAGE, cursor });
+        const page = await fetchFeedItemsPage({
+          userId,
+          limit: FEED_POSTS_PER_PAGE,
+          offset: cursor ?? 0,
+        });
         set((s) => ({
           posts: [...s.posts, ...page.items],
-          cursor: page.nextCursor ?? null,
-          hasMore: !!page.nextCursor,
+          cursor: page.nextOffset ?? null,
+          hasMore: page.nextOffset !== null,
         }));
       } finally {
         set({ isLoading: false });
@@ -62,8 +67,12 @@ export const useFeedStore = create<FeedState>()(
       if (!userId) return;
       set({ isRefreshing: true });
       try {
-        const page = await fetchFeedPage({ userId, limit: FEED_POSTS_PER_PAGE });
-        set({ posts: page.items, cursor: page.nextCursor ?? null, hasMore: !!page.nextCursor });
+        const page = await fetchFeedItemsPage({ userId, limit: FEED_POSTS_PER_PAGE, offset: 0 });
+        set({
+          posts: page.items,
+          cursor: page.nextOffset ?? null,
+          hasMore: page.nextOffset !== null,
+        });
       } finally {
         set({ isRefreshing: false });
       }
@@ -71,23 +80,43 @@ export const useFeedStore = create<FeedState>()(
 
     toggleLikeOptimistic: async (postId: string, userId: string) => {
       const prev = get().posts;
-      const idx = prev.findIndex((p) => p.id === postId);
+      // Only apply likes to post-type entries
+      const idx = prev.findIndex((entry) => entry.kind === 'post' && entry.post.id === postId);
       if (idx === -1) return;
-      const target = prev[idx];
-      const optimistic: FeedPost = {
-        ...target,
-        isLiked: !target.isLiked,
-        likesCount: target.isLiked ? Math.max(target.likesCount - 1, 0) : target.likesCount + 1,
+      const target = prev[idx] as Extract<FeedEntry, { kind: 'post' }>;
+      const optimisticPost = {
+        ...target.post,
+        isLiked: !target.post.isLiked,
+        likesCount: target.post.isLiked
+          ? Math.max(target.post.likesCount - 1, 0)
+          : target.post.likesCount + 1,
       };
-      set((s) => ({ posts: [...s.posts.slice(0, idx), optimistic, ...s.posts.slice(idx + 1)] }));
+      const optimisticEntry: FeedEntry = {
+        ...target,
+        post: optimisticPost,
+      };
+      set((s) => ({
+        posts: [...s.posts.slice(0, idx), optimisticEntry, ...s.posts.slice(idx + 1)],
+      }));
 
       try {
         const res = await togglePostLike(postId, userId);
         set((s) => {
-          const i = s.posts.findIndex((p) => p.id === postId);
+          const i = s.posts.findIndex(
+            (entry) => entry.kind === 'post' && entry.post.id === postId,
+          );
           if (i === -1) return s as any;
-          const fixed = { ...s.posts[i], isLiked: res.isLiked, likesCount: res.likesCount };
-          return { posts: [...s.posts.slice(0, i), fixed, ...s.posts.slice(i + 1)] } as any;
+          const current = s.posts[i] as Extract<FeedEntry, { kind: 'post' }>;
+          const fixedPost = {
+            ...current.post,
+            isLiked: res.isLiked,
+            likesCount: res.likesCount,
+          };
+          const fixedEntry: FeedEntry = {
+            ...current,
+            post: fixedPost,
+          };
+          return { posts: [...s.posts.slice(0, i), fixedEntry, ...s.posts.slice(i + 1)] } as any;
         });
       } catch (e) {
         // revert
@@ -95,12 +124,23 @@ export const useFeedStore = create<FeedState>()(
       }
     },
 
-    upsertPost: (post: FeedPost) => {
+    upsertPost: (post) => {
       set((s) => {
-        const i = s.posts.findIndex((p) => p.id === post.id);
-        if (i === -1) return { posts: [post, ...s.posts] } as any;
+        const i = s.posts.findIndex(
+          (entry) => entry.kind === 'post' && entry.post.id === post.id,
+        );
+        // If not found, prepend a new entry at position 0 (will still be sorted by feed service next load)
+        if (i === -1) {
+          const entry: FeedEntry = {
+            kind: 'post',
+            position: 0,
+            post,
+          };
+          return { posts: [entry, ...s.posts] } as any;
+        }
         const next = [...s.posts];
-        next[i] = post;
+        const current = next[i] as Extract<FeedEntry, { kind: 'post' }>;
+        next[i] = { ...current, post } as FeedEntry;
         return { posts: next } as any;
       });
     },

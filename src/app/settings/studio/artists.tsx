@@ -224,12 +224,12 @@ export default function StudioArtistsScreen() {
     searchQuery.trim().length >= 2 && !searching && searchResults.length === 0;
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View
@@ -272,7 +272,7 @@ export default function StudioArtistsScreen() {
 
         {/* Content */}
         <ScrollView
-          className="flex-1"
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: s(16),

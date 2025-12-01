@@ -2,8 +2,8 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { ArtistSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
-import { ResizeMode, Video } from "expo-av";
 import { useRouter } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 import { StylePills } from "../ui/stylePills";
@@ -22,6 +22,18 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
   const displayName = [artist.user.firstName, artist.user.lastName]
     .filter(Boolean)
     .join(" ") || artist.user.username;
+
+  const videoMedia = artist.bannerMedia.find(
+    (b) => b.mediaType === "VIDEO"
+  );
+  // Always call hook at top level
+  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || '', (player) => {
+    if (videoMedia) {
+      player.loop = true;
+      player.muted = true;
+      player.play();
+    }
+  });
 
   return (
     <TouchableOpacity
@@ -184,23 +196,18 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
 
       {/* Banner - Video or Images */}
       {(() => {
-        const videoMedia = artist.bannerMedia.find(
-          (b) => b.mediaType === "VIDEO"
-        );
         const imageMedia = artist.bannerMedia.filter(
           (b) => b.mediaType === "IMAGE"
         );
 
         // Video banner - autoplay, looping, no controls
-        if (videoMedia) {
+        if (videoMedia && videoPlayer) {
           return (
-            <Video
-              source={{ uri: videoMedia.mediaUrl }}
+            <VideoView
+              player={videoPlayer}
               style={{ width: "100%", height: mvs(180) }}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isLooping
-              isMuted
+              contentFit="cover"
+              nativeControls={false}
             />
           );
         }

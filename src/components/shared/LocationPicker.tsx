@@ -57,9 +57,9 @@ export default function LocationPicker({
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(
     null
   );
-  const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(
-    null
-  );
+  const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<
+    string | null
+  >(null);
 
   // Load provinces on mount
   useEffect(() => {
@@ -199,7 +199,7 @@ export default function LocationPicker({
 
           {/* Search */}
           <View style={{ paddingHorizontal: s(20), paddingTop: mvs(16) }}>
-            <View className="border border-gray rounded-full flex-row items-center">
+            <View className="border border-gray rounded-full flex-row items-center bg-tat-foreground">
               <View style={{ paddingLeft: s(12) }}>
                 <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
@@ -208,16 +208,12 @@ export default function LocationPicker({
                 className="text-foreground"
                 style={{
                   backgroundColor: "transparent",
-                  fontSize: s(14),
-                  lineHeight: mvs(23),
                   fontFamily: "NeueHaasDisplay-Light",
-                  paddingVertical: mvs(6),
-                  paddingHorizontal: s(12),
+                  fontSize: s(12),
                 }}
                 placeholder={
                   modalStep === "province" ? "Cerca provincia" : "Cerca comune"
                 }
-                  
                 value={search}
                 onChangeText={setSearch}
               />
@@ -244,7 +240,10 @@ export default function LocationPicker({
                 >
                   Popular cities
                 </ScaledText>
-                <View className="flex-row flex-wrap gap-[2px] bg-background">
+                <View
+                  className="flex-row flex-wrap  bg-background"
+                  style={{ gap: s(1) }}
+                >
                   {topSix.map((p) => {
                     const active = selectedProvince?.id === p.id;
                     return (
@@ -257,8 +256,8 @@ export default function LocationPicker({
                         style={{
                           width: "32%",
                           overflow: "hidden",
+                          height: mvs(90),
                         }}
-                        className="h-32"
                       >
                         {p.imageUrl ? (
                           <Image
@@ -293,7 +292,7 @@ export default function LocationPicker({
                 allowScaling={false}
                 variant="lg"
                 className="text-gray font-neueSemibold"
-                style={{ paddingHorizontal: s(20),  paddingBottom: mvs(6) }}
+                style={{ paddingHorizontal: s(20), paddingBottom: mvs(6) }}
               >
                 {isSearching
                   ? "Search results"
@@ -327,7 +326,7 @@ export default function LocationPicker({
                       key={item.id}
                       className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
                       onPress={() => {
-                      if (modalStep === "province") {
+                        if (modalStep === "province") {
                           setSelectedProvince(item);
                           setSelectedMunicipalityId(null);
                           setSearch("");
@@ -417,4 +416,3 @@ export default function LocationPicker({
     </Modal>
   );
 }
-

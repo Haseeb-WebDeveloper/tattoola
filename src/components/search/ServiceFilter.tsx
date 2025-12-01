@@ -99,9 +99,7 @@ export default function ServiceFilter({
             style={{ marginTop: "auto", maxHeight: "80%" }}
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => setIsExpanded(false)}
+            <View
               className="bg-background border-gray flex-row items-center justify-between"
               style={{
                 marginTop: mvs(16),
@@ -119,10 +117,36 @@ export default function ServiceFilter({
               >
                 {displayText}
               </ScaledText>
-              <View style={{ transform: [{ rotate: "180deg" }] }}>
-                <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
-              </View>
-            </TouchableOpacity>
+              {selectedIds.length === 0 ? (
+                <TouchableOpacity
+                  onPress={() => setIsExpanded(false)}
+                  style={{ transform: [{ rotate: "180deg" }] }}
+                  activeOpacity={1}
+                >
+                  <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setIsExpanded(false)}
+                  style={{
+                    backgroundColor: "#AE0E0E",
+                    borderRadius: s(6),
+                    paddingHorizontal: s(12),
+                    paddingVertical: mvs(4),
+                    marginLeft: s(6),
+                  }}
+                  activeOpacity={0.86}
+                >
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-white font-montserratMedium"
+                  >
+                    Done
+                  </ScaledText>
+                </TouchableOpacity>
+              )}
+            </View>
 
             {/* Services List */}
             <ScrollView

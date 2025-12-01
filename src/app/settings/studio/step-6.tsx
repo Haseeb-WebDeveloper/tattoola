@@ -127,25 +127,26 @@ export default function StudioStep6() {
     const isSelected = selectedStyles.includes(item.id);
     const img = resolveImageUrl(item.imageUrl);
     return (
-      <View
+      <TouchableOpacity
         className="flex-row items-center"
+        activeOpacity={0.8}
+        onPress={() => toggleStyle(item.id)}
       >
         {/* Left select box */}
-        <TouchableOpacity
+        <View
           style={{
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: mvs(6),
             paddingRight: s(16),
           }}
-          onPress={() => toggleStyle(item.id)}
         >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </TouchableOpacity>
+        </View>
 
         {/* Image */}
         {img ? (
@@ -163,7 +164,7 @@ export default function StudioStep6() {
         )}
 
         {/* Name */}
-        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+        <View className="flex-1" style={{ paddingLeft: s(16) }}>
           <ScaledText
             allowScaling={false}
             style={{ fontSize: 12.445 }}
@@ -172,7 +173,7 @@ export default function StudioStep6() {
             {item.name}
           </ScaledText>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

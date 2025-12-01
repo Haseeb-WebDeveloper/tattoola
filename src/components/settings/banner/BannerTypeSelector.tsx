@@ -2,7 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { BannerMedia, BannerType } from "@/types/banner";
 import { mvs, s } from "@/utils/scale";
-import { ResizeMode, Video } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 
@@ -19,6 +19,16 @@ export function BannerTypeSelector({
   bannerMedia,
   isEditMode,
 }: BannerTypeSelectorProps) {
+  const videoMedia = bannerMedia.length > 0 && bannerMedia[0] ? bannerMedia[0] : null;
+  const shouldUseVideo = videoMedia && selectedType === "1_VIDEO";
+  // Always call hook at top level
+  const videoPlayer = useVideoPlayer(shouldUseVideo ? videoMedia.mediaUrl : '', (player) => {
+    if (shouldUseVideo) {
+      player.loop = true;
+      player.muted = true;
+      player.play();
+    }
+  });
 
   return (
     <View style={{ marginBottom: mvs(32), paddingHorizontal: s(16) }}>
@@ -211,18 +221,16 @@ export function BannerTypeSelector({
         {/* Show preview if selected */}
         {selectedType === "1_VIDEO" && (
           <View style={{ marginTop: mvs(12) }}>
-            {bannerMedia.length > 0 && bannerMedia[0] ? (
-              <Video
-                source={{ uri: bannerMedia[0].mediaUrl }}
+            {shouldUseVideo ? (
+              <VideoView
+                player={videoPlayer}
                 style={{
                   width: "100%",
                   height: mvs(100),
                   borderRadius: s(8),
                 }}
-                resizeMode={ResizeMode.COVER}
-                shouldPlay
-                isLooping
-                isMuted
+                contentFit="cover"
+                nativeControls={false}
               />
             ) : (
               <View

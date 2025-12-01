@@ -21,6 +21,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   TouchableOpacity,
@@ -53,7 +54,8 @@ export default function ChatThreadScreen() {
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [menuModalVisible, setMenuModalVisible] = useState(false);
-  const [showMessageRestrictionModal, setShowMessageRestrictionModal] = useState(false);
+  const [showMessageRestrictionModal, setShowMessageRestrictionModal] =
+    useState(false);
   const listRef = useRef<FlatList>(null);
   const rawMessages = messagesByConv[conversationId || ""] || [];
 
@@ -312,7 +314,9 @@ export default function ChatThreadScreen() {
       colors={["#000000", "#0F0202"]}
       start={{ x: 0.4, y: 0 }}
       end={{ x: 0.6, y: 1 }}
-      className="flex-1"
+      style={{
+        flex: 1,
+      }}
     >
       {/* Header - avatar + name + actions */}
       <View
@@ -385,281 +389,286 @@ export default function ChatThreadScreen() {
         </View>
       </View>
 
-      <View style={{ flex: 1 }}>
-        {messages.length === 0 && (
-          <View
-            className="absolute inset-0 items-center justify-center z-10 w-full h-full"
-            style={{
-              paddingHorizontal: s(24),
-            }}
-            pointerEvents="none"
-          >
-            <ScaledText
-              variant="md"
-              className="text-gray text-center font-montserratMedium"
-            >
-              Chat history deleted.{"\n"}New messages will appear here.
-            </ScaledText>
-          </View>
-        )}
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(item: any) => item.id}
-          renderItem={renderItem}
-          inverted={true}
-          keyboardDismissMode={
-            Platform.OS === "ios" ? "interactive" : "on-drag"
-          }
-          onEndReached={() =>
-            conversationId && user?.id && loadOlder(conversationId, user.id)
-          }
-          onEndReachedThreshold={0.5}
-          contentContainerStyle={{
-            paddingVertical: mvs(1),
-          }}
-          ListFooterComponent={() =>
-            conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
-              <View
-                className="bg-[#2A0F10] border-b border-foreground/10"
-                style={{
-                  paddingHorizontal: s(16),
-                  paddingVertical: mvs(12),
-                }}
-              >
-                <ScaledText
-                  variant="md"
-                  className="text-foreground font-montserratMedium"
-                  style={{
-                    marginBottom: mvs(12),
-                  }}
-                >
-                  You have received a private request. Accept to start chatting.
-                </ScaledText>
-                <View
-                  className="flex-row"
-                  style={{
-                    gap: s(12),
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={async () => {
-                      try {
-                        const { acceptConversation } = await import(
-                          "@/services/chat.service"
-                        );
-                        await acceptConversation(user!.id, conversationId!);
-                        const c = await fetchConversationByIdWithPeer(
-                          user!.id,
-                          conversationId!
-                        );
-                        setConv(c);
-                      } catch {}
-                    }}
-                    className="flex-1 rounded-full bg-primary items-center justify-center"
-                    style={{
-                      paddingVertical: mvs(10.5),
-                    }}
-                  >
-                    <ScaledText
-                      variant="md"
-                      className="text-white font-neueBold"
-                    >
-                      Accept
-                    </ScaledText>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={async () => {
-                      try {
-                        const { rejectConversation } = await import(
-                          "@/services/chat.service"
-                        );
-                        await rejectConversation(user!.id, conversationId!);
-                        const c = await fetchConversationByIdWithPeer(
-                          user!.id,
-                          conversationId!
-                        );
-                        setConv(c);
-                      } catch {}
-                    }}
-                    className="flex-1 rounded-full border border-foreground/30 items-center justify-center"
-                    style={{
-                      paddingVertical: mvs(10.5),
-                    }}
-                  >
-                    <ScaledText
-                      variant="md"
-                      className="text-foreground font-neueBold"
-                    >
-                      Reject
-                    </ScaledText>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null
-          }
-          keyboardShouldPersistTaps="handled"
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-          }}
-        />
-
-        {/* Composer pill (disabled until accepted for the lover) */}
-        <View
-          style={{
-            paddingHorizontal: s(16),
-            paddingTop: mvs(8),
-            paddingBottom:
-              Platform.OS === "ios"
-                ? Math.max(insets?.bottom || 0, mvs(8))
-                : mvs(8),
-          }}
-        >
-          {/* File Preview */}
-          {selectedFile && (
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={
+          Platform.OS === "ios"
+            ? insets.top // header height
+            : insets.top
+        }
+      >
+        <View style={{ flex: 1 }}>
+          {messages.length === 0 && (
             <View
-              className="flex-row items-center rounded-full border border-gray/40 mb-2"
+              className="absolute inset-0 items-center justify-center z-10 w-full h-full"
               style={{
-                paddingHorizontal: s(12),
-                paddingVertical: mvs(8),
+                paddingHorizontal: s(24),
               }}
+              pointerEvents="none"
             >
-              <View
-                className="bg-primary/20 rounded items-center justify-center"
-                style={{
-                  width: s(40),
-                  height: s(40),
-                  marginRight: s(12),
-                }}
+              <ScaledText
+                variant="md"
+                className="text-gray text-center font-montserratMedium"
               >
-                <ScaledText variant="lg" className="text-primary">
-                  📎
-                </ScaledText>
-              </View>
-              <View className="flex-1">
-                <ScaledText
-                  variant="md"
-                  numberOfLines={1}
-                  className="text-foreground font-neueMedium"
-                >
-                  {selectedFile.name}
-                </ScaledText>
-                <ScaledText variant="sm" className="text-foreground/60">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </ScaledText>
-              </View>
-              <TouchableOpacity
-                onPress={() => setSelectedFile(null)}
-                style={{
-                  padding: s(8),
-                }}
-              >
-                <SVGIcons.Close width={s(16)} height={s(16)} />
-              </TouchableOpacity>
+                Chat history deleted.{"\n"}New messages will appear here.
+              </ScaledText>
             </View>
           )}
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(item: any) => item.id}
+            renderItem={renderItem}
+            inverted={true}
+            keyboardDismissMode={
+              Platform.OS === "ios" ? "interactive" : "on-drag"
+            }
+            onEndReached={() =>
+              conversationId && user?.id && loadOlder(conversationId, user.id)
+            }
+            onEndReachedThreshold={0.5}
+            contentContainerStyle={{
+              paddingVertical: mvs(1),
+            }}
+            ListFooterComponent={() =>
+              conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
+                <View
+                  className="bg-[#2A0F10] border-b border-foreground/10"
+                  style={{
+                    paddingHorizontal: s(16),
+                    paddingVertical: mvs(12),
+                  }}
+                >
+                  <ScaledText
+                    variant="md"
+                    className="text-foreground font-montserratMedium"
+                    style={{
+                      marginBottom: mvs(12),
+                    }}
+                  >
+                    You have received a private request. Accept to start
+                    chatting.
+                  </ScaledText>
+                  <View
+                    className="flex-row"
+                    style={{
+                      gap: s(12),
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const { acceptConversation } = await import(
+                            "@/services/chat.service"
+                          );
+                          await acceptConversation(user!.id, conversationId!);
+                          const c = await fetchConversationByIdWithPeer(
+                            user!.id,
+                            conversationId!
+                          );
+                          setConv(c);
+                        } catch {}
+                      }}
+                      className="flex-1 rounded-full bg-primary items-center justify-center"
+                      style={{
+                        paddingVertical: mvs(10.5),
+                      }}
+                    >
+                      <ScaledText
+                        variant="md"
+                        className="text-white font-neueBold"
+                      >
+                        Accept
+                      </ScaledText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const { rejectConversation } = await import(
+                            "@/services/chat.service"
+                          );
+                          await rejectConversation(user!.id, conversationId!);
+                          const c = await fetchConversationByIdWithPeer(
+                            user!.id,
+                            conversationId!
+                          );
+                          setConv(c);
+                        } catch {}
+                      }}
+                      className="flex-1 rounded-full border border-foreground/30 items-center justify-center"
+                      style={{
+                        paddingVertical: mvs(10.5),
+                      }}
+                    >
+                      <ScaledText
+                        variant="md"
+                        className="text-foreground font-neueBold"
+                      >
+                        Reject
+                      </ScaledText>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : null
+            }
+            keyboardShouldPersistTaps="handled"
+            maintainVisibleContentPosition={{
+              minIndexForVisible: 0,
+            }}
+          />
 
+          {/* Composer pill (disabled until accepted for the lover) */}
           <View
-            className="flex-row items-end border border-gray/40 mb-2"
             style={{
-              paddingVertical: mvs(2),
-              paddingHorizontal: s(8),
-              borderRadius: s(24),
+              paddingHorizontal: s(16),
+              paddingTop: mvs(8),
             }}
           >
-            <TouchableOpacity
-              onPress={handlePickFile}
-              disabled={
-                uploading ||
-                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId) ||
-                conv?.status === "BLOCKED"
-              }
+            {/* File Preview */}
+            {selectedFile && (
+              <View
+                className="flex-row items-center rounded-full border border-gray/40 mb-2"
+                style={{
+                  paddingHorizontal: s(12),
+                  paddingVertical: mvs(8),
+                }}
+              >
+                <View
+                  className="bg-primary/20 rounded items-center justify-center"
+                  style={{
+                    width: s(40),
+                    height: s(40),
+                    marginRight: s(12),
+                  }}
+                >
+                  <ScaledText variant="lg" className="text-primary">
+                    📎
+                  </ScaledText>
+                </View>
+                <View className="flex-1">
+                  <ScaledText
+                    variant="md"
+                    numberOfLines={1}
+                    className="text-foreground font-neueMedium"
+                  >
+                    {selectedFile.name}
+                  </ScaledText>
+                  <ScaledText variant="sm" className="text-foreground/60">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </ScaledText>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setSelectedFile(null)}
+                  style={{
+                    padding: s(8),
+                  }}
+                >
+                  <SVGIcons.Close width={s(16)} height={s(16)} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View
+              className="flex-row items-end border border-gray/40 mb-2"
               style={{
-                marginRight: s(4),
-                paddingBottom: mvs(10),
-                opacity:
+                paddingVertical: mvs(2),
+                paddingHorizontal: s(8),
+                borderRadius: s(24),
+              }}
+            >
+              <TouchableOpacity
+                onPress={handlePickFile}
+                disabled={
                   uploading ||
                   (conv?.status === "REQUESTED" &&
                     user?.id !== conv?.artistId) ||
                   conv?.status === "BLOCKED"
-                    ? 0.4
-                    : 1,
-              }}
-            >
-              <SVGIcons.Attachment width={s(20)} height={s(20)} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ flex: 1 }}
-              activeOpacity={1}
-              onPress={handleInputPress}
-              disabled={
-                !uploading &&
-                !(
-                  conv?.status === "REQUESTED" && user?.id !== conv?.artistId
-                ) &&
-                conv?.status !== "BLOCKED"
-              }
-            >
-              <ScaledTextInput
-                value={text}
-                onChangeText={setText}
-                placeholder="Hello I'm looking for sketch tattoo"
-                className="text-foreground"
-                containerClassName="bg-transparent"
-                multiline={true}
-                textAlignVertical="top"
-                containerStyle={{
-                  width: "100%",
-                }}
+                }
                 style={{
-                  fontSize: ms(14),
-                  lineHeight: mvs(20),
-                  fontWeight: "600",
-                  paddingHorizontal: s(8),
-                  paddingTop: mvs(10),
+                  marginRight: s(4),
                   paddingBottom: mvs(10),
-                  maxHeight: mvs(110),
-                  minHeight: mvs(40),
-                  backgroundColor: "#140404",
+                  opacity:
+                    uploading ||
+                    (conv?.status === "REQUESTED" &&
+                      user?.id !== conv?.artistId) ||
+                    conv?.status === "BLOCKED"
+                      ? 0.4
+                      : 1,
                 }}
-                editable={
+              >
+                <SVGIcons.Attachment width={s(20)} height={s(20)} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                activeOpacity={1}
+                onPress={handleInputPress}
+                disabled={
                   !uploading &&
                   !(
                     conv?.status === "REQUESTED" && user?.id !== conv?.artistId
                   ) &&
                   conv?.status !== "BLOCKED"
                 }
-                scrollEnabled={true}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              disabled={
-                uploading ||
-                (conv?.status === "REQUESTED" && user?.id !== conv?.artistId) ||
-                conv?.status === "BLOCKED"
-              }
-              onPress={handleSend}
-              className="items-center justify-center rounded-full"
-              style={{
-                paddingBottom: mvs(4),
-              }}
-            >
-              {uploading ? (
-                <SVGIcons.Loading
-                  width={s(20)}
-                  height={s(20)}
-                  color="animate-spin"
-                  style={{
-                    paddingBottom: mvs(4),
+              >
+                <ScaledTextInput
+                  value={text}
+                  onChangeText={setText}
+                  placeholder="Type your message here..."
+                  className="text-foreground"
+                  containerClassName="bg-transparent"
+                  multiline={true}
+                  textAlignVertical="top"
+                  containerStyle={{
+                    width: "100%",
                   }}
+                  style={{
+                    maxHeight: mvs(110),
+                    minHeight: mvs(20),
+                    backgroundColor: "#140404",
+                  }}
+                  editable={
+                    !uploading &&
+                    !(
+                      conv?.status === "REQUESTED" &&
+                      user?.id !== conv?.artistId
+                    ) &&
+                    conv?.status !== "BLOCKED"
+                  }
+                  scrollEnabled={true}
+                  // Ensure the placeholder is one line
                 />
-              ) : (
-                <SVGIcons.Send width={s(32)} height={s(32)} />
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={
+                  uploading ||
+                  (conv?.status === "REQUESTED" &&
+                    user?.id !== conv?.artistId) ||
+                  conv?.status === "BLOCKED"
+                }
+                onPress={handleSend}
+                className="items-center justify-center rounded-full"
+                style={{
+                  paddingBottom: mvs(4),
+                }}
+              >
+                {uploading ? (
+                  <SVGIcons.Loading
+                    width={s(20)}
+                    height={s(20)}
+                    color="animate-spin"
+                    style={{
+                      paddingBottom: mvs(4),
+                    }}
+                  />
+                ) : (
+                  <SVGIcons.Send width={s(32)} height={s(32)} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       {/* Menu Modals */}
       <ConversationMenuModals
@@ -745,4 +754,3 @@ export default function ChatThreadScreen() {
     </LinearGradient>
   );
 }
-

@@ -13,7 +13,7 @@ import {
   Modal,
   Platform,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -129,7 +129,10 @@ export default function UsernameSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-background"
+      className="bg-background h-screen"
+      style={{
+        flex: 1,
+      }}
     >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
@@ -182,7 +185,6 @@ export default function UsernameSettingsScreen() {
               value={username}
               onChangeText={handleUsernameChange}
               placeholder="Username"
-                
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}

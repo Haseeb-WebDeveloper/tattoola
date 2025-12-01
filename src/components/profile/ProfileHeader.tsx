@@ -34,7 +34,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     ""
   );
 
-
   return (
     <View
       style={{
@@ -60,7 +59,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             style={{ width: s(92), height: s(92) }}
           />
         )}
-        <View className="flex-1">
+        <View className="flex-1 justify-center">
           <View className="flex-row items-center">
             <ScaledText
               allowScaling={false}
@@ -83,47 +82,58 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </ScaledText>
           </View>
           {businessName && workArrangement && (
-            <View className="flex-row items-center" style={{ marginTop: mvs(3) }}>
+            <View
+              className="flex-row items-center"
+              style={{ marginTop: mvs(2) }}
+            >
               <View style={{ marginRight: s(4) }}>
                 <SVGIcons.Studio style={{ width: s(20), height: s(20) }} />
               </View>
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueLight"
-              >
-                {(() => {
-                  const arrangement = String(workArrangement).toUpperCase();
-                  if (arrangement === "STUDIO_OWNER") {
-                    return `Titolare di `;
-                  } else if (arrangement === "STUDIO_EMPLOYEE") {
-                    return `Ha lavorato a `;
-                  } else if (arrangement === "FREELANCE") {
-                    return `Lavora come freelance presso `;
-                  }
-                  return "";
-                })()}
+              <View style={{ flex: 1, flexShrink: 1 }}>
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-neueSemibold"
+                  className="text-foreground font-neueLight"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
-                  {businessName}
+                  {(() => {
+                    const arrangement = String(workArrangement).toUpperCase();
+                    if (arrangement === "STUDIO_OWNER") {
+                      return `Titolare di `;
+                    } else if (arrangement === "STUDIO_EMPLOYEE") {
+                      return `Ha lavorato a `;
+                    } else if (arrangement === "FREELANCE") {
+                      return `Freelancer presso `;
+                    }
+                    return "";
+                  })()}
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueSemibold"
+                  >
+                    {businessName}
+                  </ScaledText>
                 </ScaledText>
-              </ScaledText>
+              </View>
             </View>
           )}
-          <View className="flex-row items-center" style={{ marginTop: mvs(3) }}>
-            <View style={{ marginRight: s(4) }}>
-              <SVGIcons.Location style={{ width: s(20), height: s(20) }} />
-            </View>
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-foreground font-neueLight"
-            >
-              {location}
-            </ScaledText>
+          <View className="flex-row items-center" style={{ marginTop: mvs(2) }}>
+            {location && (
+              <>
+                <View style={{ marginRight: s(4) }}>
+                  <SVGIcons.Location style={{ width: s(20), height: s(20) }} />
+                </View>
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueLight"
+                >
+                  {location}
+                </ScaledText>
+              </>
+            )}
           </View>
         </View>
       </View>

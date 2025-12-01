@@ -98,7 +98,7 @@ export default function StudioOverview({
           marginTop: mvs(16),
           flexDirection: "row",
           alignItems: "stretch",
-          gap: s(20),
+          gap: s(30),
         }}
       >
         {/* Left column */}
@@ -155,7 +155,7 @@ export default function StudioOverview({
 
           {/* Socials */}
           <View
-            style={{ flexDirection: "row", alignItems: "center", gap: s(12) }}
+            style={{ flexDirection: "row", alignItems: "center", gap: s(8) }}
           >
             {!!instagram && (
               <TouchableOpacity
@@ -221,7 +221,7 @@ export default function StudioOverview({
               source={{ uri: staticMapUrl }}
               style={{
                 width: s(150),
-                height: mvs(100),
+                height: mvs(95),
                 borderRadius: s(12),
                 borderWidth: s(0.5),
                 borderColor: "#A49A99",
@@ -232,7 +232,7 @@ export default function StudioOverview({
             <View
               style={{
                 width: s(150),
-                height: mvs(100),
+                height: mvs(95),
                 borderRadius: s(12),
                 borderWidth: s(0.5),
                 borderColor: "#A49A99",

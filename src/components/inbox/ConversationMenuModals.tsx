@@ -403,16 +403,17 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               borderColor: "#AE0E0E",
             }}
           >
-            <ScaledText variant="md" className="font-neueBold text-[#AE0E0E]">
+            <ScaledText variant="md" className="font-neueBold text-foreground">
               Yes
             </ScaledText>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleClose}
-            className="flex-1 items-center justify-center"
+            className="flex-1 items-center justify-center border-tat"
             style={{
               borderRadius: s(100),
               paddingVertical: mvs(10),
+              borderWidth: s(1),
             }}
           >
             <ScaledText

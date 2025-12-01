@@ -134,7 +134,7 @@ const SkeletonCard: React.FC = () => {
         style={{
           position: "absolute",
           top: mvs(7),
-          right: s(14),
+          right: s(7),
           width: s(14),
           height: s(14),
           backgroundColor: "#2A2A2A",
@@ -238,9 +238,8 @@ const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => {
             <ScaledText
               allowScaling={false}
               variant="body4"
-              className="text-gray"
+              className="text-gray font-neueLight"
               numberOfLines={1}
-              style={{ fontWeight: "400" }}
             >
               {location}
             </ScaledText>
@@ -250,7 +249,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => {
 
       {/* Subscription Icon */}
       {user.subscriptionPlanType && (
-        <View style={{ position: "absolute", top: mvs(7), right: s(14) }}>
+        <View style={{ position: "absolute", top: mvs(7), right: s(7) }}>
           {user.subscriptionPlanType === "PREMIUM" ? (
             <SVGIcons.DimondYellow width={s(14)} height={s(14)} />
           ) : user.subscriptionPlanType === "STUDIO" ? (
@@ -300,7 +299,12 @@ export default function FollowingScreen() {
   const displayedUsers = activeTab === "artists" ? artists : tattooLovers;
 
   return (
-    <View className="flex-1 bg-background">
+    <View
+      className="bg-background min-h-screen"
+      style={{
+        flex: 1,
+      }}
+    >
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
@@ -353,14 +357,14 @@ export default function FollowingScreen() {
             flexDirection: "row",
             paddingHorizontal: s(16),
             marginBottom: mvs(24),
-            gap: s(12),
+            gap: s(8),
           }}
         >
           {/* Artists Tab */}
           <TouchableOpacity
             onPress={() => setActiveTab("artists")}
             style={{
-              flex: 1,
+              paddingHorizontal: s(16),
               height: mvs(25),
               borderRadius: s(18),
               backgroundColor:
@@ -390,7 +394,7 @@ export default function FollowingScreen() {
           <TouchableOpacity
             onPress={() => setActiveTab("tattooLovers")}
             style={{
-              flex: 1,
+              paddingHorizontal: s(16),
               height: mvs(25),
               borderRadius: s(18),
               backgroundColor:
@@ -419,7 +423,7 @@ export default function FollowingScreen() {
 
         {/* Content */}
         <ScrollView
-          className="flex-1"
+          className="h-full"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: s(16),
@@ -440,7 +444,7 @@ export default function FollowingScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-                className="text-gray"
+                className="text-gray text-center font-neueLight"
             >
                 {activeTab === "artists"
                   ? "Non segui ancora nessun artista"

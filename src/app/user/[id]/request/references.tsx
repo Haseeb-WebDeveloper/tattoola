@@ -1,6 +1,9 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
-import { MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST, referancesQuestion } from "@/constants/request-questions";
+import {
+  MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST,
+  referancesQuestion,
+} from "@/constants/request-questions";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { cloudinaryService } from "@/services/cloudinary.service";
@@ -47,7 +50,8 @@ export default function ReferencesStep() {
   const setReferences = usePrivateRequestStore((s) => s.setReferences);
 
   const canProceed = useMemo(() => media.length > 0, [media]);
-  const canAddMore = media.length < MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST;
+  const canAddMore =
+    media.length < MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST;
 
   const handlePick = async () => {
     // Only allow adding until MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST total
@@ -109,7 +113,11 @@ export default function ReferencesStep() {
               className="border-2 border-dashed border-error/70 rounded-2xl bg-primary/20 items-center"
               style={{ paddingVertical: mvs(40), marginBottom: mvs(24) }}
             >
-              <SVGIcons.Upload width={s(32)} height={s(32)} />
+              <SVGIcons.Upload
+                width={s(36)}
+                height={s(36)}
+                style={{ marginBottom: mvs(4) }}
+              />
               <TouchableOpacity
                 onPress={handlePick}
                 disabled={uploading}
@@ -131,8 +139,8 @@ export default function ReferencesStep() {
               <ScaledText
                 allowScaling={false}
                 variant="11"
-                className="text-foreground/80 text-center"
-                style={{ marginTop: mvs(24), paddingHorizontal: s(16) }}
+                className="text-foreground/80 text-center font-neueMedium"
+                style={{ marginTop: mvs(18), paddingHorizontal: s(16) }}
               >
                 Fino a 5 foto, supporta JPG, PNG. Max size 5MB Fino a 2 video,
                 supporta MOV, MP4, AVI. Max size 10MB

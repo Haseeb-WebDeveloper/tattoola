@@ -1,5 +1,5 @@
 import { mvs } from '@/utils/scale';
-import { ResizeMode, Video } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import React from 'react';
 import { Image, View } from 'react-native';
 
@@ -14,21 +14,27 @@ interface BannerProps {
 }
 
 export const Banner: React.FC<BannerProps> = ({ banner }) => {
-
   const videoMedia = banner.find((b) => b.mediaType === 'VIDEO');
   const bannerImages = banner.filter((b) => b.mediaType === 'IMAGE');
+  
+  // Always call hook at top level - use placeholder URL if no video
+  const player = useVideoPlayer(videoMedia?.mediaUrl || '', (player) => {
+    if (videoMedia) {
+      player.loop = true;
+      player.muted = true;
+      player.play();
+    }
+  });
 
   // Video banner - autoplay, looping, no controls
   if (videoMedia) {
     return (
-      <Video
-        source={{ uri: videoMedia.mediaUrl }}
+      <VideoView
+        player={player}
         className="w-full"
         style={{ height: mvs(200) }}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
+        contentFit="cover"
+        nativeControls={false}
       />
     );
   }
