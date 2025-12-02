@@ -110,7 +110,7 @@ export default function SearchScreen() {
 
     return (
       <View
-        className="flex-1 items-center justify-center"
+        className="items-center justify-center flex-1"
         style={{ paddingTop: mvs(100) }}
       >
         <View
@@ -120,20 +120,20 @@ export default function SearchScreen() {
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-gray font-neueBold text-center"
+            className="text-center text-gray font-neueBold"
           >
-            No results found
+            Nessun risultato trovato
           </ScaledText>
           {/* <SVGIcons.SafeAlert width={s(12)} height={s(12)} /> */}
         </View>
         <ScaledText
           allowScaling={false}
           variant="body2"
-          className="text-gray font-neueLight text-center"
+          className="text-center text-gray font-neueLight"
           style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
         >
-          Please try adjusting your filters
-          {areFiltersActive() ? " or reset the filters" : ""}.
+          Prova a modificare i filtri
+          {areFiltersActive() ? " o reimposta i filtri" : ""}.
         </ScaledText>
         <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
           <TouchableOpacity
@@ -144,9 +144,9 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="body2"
-              className="text-primary font-neueLight text-center"
+              className="text-center text-primary font-neueLight"
             >
-              Try again
+              Riprova
             </ScaledText>
           </TouchableOpacity>
           {areFiltersActive() && (
@@ -157,9 +157,9 @@ export default function SearchScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="body2"
-                className="text-primary font-neueLight text-center"
+                className="text-center text-primary font-neueLight"
               >
-                Reset filters
+                Reimposta filtri
               </ScaledText>
             </TouchableOpacity>
           )}
@@ -191,7 +191,7 @@ export default function SearchScreen() {
     : `${totalResults} ${activeTab === "studios" ? "studi" : activeTab === "artists" ? "artisti" : "risultati"}`;
 
   return (
-    <View className="flex-1  bg-background">
+    <View className="flex-1 bg-background">
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
@@ -254,7 +254,7 @@ export default function SearchScreen() {
                 activeTab === "all" ? "text-white" : "text-gray"
               }`}
             >
-              All
+              Tutto
             </ScaledText>
           </TouchableOpacity>
 
@@ -275,7 +275,7 @@ export default function SearchScreen() {
                 activeTab === "artists" ? "text-white" : "text-gray"
               }`}
             >
-              Artists
+              Artisti
             </ScaledText>
           </TouchableOpacity>
 
@@ -296,7 +296,7 @@ export default function SearchScreen() {
                 activeTab === "studios" ? "text-white" : "text-gray"
               }`}
             >
-              Studios
+              Studi
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -379,8 +379,7 @@ export default function SearchScreen() {
                 const type = "businessName" in item ? "artist" : "studio";
                 return `${type}-${item.id}`;
               }}
-              contentContainerStyle={{
-              }}
+              contentContainerStyle={{}}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl

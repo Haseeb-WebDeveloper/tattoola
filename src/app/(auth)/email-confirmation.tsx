@@ -9,17 +9,41 @@ import { UserRole } from "@/types/auth";
 import { logger } from "@/utils/logger";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
-  const { status, reset, pendingVerificationEmail, formData } = useSignupStore();
+  const { status, reset, pendingVerificationEmail, formData } =
+    useSignupStore();
   const [imageError, setImageError] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [cooldown, setCooldown] = useState(60); // seconds remaining before user can resend
 
   const isLoading = status === "in_progress";
+
+  // Initial cooldown when landing on the screen (first 60s)
+  useEffect(() => {
+    setCooldown(60);
+  }, []);
+
+  // Countdown effect for resend cooldown
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const interval = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldown]);
 
   logger.log("Email confirmation screen - status:", status);
 
@@ -35,9 +59,9 @@ export default function EmailConfirmationScreen() {
       <RegistrationProgress
         currentStep={2}
         totalSteps={13}
-        name="Verification email sent"
+        name="Email di verifica inviata"
         icon={<SVGIcons.MailSent className="w-7 h-7" />}
-        description="Check your inbox → Tap Confirm email → You're all set! ✅"
+        description="Controlla la tua casella di posta → Tocca Conferma email → Hai finito!"
         nameVariant="2xl"
         descriptionVariant="md"
         NameFont="font-neueBold"
@@ -49,9 +73,9 @@ export default function EmailConfirmationScreen() {
         <View className="items-center mb-4">
           <ScaledText
             variant="sm"
-            className="text-gray font-montserratLight text-center"
+            className="text-center text-gray font-montserratLight"
           >
-            Email sent to {pendingVerificationEmail}
+            Email inviata a {pendingVerificationEmail}
           </ScaledText>
         </View>
       )}
@@ -59,7 +83,7 @@ export default function EmailConfirmationScreen() {
       {/* Loading ring or image preview */}
       <View className="items-center mb-8">
         {isLoading ? (
-          <View className="w-20 h-20 rounded-full border-8 border-warning border-r-gray animate-spin-slow" />
+          <View className="w-20 h-20 border-8 rounded-full border-warning border-r-gray animate-spin-slow" />
         ) : imageError ? (
           <View className="w-[320px] h-[220px] rounded-xl bg-foreground/10 items-center justify-center">
             <SVGIcons.MailSent className="w-20 h-20" />
@@ -80,20 +104,26 @@ export default function EmailConfirmationScreen() {
       {/* Resend */}
       <View className="items-center">
         <ScaledText variant="body2" className="text-gray font-neueLight">
-          Haven’t received the email?
+          Non hai ricevuto l'email?
         </ScaledText>
         <TouchableOpacity
-          className="rounded-full border border-gray flex-row gap-2 items-center"
+          className={`flex-row items-center gap-2 border rounded-full ${
+            isResending || cooldown > 0
+              ? "border-gray/40 bg-foreground/5"
+              : "border-gray bg-transparent"
+          }`}
           style={{
             marginTop: mvs(8),
             paddingVertical: mvs(10),
             paddingHorizontal: s(24),
           }}
-          disabled={isResending}
+          disabled={isResending || cooldown > 0}
           onPress={async () => {
             try {
               setIsResending(true);
               await resendVerificationEmail(pendingVerificationEmail);
+              // Start a 60 second cooldown after a successful resend
+              setCooldown(60);
               let toastId: any;
               toastId = toast.custom(
                 <CustomToast
@@ -105,8 +135,24 @@ export default function EmailConfirmationScreen() {
               );
             } catch (error: any) {
               logger.error("Error resending verification email:", error);
-              const message =
+              const rawMessage =
                 error?.message || "Failed to resend verification email";
+
+              // Handle backend throttle message more gracefully and in Italian
+              let message = rawMessage;
+              if (
+                typeof rawMessage === "string" &&
+                rawMessage.includes(
+                  "You can request another verification email in"
+                )
+              ) {
+                const match = rawMessage.match(/in (\d+) seconds?/);
+                const seconds = match?.[1];
+                message = seconds
+                  ? `Hai appena richiesto una nuova email di verifica. Puoi riprovare tra ${seconds} secondi.`
+                  : "Hai appena richiesto una nuova email di verifica. Attendi qualche secondo prima di riprovare.";
+              }
+
               let toastId: any;
               toastId = toast.custom(
                 <CustomToast
@@ -121,25 +167,42 @@ export default function EmailConfirmationScreen() {
             }
           }}
         >
-          <SVGIcons.Reload className="w-5 h-5" />
+          {!(isResending || cooldown > 0) && (
+            <SVGIcons.Reload className="w-5 h-5" />
+          )}
           <ScaledText
             variant="11"
-            className="text-foreground font-neueSemibold"
+            className={`font-neueSemibold ${
+              isResending || cooldown > 0 ? "text-gray" : "text-foreground"
+            }`}
             allowScaling={false}
           >
-            {isResending ? "Sending..." : "Resend email"}
+            {isResending
+              ? "Invio in corso..."
+              : cooldown > 0
+                ? `Puoi reinviare tra ${cooldown}s`
+                : "Reinvia email"}
           </ScaledText>
         </TouchableOpacity>
+        {cooldown > 0 && !isResending && (
+          <ScaledText
+            variant="sm"
+            className="max-w-sm px-12 mt-2 text-xs text-center text-gray font-montserratLight"
+          >
+            Per evitare abusi, puoi richiedere una nuova email solo ogni 60
+            secondi.
+          </ScaledText>
+        )}
         <View className="h-px bg-[#A49A99] opacity-40 w-4/5 my-8" />
       </View>
 
       {/* Edit email note */}
-      <View className="px-12 mb-12 max-w-sm">
+      <View className="max-w-sm px-12 mb-12">
         <ScaledText
           variant="body2"
-          className="text-foreground font-montserratLight text-center"
+          className="text-center text-foreground font-montserratLight"
         >
-          If you entered an incorrect email address,{" "}
+          Se hai inserito un indirizzo email errato,{" "}
           <ScaledText
             variant="body2"
             className="text-foreground font-neueSemibold underline underline-offset-auto decoration-solid font-montserratRegular text-[14px] leading-[23px]"
@@ -157,7 +220,7 @@ export default function EmailConfirmationScreen() {
               }
             }}
           >
-            edit email.
+            modifica email.
           </ScaledText>
         </ScaledText>
       </View>

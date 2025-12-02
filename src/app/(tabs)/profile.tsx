@@ -65,9 +65,10 @@ export default function ProfileScreen() {
         setError(null);
         setDisplayName(null);
       } catch (e: any) {
-        const errorMessage = e?.message || "Failed to load profile";
+        const errorMessage =
+          e?.message || "Caricamento del profilo non riuscito";
         const errorCode = e?.code || e?.error?.code;
-        
+
         // Check if error is "Cannot coerce the result to a single JSON object" or similar
         // This happens when .single() is called but no rows are found (user doesn't exist in database)
         const isUserNotFoundError =
@@ -75,14 +76,14 @@ export default function ProfileScreen() {
           errorMessage.includes("Cannot coerce") ||
           errorMessage.includes("JSON object") ||
           errorMessage.includes("multiple (or no) rows returned");
-        
+
         if (isUserNotFoundError) {
           // User not found in database, check auth user metadata for displayName
           try {
             const {
               data: { user: authUser },
             } = await supabase.auth.getUser();
-            
+
             if (authUser) {
               const displayNameValue =
                 (authUser as any).user_metadata?.displayName || null;
@@ -168,15 +169,15 @@ export default function ProfileScreen() {
       : "/(auth)/user-registration/step-3";
 
     return (
-      <View className="flex-1 bg-background items-center justify-center">
+      <View className="items-center justify-center flex-1 bg-background">
         <View style={{ paddingHorizontal: s(24), alignItems: "center" }}>
           <ScaledText
             allowScaling={false}
             variant="body1"
-            className="text-foreground text-center font-neueLight"
+            className="text-center text-foreground font-neueLight"
             style={{ marginBottom: mvs(16) }}
           >
-            Please complete your registration to view your profile.
+            Completa la registrazione per visualizzare il tuo profilo.
           </ScaledText>
           <TouchableOpacity
             activeOpacity={1}
@@ -194,7 +195,7 @@ export default function ProfileScreen() {
               variant="body1"
               className="text-white font-neueSemibold"
             >
-              Complete Registration
+              Completa la registrazione
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -204,11 +205,11 @@ export default function ProfileScreen() {
 
   if (error) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
+      <View className="items-center justify-center flex-1 bg-background">
         <ScaledText
           allowScaling={false}
           variant="body1"
-          className="text-foreground text-center"
+          className="text-center text-foreground"
           style={{ paddingHorizontal: s(24) }}
         >
           {error}
@@ -247,13 +248,13 @@ export default function ProfileScreen() {
       >
         {/* settings button */}
         <View
-          className="absolute top-2 right-0 z-10"
+          className="absolute right-0 z-10 top-2"
           style={{ paddingHorizontal: s(16) }}
         >
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => router.push("/settings" as any)}
-            className="rounded-full items-center justify-center"
+            className="items-center justify-center rounded-full"
             style={{ width: s(36), height: s(36), backgroundColor: "#AD2E2E" }}
           >
             <SVGIcons.Settings style={{ width: s(20), height: s(20) }} />
@@ -279,7 +280,9 @@ export default function ProfileScreen() {
               businessName={artistData?.artistProfile?.businessName}
               municipality={artistData?.location?.municipality?.name}
               province={artistData?.location?.province?.name}
-              workArrangement={artistData?.artistProfile?.workArrangement as WorkArrangement}
+              workArrangement={
+                artistData?.artistProfile?.workArrangement as WorkArrangement
+              }
             />
           );
         })()}

@@ -50,7 +50,7 @@ export default function DescriptionStep() {
             }}
             value={description}
             onChangeText={setDescription}
-            placeholder="Describe your tattoo design in brief"
+            placeholder="Descrivi brevemente il tatuaggio che desideri"
             multiline
             numberOfLines={6}
           />
@@ -60,8 +60,8 @@ export default function DescriptionStep() {
       <NextBackFooter
         onBack={() => router.back()}
         onNext={() => router.push(`/user/${id}/request/age`)}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
       />
     </View>
   );

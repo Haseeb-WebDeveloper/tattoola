@@ -102,7 +102,7 @@ export default function StudioStep2() {
         <StudioStepHeader
           currentStep={2}
           totalSteps={8}
-          stepName="Add logo "
+          stepName="Aggiungi il logo"
           icon={<SVGIcons.Magic width={s(19)} height={s(19)} />}
         />
 
@@ -115,7 +115,7 @@ export default function StudioStep2() {
             className="text-white font-neueSemibold"
             style={{ marginBottom: mvs(8) }}
           >
-            Upload your studio logo
+            Carica il logo del tuo studio
             <ScaledText variant="lg" className="text-error">
               *
             </ScaledText>
@@ -216,7 +216,7 @@ export default function StudioStep2() {
                         variant="md"
                         className="text-foreground font-neueSemibold"
                       >
-                        Upload image
+                        Carica immagine
                       </ScaledText>
                     </View>
                   </View>

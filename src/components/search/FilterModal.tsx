@@ -270,7 +270,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               style={{ paddingTop: mvs(12), paddingBottom: mvs(8) }}
             >
               <View
-                className="bg-gray rounded-lg"
+                className="rounded-lg bg-gray"
                 style={{ width: s(30), height: mvs(4) }}
               />
             </View>
@@ -306,7 +306,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                       variant="md"
                       className="text-gray font-neueLight"
                     >
-                      Reset
+                      Reimposta
                     </ScaledText>
                   </TouchableOpacity>
                 </View>
@@ -347,7 +347,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                       variant="md"
                       className="text-gray font-neueLight"
                     >
-                      Reset
+                      Reimposta
                     </ScaledText>
                   </TouchableOpacity>
                 </View>
@@ -386,7 +386,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                         variant="md"
                         className="text-gray font-neueLight"
                       >
-                        Reset
+                        Reimposta
                       </ScaledText>
                     </TouchableOpacity>
                   )}
@@ -394,7 +394,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                 <TouchableOpacity
                   activeOpacity={1}
                   onPress={() => setShowLocationPicker(true)}
-                  className="bg-tat-foreground border-gray flex-row items-center justify-between"
+                  className="flex-row items-center justify-between bg-tat-foreground border-gray"
                   style={{
                     paddingVertical: mvs(10),
                     paddingHorizontal: s(16),
@@ -421,7 +421,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               <View className="flex-row gap-4" style={{ marginTop: mvs(12) }}>
                 <TouchableOpacity
                   onPress={handleResetAll}
-                  className="flex-1 border border-gray rounded-full items-center justify-center"
+                  className="items-center justify-center flex-1 border rounded-full border-gray"
                   style={{ paddingVertical: mvs(12) }}
                 >
                   <ScaledText
@@ -429,7 +429,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    Reset
+                    Reimposta
                   </ScaledText>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -444,7 +444,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                     variant="md"
                     className="text-white font-neueSemibold"
                   >
-                    Apply Filters
+                    Applica filtri
                   </ScaledText>
                 </TouchableOpacity>
               </View>

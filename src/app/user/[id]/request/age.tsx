@@ -26,7 +26,7 @@ export default function AgeStep() {
   const handleSubmit = async () => {
  
     if (!user?.id || !id) {
-      toast.error("User information is missing. Please log in again.");
+      toast.error("Dati utente mancanti. Effettua di nuovo l'accesso.");
       return;
     }
     
@@ -45,11 +45,11 @@ export default function AgeStep() {
       // reset the store
       reset();
       
-      toast.success("Request sent successfully");
+      toast.success("Richiesta inviata con successo");
       router.replace(`/(tabs)/inbox?conversationId=${conversation.conversationId}` as any);
     } catch (e: any) {
       console.error("Error creating conversation:", e);
-      toast.error(e?.message || "Failed to send request. Please try again.");
+      toast.error(e?.message || "Impossibile inviare la richiesta. Riprova.");
     } finally {
       setSubmitting(false);
     }
@@ -118,8 +118,8 @@ export default function AgeStep() {
           onBack={() => router.back()}
           onNext={handleSubmit}
           nextDisabled={isAdult === undefined || submitting}
-          nextLabel={submitting ? "Submitting..." : "Submit"}
-          backLabel="Back"
+          nextLabel={submitting ? "Invio in corso..." : "Invia"}
+          backLabel="Indietro"
         />
       </ScrollView>
     </View>

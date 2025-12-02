@@ -27,7 +27,7 @@ export const StylesSection: React.FC<StylesSectionProps> = ({ styles }) => {
         variant="md"
         className="text-foreground font-montserratSemibold"
       >
-        Preferred styles
+        Stili preferiti
       </ScaledText>
       <StylePills styles={styles} />
     </View>

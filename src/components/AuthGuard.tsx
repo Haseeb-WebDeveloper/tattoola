@@ -1,10 +1,10 @@
-import { router } from 'expo-router';
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import { useAuth } from '../providers/AuthProvider';
-import { useSignupStore } from '../stores/signupStore';
-import type { UserRole } from '../types/auth';
-import { LoadingSpinner } from './ui/LoadingSpinner';
+import { router } from "expo-router";
+import React, { useEffect } from "react";
+import { View } from "react-native";
+import { useAuth } from "../providers/AuthProvider";
+import { useSignupStore } from "../stores/signupStore";
+import type { UserRole } from "../types/auth";
+import { LoadingSpinner } from "./ui/LoadingSpinner";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export function AuthGuard({
   requireAuth = true,
   requireRoles = [],
   requireVerified = false,
-  redirectTo = '/(auth)/welcome',
+  redirectTo = "/(auth)/welcome",
 }: AuthGuardProps) {
   const { user, loading, initialized } = useAuth();
   const { pendingVerificationEmail } = useSignupStore();
@@ -46,7 +46,7 @@ export function AuthGuard({
     // Check if user shouldn't be here (already authenticated)
     if (!requireAuth && user) {
       // console.log('AuthGuard: guest route but user exists → /(tabs)');
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
       return;
     }
 
@@ -54,7 +54,7 @@ export function AuthGuard({
     if (requireAuth && user && requireRoles.length > 0) {
       if (!requireRoles.includes(user.role)) {
         // console.log('AuthGuard: role mismatch → /(tabs)');
-        router.replace('/(tabs)'); // Redirect to default authenticated route
+        router.replace("/(tabs)"); // Redirect to default authenticated route
         return;
       }
     }
@@ -62,16 +62,25 @@ export function AuthGuard({
     // Check verification requirement
     if (requireAuth && user && requireVerified && !user.isVerified) {
       // console.log('AuthGuard: unverified → email-confirmation');
-      router.replace('/(auth)/email-confirmation');
+      router.replace("/(auth)/email-confirmation");
       return;
     }
-  }, [user, loading, initialized, requireAuth, requireRoles, requireVerified, redirectTo, pendingVerificationEmail]);
+  }, [
+    user,
+    loading,
+    initialized,
+    requireAuth,
+    requireRoles,
+    requireVerified,
+    redirectTo,
+    pendingVerificationEmail,
+  ]);
 
   // Show loading while checking authentication
   if (!initialized || loading) {
     return (
-      <View className='bg-background w-full h-full'>
-        <LoadingSpinner message="Loading..." overlay />
+      <View className="bg-background w-full h-full">
+        <LoadingSpinner message="Caricamento..." overlay />
       </View>
     );
   }
@@ -90,7 +99,12 @@ export function AuthGuard({
     return null;
   }
 
-  if (requireAuth && user && requireRoles.length > 0 && !requireRoles.includes(user.role)) {
+  if (
+    requireAuth &&
+    user &&
+    requireRoles.length > 0 &&
+    !requireRoles.includes(user.role)
+  ) {
     return null;
   }
 
@@ -102,7 +116,10 @@ export function AuthGuard({
 }
 
 // Convenience components
-export function RequireAuth({ children, ...props }: Omit<AuthGuardProps, 'requireAuth'>) {
+export function RequireAuth({
+  children,
+  ...props
+}: Omit<AuthGuardProps, "requireAuth">) {
   return (
     <AuthGuard requireAuth={true} {...props}>
       {children}
@@ -110,7 +127,10 @@ export function RequireAuth({ children, ...props }: Omit<AuthGuardProps, 'requir
   );
 }
 
-export function RequireGuest({ children, ...props }: Omit<AuthGuardProps, 'requireAuth'>) {
+export function RequireGuest({
+  children,
+  ...props
+}: Omit<AuthGuardProps, "requireAuth">) {
   return (
     <AuthGuard requireAuth={false} {...props}>
       {children}
@@ -118,11 +138,11 @@ export function RequireGuest({ children, ...props }: Omit<AuthGuardProps, 'requi
   );
 }
 
-export function RequireRole({ 
-  children, 
-  roles, 
-  ...props 
-}: Omit<AuthGuardProps, 'requireRoles'> & { roles: UserRole[] }) {
+export function RequireRole({
+  children,
+  roles,
+  ...props
+}: Omit<AuthGuardProps, "requireRoles"> & { roles: UserRole[] }) {
   return (
     <AuthGuard requireRoles={roles} {...props}>
       {children}
@@ -130,7 +150,10 @@ export function RequireRole({
   );
 }
 
-export function RequireVerified({ children, ...props }: Omit<AuthGuardProps, 'requireVerified'>) {
+export function RequireVerified({
+  children,
+  ...props
+}: Omit<AuthGuardProps, "requireVerified">) {
   return (
     <AuthGuard requireVerified={true} {...props}>
       {children}

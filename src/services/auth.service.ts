@@ -16,6 +16,8 @@ import { buildGoogleMapsUrl } from "./location.service";
 import { COLLECTION_NAME } from "@/constants/limits";
 
 export class AuthService {
+  // In-memory throttle for resend verification email (per app instance)
+  private static lastVerificationResendAt?: number;
   /**
    * Sign in with email and password
    */
@@ -1329,6 +1331,26 @@ export class AuthService {
    * Resend verification email
    */
   static async resendVerificationEmail(email?: string): Promise<void> {
+    const THROTTLE_WINDOW_MS = 60_000; // 60 seconds
+
+    // Basic server-side (service-layer) rate limiting to avoid abuse
+    const now = Date.now();
+    if (
+      AuthService.lastVerificationResendAt &&
+      now - AuthService.lastVerificationResendAt < THROTTLE_WINDOW_MS
+    ) {
+      const remainingMs =
+        THROTTLE_WINDOW_MS - (now - AuthService.lastVerificationResendAt);
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      logger.warn(
+        "AuthService.resendVerificationEmail: Throttled resend attempt",
+        { remainingSeconds }
+      );
+      throw new Error(
+        `You can request another verification email in ${remainingSeconds} seconds.`
+      );
+    }
+
     // If email is not provided, try to use the current session's user email
     let targetEmail = email;
     if (!targetEmail) {
@@ -1344,6 +1366,9 @@ export class AuthService {
     if (error) {
       throw new Error(error.message);
     }
+
+    // Only update throttle timestamp on successful resend
+    AuthService.lastVerificationResendAt = Date.now();
   }
 
   /**

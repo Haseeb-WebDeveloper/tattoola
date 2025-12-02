@@ -45,7 +45,7 @@ export default function StudioDescriptionScreen() {
         setInitialDescription(desc);
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Failed to load studio data");
+        toast.error(error.message || "Impossibile caricare i dati dello studio");
       } finally {
         setIsFetching(false);
       }
@@ -88,17 +88,17 @@ export default function StudioDescriptionScreen() {
       );
 
       if (result.success) {
-        toast.success("Description updated successfully!");
+        toast.success("Descrizione aggiornata con successo!");
         setInitialDescription(description);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update description");
+        toast.error(result.error || "Impossibile aggiornare la descrizione");
       }
     } catch (error: any) {
       console.error("Error updating description:", error);
-      toast.error(error.message || "Failed to update description");
+      toast.error(error.message || "Impossibile aggiornare la descrizione");
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +149,7 @@ export default function StudioDescriptionScreen() {
                 variant="lg"
                 className="text-white font-neueSemibold"
               >
-                Description
+                Descrizione
               </ScaledText>
             </View>
 
@@ -168,7 +168,7 @@ export default function StudioDescriptionScreen() {
                 className="text-white font-neueSemibold"
                 style={{ marginBottom: mvs(8) }}
               >
-                Describe your studio
+                Descrivi il tuo studio
               </ScaledText>
 
               {/* Description Input */}
@@ -176,7 +176,7 @@ export default function StudioDescriptionScreen() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="Write a description for your studio..."
+                  placeholder="Scrivi una descrizione per il tuo studio..."
                   value={description}
                   onChangeText={(text) => {
                     if (text.length <= MAX_DESCRIPTION_LENGTH) {
@@ -237,7 +237,7 @@ export default function StudioDescriptionScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -275,7 +275,7 @@ export default function StudioDescriptionScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the description
+              Hai modifiche non salvate nella descrizione
             </ScaledText>
 
             {/* Subtitle */}
@@ -285,7 +285,7 @@ export default function StudioDescriptionScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -312,7 +312,7 @@ export default function StudioDescriptionScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -331,7 +331,7 @@ export default function StudioDescriptionScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

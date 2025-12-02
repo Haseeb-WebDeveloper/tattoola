@@ -44,14 +44,14 @@ export default function NewCollectionScreen() {
   const { user } = useAuth();
 
   const [collectionId, setCollectionId] = useState<string | null>(null);
-  const [name, setName] = useState("New collection");
+  const [name, setName] = useState("Nuova collezione");
   const [posts, setPosts] = useState<GridPost[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [selectModalVisible, setSelectModalVisible] = useState(false);
   const [allUserPosts, setAllUserPosts] = useState<SimplePost[]>([]);
   const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
   const [showEditNameModal, setShowEditNameModal] = useState(false);
-  const previousNameRef = useRef<string>("New collection");
+  const previousNameRef = useRef<string>("Nuova collezione");
 
   useEffect(() => {
     (async () => {
@@ -109,19 +109,23 @@ export default function NewCollectionScreen() {
       setPosts((prev) => [...added, ...prev]);
       setSelectedPostIds(new Set());
       setSelectModalVisible(false);
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to add posts to collection");
+      toast.error(
+        err.message || "Impossibile aggiungere i post alla collezione"
+      );
     }
   };
 
   const handleDeletePost = (postId: string, caption?: string) => {
     toast.warning(
-      `Are you sure you want to remove "${caption || "this post"}" from the collection?`
+      `Sei sicuro di voler rimuovere "${
+        caption || "questo post"
+      }" dalla collezione?`
     );
   };
 
@@ -158,14 +162,16 @@ export default function NewCollectionScreen() {
     setShowEditNameModal(false);
     try {
       await updateCollectionName(collectionId, newName);
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
       }
     } catch (e: any) {
       setName(previousNameRef.current);
-      toast.error(e?.message || "Failed to update collection name");
+      toast.error(
+        e?.message || "Impossibile aggiornare il nome della collezione"
+      );
     }
   };
 
@@ -306,7 +312,9 @@ export default function NewCollectionScreen() {
                 >
                   <View className="rounded-xl border-2 border-dashed border-red-500/70 bg-red-500/10 items-center justify-center aspect-[9/16]">
                     <SVGIcons.AddRed className="w-8 h-8" />
-                    <Text className="text-gray-300 mt-3">Add new tattoo</Text>
+                    <Text className="text-gray-300 mt-3">
+                      Aggiungi nuovo tatuaggio
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -334,7 +342,9 @@ export default function NewCollectionScreen() {
       >
         <View className="flex-1 bg-black/60 items-center justify-center px-4">
           <View className="bg-background rounded-xl p-4 w-full max-w-xl">
-            <Text className="text-foreground text-lg font-neueSemibold mb-3">Select tattoos</Text>
+            <Text className="text-foreground text-lg font-neueSemibold mb-3">
+              Seleziona tatuaggi
+            </Text>
             <ScrollView className="max-h-[60vh]">
               <View className="flex-row flex-wrap justify-between">
                 {allUserPosts.map((p) => {
@@ -353,8 +363,11 @@ export default function NewCollectionScreen() {
                           resizeMode="cover"
                         />
                       </View>
-                      <Text className="text-foreground text-xs mt-2" numberOfLines={2}>
-                        {p.caption || "Untitled"}
+                      <Text
+                        className="text-foreground text-xs mt-2"
+                        numberOfLines={2}
+                      >
+                        {p.caption || "Senza titolo"}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -362,11 +375,21 @@ export default function NewCollectionScreen() {
               </View>
             </ScrollView>
             <View className="flex-row gap-3 mt-4">
-              <TouchableOpacity onPress={() => setSelectModalVisible(false)} className="flex-1 bg-gray-200 py-3 rounded-lg">
-                <Text className="text-foreground text-center font-neueSemibold">Cancel</Text>
+              <TouchableOpacity
+                onPress={() => setSelectModalVisible(false)}
+                className="flex-1 bg-gray-200 py-3 rounded-lg"
+              >
+                <Text className="text-foreground text-center font-neueSemibold">
+                  Annulla
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={confirmAdd} className="flex-1 bg-primary py-3 rounded-lg">
-                <Text className="text-white text-center font-neueSemibold">Add to collection</Text>
+              <TouchableOpacity
+                onPress={confirmAdd}
+                className="flex-1 bg-primary py-3 rounded-lg"
+              >
+                <Text className="text-white text-center font-neueSemibold">
+                  Aggiungi alla collezione
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -382,21 +405,32 @@ export default function NewCollectionScreen() {
       >
         <View className="flex-1 items-center justify-center px-6 bg-black/50">
           <View className="bg-[#1a1a1a] p-6 rounded-xl w-full max-w-sm">
-            <Text className="text-foreground text-lg font-neueSemibold mb-4">Edit Collection Name</Text>
+            <Text className="text-foreground text-lg font-neueSemibold mb-4">
+              Modifica nome collezione
+            </Text>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Collection name"
-                
+              placeholder="Nome della collezione"
               className="px-4 py-3 text-base text-foreground bg-[#252424] rounded-lg mb-4"
               autoFocus
             />
             <View className="flex-row gap-3">
-              <TouchableOpacity onPress={() => setShowEditNameModal(false)} className="flex-1 bg-[#100C0C] py-3 rounded-lg">
-                <Text className="text-foreground text-center font-neueSemibold">Cancel</Text>
+              <TouchableOpacity
+                onPress={() => setShowEditNameModal(false)}
+                className="flex-1 bg-[#100C0C] py-3 rounded-lg"
+              >
+                <Text className="text-foreground text-center font-neueSemibold">
+                  Annulla
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={saveName} className="flex-1 bg-primary py-3 rounded-lg">
-                <Text className="text-white text-center font-neueSemibold">Save</Text>
+              <TouchableOpacity
+                onPress={saveName}
+                className="flex-1 bg-primary py-3 rounded-lg"
+              >
+                <Text className="text-white text-center font-neueSemibold">
+                  Salva
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

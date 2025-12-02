@@ -204,11 +204,11 @@ export default function UploadStyleStep() {
                 <ScaledText
                   variant="sm"
                   numberOfLines={3}
-                  className="text-gray text-left font-neueMedium"
+                  className="text-left text-gray font-neueMedium"
                   style={{ textAlignVertical: "top", width: "100%" }}
                 >
                   {caption ||
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus blandit augue et rhoncus consectetur....."}
+                    "Scrivi una descrizione per il tuo post. Ad esempio: stile, soggetto, dimensioni, zona del corpo..."}
                 </ScaledText>
               </View>
             </View>
@@ -233,7 +233,7 @@ export default function UploadStyleStep() {
           variant="lg"
           className="text-foreground font-neueBold"
         >
-          Select styles
+          Seleziona gli stili
         </ScaledText>
       </View>
 
@@ -259,8 +259,8 @@ export default function UploadStyleStep() {
           )
         }
         nextDisabled={!styleId}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
       />
     </View>
   );

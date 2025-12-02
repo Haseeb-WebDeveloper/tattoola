@@ -80,7 +80,7 @@ export default function WelcomeScreen() {
                   className="text-foreground text-center font-montserratBold"
                   style={{ fontSize: scaledFont(18) }}
                 >
-                  Where tattoos meet their stories.
+                  Dove i tatuaggi incontrano le loro storie.
                 </ScaledText>
               </View>
             </View>
@@ -94,7 +94,7 @@ export default function WelcomeScreen() {
               className="text-center mb-2 font-montserratMediumItalic"
               style={{ color: "#A49A99" }}
             >
-              Create a profile to showcase your work
+              Crea un profilo per mostrare i tuoi lavori
             </ScaledText>
 
             {/* Artist Sign up */}
@@ -110,7 +110,7 @@ export default function WelcomeScreen() {
                   allowScaling={false}
                   className="text-foreground font-neueBold"
                 >
-                  Sign up as Artist
+                  Registrati come artista
                 </ScaledText>
                 <SVGIcons.Pen3
                   className="w-6 h-6 ml-2"
@@ -127,7 +127,7 @@ export default function WelcomeScreen() {
                 variant="sm"
                 className="text-gray mx-4 font-montserratMedium"
               >
-                OR
+                OPPURE
               </ScaledText>
               <View className="bg-gray/80 flex-1" style={{ height: s(0.5) }} />
             </View>
@@ -139,7 +139,7 @@ export default function WelcomeScreen() {
               className=" text-center mt-6  font-montserratMediumItalic"
               style={{ color: "#A49A99" }}
             >
-              Discover and connect with artists
+              Scopri e connettiti con gli artisti
             </ScaledText>
 
             {/* User Sign up button */}
@@ -155,7 +155,7 @@ export default function WelcomeScreen() {
                   allowScaling={false}
                   className="text-foreground font-neueBold"
                 >
-                  Sign up as User
+                  Registrati come utente
                 </ScaledText>
                 <SVGIcons.UserFilled
                   className="ml-2"
@@ -182,14 +182,14 @@ export default function WelcomeScreen() {
                 variant="md"
                 className="text-gray font-montserratMedium"
               >
-                Already have an account?{" "}
+                Hai già un account?{" "}
                 <ScaledText
                   allowScaling={false}
                   variant="md"
                   className="text-foreground font-montserratSemibold"
                   onPress={() => router.push("/(auth)/login")}
                 >
-                  Sign in
+                  Accedi
                 </ScaledText>
               </ScaledText>
             </View>

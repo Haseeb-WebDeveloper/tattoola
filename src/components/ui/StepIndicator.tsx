@@ -24,7 +24,7 @@ export function StepIndicator({ currentStep, totalSteps, style }: StepIndicatorP
         />
       </View>
       <Text style={styles.stepText}>
-        Step {currentStep} of {totalSteps}
+        Passo {currentStep} di {totalSteps}
       </Text>
     </View>
   );

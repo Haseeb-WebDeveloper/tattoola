@@ -34,7 +34,7 @@ export default function UploadDescriptionStep() {
           Descrizione
         </Text>
         <Text className="tat-body-4 text-gray mb-6 font-neueMedium">
-          Describe your post in a few words
+          Descrivi il tuo post in poche parole
         </Text>
 
         {/* Media previews (9/16 aspect, horizontal scroll) */}
@@ -81,7 +81,7 @@ export default function UploadDescriptionStep() {
               paddingHorizontal: s(42),
               paddingVertical: s(12),
             }}
-            placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit....."
+            placeholder="Scrivi una descrizione per il tuo post..."
             value={caption || ""}
             onChangeText={(v) => setCaption(v)}
           />
@@ -92,8 +92,8 @@ export default function UploadDescriptionStep() {
         onBack={() => router.back()}
         onNext={() => router.push("/upload/style")}
         nextDisabled={!caption}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
       />
     </View>
   );

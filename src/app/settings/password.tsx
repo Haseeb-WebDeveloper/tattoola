@@ -94,7 +94,7 @@ export default function PasswordSettingsScreen() {
 
     // Validate current password
     if (!currentPassword.trim()) {
-      setCurrentPasswordError("Current password is required");
+      setCurrentPasswordError("La password attuale è obbligatoria");
       isValid = false;
     }
 
@@ -110,10 +110,10 @@ export default function PasswordSettingsScreen() {
 
     // Validate confirm password
     if (!confirmPassword.trim()) {
-      setConfirmPasswordError("Please confirm your password");
+      setConfirmPasswordError("Conferma la tua password");
       isValid = false;
     } else if (newPassword !== confirmPassword) {
-      setConfirmPasswordError("Both passwords don't match");
+      setConfirmPasswordError("Le due password non coincidono");
       isValid = false;
     }
 
@@ -129,13 +129,13 @@ export default function PasswordSettingsScreen() {
       });
 
       if (error) {
-        setCurrentPasswordError("The password is incorrect");
+        setCurrentPasswordError("La password non è corretta");
         return false;
       }
 
       return true;
     } catch (err) {
-      setCurrentPasswordError("The password is incorrect");
+      setCurrentPasswordError("La password non è corretta");
       return false;
     }
   };
@@ -168,9 +168,11 @@ export default function PasswordSettingsScreen() {
         // This ensures any auth-related caching is fresh
         await clearProfileCache(user!.id);
         
-        toast.success("Password updated successfully");
+        toast.success("Password aggiornata con successo");
       } else {
-        toast.error(error.message || "Failed to update password");
+        toast.error(
+          error.message || "Impossibile aggiornare la password"
+        );
       }
 
       // Navigate back
@@ -179,7 +181,9 @@ export default function PasswordSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating password:", err);
-      toast.error(err.message || "Failed to update password");
+      toast.error(
+        err.message || "Impossibile aggiornare la password"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -241,19 +245,19 @@ export default function PasswordSettingsScreen() {
         >
           {/* Current Password */}
           <View style={{ marginBottom: mvs(24) }}>
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-gray font-montserratMedium"
-              style={{ marginBottom: mvs(8) }}
-            >
-              Enter your current password
-            </ScaledText>
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-gray font-montserratMedium"
+            style={{ marginBottom: mvs(8) }}
+          >
+            Inserisci la tua password attuale
+          </ScaledText>
             <View>
               <ScaledTextInput
                 value={currentPassword}
                 onChangeText={handleCurrentPasswordChange}
-                placeholder="Current password"
+                placeholder="Password attuale"
                   
                 secureTextEntry={!showCurrentPassword}
                 autoCapitalize="none"
@@ -306,13 +310,13 @@ export default function PasswordSettingsScreen() {
               className="text-gray font-montserratMedium"
               style={{ marginBottom: mvs(8) }}
             >
-              Enter your new password
+              Inserisci la nuova password
             </ScaledText>
             <View>
               <ScaledTextInput
                 value={newPassword}
                 onChangeText={handleNewPasswordChange}
-                placeholder="New password"
+                placeholder="Nuova password"
                   
                 secureTextEntry={!showNewPassword}
                 autoCapitalize="none"
@@ -372,13 +376,13 @@ export default function PasswordSettingsScreen() {
               className="text-gray font-montserratMedium"
               style={{ marginBottom: mvs(8) }}
             >
-              Confirm Password
+              Conferma password
             </ScaledText>
             <View>
               <ScaledTextInput
                 value={confirmPassword}
                 onChangeText={handleConfirmPasswordChange}
-                placeholder="Confirm password"
+                placeholder="Conferma password"
                   
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
@@ -452,7 +456,7 @@ export default function PasswordSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Updating..." : "Update Password"}
+              {isLoading ? "Aggiornamento..." : "Aggiorna password"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -489,7 +493,7 @@ export default function PasswordSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the password
+              Hai modifiche non salvate nella password
             </ScaledText>
 
             {/* Subtitle */}
@@ -499,7 +503,7 @@ export default function PasswordSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -526,7 +530,7 @@ export default function PasswordSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -545,7 +549,7 @@ export default function PasswordSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

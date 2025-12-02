@@ -133,7 +133,7 @@ export default function ReferencesStep() {
                   variant="md"
                   className="text-foreground font-neueBold"
                 >
-                  {uploading ? "Uploading..." : "Upload files"}
+                  {uploading ? "Caricamento..." : "Carica file"}
                 </ScaledText>
               </TouchableOpacity>
               <ScaledText

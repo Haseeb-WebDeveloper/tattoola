@@ -70,7 +70,7 @@ export default function StudioInvitationAcceptScreen() {
         }
 
         if (!token) {
-          setError("Invalid invitation link");
+          setError("Link di invito non valido");
           setLoading(false);
           return;
         }
@@ -114,7 +114,7 @@ export default function StudioInvitationAcceptScreen() {
           .single();
 
         if (fetchError || !invitation) {
-          setError("Invalid or expired invitation");
+          setError("Invito non valido o scaduto");
           setLoading(false);
           return;
         }
@@ -122,8 +122,8 @@ export default function StudioInvitationAcceptScreen() {
         if (invitation.status !== "PENDING") {
           setError(
             invitation.status === "ACCEPTED"
-              ? "This invitation has already been accepted"
-              : "This invitation has been rejected"
+              ? "Questo invito è già stato accettato"
+              : "Questo invito è stato rifiutato"
           );
           setLoading(false);
           return;
@@ -135,7 +135,7 @@ export default function StudioInvitationAcceptScreen() {
         const senderName =
           inviter?.firstName && inviter?.lastName
             ? `${inviter.firstName} ${inviter.lastName}`
-            : inviter?.username || "Studio Owner";
+            : inviter?.username || "Titolare dello studio";
 
         const invitationDataToSet = {
           studioName: studio?.name || "Studio",
@@ -147,7 +147,7 @@ export default function StudioInvitationAcceptScreen() {
         setInvitationData(invitationDataToSet);
       } catch (err: any) {
         console.error("Error loading invitation:", err);
-        setError(err.message || "Failed to load invitation");
+        setError(err.message || "Caricamento dell'invito non riuscito");
       } finally {
         setLoading(false);
       }
@@ -167,18 +167,18 @@ export default function StudioInvitationAcceptScreen() {
       );
 
       if (result.success) {
-        toast.success(`You've joined ${result.studioName}!`);
+        toast.success(`Ti sei unito a ${result.studioName}!`);
         setTimeout(() => {
           router.replace("/settings/studio" as any);
         }, 1000);
       } else {
-        toast.error(result.error || "Failed to accept invitation");
-        setError(result.error || "Failed to accept invitation");
+        toast.error(result.error || "Accettazione dell'invito non riuscita");
+        setError(result.error || "Accettazione dell'invito non riuscita");
       }
     } catch (err: any) {
       console.error("Error accepting invitation:", err);
-      toast.error(err.message || "Failed to accept invitation");
-      setError(err.message || "Failed to accept invitation");
+      toast.error(err.message || "Accettazione dell'invito non riuscita");
+      setError(err.message || "Accettazione dell'invito non riuscita");
     } finally {
       setProcessing(false);
     }
@@ -195,18 +195,18 @@ export default function StudioInvitationAcceptScreen() {
       );
 
       if (result.success) {
-        toast.success("Invitation declined");
+        toast.success("Invito rifiutato");
         setTimeout(() => {
           router.replace("/(tabs)" as any);
         }, 1000);
       } else {
-        toast.error(result.error || "Failed to decline invitation");
-        setError(result.error || "Failed to decline invitation");
+        toast.error(result.error || "Impossibile rifiutare l'invito");
+        setError(result.error || "Impossibile rifiutare l'invito");
       }
     } catch (err: any) {
       console.error("Error declining invitation:", err);
-      toast.error(err.message || "Failed to decline invitation");
-      setError(err.message || "Failed to decline invitation");
+      toast.error(err.message || "Impossibile rifiutare l'invito");
+      setError(err.message || "Impossibile rifiutare l'invito");
     } finally {
       setProcessing(false);
     }
@@ -214,7 +214,7 @@ export default function StudioInvitationAcceptScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
+      <View className="items-center justify-center flex-1 bg-background">
         <ActivityIndicator size="large" color="#CA2323" />
       </View>
     );
@@ -242,20 +242,20 @@ export default function StudioInvitationAcceptScreen() {
             <ScaledText
               allowScaling={false}
               variant="xl"
-              className="text-white font-neueSemibold mb-2 text-center"
+              className="mb-2 text-center text-white font-neueSemibold"
             >
-              Invalid Invitation
+              Invito non valido
             </ScaledText>
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-foreground font-montserratRegular text-center mb-6"
+              className="mb-6 text-center text-foreground font-montserratRegular"
             >
-              {error || "This invitation link is invalid or has expired."}
+              {error || "Questo link di invito non è valido o è scaduto."}
             </ScaledText>
             <TouchableOpacity
               onPress={() => router.replace("/(tabs)" as any)}
-              className="bg-primary rounded-full"
+              className="rounded-full bg-primary"
               style={{
                 paddingVertical: mvs(12),
                 paddingHorizontal: s(24),
@@ -266,7 +266,7 @@ export default function StudioInvitationAcceptScreen() {
                 variant="md"
                 className="text-white font-neueSemibold"
               >
-                Go Home
+                Vai alla Home
               </ScaledText>
             </TouchableOpacity>
           </ScrollView>
@@ -309,7 +309,7 @@ export default function StudioInvitationAcceptScreen() {
               />
             ) : (
               <View
-                className="bg-foreground/10 rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full bg-foreground/10"
                 style={{
                   width: s(120),
                   height: s(120),
@@ -324,23 +324,23 @@ export default function StudioInvitationAcceptScreen() {
           <ScaledText
             allowScaling={false}
             variant="2xl"
-            className="text-white font-neueSemibold text-center mb-4"
+            className="mb-4 text-center text-white font-neueSemibold"
           >
-            Studio Invitation
+            Invito allo studio
           </ScaledText>
 
           {/* Message */}
           <ScaledText
             allowScaling={false}
             variant="lg"
-            className="text-foreground font-montserratRegular text-center mb-2"
+            className="mb-2 text-center text-foreground font-montserratRegular"
           >
-            You've been invited to join
+            Sei stato invitato a unirti a
           </ScaledText>
           <ScaledText
             allowScaling={false}
             variant="xl"
-            className="text-primary font-neueSemibold text-center mb-6"
+            className="mb-6 text-center text-primary font-neueSemibold"
           >
             {invitationData.studioName}
           </ScaledText>
@@ -352,12 +352,12 @@ export default function StudioInvitationAcceptScreen() {
               variant="md"
               className="text-foreground font-montserratRegular"
             >
-              Invited by
+              Invitato da
             </ScaledText>
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-neueSemibold mt-1"
+              className="mt-1 text-white font-neueSemibold"
             >
               {invitationData.senderName}
             </ScaledText>
@@ -365,13 +365,13 @@ export default function StudioInvitationAcceptScreen() {
 
           {/* Buttons */}
           <View
-            className="flex-1 justify-end"
+            className="justify-end flex-1"
             style={{ gap: s(12), marginTop: mvs(40) }}
           >
             <TouchableOpacity
               onPress={handleAccept}
               disabled={processing}
-              className="bg-primary rounded-full items-center justify-center"
+              className="items-center justify-center rounded-full bg-primary"
               style={{
                 paddingVertical: mvs(14),
               }}
@@ -384,7 +384,7 @@ export default function StudioInvitationAcceptScreen() {
                   variant="md"
                   className="text-white font-neueSemibold"
                 >
-                  Confirm
+                  Conferma
                 </ScaledText>
               )}
             </TouchableOpacity>
@@ -392,7 +392,7 @@ export default function StudioInvitationAcceptScreen() {
             <TouchableOpacity
               onPress={handleDecline}
               disabled={processing}
-              className="bg-foreground/10 rounded-full items-center justify-center border border-gray"
+              className="items-center justify-center border rounded-full bg-foreground/10 border-gray"
               style={{
                 paddingVertical: mvs(14),
               }}
@@ -402,7 +402,7 @@ export default function StudioInvitationAcceptScreen() {
                 variant="md"
                 className="text-white font-neueSemibold"
               >
-                Decline
+                Rifiuta
               </ScaledText>
             </TouchableOpacity>
           </View>

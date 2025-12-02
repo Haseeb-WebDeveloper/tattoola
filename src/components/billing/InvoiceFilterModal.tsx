@@ -24,10 +24,10 @@ type InvoiceFilterModalProps = {
 };
 
 const STATUS_OPTIONS: { value: InvoiceStatusFilter; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "PAID", label: "Paid" },
-  { value: "OPEN", label: "Pending" },
-  { value: "UNCOLLECTIBLE", label: "Failed" },
+  { value: "ALL", label: "Tutte" },
+  { value: "PAID", label: "Pagate" },
+  { value: "OPEN", label: "In sospeso" },
+  { value: "UNCOLLECTIBLE", label: "Non riscosse" },
 ];
 
 export default function InvoiceFilterModal({
@@ -141,11 +141,11 @@ export default function InvoiceFilterModal({
   const displayText =
     tempSelectedStatuses.length === 0 ||
     (tempSelectedStatuses.length === 1 && tempSelectedStatuses[0] === "ALL")
-      ? "All"
+      ? "Tutte"
       : tempSelectedStatuses.length === 1
         ? STATUS_OPTIONS.find((opt) => opt.value === tempSelectedStatuses[0])
-            ?.label || "All"
-        : `${tempSelectedStatuses.length} selected`;
+            ?.label || "Tutte"
+        : `${tempSelectedStatuses.length} selezionate`;
 
   const hasActiveFilters =
     tempSelectedStatuses.length > 0 &&
@@ -218,7 +218,7 @@ export default function InvoiceFilterModal({
                   variant="lg"
                   className="text-foreground font-neueBold"
                 >
-                  Filter invoices
+                  Filtra fatture
                 </ScaledText>
                 {hasActiveFilters && (
                   <TouchableOpacity onPress={handleReset}>
@@ -227,7 +227,7 @@ export default function InvoiceFilterModal({
                       variant="md"
                       className="text-gray font-neueLight"
                     >
-                      Reset
+                      Reimposta
                     </ScaledText>
                   </TouchableOpacity>
                 )}
@@ -331,7 +331,7 @@ export default function InvoiceFilterModal({
                     variant="md"
                     className="text-foreground font-neueSemibold text-center"
                   >
-                    Reset
+                    Reimposta
                   </ScaledText>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -348,7 +348,7 @@ export default function InvoiceFilterModal({
                     numberOfLines={1}
                     style={{ flexShrink: 1 }}
                   >
-                    Apply Filters
+                    Applica filtri
                   </ScaledText>
                 </TouchableOpacity>
               </View>

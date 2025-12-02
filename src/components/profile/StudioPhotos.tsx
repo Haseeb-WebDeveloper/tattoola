@@ -81,7 +81,7 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
                         variant="11"
                         className="text-white font-neueBold"
                       >
-                        +{remainingCount} more
+                        +{remainingCount} altre
                       </ScaledText>
                     </View>
                   )}

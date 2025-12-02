@@ -66,7 +66,7 @@ function LoginScreenContent() {
       const message =
         error instanceof Error
           ? error.message
-          : "An error occurred during login";
+          : "Si è verificato un errore durante l'accesso";
       let toastId: any;
       toastId = toast.custom(
         <CustomToast
@@ -165,7 +165,7 @@ function LoginScreenContent() {
                 variant="2xl"
                 className="text-foreground text-center font-neueSemibold"
               >
-                Welcome back!!
+                Bentornato!!
               </ScaledText>
             </View>
           </View>
@@ -240,7 +240,7 @@ function LoginScreenContent() {
               variant="body4"
               className="text-gray font-neueLight"
             >
-              Forgot password?
+              Hai dimenticato la password?
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -259,7 +259,7 @@ function LoginScreenContent() {
               variant="lg"
               className="text-foreground font-neueSemibold"
             >
-              Sign in
+              Accedi
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -271,14 +271,14 @@ function LoginScreenContent() {
             variant="md"
             className="text-gray font-montserratMedium"
           >
-            Don’t have an account?{" "}
+            Non hai ancora un account?{" "}
             <ScaledText
               allowScaling={false}
               variant="md"
               className="text-foreground font-montserratSemibold"
               onPress={handleRegister}
             >
-              Sign up
+              Registrati
             </ScaledText>
           </ScaledText>
         </View>

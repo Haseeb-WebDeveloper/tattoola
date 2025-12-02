@@ -3,7 +3,13 @@ import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Dimensions, Image, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface Collection {
   id: string;
@@ -44,16 +50,19 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
       images.push(""); // empty string means no image, placeholder
     }
     return (
-      <View className="flex flex-row flex-wrap w-full aspect-square" style={{ gap: s(8) }}>
+      <View
+        className="flex flex-row flex-wrap w-full aspect-square"
+        style={{ gap: s(8) }}
+      >
         {[0, 1].map((row) => (
-          <View className="w-full flex-1" key={row} style={{ gap: s(8) }}>
+          <View className="flex-1 w-full" key={row} style={{ gap: s(8) }}>
             {[0, 1].map((col) => {
               const idx = row * 2 + col;
               const url = images[idx];
               return (
                 <View
                   key={idx}
-                  className="flex-1 bg-gray-200 rounded overflow-hidden aspect-square"
+                  className="flex-1 overflow-hidden bg-gray-200 rounded aspect-square"
                   style={{
                     minWidth: 0,
                   }}
@@ -80,7 +89,9 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   const screenWidth = Dimensions.get("window").width;
   const horizontalPadding = s(32); // paddingHorizontal s(16) * 2
   const itemGap = COLLECTION_GAP;
-  const itemWidth = Math.floor((screenWidth - horizontalPadding - itemGap) / NUM_COLUMNS);
+  const itemWidth = Math.floor(
+    (screenWidth - horizontalPadding - itemGap) / NUM_COLUMNS
+  );
 
   // Create the row-major order grid layout
   const renderGridItems = () => {
@@ -122,7 +133,10 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                 return (
                   <View
                     key={colIdx}
-                    style={{ width: itemWidth, marginRight: colIdx === 0 ? itemGap : 0 }}
+                    style={{
+                      width: itemWidth,
+                      marginRight: colIdx === 0 ? itemGap : 0,
+                    }}
                   />
                 );
               }
@@ -154,10 +168,10 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                     <ScaledText
                       allowScaling={false}
                       variant="md"
-                      className="text-foreground text-center font-neueLight"
+                      className="text-center text-foreground font-neueLight"
                       style={{ marginTop: mvs(8) }}
                     >
-                      Create new collection
+                      Crea nuova collezione
                     </ScaledText>
                   </TouchableOpacity>
                 );
@@ -215,7 +229,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
         className="text-foreground font-montserratSemibold"
         style={{ marginBottom: mvs(12) }}
       >
-        Collections
+        Collezioni
       </ScaledText>
       <ScrollView
         horizontal={false}

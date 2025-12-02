@@ -20,8 +20,8 @@ export default function AbsoluteNextBackFooter({
   nextDisabled,
   showBack = true,
   containerStyle,
-  nextLabel = "Next",
-  backLabel = "Back",
+  nextLabel = "Avanti",
+  backLabel = "Indietro",
 }: Props) {
   return (
     <View

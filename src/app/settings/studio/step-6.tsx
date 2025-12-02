@@ -195,7 +195,7 @@ export default function StudioStep6() {
             variant="lg"
             className="text-foreground font-neueSemibold"
           >
-           Select styles
+           Seleziona gli stili
           </ScaledText>
         </View>
 

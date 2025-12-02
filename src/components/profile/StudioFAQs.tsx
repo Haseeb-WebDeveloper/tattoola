@@ -3,11 +3,11 @@ import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 
 // Enable LayoutAnimation on Android
@@ -57,7 +57,7 @@ export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
         className="text-foreground font-montserratSemibold"
         style={{ marginBottom: mvs(12) }}
       >
-        FAQs
+        Domande frequenti
       </ScaledText>
 
       <View style={{ gap: mvs(12) }}>
@@ -68,7 +68,7 @@ export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
             <View key={faq.id}>
               <TouchableOpacity
                 onPress={() => toggleFAQ(faq.id)}
-                className="flex-row items-center justify-between  border-gray"
+                className="flex-row items-center justify-between border-gray"
                 style={{
                   paddingVertical: mvs(12),
                   paddingHorizontal: s(16),
@@ -79,7 +79,7 @@ export const StudioFAQs: React.FC<StudioFAQsProps> = ({ faqs }) => {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-montserratSemibold flex-1"
+                  className="flex-1 text-foreground font-montserratSemibold"
                 >
                   {faq.question}
                 </ScaledText>

@@ -46,7 +46,7 @@ export function UnsavedChangesModal({
             className="text-background font-neueBold text-center"
             style={{ marginBottom: mvs(4) }}
           >
-            You have unsaved changes in banner
+            Hai modifiche non salvate nel banner
           </ScaledText>
 
           {/* Subtitle */}
@@ -56,7 +56,7 @@ export function UnsavedChangesModal({
             className="text-background font-montserratMedium text-center"
             style={{ marginBottom: mvs(32) }}
           >
-            Do you want to discard them?
+            Vuoi eliminarle?
           </ScaledText>
 
           {/* Action Buttons */}
@@ -83,7 +83,7 @@ export function UnsavedChangesModal({
                 className="font-montserratMedium"
                 style={{ color: "#AD2E2E" }}
               >
-                Continue Editing
+                Continua a modificare
               </ScaledText>
             </TouchableOpacity>
 
@@ -102,7 +102,7 @@ export function UnsavedChangesModal({
                 variant="md"
                 className="text-gray font-montserratMedium"
               >
-                Discard changes
+                Elimina modifiche
               </ScaledText>
             </TouchableOpacity>
           </View>

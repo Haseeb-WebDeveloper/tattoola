@@ -90,7 +90,7 @@ export default function BusinessInfoSettingsScreen() {
           .eq("userId", user.id)
           .single();
 
-        if (apErr || !ap) throw new Error("Artist profile not found");
+        if (apErr || !ap) throw new Error("Profilo artista non trovato");
 
         if (!mounted) return;
         setArtistId(ap.id);
@@ -183,7 +183,10 @@ export default function BusinessInfoSettingsScreen() {
         });
       } catch (error: any) {
         console.error("Error loading business info:", error);
-        toast.error(error.message || "Failed to load business info");
+        toast.error(
+          error.message ||
+            "Caricamento delle informazioni attività non riuscito"
+        );
       } finally {
         if (mounted) setLoading(false);
       }
@@ -217,7 +220,7 @@ export default function BusinessInfoSettingsScreen() {
       const re =
         /^(https?:\/\/)[\w.-]+(\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]*$/i;
       if (!re.test(website.trim())) {
-        toast.error("Invalid website URL");
+        toast.error("URL del sito web non valido");
         return false;
       }
     }
@@ -225,7 +228,7 @@ export default function BusinessInfoSettingsScreen() {
       const clean = phone.trim();
       const rePhone = /^\+?[0-9\s().-]{6,}$/;
       if (!rePhone.test(clean)) {
-        toast.error("Invalid phone number");
+        toast.error("Numero di telefono non valido");
         return false;
       }
     }
@@ -257,7 +260,7 @@ export default function BusinessInfoSettingsScreen() {
       // Check file size (10MB limit for documents)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size && file.size > maxSize) {
-        toast.error("File size must be less than 10MB");
+        toast.error("Il file deve essere inferiore a 10MB");
         setUploading(false);
         return;
       }
@@ -282,11 +285,13 @@ export default function BusinessInfoSettingsScreen() {
       
       const certificateUrl = uploadResult.secureUrl;
       setCertificateUrl(certificateUrl);
-      
-      toast.success("Certificate uploaded successfully");
+
+      toast.success("Certificato caricato con successo");
     } catch (error: any) {
       console.error("Error uploading certificate:", error);
-      toast.error(error.message || "Failed to upload certificate");
+      toast.error(
+        error.message || "Caricamento del certificato non riuscito"
+      );
       setSelectedDocument(null);
     } finally {
       setUploading(false);
@@ -300,7 +305,7 @@ export default function BusinessInfoSettingsScreen() {
 
   const handleSave = async () => {
     if (!artistId || !user?.id) {
-      toast.error("Artist profile not found");
+      toast.error("Profilo artista non trovato");
       return;
     }
     if (!hasUnsavedChanges) {
@@ -365,14 +370,16 @@ export default function BusinessInfoSettingsScreen() {
       }
 
       await clearProfileCache(user.id);
-      toast.success("Business info updated successfully");
+      toast.success("Informazioni attività aggiornate con successo");
 
       setTimeout(() => {
         router.back();
       }, 500);
     } catch (err: any) {
       console.error("Error saving business info:", err);
-      toast.error(err.message || "Failed to update business info");
+      toast.error(
+        err.message || "Impossibile aggiornare le informazioni attività"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -500,13 +507,17 @@ export default function BusinessInfoSettingsScreen() {
                 paddingVertical: mvs(12),
               }}
             >
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className={locationLabel === "Not set" ? "text-[#A49A99]" : "text-foreground font-montserratMedium"}
-              >
-                {loading ? "Loading..." : locationLabel}
-              </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className={
+                locationLabel === "Not set"
+                  ? "text-[#A49A99]"
+                  : "text-foreground font-montserratMedium"
+              }
+            >
+              {loading ? "Caricamento..." : locationLabel}
+            </ScaledText>
             </TouchableOpacity>
           </View>
 
@@ -566,13 +577,13 @@ export default function BusinessInfoSettingsScreen() {
                   marginTop: mvs(12),
                 }}
               >
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueSemibold"
-                >
-                  {uploading ? "Uploading..." : "Upload Certificate"}
-                </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-foreground font-neueSemibold"
+              >
+                {uploading ? "Caricamento..." : "Carica certificato"}
+              </ScaledText>
               </TouchableOpacity>
               <ScaledText
                 allowScaling={false}
@@ -653,10 +664,10 @@ export default function BusinessInfoSettingsScreen() {
               className="text-foreground font-neueMedium"
             >
               {isSaving || uploading
-                ? "Saving..."
+                ? "Salvataggio..."
                 : loading
-                  ? "Loading..."
-                  : "Save"}
+                  ? "Caricamento..."
+                  : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -690,7 +701,7 @@ export default function BusinessInfoSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes
+              Hai modifiche non salvate
             </ScaledText>
             <ScaledText
               allowScaling={false}
@@ -698,7 +709,7 @@ export default function BusinessInfoSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
             <View style={{ gap: mvs(4) }} className="flex-row justify-center">
               <TouchableOpacity
@@ -722,7 +733,7 @@ export default function BusinessInfoSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -739,7 +750,7 @@ export default function BusinessInfoSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

@@ -239,7 +239,7 @@ export default function LikesScreen() {
         setPosts(data);
       } catch (error) {
         console.error("Error fetching liked posts:", error);
-        toast.error("Failed to load liked posts");
+        toast.error("Impossibile caricare i post che ti piacciono");
       } finally {
         setLoading(false);
       }
@@ -317,8 +317,8 @@ export default function LikesScreen() {
     let toastId: string | number = "";
     toastId = toast.custom(
       <CustomToast
-        message="Post removed from your likes. "
-        actionText="Undo?"
+        message="Post rimosso dai tuoi Mi piace."
+        actionText="Annulla"
         iconType="success"
         onAction={() => {
           // Undo the unlike
@@ -352,7 +352,7 @@ export default function LikesScreen() {
         });
       } catch (error) {
         console.error("Error unliking post:", error);
-        toast.error("Failed to unlike post");
+        toast.error("Impossibile togliere Mi piace al post");
         // Revert optimistic update
         setRemovingPostIds((prev) => {
           const newSet = new Set(prev);
@@ -409,14 +409,14 @@ export default function LikesScreen() {
   }, [selectedStyleId, tattooStyles]);
 
   const tempSelectedStyleName = useMemo(() => {
-    if (!tempSelectedStyleId) return "All";
+    if (!tempSelectedStyleId) return "Tutti";
     const style = tattooStyles.find((s) => s.id === tempSelectedStyleId);
-    return style?.name || "All";
+    return style?.name || "Tutti";
   }, [tempSelectedStyleId, tattooStyles]);
 
   return (
     <View
-      className="bg-background min-h-screen"
+      className="min-h-screen bg-background"
       style={{
         flex: 1,
       }}
@@ -429,7 +429,7 @@ export default function LikesScreen() {
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="relative flex-row items-center justify-center"
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
@@ -438,7 +438,7 @@ export default function LikesScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
+            className="absolute items-center justify-center rounded-full bg-foreground/20"
             style={{
               width: s(34),
               height: s(34),
@@ -457,7 +457,7 @@ export default function LikesScreen() {
           </ScaledText>
           <TouchableOpacity
             onPress={handleFilterPress}
-            className="absolute rounded-full items-center justify-center"
+            className="absolute items-center justify-center rounded-full"
             style={{
               width: s(34),
               height: s(34),
@@ -531,12 +531,11 @@ export default function LikesScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white text-center font-neueLight"
+              className="text-center text-white font-neueLight"
               style={{ lineHeight: mvs(23) }}
             >
-              Here you'll find the works you've liked.{"\n"}
-              (To remove it, simply open the work and click the heart icon
-              again.)
+              Qui trovi i lavori a cui hai messo Mi piace.{"\n"}
+              (Per rimuoverli, apri il lavoro e tocca di nuovo l'icona del cuore.)
             </ScaledText>
           </View>
 
@@ -887,7 +886,7 @@ export default function LikesScreen() {
               >
                 <TouchableOpacity
                   onPress={handleResetFilter}
-                  className="rounded-full items-center"
+                  className="items-center rounded-full"
                   style={{
                     flex: 1,
                     paddingVertical: mvs(10),
@@ -905,7 +904,7 @@ export default function LikesScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleApplyFilter}
-                  className="bg-primary rounded-full items-center"
+                  className="items-center rounded-full bg-primary"
                   style={{
                     flex: 1,
                     paddingVertical: mvs(10),

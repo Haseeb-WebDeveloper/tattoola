@@ -79,7 +79,7 @@ export default function StudioStepHeader({
             variant="lg"
             className="text-foreground font-neueSemibold text-center"
           >
-            Set up your studio page
+            Imposta la pagina del tuo studio
           </ScaledText>
           <View className="w-10" />
         </View>

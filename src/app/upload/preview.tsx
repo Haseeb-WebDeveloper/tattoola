@@ -64,7 +64,7 @@ export default function UploadPreviewStep() {
   const DisplayName =
     user?.firstName || user?.lastName
       ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
-      : user?.username || "User";
+      : user?.username || "Utente";
 
   const PreviewCard = () => (
     <View className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40">
@@ -145,7 +145,7 @@ export default function UploadPreviewStep() {
             variant="lg"
             className="text-foreground font-neueBold"
           >
-            Preview
+            Anteprima
           </ScaledText>
         </View>
         <View className="flex flex-row" style={{ gap: betweenGap }}>
@@ -156,7 +156,7 @@ export default function UploadPreviewStep() {
               className="text-foreground/80 font-neueBold text-center"
               style={{ marginBottom: mvs(6) }}
             >
-              Feed view
+              Vista feed
             </ScaledText>
             <PreviewCard />
           </View>
@@ -167,7 +167,7 @@ export default function UploadPreviewStep() {
               className="text-foreground/80 font-neueBold text-center"
               style={{ marginBottom: mvs(6) }}
             >
-              Detailed view
+              Vista dettagliata
             </ScaledText>
             <PreviewCard />
           </View>
@@ -182,8 +182,8 @@ export default function UploadPreviewStep() {
           !styleId ||
           (user?.role === "ARTIST" && !collectionId)
         }
-        nextLabel="Publish"
-        backLabel="Back"
+        nextLabel="Pubblica"
+        backLabel="Indietro"
       />
     </View>
   );

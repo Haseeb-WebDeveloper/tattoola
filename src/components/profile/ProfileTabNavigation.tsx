@@ -22,22 +22,22 @@ export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
   const tabs = [
     {
       id: "my-tattoos" as const,
-      label: "My tattoos",
+      label: "I miei tatuaggi",
       icon: SVGIcons.Magic,
     },
     {
       id: "liked" as const,
-      label: "Liked",
+      label: "Mi piace",
       icon: SVGIcons.Heart,
     },
     {
       id: "artists-you-follow" as const,
-      label: "Artists you follow",
+      label: "Artisti che segui",
       icon: SVGIcons.UserArt,
     },
     {
       id: "tattoolers" as const,
-      label: "Tattoolers",
+      label: "Tattoo lover",
       icon: SVGIcons.Users,
     },
   ];

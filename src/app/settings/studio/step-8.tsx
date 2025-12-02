@@ -108,13 +108,13 @@ export default function StudioStep8() {
 
   const handleNext = async () => {
     if (!user?.id) {
-      toast.error("User not found. Please log in again.");
+      toast.error("Utente non trovato. Effettua di nuovo l'accesso.");
       return;
     }
 
     // Validate required fields
     if (!step2.logoUrl) {
-      toast.error("Please upload a studio logo");
+      toast.error("Carica il logo dello studio");
       router.push("/settings/studio/step-2" as any);
       return;
     }
@@ -125,19 +125,19 @@ export default function StudioStep8() {
       !step3.municipality ||
       !step3.address
     ) {
-      toast.error("Please complete studio information");
+      toast.error("Completa le informazioni dello studio");
       router.push("/settings/studio/step-3" as any);
       return;
     }
 
     if (step6.styleIds.length === 0) {
-      toast.error("Please select at least one style");
+      toast.error("Seleziona almeno uno stile");
       router.push("/settings/studio/step-6" as any);
       return;
     }
 
     if (step7.serviceIds.length === 0) {
-      toast.error("Please select at least one service");
+      toast.error("Seleziona almeno un servizio");
       router.push("/settings/studio/step-7" as any);
       return;
     }
@@ -172,7 +172,7 @@ export default function StudioStep8() {
       );
 
       if (result.success) {
-        toast.success("Studio setup completed successfully! 🎉");
+        toast.success("Configurazione dello studio completata con successo! 🎉");
 
         // Clear the store
         resetStore();
@@ -182,11 +182,11 @@ export default function StudioStep8() {
           router.push("/settings/studio" as any);
         }, 500);
       } else {
-        toast.error(result.error || "Failed to save studio. Please try again.");
+        toast.error(result.error || "Impossibile salvare lo studio. Riprova.");
       }
     } catch (error: any) {
       console.error("Error saving studio:", error);
-      toast.error(error.message || "An unexpected error occurred");
+      toast.error(error.message || "Si è verificato un errore imprevisto");
     } finally {
       setIsSaving(false);
     }
@@ -221,8 +221,7 @@ export default function StudioStep8() {
             className="text-foreground font-neueLight text-center"
             style={{ marginBottom: mvs(20) }}
           >
-            Add a question and its answer to help visitors learn more about your
-            studio and work. You can add upto 5 FAQs in your profile
+            Aggiungi una domanda e la relativa risposta per aiutare i visitatori a conoscere meglio il tuo studio e il tuo lavoro. Puoi aggiungere fino a 5 FAQ nel tuo profilo
           </ScaledText>
 
           {/* FAQs List */}
@@ -282,7 +281,7 @@ export default function StudioStep8() {
               variant="sm"
               className="text-gray font-montserratSemibold"
             >
-              Add Faq
+              Aggiungi FAQ
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -321,7 +320,7 @@ export default function StudioStep8() {
                 variant="md"
                 className="text-foreground font-neueSemibold"
               >
-                Saving...
+                Salvataggio...
               </ScaledText>
             </View>
           </View>
@@ -329,7 +328,7 @@ export default function StudioStep8() {
           <NextBackFooter
             onNext={handleNext}
             nextDisabled={isSaving}
-            nextLabel="Complete"
+            nextLabel="Completa"
             onBack={handleBack}
           />
         )}
@@ -390,8 +389,7 @@ export default function StudioStep8() {
                 className="text-foreground font-neueLight text-center"
                 style={{ marginBottom: mvs(20) }}
               >
-                Add a question and its answer to help visitors learn more about
-                your studio and work.
+                Aggiungi una domanda e la relativa risposta per aiutare i visitatori a conoscere meglio il tuo studio e il tuo lavoro.
               </ScaledText>
               {/* Question Input */}
               <View style={{ marginBottom: mvs(24) }}>
@@ -400,7 +398,7 @@ export default function StudioStep8() {
                   variant="sm"
                   className="text-gray font-montserratSemibold mb-2"
                 >
-                  Question
+                  Domanda
                   <ScaledText variant="sm" className="text-error">
                     *
                   </ScaledText>
@@ -409,7 +407,7 @@ export default function StudioStep8() {
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
                   style={{ fontSize: s(12) }}
-                  placeholder="Enter your question"
+                  placeholder="Inserisci la domanda"
                     
                   value={tempQuestion}
                   onChangeText={setTempQuestion}
@@ -431,7 +429,7 @@ export default function StudioStep8() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="Enter your answer"
+                  placeholder="Inserisci la risposta"
                     
                   value={tempAnswer}
                   onChangeText={setTempAnswer}
@@ -472,7 +470,7 @@ export default function StudioStep8() {
                   variant="md"
                   className="text-foreground font-neueSemibold text-nowrap"
                 >
-                  {editingFaq ? "Update FAQ" : "Add FAQ "}
+                  {editingFaq ? "Aggiorna FAQ" : "Aggiungi FAQ"}
                 </ScaledText>
               </TouchableOpacity>
             </View>

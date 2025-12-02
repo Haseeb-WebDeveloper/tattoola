@@ -14,7 +14,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -23,7 +23,6 @@ type Step = "password" | "email";
 export default function EmailSettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-
 
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>("password");
@@ -138,15 +137,15 @@ export default function EmailSettingsScreen() {
     setConfirmPasswordError("");
 
     if (!currentPassword.trim()) {
-      setPasswordError("Current password is required");
+      setPasswordError("La password attuale è obbligatoria");
       isValid = false;
     }
 
     if (!confirmPassword.trim()) {
-      setConfirmPasswordError("Please confirm your password");
+      setConfirmPasswordError("Conferma la tua password");
       isValid = false;
     } else if (currentPassword !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
+      setConfirmPasswordError("Le password non coincidono");
       isValid = false;
     }
     return isValid;
@@ -165,13 +164,13 @@ export default function EmailSettingsScreen() {
       });
 
       if (error) {
-        setPasswordError("The password is incorrect");
+        setPasswordError("La password non è corretta");
         return false;
       }
 
       return true;
     } catch (err) {
-      setPasswordError("The password is incorrect");
+      setPasswordError("La password non è corretta");
       return false;
     } finally {
       setIsVerifyingPassword(false);
@@ -211,16 +210,16 @@ export default function EmailSettingsScreen() {
 
     // Check if email is same as current
     if (newEmail === user?.email) {
-      setNewEmailError("New email must be different from current email");
+      setNewEmailError("La nuova email deve essere diversa da quella attuale");
       isValid = false;
     }
 
     // Validate confirm email
     if (!confirmEmail.trim()) {
-      setConfirmEmailError("Please confirm your email");
+      setConfirmEmailError("Conferma la tua email");
       isValid = false;
     } else if (newEmail !== confirmEmail) {
-      setConfirmEmailError("Both emails don't match");
+      setConfirmEmailError("Le due email non coincidono");
       isValid = false;
     }
 
@@ -235,7 +234,6 @@ export default function EmailSettingsScreen() {
     setIsUpdatingEmail(true);
 
     try {
-
       // Update email in Supabase Auth
       const { data, error } = await supabase.auth.updateUser(
         {
@@ -246,16 +244,15 @@ export default function EmailSettingsScreen() {
         }
       );
 
-
       if (error) {
-        toast.error(error.message || "Failed to update email");
+        toast.error(error.message || "Impossibile aggiornare l'email");
         setIsUpdatingEmail(false); // Explicit clear on error
         return;
       }
 
       setIsUpdatingEmail(false); // Clear BEFORE navigation
       toast.success(
-        "Verification emails sent! Check both your old and new email addresses."
+        "Email di verifica inviate! Controlla sia il vecchio che il nuovo indirizzo email."
       );
 
       // Small delay to ensure state updates
@@ -264,7 +261,7 @@ export default function EmailSettingsScreen() {
       }, 100);
     } catch (err: any) {
       console.error("Error updating email:", err);
-      toast.error(err.message || "Failed to update email");
+      toast.error(err.message || "Impossibile aggiornare l'email");
       setIsUpdatingEmail(false); // Explicit clear on catch
     }
   };
@@ -280,7 +277,7 @@ export default function EmailSettingsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="bg-background h-screen"
+      className="h-screen bg-background"
       style={{
         flex: 1,
       }}
@@ -289,11 +286,11 @@ export default function EmailSettingsScreen() {
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-       style={{ flex: 1 }}
+        style={{ flex: 1 }}
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="relative flex-row items-center justify-center"
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
@@ -302,7 +299,7 @@ export default function EmailSettingsScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
+            className="absolute items-center justify-center rounded-full bg-foreground/20"
             style={{
               width: s(34),
               height: s(34),
@@ -317,7 +314,7 @@ export default function EmailSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            {currentStep === "password" ? "Modifica email" : "New email"}
+            {currentStep === "password" ? "Modifica email" : "Nuova email"}
           </ScaledText>
         </View>
 
@@ -335,9 +332,9 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-montserratMedium text-center"
+                  className="text-center text-foreground font-montserratMedium"
                 >
-                  Per richiedere la modifica della mail devi inserire prima la
+                  Per richiedere la modifica dell'email devi inserire prima la
                   tua password attuale.
                 </ScaledText>
               </View>
@@ -347,7 +344,7 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-tat mb-2 font-montserratSemibold"
+                  className="mb-2 text-tat font-montserratSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
                   Inserire la password
@@ -356,7 +353,7 @@ export default function EmailSettingsScreen() {
                   <ScaledTextInput
                     value={currentPassword}
                     onChangeText={handlePasswordChange}
-                    placeholder="Enter your password"
+                    placeholder="Inserisci la tua password"
                     secureTextEntry={!showCurrentPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -410,17 +407,16 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
-                  className="text-tat mb-2 font-montserratSemibold"
+                  className="mb-2 text-tat font-montserratSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
-                  Conferma Password
+                  Conferma password
                 </ScaledText>
                 <View>
                   <ScaledTextInput
                     value={confirmPassword}
                     onChangeText={handleConfirmPasswordChange}
-                    placeholder="Re-enter your password"
-                      
+                    placeholder="Reinserisci la tua password"
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -477,7 +473,7 @@ export default function EmailSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-montserratMedium text-center"
+                  className="text-center text-foreground font-montserratMedium"
                 >
                   Inserisci il nuovo indirizzo e-mail che desideri usare in
                   Tattoola
@@ -511,13 +507,12 @@ export default function EmailSettingsScreen() {
                   className="text-gray font-montserratMedium"
                   style={{ marginBottom: mvs(6) }}
                 >
-                  Inserire la nouve email
+                  Inserisci la nuova email
                 </ScaledText>
                 <ScaledTextInput
                   value={newEmail}
                   onChangeText={handleNewEmailChange}
-                  placeholder={user?.email || "Enter new email"}
-                    
+                  placeholder={user?.email || "Inserisci la nuova email"}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -559,8 +554,7 @@ export default function EmailSettingsScreen() {
                 <ScaledTextInput
                   value={confirmEmail}
                   onChangeText={handleConfirmEmailChange}
-                  placeholder="Re-enter new email"
-                    
+                  placeholder="Reinserisci la nuova email"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -610,7 +604,7 @@ export default function EmailSettingsScreen() {
                 ? isVerifyingPassword || !isPasswordStepValid
                 : isUpdatingEmail || !isEmailStepValid
             }
-            className="rounded-full items-center justify-center flex-row"
+            className="flex-row items-center justify-center rounded-full"
             style={{
               backgroundColor:
                 currentStep === "password"
@@ -639,11 +633,11 @@ export default function EmailSettingsScreen() {
             >
               {currentStep === "password"
                 ? isVerifyingPassword
-                  ? "Verifying..."
-                  : "Next"
+                  ? "Verifica in corso..."
+                  : "Avanti"
                 : isUpdatingEmail
-                  ? "Updating..."
-                  : "Update Email"}
+                  ? "Aggiornamento in corso..."
+                  : "Aggiorna email"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -657,7 +651,7 @@ export default function EmailSettingsScreen() {
         onRequestClose={handleContinueEditing}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -677,20 +671,20 @@ export default function EmailSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes
+              Hai modifiche non salvate
             </ScaledText>
 
             {/* Subtitle */}
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -698,7 +692,7 @@ export default function EmailSettingsScreen() {
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}
-                className="rounded-full border-2 items-center justify-center flex-row"
+                className="flex-row items-center justify-center border-2 rounded-full"
                 style={{
                   borderColor: "#AD2E2E",
                   paddingVertical: mvs(10.5),
@@ -717,14 +711,14 @@ export default function EmailSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
               {/* Discard Changes Button */}
               <TouchableOpacity
                 onPress={handleDiscardChanges}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
@@ -736,7 +730,7 @@ export default function EmailSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

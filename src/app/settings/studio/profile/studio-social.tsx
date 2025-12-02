@@ -59,7 +59,7 @@ export default function StudioSocialScreen() {
         setInitialData(data);
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Failed to load studio data");
+        toast.error(error.message || "Impossibile caricare i dati dello studio");
       } finally {
         setIsFetching(false);
       }
@@ -107,17 +107,17 @@ export default function StudioSocialScreen() {
       );
 
       if (result.success) {
-        toast.success("Social links updated successfully!");
+        toast.success("Link social aggiornati con successo!");
         setInitialData(formData);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update social links");
+        toast.error(result.error || "Impossibile aggiornare i link social");
       }
     } catch (error: any) {
       console.error("Error updating social links:", error);
-      toast.error(error.message || "Failed to update social links");
+      toast.error(error.message || "Impossibile aggiornare i link social");
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +168,7 @@ export default function StudioSocialScreen() {
                 variant="lg"
                 className="text-white font-neueSemibold"
               >
-                Social links
+                Link social
               </ScaledText>
             </View>
 
@@ -193,7 +193,7 @@ export default function StudioSocialScreen() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="https://yourwebsite.com"
+                  placeholder="https://iltuositoweb.com"
                   value={formData.website}
                   onChangeText={(text) => handleInputChange("website", text)}
                   autoCapitalize="none"
@@ -272,7 +272,7 @@ export default function StudioSocialScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -310,7 +310,7 @@ export default function StudioSocialScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in social links
+              Hai modifiche non salvate nei link social
             </ScaledText>
 
             {/* Subtitle */}
@@ -320,7 +320,7 @@ export default function StudioSocialScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -347,7 +347,7 @@ export default function StudioSocialScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -366,7 +366,7 @@ export default function StudioSocialScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

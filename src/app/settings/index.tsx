@@ -40,7 +40,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
     {!iconRight ? (
       <View className="flex-row items-center flex-1 ">
         {icon && <View style={{ marginRight: s(12) }}>{icon}</View>}
-        <View className="flex-1 flex-row items-center" style={{ gap: s(24) }}>
+        <View className="flex-row items-center flex-1" style={{ gap: s(24) }}>
           <ScaledText
             allowScaling={false}
             variant="md"
@@ -208,16 +208,16 @@ export default function SettingsScreen() {
         .eq("id", user.id);
 
       if (error) {
-        toast.error(error.message || "Failed to deactivate account");
+        toast.error(error.message || "Impossibile disattivare l'account");
         setIsDeactivating(false);
         return;
       }
 
-      toast.success("Account deactivated");
+      toast.success("Account disattivato");
       setShowDeleteModal(false);
       await logout();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to deactivate account");
+      toast.error(e?.message || "Impossibile disattivare l'account");
       setIsDeactivating(false);
     }
   };
@@ -228,14 +228,14 @@ export default function SettingsScreen() {
 
   return (
     <View
-      className="bg-background h-screen"
+      className="h-screen bg-background"
       style={{
         flex: 1,
       }}
     >
       {/* Header */}
       <View
-        className="flex-row items-center justify-center relative"
+        className="relative flex-row items-center justify-center"
         style={{
           paddingHorizontal: s(16),
           paddingVertical: mvs(16),
@@ -244,7 +244,7 @@ export default function SettingsScreen() {
       >
         <TouchableOpacity
           onPress={handleBack}
-          className="absolute rounded-full bg-foreground/20 items-center justify-center"
+          className="absolute items-center justify-center rounded-full bg-foreground/20"
           style={{
             width: s(34),
             height: s(34),
@@ -259,14 +259,14 @@ export default function SettingsScreen() {
           variant="2xl"
           className="text-white font-neueSemibold"
         >
-          Settings
+          Impostazioni
         </ScaledText>
       </View>
 
       <ScrollView className="h-full" showsVerticalScrollIndicator={false}>
         {/* Account Management */}
         <SettingsSection
-          title="Account Management"
+          title="Gestione account"
           icon={<SVGIcons.EditUser style={{ width: s(16), height: s(16) }} />}
         >
           <SettingsItem
@@ -287,7 +287,7 @@ export default function SettingsScreen() {
         {/* Subscription & Billing */}
         {user?.role === "ARTIST" && (
           <SettingsSection
-            title="Subscription & Billing"
+            title="Abbonamento e fatturazione"
             icon={
               <SVGIcons.Subscription style={{ width: s(16), height: s(16) }} />
             }
@@ -302,7 +302,7 @@ export default function SettingsScreen() {
         )}
 
         {/* Advanced settings */}
-        <SettingsSection title="Advanced settings">
+        <SettingsSection title="Impostazioni avanzate">
           <SettingsItem title="Profilo" onPress={handleProfilePress} />
           <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem title="Community" onPress={handleCommunityPress} />
@@ -323,7 +323,7 @@ export default function SettingsScreen() {
         </SettingsSection>
 
         {/* Danger zone */}
-        <SettingsSection title="Danger zone">
+        <SettingsSection title="Zona pericolosa">
           <SettingsItem
             title="Eliminazione account"
             onPress={handleAccountDeletionPress}
@@ -347,7 +347,7 @@ export default function SettingsScreen() {
         onRequestClose={handleCancelDeletion}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -365,7 +365,7 @@ export default function SettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
               Elimina account?
@@ -374,18 +374,18 @@ export default function SettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
-              This action will deactivate your account. You can reactivate it
-              withen 30 days by contacting support.
+              Questa azione disattiverà il tuo account. Puoi riattivarlo entro
+              30 giorni contattando il supporto.
             </ScaledText>
 
             <View style={{ gap: mvs(4) }} className="flex-row justify-center">
               <TouchableOpacity
                 onPress={handleConfirmDeletion}
                 disabled={isDeactivating}
-                className="rounded-full items-center justify-center flex-row"
+                className="flex-row items-center justify-center rounded-full"
                 style={{
                   backgroundColor: isDeactivating ? "#6B2C2C" : "#AD2E2E",
                   paddingVertical: mvs(10.5),
@@ -398,14 +398,14 @@ export default function SettingsScreen() {
                   variant="md"
                   className="font-montserratMedium text-foreground"
                 >
-                  {isDeactivating ? "Processing..." : "I understand"}
+                  {isDeactivating ? "Elaborazione..." : "Ho capito"}
                 </ScaledText>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleCancelDeletion}
                 disabled={isDeactivating}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
@@ -417,7 +417,7 @@ export default function SettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Cancel
+                  Annulla
                 </ScaledText>
               </TouchableOpacity>
             </View>

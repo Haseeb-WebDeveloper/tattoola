@@ -32,7 +32,7 @@ export const StudioSearchBar: React.FC<StudioSearchBarProps> = ({
           variant="sm"
           className="text-tat font-montserratSemibold"
         >
-          Enter the artist's username or email address
+          Inserisci username o email dell'artista
         </ScaledText>
         <ScaledText
           allowScaling={false}

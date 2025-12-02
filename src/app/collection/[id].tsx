@@ -108,7 +108,7 @@ export default function CollectionDetailsScreen() {
       setPosts(data.posts);
       setEditName(data.name);
     } catch (err: any) {
-      setError(err.message || "Failed to load collection");
+      setError(err.message || "Impossibile caricare la collezione");
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,9 @@ export default function CollectionDetailsScreen() {
       }));
       const toastId = toast.custom(
         <CustomToast
-          message={err.message || "Failed to update collection name"}
+          message={
+            err.message || "Impossibile aggiornare il nome della collezione"
+          }
           iconType="error"
           onClose={() => toast.dismiss(toastId)}
         />,
@@ -190,7 +192,7 @@ export default function CollectionDetailsScreen() {
     } catch (err: any) {
       const toastId = toast.custom(
         <CustomToast
-          message={err.message || "Failed to remove post"}
+          message={err.message || "Impossibile rimuovere il post"}
           iconType="error"
           onClose={() => toast.dismiss(toastId)}
         />,
@@ -291,7 +293,9 @@ export default function CollectionDetailsScreen() {
       // Show success toast
       const toastId = toast.custom(
         <CustomToast
-          message={`${toAdd.length} ${toAdd.length === 1 ? "tattoo" : "tattoos"} added to collection`}
+          message={`${toAdd.length} ${
+            toAdd.length === 1 ? "tatuaggio" : "tatuaggi"
+          } aggiunti alla collezione`}
           iconType="success"
           onClose={() => toast.dismiss(toastId)}
         />,
@@ -305,7 +309,9 @@ export default function CollectionDetailsScreen() {
       }));
       const toastId = toast.custom(
         <CustomToast
-          message={err.message || "Failed to add posts to collection"}
+          message={
+            err.message || "Impossibile aggiungere i post alla collezione"
+          }
           iconType="error"
           onClose={() => toast.dismiss(toastId)}
         />,
@@ -362,13 +368,13 @@ export default function CollectionDetailsScreen() {
     return (
       <View className="flex-1 bg-background">
         {/* Header skeleton */}
-        <View className="flex-row items-center justify-between pb-4 pt-4 px-4">
+        <View className="flex-row items-center justify-between px-4 pt-4 pb-4">
           <View className="w-10 h-10 rounded-full bg-foreground/20" />
           <View className="items-center flex-1">
-            <View className="w-40 h-6 bg-foreground/20 rounded mb-2" />
+            <View className="w-40 h-6 mb-2 rounded bg-foreground/20" />
             <View className="flex-row items-center mt-1">
-              <View className="w-5 h-5 rounded-full mr-2 bg-foreground/20" />
-              <View className="w-48 h-4 bg-foreground/20 rounded" />
+              <View className="w-5 h-5 mr-2 rounded-full bg-foreground/20" />
+              <View className="w-48 h-4 rounded bg-foreground/20" />
             </View>
           </View>
           <View className="w-10 h-10 rounded-full bg-foreground/20" />
@@ -380,7 +386,7 @@ export default function CollectionDetailsScreen() {
             {Array.from({ length: 6 }).map((_, idx) => (
               <View key={idx} style={{ width: POST_WIDTH }} className="mb-2">
                 <View className="rounded-lg bg-foreground/10 aspect-[9/16]" />
-                <View className="h-4 bg-foreground/10 rounded mt-2 w-5/6" />
+                <View className="w-5/6 h-4 mt-2 rounded bg-foreground/10" />
               </View>
             ))}
           </View>
@@ -391,19 +397,19 @@ export default function CollectionDetailsScreen() {
 
   if (error || !collection) {
     return (
-      <View className="flex-1 bg-background items-center justify-center px-6">
+      <View className="items-center justify-center flex-1 px-6 bg-background">
         <ScaledText
-          className="text-foreground text-center"
+          className="text-center text-foreground"
           style={{ marginBottom: mvs(16) }}
         >
-          {error || "Collection not found"}
+          {error || "Collezione non trovata"}
         </ScaledText>
         <TouchableOpacity
           onPress={handleBack}
-          className="bg-primary px-6 py-3 rounded-lg"
+          className="px-6 py-3 rounded-lg bg-primary"
         >
           <ScaledText className="text-white font-neueSemibold">
-            Go Back
+            Torna indietro
           </ScaledText>
         </TouchableOpacity>
       </View>
@@ -414,20 +420,20 @@ export default function CollectionDetailsScreen() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View className="flex-1 bg-background">
         {/* Header */}
-        <View className="flex-row items-center justify-between pb-4 pt-4 px-4">
+        <View className="flex-row items-center justify-between px-4 pt-4 pb-4">
           <TouchableOpacity
             onPress={handleBack}
-            className="w-10 h-10 rounded-full bg-foreground/20 items-center justify-center"
+            className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
             <SVGIcons.ChevronLeft className="w-5 h-5" />
           </TouchableOpacity>
 
-          <View className="flex-1 items-center">
+          <View className="items-center flex-1">
             <View className="flex-row items-center">
               <ScaledText
                 allowScaling={false}
                 variant="2xl"
-                className="text-foreground font-neueSemibold mr-2  border-foreground"
+                className="mr-2 text-foreground font-neueSemibold border-foreground"
                 style={{
                   lineHeight: mvs(20),
                   borderBottomWidth: mvs(0.5),
@@ -447,15 +453,17 @@ export default function CollectionDetailsScreen() {
                     user?.avatar ||
                     `https://api.dicebear.com/7.x/initials/png?seed=${collection?.author?.firstName?.split(" ")[0]}`,
                 }}
-                className="w-5 h-5 rounded-full mr-2 border border-foreground"
+                className="w-5 h-5 mr-2 border rounded-full border-foreground"
               />
               <ScaledText
                 variant="sm"
                 className="text-foreground font-montserratSemibold"
               >
-                {collection?.author?.firstName || user?.firstName || "Unknown"}{" "}
-                {collection?.author?.lastName || user?.lastName || "User"} •{" "}
-                {collection.postsCount} designs
+                {collection?.author?.firstName ||
+                  user?.firstName ||
+                  "Sconosciuto"}{" "}
+                {collection?.author?.lastName || user?.lastName || ""} •{" "}
+                {collection.postsCount} design
               </ScaledText>
             </View>
           </View>

@@ -74,7 +74,7 @@ export default function ServicesSettingsScreen() {
           .single();
 
         if (profileError || !profileData) {
-          throw new Error("Artist profile not found");
+          throw new Error("Profilo artista non trovato");
         }
 
         const artistProfileId = profileData.id;
@@ -93,7 +93,7 @@ export default function ServicesSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading services:", error);
-        toast.error(error.message || "Failed to load services");
+        toast.error(error.message || "Caricamento dei servizi non riuscito");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -156,7 +156,7 @@ export default function ServicesSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Services updated successfully");
+      toast.success("Servizi aggiornati con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -164,7 +164,7 @@ export default function ServicesSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating services:", err);
-      toast.error(err.message || "Failed to update services");
+      toast.error(err.message || "Impossibile aggiornare i servizi");
     } finally {
       setIsLoading(false);
     }
@@ -241,7 +241,7 @@ export default function ServicesSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Services offered
+            Servizi offerti
           </ScaledText>
         </View>
 
@@ -262,7 +262,7 @@ export default function ServicesSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Select services
+            Seleziona i servizi
           </ScaledText>
         </View>
 
@@ -327,7 +327,7 @@ export default function ServicesSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -364,7 +364,7 @@ export default function ServicesSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in services
+              Hai modifiche non salvate nei servizi
             </ScaledText>
 
             {/* Subtitle */}
@@ -374,7 +374,7 @@ export default function ServicesSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -401,7 +401,7 @@ export default function ServicesSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -420,7 +420,7 @@ export default function ServicesSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

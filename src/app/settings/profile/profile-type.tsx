@@ -71,7 +71,9 @@ export default function ProfileTypeSettingsScreen() {
       await updateProfile({ isPublic });
 
       toast.success(
-        `Profile set to ${selectedType === "public" ? "public" : "private"}`
+        `Profilo impostato su ${
+          selectedType === "public" ? "pubblico" : "privato"
+        }`
       );
 
       // Navigate back on success
@@ -80,7 +82,9 @@ export default function ProfileTypeSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating profile type:", err);
-      toast.error(err.message || "Failed to update profile visibility");
+      toast.error(
+        err.message || "Impossibile aggiornare la visibilità del profilo"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -115,13 +119,13 @@ export default function ProfileTypeSettingsScreen() {
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
           </TouchableOpacity>
-          <ScaledText
-            allowScaling={false}
-            variant="lg"
-            className="text-white font-neueSemibold"
-          >
-            Profile visibility
-          </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-white font-neueSemibold"
+            >
+              Visibilità profilo
+            </ScaledText>
         </View>
 
         {/* Divider */}
@@ -178,15 +182,15 @@ export default function ProfileTypeSettingsScreen() {
                   className="text-foreground font-montserratSemibold"
                   style={{ marginBottom: mvs(4) }}
                 >
-                  Public profile
+                  Profilo pubblico
                 </ScaledText>
                 <ScaledText
                   allowScaling={false}
                   variant="11"
                   className="text-foreground font-neueRoman"
                 >
-                  Your tattoos, the artists you follow will be visible on your
-                  page
+                  I tuoi tatuaggi e gli artisti che segui saranno visibili nella
+                  tua pagina
                 </ScaledText>
               </View>
             </View>
@@ -231,15 +235,15 @@ export default function ProfileTypeSettingsScreen() {
                   className="text-foreground font-montserratSemibold"
                   style={{ marginBottom: mvs(4) }}
                 >
-                  Private profile
+                  Profilo privato
                 </ScaledText>
                 <ScaledText
                   allowScaling={false}
                   variant="11"
                   className="text-foreground font-neueRoman"
                 >
-                  Your tattoos and the artists you follow are visible only to
-                  you
+                  I tuoi tatuaggi e gli artisti che segui sono visibili solo a
+                  te
                 </ScaledText>
               </View>
             </View>
@@ -269,7 +273,7 @@ export default function ProfileTypeSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -306,7 +310,7 @@ export default function ProfileTypeSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in profile visibility
+              Hai modifiche non salvate nella visibilità del profilo
             </ScaledText>
 
             {/* Subtitle */}
@@ -316,7 +320,7 @@ export default function ProfileTypeSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -343,7 +347,7 @@ export default function ProfileTypeSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -362,7 +366,7 @@ export default function ProfileTypeSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

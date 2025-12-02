@@ -61,7 +61,7 @@ export default function StudioFAQsScreen() {
         setInitialFaqs(JSON.parse(JSON.stringify(faqData)));
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Failed to load studio data");
+        toast.error(error.message || "Impossibile caricare i dati dello studio");
       } finally {
         setIsFetching(false);
       }
@@ -153,17 +153,17 @@ export default function StudioFAQsScreen() {
       );
 
       if (result.success) {
-        toast.success("FAQs updated successfully!");
+        toast.success("FAQ aggiornate con successo!");
         setInitialFaqs(JSON.parse(JSON.stringify(faqs)));
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update FAQs");
+        toast.error(result.error || "Impossibile aggiornare le FAQ");
       }
     } catch (error: any) {
       console.error("Error updating FAQs:", error);
-      toast.error(error.message || "Failed to update FAQs");
+      toast.error(error.message || "Impossibile aggiornare le FAQ");
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +212,7 @@ export default function StudioFAQsScreen() {
                 variant="lg"
                 className="text-white font-neueSemibold"
               >
-                FAQs
+                FAQ
               </ScaledText>
             </View>
 
@@ -231,8 +231,7 @@ export default function StudioFAQsScreen() {
                 className="text-foreground font-neueLight text-center"
                 style={{ marginBottom: mvs(20) }}
               >
-                Add a question and its answer to help visitors learn more about your
-                studio and work. You can add upto 5 FAQs in your profile
+                Aggiungi una domanda e la relativa risposta per aiutare i visitatori a conoscere meglio il tuo studio e il tuo lavoro. Puoi aggiungere fino a 5 FAQ nel tuo profilo
               </ScaledText>
 
               {/* FAQs List */}
@@ -297,7 +296,7 @@ export default function StudioFAQsScreen() {
                   variant="sm"
                   className="text-gray font-montserratSemibold"
                 >
-                  Add Faq
+                  Aggiungi FAQ
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -329,7 +328,7 @@ export default function StudioFAQsScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -391,8 +390,7 @@ export default function StudioFAQsScreen() {
                 className="text-foreground font-neueLight text-center"
                 style={{ marginBottom: mvs(20) }}
               >
-                Add a question and its answer to help visitors learn more about
-                your studio and work.
+                Aggiungi una domanda e la relativa risposta per aiutare i visitatori a conoscere meglio il tuo studio e il tuo lavoro.
               </ScaledText>
 
               {/* Question Input */}
@@ -402,7 +400,7 @@ export default function StudioFAQsScreen() {
                   variant="sm"
                   className="text-gray font-montserratSemibold mb-2"
                 >
-                  Question
+                  Domanda
                   <ScaledText variant="sm" className="text-error">
                     *
                   </ScaledText>
@@ -410,7 +408,7 @@ export default function StudioFAQsScreen() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="Enter your question"
+                  placeholder="Inserisci la domanda"
                     
                   value={tempQuestion}
                   onChangeText={setTempQuestion}
@@ -432,7 +430,7 @@ export default function StudioFAQsScreen() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="Enter your answer"
+                  placeholder="Inserisci la risposta"
                     
                   value={tempAnswer}
                   onChangeText={setTempAnswer}
@@ -473,7 +471,7 @@ export default function StudioFAQsScreen() {
                   variant="md"
                   className="text-foreground font-neueMedium"
                 >
-                  {editingFaq ? "Update FAQ" : "Add FAQ"}
+                  {editingFaq ? "Aggiorna FAQ" : "Aggiungi FAQ"}
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -512,7 +510,7 @@ export default function StudioFAQsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in FAQs
+              Hai modifiche non salvate nelle FAQ
             </ScaledText>
 
             {/* Subtitle */}
@@ -522,7 +520,7 @@ export default function StudioFAQsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -549,7 +547,7 @@ export default function StudioFAQsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -568,7 +566,7 @@ export default function StudioFAQsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

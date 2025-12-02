@@ -52,7 +52,7 @@ export default function ExperienceSettingsScreen() {
           .single();
 
         if (profileError || !profileData) {
-          throw new Error("Artist profile not found");
+          throw new Error("Profilo artista non trovato");
         }
 
         if (mounted) {
@@ -65,7 +65,7 @@ export default function ExperienceSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading experience:", error);
-        toast.error(error.message || "Failed to load experience");
+        toast.error(error.message || "Caricamento dell'esperienza non riuscito");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -134,7 +134,7 @@ export default function ExperienceSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Experience updated successfully");
+      toast.success("Esperienza aggiornata con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -142,7 +142,9 @@ export default function ExperienceSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating experience:", err);
-      toast.error(err.message || "Failed to update experience");
+      toast.error(
+        err.message || "Impossibile aggiornare l'esperienza"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -289,7 +291,7 @@ export default function ExperienceSettingsScreen() {
                   >
                     {selectedYear
                       ? selectedYear.toString()
-                      : "Select the year you started your profession"}
+                      : "Seleziona l'anno in cui hai iniziato la professione"}
                   </ScaledText>
                 </View>
               </TouchableOpacity>
@@ -363,7 +365,7 @@ export default function ExperienceSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : loading ? "Loading..." : "Save"}
+              {isLoading ? "Salvataggio..." : loading ? "Caricamento..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -399,14 +401,14 @@ export default function ExperienceSettingsScreen() {
             paddingTop: mvs(20),
           }}
         >
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-[#fff] font-neueLight text-center"
-            style={{ marginBottom: mvs(24) }}
-          >
-            Select the year you started your profession
-          </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-[#fff] font-neueLight text-center"
+              style={{ marginBottom: mvs(24) }}
+            >
+              Seleziona l'anno in cui hai iniziato la professione
+            </ScaledText>
 
           {/* Fixed Height Scrollable Grid - Shows 4 rows (12 years) */}
           <BottomSheetScrollView
@@ -464,13 +466,13 @@ export default function ExperienceSettingsScreen() {
                 paddingVertical: mvs(12),
               }}
             >
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueBold"
-              >
-                Select year
-              </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueBold"
+                >
+                  Seleziona anno
+                </ScaledText>
             </TouchableOpacity>
           </View>
         </View>
@@ -507,7 +509,7 @@ export default function ExperienceSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes
+              Hai modifiche non salvate
             </ScaledText>
 
             {/* Subtitle */}
@@ -517,7 +519,7 @@ export default function ExperienceSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -544,7 +546,7 @@ export default function ExperienceSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -563,7 +565,7 @@ export default function ExperienceSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

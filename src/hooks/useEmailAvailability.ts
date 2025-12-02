@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
+import { useCallback, useState } from "react";
 
 export function useEmailAvailability(initialEmail: string = "") {
   const [checking, setChecking] = useState(false);
@@ -37,7 +37,7 @@ export function useEmailAvailability(initialEmail: string = "") {
         setAvailable(isAvailable);
 
         if (!isAvailable) {
-          setError("This email is already registered");
+          setError("Questa email è già registrata");
         } else {
           setError(null);
         }

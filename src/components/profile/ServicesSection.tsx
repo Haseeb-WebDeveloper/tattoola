@@ -30,7 +30,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
         className="text-foreground font-montserratSemibold"
         style={{ marginBottom: mvs(8) }}
       >
-        Services
+        Servizi
       </ScaledText>
       <View style={{ gap: mvs(8) }}>
         {services.map((service) => (

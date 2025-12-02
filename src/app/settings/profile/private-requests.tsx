@@ -56,7 +56,7 @@ export default function PrivateRequestsSettingsScreen() {
           .single();
 
         if (profileError || !profileData) {
-          throw new Error("Artist profile not found");
+          throw new Error("Profilo artista non trovato");
         }
 
         if (mounted) {
@@ -82,7 +82,9 @@ export default function PrivateRequestsSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading private requests settings:", error);
-        toast.error(error.message || "Failed to load settings");
+        toast.error(
+          error.message || "Caricamento delle impostazioni non riuscito"
+        );
       } finally {
         if (mounted) {
           setLoading(false);
@@ -168,7 +170,7 @@ export default function PrivateRequestsSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Private requests updated successfully");
+      toast.success("Richieste private aggiornate con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -176,7 +178,9 @@ export default function PrivateRequestsSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating private requests settings:", err);
-      toast.error(err.message || "Failed to update settings");
+      toast.error(
+        err.message || "Impossibile aggiornare le impostazioni"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -537,7 +541,7 @@ export default function PrivateRequestsSettingsScreen() {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    Back
+                    Indietro
                   </ScaledText>
                 </TouchableOpacity>
 
@@ -558,7 +562,7 @@ export default function PrivateRequestsSettingsScreen() {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    Save
+                    Salva
                   </ScaledText>
                   <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                 </TouchableOpacity>
@@ -582,9 +586,8 @@ export default function PrivateRequestsSettingsScreen() {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    {loading ? "Loading..." : acceptRequests ? "Save" : "Next"}
+                    {loading ? "Caricamento..." : acceptRequests ? "Salva" : "Avanti"}
                   </ScaledText>
-                 
                 </TouchableOpacity>
               </>
             )}
@@ -623,7 +626,7 @@ export default function PrivateRequestsSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes
+              Hai modifiche non salvate
             </ScaledText>
 
             {/* Subtitle */}
@@ -633,7 +636,7 @@ export default function PrivateRequestsSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -660,7 +663,7 @@ export default function PrivateRequestsSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -679,7 +682,7 @@ export default function PrivateRequestsSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

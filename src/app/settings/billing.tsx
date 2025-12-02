@@ -38,7 +38,7 @@ export default function SettingsBilling() {
       const inv = await BillingService.getInvoices();
       setInvoices(inv);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to load invoices");
+      toast.error(e?.message || "Impossibile caricare le fatture");
     }
   };
 
@@ -60,7 +60,7 @@ export default function SettingsBilling() {
     try {
       await Linking.openURL(url);
     } catch {
-      toast.error("Could not open invoice file");
+      toast.error("Impossibile aprire il file della fattura");
     }
   };
 
@@ -95,7 +95,7 @@ export default function SettingsBilling() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="bg-background min-h-screen"
+      className="min-h-screen bg-background"
       style={{
         flex: 1,
       }}
@@ -116,7 +116,7 @@ export default function SettingsBilling() {
         >
           <TouchableOpacity
             onPress={() => router.back()}
-            className="rounded-full bg-foreground/20 items-center justify-center"
+            className="items-center justify-center rounded-full bg-foreground/20"
             style={{ width: s(34), height: s(34), padding: s(8) }}
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
@@ -130,7 +130,7 @@ export default function SettingsBilling() {
           </ScaledText>
           <TouchableOpacity
             onPress={() => setShowFilterModal(true)}
-            className="rounded-full  items-end justify-center"
+            className="items-end justify-center rounded-full"
             style={{
               width: s(32),
               height: s(32),
@@ -239,9 +239,9 @@ export default function SettingsBilling() {
               <ScaledText
                 allowScaling={false}
                 variant="body2"
-                className="text-gray text-center font-neueLight"
+                className="text-center text-gray font-neueLight"
               >
-                No invoices found
+                Nessuna fattura trovata
               </ScaledText>
             ) : (
               <View style={{ gap: mvs(12) }}>
@@ -302,7 +302,7 @@ export default function SettingsBilling() {
                             variant="body2"
                             className="text-gray font-neueLight"
                           >
-                            {inv.status === "PAID" ? "Paid on" : "Created on"}{" "}
+                            {inv.status === "PAID" ? "Pagata il" : "Creata il"}{" "}
                             {formattedDate}
                           </ScaledText>
                         )}

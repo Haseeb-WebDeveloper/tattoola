@@ -49,7 +49,7 @@ export default function DeleteConfirmModal({
             className="text-background font-neueBold text-center"
             style={{ marginBottom: mvs(6) }}
           >
-            Remove from collection?
+            Rimuovere dalla collection?
           </ScaledText>
           {/* {!!caption && (
             <ScaledText
@@ -67,8 +67,8 @@ export default function DeleteConfirmModal({
             className="text-background text-center font-montserratSemibold"
             style={{ marginBottom: mvs(20) }}
           >
-            This tattoo will be removed from this collection but won’t be
-            deleted from your profile.
+            Questo tatuaggio verrà rimosso da questa collection ma non sarà
+            eliminato dal tuo profilo.
           </ScaledText>
           <View
             className="flex-row justify-center"
@@ -93,7 +93,7 @@ export default function DeleteConfirmModal({
                 variant="md"
                 className="text-primary font-montserratSemibold"
               >
-                {deleting ? "Removing..." : "Remove"}
+                {deleting ? "Rimozione..." : "Rimuovi"}
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -112,7 +112,7 @@ export default function DeleteConfirmModal({
                 variant="md"
                 className="text-gray font-montserratSemibold"
               >
-                Cancel
+                Annulla
               </ScaledText>
             </TouchableOpacity>
           </View>

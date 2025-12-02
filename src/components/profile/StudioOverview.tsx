@@ -129,7 +129,7 @@ export default function StudioOverview({
                 className="text-foreground font-neueLight"
                 numberOfLines={1}
               >
-                Owned by{" "}
+                Di proprietà di{" "}
                 <ScaledText
                   allowScaling={false}
                   variant="md"

@@ -73,7 +73,7 @@ export default function StudioNameAddressScreen() {
         setInitialData(data);
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Failed to load studio data");
+        toast.error(error.message || "Impossibile caricare i dati dello studio");
       } finally {
         setIsFetching(false);
       }
@@ -141,17 +141,17 @@ export default function StudioNameAddressScreen() {
       );
 
       if (result.success) {
-        toast.success("Studio information updated successfully!");
+        toast.success("Informazioni dello studio aggiornate con successo!");
         setInitialData(formData);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update studio information");
+        toast.error(result.error || "Impossibile aggiornare le informazioni dello studio");
       }
     } catch (error: any) {
       console.error("Error updating studio:", error);
-      toast.error(error.message || "Failed to update studio information");
+      toast.error(error.message || "Impossibile aggiornare le informazioni dello studio");
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +200,7 @@ export default function StudioNameAddressScreen() {
                 variant="lg"
                 className="text-white font-neueSemibold"
               >
-                Studio name and address
+                Nome e indirizzo dello Studio
               </ScaledText>
             </View>
 
@@ -219,7 +219,7 @@ export default function StudioNameAddressScreen() {
                   variant="sm"
                   className="text-tat mb-2 font-montserratSemibold"
                 >
-                  Name of the Studio
+                  Nome dello Studio
                   <ScaledText variant="sm" className="text-error">
                     *
                   </ScaledText>
@@ -227,7 +227,7 @@ export default function StudioNameAddressScreen() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="Enter studio name"
+                  placeholder="Inserisci il nome dello Studio"
                   value={formData.name}
                   onChangeText={(value) => handleInputChange("name", value)}
                   editable={!isFetching}
@@ -266,7 +266,7 @@ export default function StudioNameAddressScreen() {
                         : "text-tat-chat font-montserratSemibold"
                     }
                   >
-                    {displayValue || "Select Province and Municipality"}
+                    {displayValue || "Seleziona Provincia e Comune"}
                   </ScaledText>
                 </TouchableOpacity>
               </View>
@@ -286,7 +286,7 @@ export default function StudioNameAddressScreen() {
                 <ScaledTextInput
                   containerClassName="rounded-xl border border-gray"
                   className="text-foreground"
-                  placeholder="Enter studio address"
+                  placeholder="Inserisci l'indirizzo dello Studio"
                   value={formData.address}
                   onChangeText={(value) => handleInputChange("address", value)}
                   multiline
@@ -326,7 +326,7 @@ export default function StudioNameAddressScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -381,7 +381,7 @@ export default function StudioNameAddressScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in studio information
+              Hai modifiche non salvate nelle informazioni dello studio
             </ScaledText>
 
             {/* Subtitle */}
@@ -391,7 +391,7 @@ export default function StudioNameAddressScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -418,7 +418,7 @@ export default function StudioNameAddressScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -437,7 +437,7 @@ export default function StudioNameAddressScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

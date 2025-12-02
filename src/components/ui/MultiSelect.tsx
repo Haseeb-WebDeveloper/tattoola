@@ -83,7 +83,7 @@ export function MultiSelect({
       
       {maxSelections && (
         <Text style={styles.counter}>
-          {selectedIds.length} of {maxSelections} selected
+          {selectedIds.length} di {maxSelections} selezionati
         </Text>
       )}
       

@@ -49,7 +49,7 @@ export default function ResetPasswordScreen() {
         required: true,
         custom: (value: string) => {
           if (value !== formData.password) {
-            return 'Passwords do not match';
+            return "Le password non coincidono";
           }
           return true;
         },
@@ -67,7 +67,9 @@ export default function ResetPasswordScreen() {
     }
 
     if (!token) {
-      toast.error('This password reset link is invalid or has expired. Please request a new one.');
+      toast.error(
+        "Questo link per il reset della password non è valido o è scaduto. Richiedine uno nuovo."
+      );
       setTimeout(() => {
         router.push('/(auth)/forgot-password');
       }, 1000);
@@ -78,7 +80,11 @@ export default function ResetPasswordScreen() {
       await resetPassword(formData);
       setPasswordReset(true);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to reset password');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Reimpostazione della password non riuscita"
+      );
     }
   };
 
@@ -89,7 +95,7 @@ export default function ResetPasswordScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <LoadingSpinner message="Resetting password..." overlay />
+        <LoadingSpinner message="Reimpostazione della password..." overlay />
       </SafeAreaView>
     );
   }
@@ -105,9 +111,15 @@ export default function ResetPasswordScreen() {
             <View style={styles.iconContainer}>
               <SVGIcons.VarifiedGreen className="w-16 h-16" />
             </View>
-            <ScaledText variant="2xl" className="text-foreground font-neueBold">Password Reset Successful</ScaledText>
+            <ScaledText
+              variant="2xl"
+              className="text-foreground font-neueBold"
+            >
+              Password reimpostata con successo
+            </ScaledText>
             <ScaledText variant="body2" className="text-gray text-center">
-              Your password has been successfully reset. You can now log in with your new password.
+              La tua password è stata reimpostata correttamente. Ora puoi
+              accedere con la nuova password.
             </ScaledText>
           </View>
 
@@ -118,7 +130,12 @@ export default function ResetPasswordScreen() {
               className="bg-primary rounded-full"
               style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
             >
-              <ScaledText variant="body1" className="text-foreground font-neueBold">Continue to Login</ScaledText>
+              <ScaledText
+                variant="body1"
+                className="text-foreground font-neueBold"
+              >
+                Vai al login
+              </ScaledText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -144,16 +161,25 @@ export default function ResetPasswordScreen() {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <ScaledText variant="2xl" className="text-foreground font-neueBold">Reset Your Password</ScaledText>
-            <ScaledText variant="body2" className="text-gray text-center">Enter your new password below</ScaledText>
+            <ScaledText
+              variant="2xl"
+              className="text-foreground font-neueBold"
+            >
+              Reimposta la tua password
+            </ScaledText>
+            <ScaledText variant="body2" className="text-gray text-center">
+              Inserisci qui sotto la tua nuova password
+            </ScaledText>
           </View>
 
           <View style={styles.form}>
-            <ScaledText variant="sm" className="text-foreground mb-2">New Password</ScaledText>
+            <ScaledText variant="sm" className="text-foreground mb-2">
+              Nuova password
+            </ScaledText>
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
               className="flex-1 text-foreground rounded-xl"
-              placeholder="Enter your new password"
+              placeholder="Inserisci la tua nuova password"
               secureTextEntry={!showPassword}
               value={formData.password}
               onChangeText={(value) => handleInputChange('password', value)}
@@ -175,11 +201,13 @@ export default function ResetPasswordScreen() {
 
             <View style={{ height: mvs(12) }} />
 
-            <ScaledText variant="sm" className="text-foreground mb-2">Confirm New Password</ScaledText>
+            <ScaledText variant="sm" className="text-foreground mb-2">
+              Conferma nuova password
+            </ScaledText>
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
               className="flex-1 text-foreground rounded-xl"
-              placeholder="Confirm your new password"
+              placeholder="Conferma la tua nuova password"
               secureTextEntry={!showConfirmPassword}
               value={formData.confirmPassword}
               onChangeText={(value) => handleInputChange('confirmPassword', value)}
@@ -200,11 +228,16 @@ export default function ResetPasswordScreen() {
             />
 
             <View style={styles.passwordRequirements}>
-              <ScaledText variant="body2" className="text-foreground font-montserratSemibold">Password requirements:</ScaledText>
+              <ScaledText
+                variant="body2"
+                className="text-foreground font-montserratSemibold"
+              >
+                Requisiti della password:
+              </ScaledText>
               <ScaledText variant="body2" className="text-gray">
-                • At least 8 characters long{"\n"}
-                • Contains at least one number{"\n"}
-                • Mix of letters and numbers recommended
+                • Almeno 8 caratteri{"\n"}
+                • Contiene almeno un numero{"\n"}
+                • Consigliato un mix di lettere e numeri
               </ScaledText>
             </View>
 
@@ -215,7 +248,12 @@ export default function ResetPasswordScreen() {
               className="bg-primary rounded-full"
               style={[styles.resetButton, { paddingVertical: mvs(10), paddingHorizontal: s(32) }]}
             >
-              <ScaledText variant="body1" className="text-foreground font-neueBold">Reset Password</ScaledText>
+              <ScaledText
+                variant="body1"
+                className="text-foreground font-neueBold"
+              >
+                Reimposta password
+              </ScaledText>
             </TouchableOpacity>
           </View>
 
@@ -225,7 +263,13 @@ export default function ResetPasswordScreen() {
               onPress={handleBackToLogin}
             >
               <ScaledText variant="body2" className="text-gray text-center">
-                Remember your password? <ScaledText variant="body2" className="text-foreground font-montserratSemibold">Sign in</ScaledText>
+                Ti sei ricordato la password?{" "}
+                <ScaledText
+                  variant="body2"
+                  className="text-foreground font-montserratSemibold"
+                >
+                  Accedi
+                </ScaledText>
               </ScaledText>
             </TouchableOpacity>
           </View>

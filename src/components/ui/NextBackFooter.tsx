@@ -22,8 +22,8 @@ export default function NextBackFooter({
   backDisabled = false,
   showBack = true,
   containerStyle,
-  nextLabel = "Next",
-  backLabel = "Back",
+  nextLabel = "Avanti",
+  backLabel = "Indietro",
 }: Props) {
   return (
     <View

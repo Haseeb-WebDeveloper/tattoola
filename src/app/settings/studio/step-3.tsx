@@ -89,7 +89,7 @@ export default function StudioStep3() {
         <StudioStepHeader
           currentStep={3}
           totalSteps={8}
-          stepName="Studio Info"
+        stepName="Informazioni Studio"
           icon={<SVGIcons.Location width={s(19)} height={s(19)} />}
         />
 
@@ -102,7 +102,7 @@ export default function StudioStep3() {
               variant="sm"
             className="text-tat mb-2 font-montserratSemibold"
             >
-              Name of the Studio
+              Nome dello Studio
               <ScaledText variant="body2" className="text-error">
                 *
               </ScaledText>
@@ -111,7 +111,7 @@ export default function StudioStep3() {
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
               style={{ fontSize: s(12) }}
-              placeholder="Enter studio name"
+              placeholder="Inserisci il nome dello Studio"
                 
               value={formData.name}
               onChangeText={(value) => handleInputChange("name", value)}
@@ -141,7 +141,7 @@ export default function StudioStep3() {
                 variant="md"
                 className={displayValue ? "text-tat font-montserratSemibold" : "text-gray font-montserratSemibold"}
               >
-                {displayValue || "Select Province and Municipality"}
+                {displayValue || "Seleziona Provincia e Comune"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -161,7 +161,7 @@ export default function StudioStep3() {
             <ScaledTextInput
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
-              placeholder="Enter studio address"
+              placeholder="Inserisci l'indirizzo dello Studio"
                 
               value={formData.address}
               onChangeText={(value) => handleInputChange("address", value)}

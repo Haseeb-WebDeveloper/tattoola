@@ -154,7 +154,7 @@ export default function InboxScreen() {
                 variant="md"
                 className="text-foreground font-montserratMedium"
               >
-                {TrimText(item.peerName || "Unknown", 23)}
+                {TrimText(item.peerName || "Sconosciuto", 23)}
               </ScaledText>
               <View className="flex-row items-center">
                 {item.unreadCount > 0 && (
@@ -185,7 +185,7 @@ export default function InboxScreen() {
                   marginRight: s(8),
                 }}
               >
-                {TrimText(item.lastMessageText || "New conversation", 50)}
+                {TrimText(item.lastMessageText || "Nuova conversazione", 50)}
               </ScaledText>
               {item.lastMessageTime && (
                 <View
@@ -240,8 +240,8 @@ export default function InboxScreen() {
           className="text-gray text-center font-montserratMedium"
         >
           {hasSearchQuery
-            ? `No conversations found for "${debouncedQuery.trim()}"`
-            : "No conversations yet.\nSend a request to get started!"}
+            ? `Nessuna conversazione trovata per "${debouncedQuery.trim()}"`
+            : "Nessuna conversazione ancora.\nInvia una richiesta per iniziare!"}
         </ScaledText>
         {hasSearchQuery && (
           <ScaledText
@@ -251,7 +251,7 @@ export default function InboxScreen() {
               marginTop: mvs(8),
             }}
           >
-            Try searching for a different name or message
+            Prova a cercare un nome o un messaggio diverso
           </ScaledText>
         )}
       </View>
@@ -311,7 +311,7 @@ export default function InboxScreen() {
         >
           <SVGIcons.Search width={s(18)} height={s(18)} />
           <ScaledTextInput
-            placeholder="Search conversations..."
+            placeholder="Cerca conversazioni..."
             className="text-foreground w-full"
             value={query}
             onChangeText={setQuery}

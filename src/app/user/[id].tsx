@@ -43,7 +43,7 @@ export default function UserProfileScreen() {
         .single();
 
       if (userError) throw new Error(userError.message);
-      if (!userData) throw new Error("User not found");
+      if (!userData) throw new Error("Utente non trovato");
 
       const role = userData.role as "ARTIST" | "TATTOO_LOVER";
       setUserRole(role);
@@ -57,7 +57,7 @@ export default function UserProfileScreen() {
 
       setData(profile);
     } catch (e: any) {
-      setError(e?.message || "Failed to load profile");
+      setError(e?.message || "Impossibile caricare il profilo");
     } finally {
       setLoading(false);
       setRefreshing(false);

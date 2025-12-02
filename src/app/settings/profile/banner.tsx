@@ -107,7 +107,9 @@ export default function BannerSettingsScreen() {
       }
     } catch (error: any) {
       console.error("Error loading banner data:", error);
-      toast.error(error.message || "Failed to load banner data");
+      toast.error(
+        error.message || "Caricamento della cover non riuscito"
+      );
     } finally {
       setLoading(false);
     }
@@ -185,7 +187,9 @@ export default function BannerSettingsScreen() {
       const maxSize = mediaType === "video" ? 50 * 1024 * 1024 : 10 * 1024 * 1024; // 50MB for video, 10MB for image
       if (file.fileSize && file.fileSize > maxSize) {
         toast.error(
-          `${mediaType === "video" ? "Video" : "Image"} size must be less than ${
+          `${
+            mediaType === "video" ? "Il video" : "L'immagine"
+          } deve essere inferiore a ${
             mediaType === "video" ? "50MB" : "10MB"
           }`
         );
@@ -213,7 +217,7 @@ export default function BannerSettingsScreen() {
       }
     } catch (error: any) {
       console.error("Error picking media:", error);
-      toast.error(error.message || "Failed to upload media");
+      toast.error(error.message || "Caricamento del media non riuscito");
     }
   };
 
@@ -227,18 +231,21 @@ export default function BannerSettingsScreen() {
 
   const handleSave = async () => {
     if (!artistId) {
-      toast.error("Artist profile not found");
+      toast.error("Profilo artista non trovato");
       return;
     }
 
     // Validation
     if (selectedType === "4_IMAGES" && bannerMedia.length !== 4) {
-      toast.error("Please upload all 4 images");
+      toast.error("Carica tutte e 4 le immagini");
       return;
     }
 
-    if ((selectedType === "1_IMAGE" || selectedType === "1_VIDEO") && bannerMedia.length !== 1) {
-      toast.error("Please upload the media");
+    if (
+      (selectedType === "1_IMAGE" || selectedType === "1_VIDEO") &&
+      bannerMedia.length !== 1
+    ) {
+      toast.error("Carica il media");
       return;
     }
 
@@ -299,7 +306,7 @@ export default function BannerSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Banner updated successfully");
+      toast.success("Cover aggiornata con successo");
 
       // Exit edit mode and update initial values
       setIsEditMode(false);
@@ -307,7 +314,7 @@ export default function BannerSettingsScreen() {
       setInitialBannerMedia(JSON.parse(JSON.stringify(bannerMedia)));
     } catch (err: any) {
       console.error("Error updating banner:", err);
-      toast.error(err.message || "Failed to update banner");
+      toast.error(err.message || "Impossibile aggiornare la cover");
     } finally {
       setIsLoading(false);
     }
@@ -461,7 +468,7 @@ export default function BannerSettingsScreen() {
                   uploading={uploading}
                   mediaType="image"
                   title="Voglio mostrare una foto a mia scelta"
-                  uploadLabel="Upload image"
+                  uploadLabel="Carica immagine"
                 />
               )}
               {selectedType === "1_VIDEO" && (
@@ -472,7 +479,7 @@ export default function BannerSettingsScreen() {
                   uploading={uploading}
                   mediaType="video"
                   title="Voglio mostrare un video a mia scelta"
-                  uploadLabel="Upload video"
+                  uploadLabel="Carica video"
                 />
               )}
             </>
@@ -503,7 +510,7 @@ export default function BannerSettingsScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading || uploading ? "Saving..." : "Save"}
+                {isLoading || uploading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           ) : (

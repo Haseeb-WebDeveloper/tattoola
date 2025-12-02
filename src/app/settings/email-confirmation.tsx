@@ -46,7 +46,7 @@ export default function EmailConfirmationScreen() {
       } = await supabase.auth.getUser();
 
       if (!authUser?.new_email) {
-        toast.error("No pending email change found");
+        toast.error("Nessuna modifica email in sospeso trovata");
         setIsResending(false);
         return;
       }
@@ -58,13 +58,13 @@ export default function EmailConfirmationScreen() {
 
       if (error) {
         console.error("Error resending verification email:", error);
-        toast.error("Failed to resend email");
+        toast.error("Impossibile reinviare l'email");
       } else {
-        toast.success("Verification email resent");
+        toast.success("Email di verifica reinviata");
       }
     } catch (err: any) {
       console.error("Error resending verification email:", err);
-      toast.error(err.message || "Failed to resend email");
+      toast.error(err.message || "Impossibile reinviare l'email");
     } finally {
       setIsResending(false);
     }
@@ -105,14 +105,15 @@ export default function EmailConfirmationScreen() {
               variant="sectionTitle"
               className="text-foreground font-neueBold"
             >
-              Verification emails sent
+              Email di verifica inviate
             </ScaledText>
           </View>
           <ScaledText
             variant="body2"
             className="text-foreground font-montserratLight text-center"
           >
-            Check BOTH your old and new email addresses for confirmation links
+            Controlla SIA il vecchio che il nuovo indirizzo email per i link di
+            conferma
           </ScaledText>
 
           {/* Show pending email change info */}
@@ -129,14 +130,14 @@ export default function EmailConfirmationScreen() {
                 variant="sm"
                 className="text-foreground/60 font-montserratMedium text-center"
               >
-                Current: {user?.email}
+                Attuale: {user?.email}
               </ScaledText>
               <ScaledText
                 variant="sm"
                 className="text-foreground font-montserratSemibold text-center"
                 style={{ marginTop: mvs(4) }}
               >
-                Changing to: {pendingEmail}
+                In modifica a: {pendingEmail}
               </ScaledText>
             </View>
           )}
@@ -157,7 +158,7 @@ export default function EmailConfirmationScreen() {
             variant="body2"
             className="text-foreground font-montserratLight"
           >
-            Haven't received the email?
+            Non hai ricevuto l'email?
           </ScaledText>
           <TouchableOpacity
             className="px-6 py-3 rounded-full border border-foreground/60 flex-row gap-2 items-center mt-4"
@@ -175,7 +176,7 @@ export default function EmailConfirmationScreen() {
               allowScaling={false}
               style={{ marginTop: mvs(4) }}
             >
-              {isResending ? "Sending..." : "Resend email"}
+              {isResending ? "Invio in corso..." : "Reinvia email"}
             </ScaledText>
           </TouchableOpacity>
           <View className="h-px bg-[#A49A99] opacity-40 w-4/5 my-8" />
@@ -187,9 +188,10 @@ export default function EmailConfirmationScreen() {
             variant="md"
             className="text-foreground/80 font-montserratLight text-center"
           >
-            Step 1: Click the confirmation link in your OLD email{"\n"}
-            Step 2: Click the verification link in your NEW email{"\n"}
-            After completing both steps, your email will be updated.
+            Passo 1: Clicca sul link di conferma nella tua VECCHIA email{"\n"}
+            Passo 2: Clicca sul link di verifica nella tua NUOVA email{"\n"}
+            Dopo aver completato entrambi i passaggi, la tua email sarà
+            aggiornata.
           </ScaledText>
         </View>
       </ScrollView>

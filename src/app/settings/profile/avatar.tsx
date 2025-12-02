@@ -71,7 +71,7 @@ export default function AvatarSettingsScreen() {
       // Check file size (5MB max)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.fileSize && file.fileSize > maxSize) {
-        toast.error("Image size must be less than 5MB");
+        toast.error("L'immagine deve essere inferiore a 5MB");
         return;
       }
 
@@ -87,7 +87,7 @@ export default function AvatarSettingsScreen() {
       }
     } catch (error: any) {
       console.error("Error picking image:", error);
-      toast.error(error.message || "Failed to upload image");
+      toast.error(error.message || "Caricamento dell'immagine non riuscito");
     }
   };
 
@@ -117,7 +117,7 @@ export default function AvatarSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Profile photo updated successfully");
+      toast.success("Foto profilo aggiornata con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -125,7 +125,9 @@ export default function AvatarSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating avatar:", err);
-      toast.error(err.message || "Failed to update profile photo");
+      toast.error(
+        err.message || "Impossibile aggiornare la foto profilo"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +170,7 @@ export default function AvatarSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Profile photo
+            Foto profilo
           </ScaledText>
         </View>
 
@@ -189,7 +191,7 @@ export default function AvatarSettingsScreen() {
                 variant="lg"
                 className="text-white font-neueSemibold"
               >
-                Upload your photo
+                Carica la tua foto
               </ScaledText>
               <ScaledText
                 allowScaling={false}
@@ -268,7 +270,7 @@ export default function AvatarSettingsScreen() {
                   variant="11"
                   className="text-error font-neueSemibold"
                 >
-                  Remove image
+                  Rimuovi immagine
                 </ScaledText>
               </TouchableOpacity>
             )}
@@ -301,7 +303,7 @@ export default function AvatarSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading || uploading ? "Saving..." : "Save"}
+              {isLoading || uploading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -338,7 +340,7 @@ export default function AvatarSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the profile photo
+              Hai modifiche non salvate nella foto profilo
             </ScaledText>
 
             {/* Subtitle */}
@@ -348,7 +350,7 @@ export default function AvatarSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -375,7 +377,7 @@ export default function AvatarSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -394,7 +396,7 @@ export default function AvatarSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

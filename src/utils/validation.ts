@@ -6,22 +6,22 @@ export class ValidationUtils {
    */
   static validateField(value: any, rules: ValidationRule): string | null {
     if (rules.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
-      return 'This field is required';
+      return 'Questo campo è obbligatorio';
     }
 
     if (value && typeof value === 'string') {
       if (rules.minLength && value.length < rules.minLength) {
-        return `Must be at least ${rules.minLength} characters long`;
+        return `Deve contenere almeno ${rules.minLength} caratteri`;
       }
 
       if (rules.maxLength && value.length > rules.maxLength) {
-        return `Must be no more than ${rules.maxLength} characters long`;
+        return `Non può superare i ${rules.maxLength} caratteri`;
       }
 
       if (rules.pattern && !rules.pattern.test(value)) {
         // For username, we provide specific error in custom validation
         // For other fields, use generic message
-        return 'Invalid format';
+        return 'Formato non valido';
       }
     }
 
@@ -31,7 +31,7 @@ export class ValidationUtils {
         return result;
       }
       if (result === false) {
-        return 'Invalid value';
+        return 'Valore non valido';
       }
     }
 
@@ -74,7 +74,7 @@ export const ValidationRules = {
     custom: (value: string) => {
       if (!value) return true;
       if (!/(?=.*[0-9])/.test(value)) {
-        return 'Password must contain at least one number';
+        return 'La password deve contenere almeno un numero';
       }
       return true;
     },
@@ -83,7 +83,7 @@ export const ValidationRules = {
     required: true,
     custom: (value: string) => {
       if (value !== password) {
-        return 'Passwords do not match';
+        return 'Le password non coincidono';
       }
       return true;
     },
@@ -98,25 +98,25 @@ export const ValidationRules = {
       
       // Check for spaces
       if (/\s/.test(value)) {
-        return 'Spaces are not allowed';
+        return 'Non sono consentiti spazi';
       }
       
       // Check if starts with a letter
       if (!/^[a-zA-Z]/.test(value)) {
-        return 'Username must start with a letter';
+        return 'Lo username deve iniziare con una lettera';
       }
       
       // Check for invalid characters (pattern check happens before custom, but we provide specific message)
       if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-        return 'Only letters, numbers, and underscores are allowed';
+        return 'Sono consentite solo lettere, numeri e underscore';
       }
       
       // Check length (minLength and maxLength are checked before custom, but we provide specific message)
       if (value.length < 3) {
-        return 'Username must be at least 3 characters';
+        return 'Lo username deve contenere almeno 3 caratteri';
       }
       if (value.length > 30) {
-        return 'Username must be no more than 30 characters';
+        return 'Lo username non può superare i 30 caratteri';
       }
       
       return true;
@@ -142,7 +142,7 @@ export const ValidationRules = {
       // E.164 format: +[country code][number]
       // Length should be between 8 and 15 characters (including +)
       if (value.length < 8 || value.length > 16) {
-        return 'Phone number must be between 8 and 15 digits';
+        return 'Il numero di telefono deve avere tra 8 e 15 cifre';
       }
       return true;
     },
@@ -223,10 +223,10 @@ export const UserStep6ValidationSchema = {
     required: true,
     custom: (value: string[]) => {
       if (!Array.isArray(value) || value.length === 0) {
-        return 'Please select at least one favorite style';
+        return 'Seleziona almeno uno stile preferito';
       }
       if (value.length > 4) {
-        return 'Please select no more than 4 favorite styles';
+        return 'Seleziona al massimo 4 stili preferiti';
       }
       return true;
     },
@@ -257,10 +257,10 @@ export const ArtistStep7ValidationSchema = {
     required: true,
     custom: (value: string[]) => {
       if (!Array.isArray(value) || value.length === 0) {
-        return 'Please select at least one favorite style';
+        return 'Seleziona almeno uno stile preferito';
       }
       if (value.length > 2) {
-        return 'Please select no more than 2 favorite styles for basic plan';
+        return 'Per il piano Basic puoi selezionare al massimo 2 stili preferiti';
       }
       return true;
     },
@@ -276,7 +276,7 @@ export const ArtistStep9ValidationSchema = {
     required: true,
     custom: (value: string[]) => {
       if (!Array.isArray(value) || value.length === 0) {
-        return 'Please select at least one service';
+        return 'Seleziona almeno un servizio';
       }
       return true;
     },
@@ -288,7 +288,7 @@ export const ArtistStep10ValidationSchema = {
     required: true,
     custom: (value: string[]) => {
       if (!Array.isArray(value) || value.length === 0) {
-        return 'Please select at least one body part';
+        return 'Seleziona almeno una parte del corpo';
       }
       return true;
     },
@@ -305,16 +305,16 @@ export const ArtistStep12ValidationSchema = {
     required: true,
     custom: (value: any[]) => {
       if (!Array.isArray(value) || value.length !== 4) {
-        return 'Please add exactly 4 portfolio projects';
+        return 'Aggiungi esattamente 4 progetti al portfolio';
       }
       
       for (let i = 0; i < value.length; i++) {
         const project = value[i];
         if (!project.media || !Array.isArray(project.media) || project.media.length === 0) {
-          return `Project ${i + 1} must have at least one media file`;
+          return `Il progetto ${i + 1} deve avere almeno un file multimediale`;
         }
         if (!project.styles || !Array.isArray(project.styles) || project.styles.length === 0) {
-          return `Project ${i + 1} must have at least one style selected`;
+          return `Il progetto ${i + 1} deve avere almeno uno stile selezionato`;
         }
       }
       

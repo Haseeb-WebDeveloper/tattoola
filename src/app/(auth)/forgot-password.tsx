@@ -65,7 +65,9 @@ export default function ForgotPasswordScreen() {
       setEmailSent(true);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to send reset email"
+        error instanceof Error
+          ? error.message
+          : "Invio dell'email di reset non riuscito"
       );
     }
   };
@@ -84,7 +86,7 @@ export default function ForgotPasswordScreen() {
       <SafeAreaView
         style={[styles.container, { backgroundColor: "transparent" }]}
       >
-        <LoadingSpinner message="Sending reset email..." overlay />
+        <LoadingSpinner message="Invio dell'email di reset..." overlay />
       </SafeAreaView>
     );
   }
@@ -134,14 +136,15 @@ export default function ForgotPasswordScreen() {
             variant="2xl"
             className="text-foreground text-center font-neueSemibold"
           >
-            Forgot Password?
+            Password dimenticata?
           </ScaledText>
           <ScaledText
             allowScaling={false}
             variant="md"
             className="text-gray text-center font-montserratLight"
           >
-            Enter your email address and we&apos;ll send you a reset link.
+            Inserisci il tuo indirizzo email e ti invieremo un link per
+            reimpostare la password.
           </ScaledText>
         </View>
 
@@ -159,7 +162,7 @@ export default function ForgotPasswordScreen() {
               containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : errors.email ? "border-2 border-error" : "border border-gray"}`}
               className="flex-1 text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
-              placeholder="Enter your email"
+              placeholder="Inserisci la tua email"
               value={formData.email}
               onChangeText={(value) => handleInputChange("email", value)}
               keyboardType="email-address"
@@ -187,7 +190,7 @@ export default function ForgotPasswordScreen() {
                   variant="lg"
                   className="text-foreground font-neueBold"
                 >
-                  Send Reset Link
+                  Invia link di reset
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -200,11 +203,17 @@ export default function ForgotPasswordScreen() {
             <View style={{ marginBottom: mvs(16) }}>
               <SVGIcons.MailSent width={s(40)} height={s(40)} />
             </View>
-            <ScaledText variant="2xl" className="text-foreground font-neueBold">
-              Check Your Email
+            <ScaledText
+              variant="2xl"
+              className="text-foreground font-neueBold"
+            >
+              Controlla la tua email
             </ScaledText>
-            <ScaledText variant="body2" className="text-gray text-center mt-2">
-              We&apos;ve sent a password reset link to
+            <ScaledText
+              variant="body2"
+              className="text-gray text-center mt-2"
+            >
+              Ti abbiamo inviato un link per reimpostare la password a
             </ScaledText>
             <ScaledText
               variant="body2"
@@ -224,7 +233,7 @@ export default function ForgotPasswordScreen() {
                   variant="body1"
                   className="text-foreground font-neueBold"
                 >
-                  Back to Login
+                  Torna al login
                 </ScaledText>
               </TouchableOpacity>
 
@@ -233,7 +242,7 @@ export default function ForgotPasswordScreen() {
                   variant="body2"
                   className="text-foreground font-montserratSemibold"
                 >
-                  Didn&apos;t receive the email? Resend
+                  Non hai ricevuto l'email? Invia di nuovo
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -248,13 +257,13 @@ export default function ForgotPasswordScreen() {
               variant="md"
               className="text-gray font-montserratMedium"
             >
-              Remember your password?{" "}
+              Ti sei ricordato la password?{" "}
               <ScaledText
                 allowScaling={false}
                 variant="md"
                 className="text-foreground font-montserratSemibold"
               >
-                Sign in
+                Accedi
               </ScaledText>
             </ScaledText>
           </TouchableOpacity>
