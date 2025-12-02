@@ -82,6 +82,7 @@ interface PostGridItemProps {
 const PostGridItem: React.FC<PostGridItemProps> = ({ post }) => {
   // Use first media item or thumbnail
   const imageUrl = post.media?.[0]?.mediaUrl || post.thumbnailUrl;
+  // console.log("imageUrl", imageUrl);
 
   return (
     <TouchableOpacity
@@ -124,7 +125,7 @@ const PostGridItem: React.FC<PostGridItemProps> = ({ post }) => {
           <ScaledText
             allowScaling={false}
             variant="sm"
-            className="text-foreground font-normal"
+            className="text-foreground font-neueLight"
             style={{ fontSize: s(13), lineHeight: s(18) }}
             numberOfLines={2}
           >

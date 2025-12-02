@@ -28,3 +28,5 @@ export const ALLOWED_TYPES = {
   VIDEO: ['video/mp4', 'video/webm'],
   DOCUMENT: ['application/pdf', 'image/jpeg', 'image/png'],
 };
+
+

@@ -1,4 +1,5 @@
 import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { router } from "expo-router";
@@ -17,6 +18,7 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import { s, mvs } from "@/utils/scale";
 
 export default function UploadStyleStep() {
+  const { user } = useAuth();
   const styleId = usePostUploadStore((s) => s.styleId);
   const setStyleId = usePostUploadStore((s) => s.setStyleId);
   const media = usePostUploadStore((s) => s.media);
@@ -251,7 +253,11 @@ export default function UploadStyleStep() {
       </View>
       <NextBackFooter
         onBack={() => router.back()}
-        onNext={() => router.push("/upload/collection")}
+        onNext={() =>
+          router.push(
+            user?.role === "ARTIST" ? "/upload/collection" : "/upload/preview"
+          )
+        }
         nextDisabled={!styleId}
         nextLabel="Next"
         backLabel="Back"

@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -65,6 +66,7 @@ export default function UserRegistrationStep6() {
   const [errors, setLocalErrors] = useState<FormErrors>({});
   const [tattooStyles, setTattooStyles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Load existing data if available
   useEffect(() => {
@@ -137,6 +139,7 @@ export default function UserRegistrationStep6() {
       } else {
         // Add style (check limit)
         if (prev.favoriteStyles.length >= TL_MAX_FAVORITE_STYLES) {
+          setShowLimitModal(true);
           return prev;
         }
         newStyles = [...prev.favoriteStyles, styleId];
@@ -176,22 +179,25 @@ export default function UserRegistrationStep6() {
   const renderItem = ({ item }: { item: any }) => {
     const isSelected = formData.favoriteStyles.includes(item.id);
     return (
-      <View className="flex-row items-center">
-        <TouchableOpacity
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => handleStyleToggle(item.id)}
+        className="flex-row items-center"
+      >
+        <View
           style={{
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: mvs(6),
             paddingRight: s(16),
           }}
-          onPress={() => handleStyleToggle(item.id)}
         >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </TouchableOpacity>
+        </View>
         <View className="border-b border-gray/20 flex-row items-center justify-center">
           {item.imageUrl ? (
             <Image
@@ -209,7 +215,7 @@ export default function UserRegistrationStep6() {
               }}
             />
           )}
-          <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+          <View className="flex-1" style={{ paddingLeft: s(16) }}>
             <ScaledText
               allowScaling={false}
               style={{ fontSize: 12.445 }}
@@ -219,7 +225,7 @@ export default function UserRegistrationStep6() {
             </ScaledText>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -237,7 +243,7 @@ export default function UserRegistrationStep6() {
         name="Your preferred styles"
         nameVariant="2xl"
         icon={<SVGIcons.Style width={20} height={20} />}
-        description="You can choose up to 4 favorite styles."
+        description={`You can choose up to ${TL_MAX_FAVORITE_STYLES} favorite styles.`}
         descriptionVariant="md"
       />
 
@@ -274,6 +280,75 @@ export default function UserRegistrationStep6() {
         backLabel="Back"
         onBack={handleBack}
       />
+
+      {/* Limit Exceeded Modal */}
+      <Modal
+        visible={showLimitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLimitModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            {/* Warning Icon */}
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+
+            {/* Title */}
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Style Limit Reached
+            </ScaledText>
+
+            {/* Subtitle */}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(16) }}
+            >
+              You can only select {TL_MAX_FAVORITE_STYLES} styles.
+            </ScaledText>
+
+            {/* Action Button */}
+            <View className="flex-row justify-center">
+              <TouchableOpacity
+                onPress={() => setShowLimitModal(false)}
+                className="rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: "#AD2E2E",
+                  paddingVertical: mvs(8),
+                  paddingLeft: s(32),
+                  paddingRight: s(32),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-white font-neueSemibold"
+                >
+                  OK
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

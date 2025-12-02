@@ -176,7 +176,12 @@ export default function UploadPreviewStep() {
       <NextBackFooter
         onBack={() => router.back()}
         onNext={onSubmit}
-        nextDisabled={!media.length || !caption || !styleId || !collectionId}
+        nextDisabled={
+          !media.length ||
+          !caption ||
+          !styleId ||
+          (user?.role === "ARTIST" && !collectionId)
+        }
         nextLabel="Publish"
         backLabel="Back"
       />

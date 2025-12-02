@@ -4,6 +4,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useUsernameValidation } from "@/hooks/useUsernameValidation";
+import { useEmailAvailability } from "@/hooks/useEmailAvailability";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
@@ -36,6 +37,7 @@ export default function RegisterScreen() {
 
   // Username validation hook
   const usernameValidation = useUsernameValidation(formData.username);
+  const emailAvailability = useEmailAvailability(formData.email);
 
   const totalSteps = 8; // TL flow ends at step-8 (completion)
   const currentStep = 1;
@@ -80,6 +82,16 @@ export default function RegisterScreen() {
       }
     }
 
+    // Check email availability (only error, no success border/state)
+    if (!formErrors.email && formData.email.trim().length > 0) {
+      const isEmailAvailable = await emailAvailability.manualCheck(
+        formData.email
+      );
+      if (!isEmailAvailable) {
+        formErrors.email = "This email is already registered";
+      }
+    }
+
     if (!acceptedTerms) {
       formErrors.terms = "You must accept the Terms of Use and Privacy Policy";
     }
@@ -94,8 +106,10 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Navigate immediately to email confirmation and start background signup
-    setInProgress(formData.email);
+    // Navigate immediately to email confirmation and start background signup.
+    // Also persist the full form data (including role) so we can route back
+    // to the correct registration screen if the user needs to edit their email.
+    setInProgress(formData.email, formData);
     router.push("/(auth)/email-confirmation");
 
     try {
@@ -239,6 +253,7 @@ export default function RegisterScreen() {
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
           />
+          {/* Only show error state if email is already registered */}
           {!!errors.email && (
             <ScaledText
               variant="sm"

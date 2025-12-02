@@ -1,6 +1,12 @@
 import { mvs, s } from "@/utils/scale";
 import React from "react";
-import { Platform, TextInput, TextInputProps, View, ViewStyle } from "react-native";
+import {
+  Platform,
+  TextInput,
+  TextInputProps,
+  View,
+  ViewStyle,
+} from "react-native";
 
 type Props = TextInputProps & {
   containerClassName?: string;
@@ -18,10 +24,10 @@ export const ScaledTextInput: React.FC<Props> = ({
   // iOS-specific text alignment fix: lineHeight should be closer to fontSize for proper vertical centering
   const fontSize = s(12);
   const borderRadius = s(12);
-  
+
   // Check if this is a password field
   const isPasswordField = rest.secureTextEntry === true;
-  
+
   // Base style with consistent background and border radius to prevent autofill highlight issues
   const baseStyle = {
     paddingHorizontal: s(12),
@@ -50,14 +56,14 @@ export const ScaledTextInput: React.FC<Props> = ({
   const { autoComplete, ...textInputProps } = rest;
 
   return (
-    <View 
-      className={`${containerClassName} bg-gray-foreground`} 
+    <View
+      className={`${containerClassName} bg-gray-foreground`}
       style={[
-        { 
-          borderRadius: borderRadius, 
+        {
+          borderRadius: borderRadius,
           overflow: "hidden",
-        }, 
-        containerStyle
+        },
+        containerStyle,
       ]}
     >
       <TextInput
@@ -73,7 +79,9 @@ export const ScaledTextInput: React.FC<Props> = ({
         underlineColorAndroid="transparent"
         // Control autofill behavior - use provided autoComplete or default based on field type
         // Using "password" instead of "password-new" might reduce yellow highlight on some Android versions
-        autoComplete={autoComplete || (isPasswordField ? "password" : undefined)}
+        autoComplete={
+          autoComplete || (isPasswordField ? "password" : undefined)
+        }
         // On iOS, use textContentType for better autofill control
         {...(Platform.OS === "ios" && isPasswordField
           ? { textContentType: "newPassword" as const }
@@ -88,4 +96,3 @@ export const ScaledTextInput: React.FC<Props> = ({
 };
 
 export default ScaledTextInput;
-

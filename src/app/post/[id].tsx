@@ -457,7 +457,7 @@ export default function PostDetailScreen() {
                   variant="lg"
                   className="text-foreground mb-2 font-neueBold"
                 >
-                  {post.caption || "Dragon x Sunflower sketch with abc.."}
+                  {post.caption || "No caption"}
                 </ScaledText>
 
                 {/* Style tag */}

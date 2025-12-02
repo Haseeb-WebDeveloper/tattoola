@@ -4,6 +4,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useUsernameValidation } from "@/hooks/useUsernameValidation";
+import { useEmailAvailability } from "@/hooks/useEmailAvailability";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
@@ -37,6 +38,7 @@ export default function ArtistRegisterScreen() {
 
   // Username validation hook
   const usernameValidation = useUsernameValidation(formData.username);
+  const emailAvailability = useEmailAvailability(formData.email);
 
   const totalSteps = 13;
   const currentStep = 1;
@@ -85,6 +87,16 @@ export default function ArtistRegisterScreen() {
       const isAvailable = await usernameValidation.manualCheck();
       if (!isAvailable) {
         formErrors.username = "This username is already taken";
+      }
+    }
+
+    // Check email availability (only error, no success border/state)
+    if (!formErrors.email && formData.email.trim().length > 0) {
+      const isEmailAvailable = await emailAvailability.manualCheck(
+        formData.email
+      );
+      if (!isEmailAvailable) {
+        formErrors.email = "This email is already registered";
       }
     }
 
@@ -251,6 +263,7 @@ export default function ArtistRegisterScreen() {
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
           />
+          {/* Only show error state if email is already registered */}
           {!!errors.email && (
             <ScaledText
               variant="sm"

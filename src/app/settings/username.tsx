@@ -138,7 +138,7 @@ export default function UsernameSettingsScreen() {
         colors={["#000000", "#0F0202"]}
         start={{ x: 0.4, y: 0 }}
         end={{ x: 0.6, y: 1 }}
-        className="flex-1"
+       style={{ flex: 1 }}
       >
         {/* Header */}
         <View
@@ -175,33 +175,38 @@ export default function UsernameSettingsScreen() {
           <View style={{ marginBottom: mvs(24) }}>
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-gray font-montserratMedium"
-              style={{ marginBottom: mvs(8) }}
+              variant="sm"
+              className="text-tat font-montserratSemibold"
+              style={{ marginBottom: mvs(4) }}
             >
-              Username (inserisci un nome univoco)
+               Username (inserisci un nome univoco)
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-error"
+              >
+                *
+              </ScaledText>
             </ScaledText>
             <ScaledTextInput
+              containerClassName={`flex-row items-center rounded-xl ${error ? "border-2 border-error" : "border border-gray"}`}
+              className="flex-1 text-foreground"
+              style={{ fontSize: s(12) }}
+              placeholder="Username"
               value={username}
               onChangeText={handleUsernameChange}
-              placeholder="Username"
+              onFocus={() => {}}
+              onBlur={() => {}}
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
-              className="text-foreground font-neueMedium"
-              containerClassName="rounded-lg"
-              containerStyle={{
-                borderWidth: s(1),
-                borderColor: error ? "#DC3545" : "#A49A99",
-                backgroundColor: "#100C0C",
-              }}
             />
             {error ? (
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-error"
-                style={{ marginTop: mvs(8) }}
+                className="text-error font-montserratLight"
+                style={{ marginTop: mvs(4) }}
               >
                 {error}
               </ScaledText>

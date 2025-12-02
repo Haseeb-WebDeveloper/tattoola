@@ -51,7 +51,7 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "For now showing all artists in search"
+eas update --branch preview --message "ui and some logic refactored"
 
 eas build --profile development --platform android
 
@@ -69,6 +69,32 @@ eas submit --platform ios --profile preview
 
 # If you used production profile
 eas submit --platform ios --profile production
+
+<!-- For ios production build and submission automatically -->
+ npx eas-cli build --platform ios --profile production --auto-submit
+
+<!-- For ios submittion only -->
+npx eas-cli submit --platform ios --profile production
+
+<!-- For android production build and submission automatically -->
+npx eas-cli build --platform android --profile production --auto-submit
+
+<!-- For android submittion only -->
+npx eas-cli submit --platform android --profile production
+
+<!-- For setting the version code and version name for ios -->
+eas build:version:set --platform ios
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -122,3 +148,6 @@ gap on studio profile between icons and text
 
 todo
 // .eq("portfolioComplete", true)
+
+
+ios click on input issue

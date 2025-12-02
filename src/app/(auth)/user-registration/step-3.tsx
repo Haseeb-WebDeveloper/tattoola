@@ -14,13 +14,13 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, TouchableOpacity, View } from "react-native";
 import CountryPicker, {
-    Country,
-    CountryCode,
+  Country,
+  CountryCode,
 } from "react-native-country-picker-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 function formatPhoneForInput(phone: string, callingCode: string): string {
@@ -245,7 +245,6 @@ export default function UserRegistrationStep3() {
               className="text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
               placeholder="Mario"
-                
               value={formData.firstName}
               onChangeText={(v) => handleInputChange("firstName", v)}
             />
@@ -272,7 +271,6 @@ export default function UserRegistrationStep3() {
               className="text-foreground rounded-xl"
               style={{ fontSize: s(12) }}
               placeholder="Rossi"
-                
               value={formData.lastName}
               onChangeText={(v) => handleInputChange("lastName", v)}
             />

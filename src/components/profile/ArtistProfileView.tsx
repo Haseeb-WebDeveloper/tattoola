@@ -69,7 +69,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
     // Check if this is a self-request
     const isSelfRequest = currentUserId === data.user.id;
-    
+
     // Self-requests don't need validation, proceed directly
     if (isSelfRequest) {
       router.push(`/user/${data.user.id}/request/size` as any);
@@ -191,9 +191,13 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         {/* Bio */}
         {!!data?.artistProfile?.bio && (
           <View className="px-4 mt-6">
-            <Text className="text-foreground font-neueLight">
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-foreground font-neueLight"
+            >
               {data.artistProfile.bio}
-            </Text>
+            </ScaledText>
           </View>
         )}
 
@@ -218,21 +222,33 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <TouchableOpacity
               onPress={handleFollowToggle}
               disabled={isTogglingFollow}
-              className={`flex-1 h-12 rounded-full items-center justify-center ${
+              className={`flex-1 flex-row rounded-full items-center justify-center ${
                 isFollowing ? "border border-gray" : "border border-gray"
               }`}
+              style={{ gap: s(8), paddingVertical: mvs(8) }}
             >
-              <Text className="text-foreground font-neueMedium">
+              <SVGIcons.Follow width={s(14)} height={s(14)} />
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueMedium"
+              >
                 {isFollowing ? "Seguendo" : "Segui"}
-              </Text>
+              </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSendRequest}
-              className="flex-1 h-12 rounded-full bg-primary items-center justify-center"
+              className="flex-1 flex-row gap-2 rounded-full bg-primary items-center justify-center"
+              style={{ gap: s(8), paddingVertical: mvs(8) }}
             >
-              <Text className="text-white font-neueMedium">
+              <SVGIcons.Send2 width={s(14)} height={s(14)} />
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-white font-neueMedium"
+              >
                 Invia richiesta
-              </Text>
+              </ScaledText>
             </TouchableOpacity>
           </View>
         </View>

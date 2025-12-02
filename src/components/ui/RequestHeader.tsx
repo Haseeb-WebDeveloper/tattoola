@@ -1,11 +1,12 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { fetchArtistSelfProfile } from "@/services/profile.service";
+import { usePrivateRequestStore } from "@/stores/privateRequestStore";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { useLocalSearchParams, usePathname, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Image, TouchableOpacity, View } from "react-native";
+import { Image, Modal, TouchableOpacity, View } from "react-native";
 
 type Props = { title: string; stepIndex: number; totalSteps: number };
 
@@ -14,6 +15,8 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
+  const resetRequest = usePrivateRequestStore((s) => s.reset);
+  const [showCloseModal, setShowCloseModal] = useState(false);
   // Progress indicator state (mirrors upload-header behavior)
   const barRef = useRef(null);
   const [indicatorWidth, setIndicatorWidth] = useState(0);
@@ -101,7 +104,7 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
           style={{ marginBottom: mvs(8) }}
         >
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => setShowCloseModal(true)}
             className="rounded-full bg-foreground/20 items-center justify-center"
             style={{ width: s(32), height: s(32) }}
           >
@@ -172,6 +175,7 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                   </ScaledText>
                 )}
               </View>
+              {!!profile?.location?.municipality?.name && (
               <View className="flex-row items-center" style={{ gap: s(4) }}>
                 <SVGIcons.Location width={s(12)} height={s(12)} />
                 <ScaledText
@@ -182,9 +186,10 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                   {profile?.location?.municipality?.name}
                   {profile?.location?.province?.name
                     ? ` (${profile?.location?.province?.name})`
-                    : ""}
-                </ScaledText>
-              </View>
+                      : ""}
+                  </ScaledText>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -244,6 +249,98 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
           )}
         </View>
       </View>
+
+      {/* Discard private request confirmation */}
+      <Modal
+        visible={showCloseModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCloseModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-background font-neueBold text-center"
+              style={{ marginBottom: mvs(8) }}
+            >
+              Discard private request?
+            </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-background font-montserratMedium text-center"
+              style={{ marginBottom: mvs(24) }}
+            >
+              If you close now, all the information you have entered will be
+              lost. Do you want to leave this request?
+            </ScaledText>
+            <View
+              className="flex-row justify-center"
+              style={{ columnGap: s(12) }}
+            >
+              <TouchableOpacity
+                onPress={() => setShowCloseModal(false)}
+                className="rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: "#A49A99",
+                  paddingVertical: mvs(8),
+                  paddingLeft: s(24),
+                  paddingRight: s(24),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-white font-neueSemibold"
+                >
+                  No, stay
+                </ScaledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCloseModal(false);
+                  resetRequest();
+                  if (id) {
+                    router.replace(`/user/${id}` as any);
+                  } else {
+                    router.back();
+                  }
+                }}
+                className="rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: "#AD2E2E",
+                  paddingVertical: mvs(8),
+                  paddingLeft: s(24),
+                  paddingRight: s(24),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-white font-neueSemibold"
+                >
+                  Yes, leave
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

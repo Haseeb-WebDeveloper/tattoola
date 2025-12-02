@@ -5,6 +5,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
+import { UserRole } from "@/types/auth";
 import { logger } from "@/utils/logger";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
@@ -14,7 +15,7 @@ import { toast } from "sonner-native";
 
 export default function EmailConfirmationScreen() {
   const { resendVerificationEmail } = useAuth();
-  const { status, reset, pendingVerificationEmail } = useSignupStore();
+  const { status, reset, pendingVerificationEmail, formData } = useSignupStore();
   const [imageError, setImageError] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
@@ -148,7 +149,12 @@ export default function EmailConfirmationScreen() {
             onPress={() => {
               // Don't reset form data - keep it so user can edit email
               // Only reset status, not formData
-              router.replace("/(auth)/artist-register");
+              const role = formData?.role;
+              if (role === UserRole.ARTIST) {
+                router.replace("/(auth)/artist-register");
+              } else {
+                router.replace("/(auth)/register");
+              }
             }}
           >
             edit email.

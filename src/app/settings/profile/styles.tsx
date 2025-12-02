@@ -43,7 +43,7 @@ function StyleSkeleton() {
       />
       <View
         className="bg-gray/30"
-        style={{ width: s(120), height: s(96) }}
+        style={{ width: s(120), height: s(72) }}
       />
       <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
         <View
@@ -309,16 +309,13 @@ export default function StylesSettingsScreen() {
     const img = resolveImageUrl(item.imageUrl);
 
     return (
-      <View
+      <Pressable
         className="flex-row items-center border-b border-gray/20"
         style={{ paddingHorizontal: s(16) }}
+        onPress={() => toggleStyle(item.id)}
       >
         {/* Left select box */}
-        <Pressable
-          className="items-center"
-          style={{ width: s(40) }}
-          onPress={() => toggleStyle(item.id)}
-        >
+        <View className="items-center" style={{ width: s(40) }}>
           {isSelected ? (
             <SVGIcons.CheckedCheckbox style={{ width: s(20), height: s(20) }} />
           ) : (
@@ -326,19 +323,19 @@ export default function StylesSettingsScreen() {
               style={{ width: s(20), height: s(20) }}
             />
           )}
-        </Pressable>
+        </View>
 
         {/* Image */}
         {img ? (
           <Image
             source={{ uri: img }}
-            style={{ width: s(120), height: s(96) }}
+            style={{ width: s(120), height: s(72) }}
             resizeMode="cover"
           />
         ) : (
           <View
             className="bg-gray/30"
-            style={{ width: s(120), height: s(96) }}
+            style={{ width: s(120), height: s(72) }}
           />
         )}
 
@@ -356,7 +353,10 @@ export default function StylesSettingsScreen() {
         {/* Favorite star - only for artists */}
         {isArtist && (
           <TouchableOpacity
-            onPress={() => toggleFavorite(item.id)}
+            onPress={(e) => {
+              e.stopPropagation?.(); // Prevent Pressable triggering
+              toggleFavorite(item.id);
+            }}
             style={{ paddingRight: s(16) }}
             disabled={!isSelected}
           >
@@ -369,7 +369,7 @@ export default function StylesSettingsScreen() {
             )}
           </TouchableOpacity>
         )}
-      </View>
+      </Pressable>
     );
   };
 
@@ -445,7 +445,7 @@ export default function StylesSettingsScreen() {
                 paddingBottom: mvs(100),
               }}
             >
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 8 }).map((_, i) => (
                 <StyleSkeleton key={i} />
               ))}
             </ScrollView>

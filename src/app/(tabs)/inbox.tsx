@@ -287,7 +287,8 @@ export default function InboxScreen() {
         </View>
         <SVGIcons.LogoLight />
         <View className="rounded-full items-center justify-center">
-          <SVGIcons.Menu width={s(20)} height={s(20)} />
+          <View style={{ width: s(20), height: s(20) }} />
+          {/* <SVGIcons.Menu width={s(20)} height={s(20)} /> */}
         </View>
       </View>
 

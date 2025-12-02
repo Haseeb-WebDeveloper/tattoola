@@ -163,6 +163,8 @@ import Attachment from "@/assets/icons/attachment.svg";
 // @ts-ignore
 import Send from "@/assets/icons/send.svg";
 // @ts-ignore
+import Send2 from "@/assets/icons/send-2.svg";
+// @ts-ignore
 import MailSent from "@/assets/icons/mail-sent.svg";
 // @ts-ignore
 import Reload from "@/assets/icons/reload.svg";
@@ -320,6 +322,7 @@ export const SVGIcons = {
   Attachment,
   Send,
   Pen3,
+  Send2,
   MailSent,
   Reload,
   ReloadGreen,

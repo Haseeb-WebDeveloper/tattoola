@@ -380,7 +380,6 @@ export default function SearchScreen() {
                 return `${type}-${item.id}`;
               }}
               contentContainerStyle={{
-                paddingBottom: mvs(100),
               }}
               showsVerticalScrollIndicator={false}
               refreshControl={

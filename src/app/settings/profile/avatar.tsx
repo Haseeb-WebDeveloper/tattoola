@@ -189,7 +189,7 @@ export default function AvatarSettingsScreen() {
                 variant="lg"
                 className="text-white font-neueSemibold"
               >
-                Upload your studio logo
+                Upload your photo
               </ScaledText>
               <ScaledText
                 allowScaling={false}

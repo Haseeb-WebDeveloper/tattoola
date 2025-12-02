@@ -13,6 +13,7 @@ import { UserRole } from "../types/auth";
 import { logger } from "../utils/logger";
 import { supabase } from "../utils/supabase";
 import { buildGoogleMapsUrl } from "./location.service";
+import { COLLECTION_NAME } from "@/constants/limits";
 
 export class AuthService {
   /**
@@ -432,7 +433,7 @@ export class AuthService {
 
     // Ensure a users row exists for this auth user
     const email = session.session.user.email || "";
-    
+
     // Check if user exists by ID first
     const { data: existingUserById, error: existUserByIdError } = await supabase
       .from("users")
@@ -447,18 +448,22 @@ export class AuthService {
     }
 
     let baseUserRow: any = existingUserById;
-    
+
     // If user doesn't exist by ID, check by email (in case email exists from previous registration)
     if (!baseUserRow && email) {
-      const { data: existingUserByEmail, error: existUserByEmailError } = await supabase
-        .from("users")
-        .select("id, email")
-        .eq("email", email)
-        .maybeSingle();
+      const { data: existingUserByEmail, error: existUserByEmailError } =
+        await supabase
+          .from("users")
+          .select("id, email")
+          .eq("email", email)
+          .maybeSingle();
 
       logger.log("existing user by email:", existingUserByEmail);
 
-      if (existUserByEmailError && !existUserByEmailError.message.includes("No rows")) {
+      if (
+        existUserByEmailError &&
+        !existUserByEmailError.message.includes("No rows")
+      ) {
         throw new Error(existUserByEmailError.message);
       }
 
@@ -500,8 +505,13 @@ export class AuthService {
 
       if (insertUserError) {
         // If insert fails due to duplicate email, fetch and update existing user
-        if (insertUserError.message.includes("duplicate key") && insertUserError.message.includes("email")) {
-          logger.log("Duplicate email detected, fetching and updating existing user");
+        if (
+          insertUserError.message.includes("duplicate key") &&
+          insertUserError.message.includes("email")
+        ) {
+          logger.log(
+            "Duplicate email detected, fetching and updating existing user"
+          );
           const { data: existingUser, error: fetchError } = await supabase
             .from("users")
             .select("*")
@@ -509,7 +519,9 @@ export class AuthService {
             .single();
 
           if (fetchError || !existingUser) {
-            throw new Error("User with this email already exists but could not be retrieved. Please contact support.");
+            throw new Error(
+              "User with this email already exists but could not be retrieved. Please contact support."
+            );
           }
 
           // Update the existing user with new registration data
@@ -1118,15 +1130,33 @@ export class AuthService {
       }
     }
 
-    // Create portfolio collection
-    logger.log("Creating portfolio collection");
+    // creating one empty collection for all posts of the artist
+    logger.log("Creating all posts collection");
+    const { data: allPostsCollection, error: allPostsCollectionError } =
+      await adminOrUserClient
+        .from("collections")
+        .insert({
+          id: generateUUID(),
+          name: COLLECTION_NAME.ALL_POSTS,
+          description: "All posts of the artist",
+          ownerId: userId,
+          isPrivate: false,
+          isPortfolioCollection: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+    // Create artist favorite work collection
+    logger.log("Creating artist favorite work collection");
     const { data: portfolioCollection, error: collectionError } =
       await adminOrUserClient
         .from("collections")
         .insert({
           id: generateUUID(),
-          name: `${data.step3.firstName} ${data.step3.lastName}'s Portfolio`,
-          description: "Portfolio works",
+          name: COLLECTION_NAME.ARTIST_FAV_WORK,
+          description: "Artist favorite works",
           ownerId: userId,
           isPrivate: false,
           isPortfolioCollection: true,

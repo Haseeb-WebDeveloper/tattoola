@@ -22,7 +22,11 @@ type OverlayProps = {
 };
 
 // Separate overlay component rendered at screen level (above gradients)
-function FeedPostOverlayComponent({ post, onLikePress, onAuthorPress }: OverlayProps) {
+function FeedPostOverlayComponent({
+  post,
+  onLikePress,
+  onAuthorPress,
+}: OverlayProps) {
   const tabBarHeight = useTabBarStore((state) => state.tabBarHeight);
   const bottomPosition = tabBarHeight > 0 ? tabBarHeight : mvs(119);
 
@@ -54,13 +58,15 @@ function FeedPostOverlayComponent({ post, onLikePress, onAuthorPress }: OverlayP
             className="flex-row items-center justify-start"
             style={{ gap: s(12) }}
           >
-            <ScaledText
-              variant="18"
-              className="text-foreground leading-7 font-neueBold"
-              numberOfLines={1}
-            >
-              {post.caption || "Untitled"}
-            </ScaledText>
+            {!!post.caption && (
+              <ScaledText
+                variant="18"
+                className="text-foreground leading-7 font-neueBold"
+                numberOfLines={1}
+              >
+                {post.caption}
+              </ScaledText>
+            )}
             <View
               className=" flex items-center justify-center"
               style={{
@@ -81,8 +87,9 @@ function FeedPostOverlayComponent({ post, onLikePress, onAuthorPress }: OverlayP
           >
             <Image
               source={{
-                uri: post.author.avatar ||
-                  `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`
+                uri:
+                  post.author.avatar ||
+                  `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`,
               }}
               className="rounded-full"
               style={{
@@ -130,7 +137,13 @@ function FeedPostOverlayComponent({ post, onLikePress, onAuthorPress }: OverlayP
 export const FeedPostOverlay = memo(FeedPostOverlayComponent);
 
 // Card component - only shows image, bottom content rendered at screen level
-function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress, hideOverlay }: Props) {
+function FeedPostCardComponent({
+  post,
+  onPress,
+  onLikePress,
+  onAuthorPress,
+  hideOverlay,
+}: Props) {
   const cover = post.media[0]?.mediaUrl;
   const tabBarHeight = useTabBarStore((state) => state.tabBarHeight);
   const bottomPosition = tabBarHeight > 0 ? tabBarHeight : mvs(119);
@@ -160,9 +173,7 @@ function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress, hide
 
   return (
     <View className="w-full h-[100svh] ">
-      <View
-        className="relative w-full overflow-hidden h-full"
-      >
+      <View className="relative w-full overflow-hidden h-full">
         {/* Background media press area (post open) */}
         <TouchableOpacity
           activeOpacity={1}
@@ -198,13 +209,15 @@ function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress, hide
                   className="flex-row items-center justify-start"
                   style={{ gap: s(12) }}
                 >
-                  <ScaledText
-                    variant="18"
-                    className="text-foreground leading-7 font-neueBold"
-                    numberOfLines={1}
-                  >
-                    {post.caption || "Untitled"}
-                  </ScaledText>
+                  {post.caption && (
+                    <ScaledText
+                      variant="18"
+                      className="text-foreground leading-7 font-neueBold"
+                      numberOfLines={1}
+                    >
+                      {post.caption}
+                    </ScaledText>
+                  )}
                   <View
                     className=" flex items-center justify-center"
                     style={{
@@ -225,8 +238,9 @@ function FeedPostCardComponent({ post, onPress, onLikePress, onAuthorPress, hide
                 >
                   <Image
                     source={{
-                      uri: post.author.avatar ||
-                        `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`
+                      uri:
+                        post.author.avatar ||
+                        `https://api.dicebear.com/7.x/initials/png?seed=${post.author.firstName?.[0] || post.author.username?.[0] || "u"}`,
                     }}
                     className="rounded-full"
                     style={{

@@ -30,6 +30,16 @@ export default function StudioOverview({
 }: StudioOverviewProps) {
   const ownerName = [ownerFirstName, ownerLastName].filter(Boolean).join(" ");
 
+  console.log("name", name);
+  console.log("logo", logo);
+  console.log("ownerFirstName", ownerFirstName);
+  console.log("ownerLastName", ownerLastName);
+  console.log("municipality", municipality);
+  console.log("province", province);
+  console.log("website", website);
+  console.log("instagram", instagram);
+  console.log("tiktok", tiktok);
+
   const openUrl = (url?: string | null) => {
     if (!url) return;
     try {

@@ -7,6 +7,9 @@ import {
 } from "@/stores/postUploadStore";
 import { TrimText } from "@/utils/text-trim";
 import { router, useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/providers/AuthProvider";
+import { COLLECTION_NAME } from "@/constants/limits";
+import { supabase } from "@/utils/supabase";
 import React, { useEffect, useMemo } from "react";
 import {
   Image,
@@ -27,6 +30,7 @@ import { s } from "@/utils/scale";
 export default function UploadMediaStep() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
   const params = useLocalSearchParams<{ collectionId?: string }>();
+  const { user } = useAuth();
   const media = usePostUploadStore((s) => s.media);
   const setMedia = usePostUploadStore((s) => s.setMedia);
   const addMedia = usePostUploadStore((s) => s.addMedia);
@@ -39,6 +43,34 @@ export default function UploadMediaStep() {
       setCollectionId(params.collectionId);
     }
   }, [params.collectionId, setCollectionId]);
+
+  // For artists, default to their ALL_POSTS collection if none is set.
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!user?.id || user.role !== "ARTIST") return;
+        // If collection is already chosen (via route or store), don't override.
+        if (usePostUploadStore.getState().collectionId) return;
+
+        const { data, error } = await supabase
+          .from("collections")
+          .select("id,name")
+          .eq("ownerId", user.id)
+          .eq("name", COLLECTION_NAME.ALL_POSTS)
+          .maybeSingle();
+
+        if (!mounted || error || !data?.id) return;
+
+        setCollectionId(data.id);
+      } catch {
+        // Fail silently; user can still pick a collection manually if needed.
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, user?.role, setCollectionId]);
 
   const canProceed = useMemo(
     () => canProceedFromMedia(usePostUploadStore.getState()),
