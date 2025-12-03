@@ -239,7 +239,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
         <BottomSheetTextInput
           value={reportReason}
           onChangeText={setReportReason}
-          placeholder="Describe your issue here...."
+          placeholder="Descrivi qui il problema..."
             
           multiline
           textAlignVertical="top"

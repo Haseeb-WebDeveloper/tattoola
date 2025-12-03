@@ -2,8 +2,8 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import type { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
-import { VideoView, useVideoPlayer } from "expo-video";
 import { useRouter } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 import { StylePills } from "../ui/stylePills";
@@ -19,11 +19,9 @@ export default function StudioCard({ studio }: StudioCardProps) {
     router.push(`/studio/${studio.id}`);
   };
 
-  const videoMedia = studio.bannerMedia.find(
-    (b) => b.mediaType === "VIDEO"
-  );
+  const videoMedia = studio.bannerMedia.find((b) => b.mediaType === "VIDEO");
   // Always call hook at top level
-  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || '', (player) => {
+  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || "", (player) => {
     if (videoMedia) {
       player.loop = true;
       player.muted = true;
@@ -35,7 +33,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
     <TouchableOpacity
       activeOpacity={1}
       onPress={handlePress}
-      className="bg-background  border-gray/50  overflow-hidden"
+      className="overflow-hidden bg-background border-gray/50"
       style={{
         marginHorizontal: s(16),
         marginBottom: mvs(16),
@@ -48,7 +46,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
         {/* Subscription Badge */}
         {studio.subscription && (
           <View
-            className="absolute right-0 top-0 bg-gray flex-row items-center justify-center"
+            className="absolute top-0 right-0 flex-row items-center justify-center bg-gray"
             style={{
               paddingLeft: s(8),
               paddingRight: s(25),
@@ -63,7 +61,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
               variant="11"
               className="text-primary font-neueMedium"
             >
-              Studio profile
+              Profilo studio
             </ScaledText>
           </View>
         )}
@@ -74,7 +72,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
           style={{ marginBottom: mvs(8) }}
         >
           <View
-            className="rounded-full border border-black overflow-hidden"
+            className="overflow-hidden border border-black rounded-full"
             style={{ width: s(61), height: s(61), marginRight: s(12) }}
           >
             {studio.logo ? (
@@ -108,7 +106,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-gray font-montserratMedium ml-1"
+              className="ml-1 text-gray font-montserratMedium"
               numberOfLines={2}
               ellipsizeMode="tail"
             >
@@ -132,12 +130,12 @@ export default function StudioCard({ studio }: StudioCardProps) {
               className="text-white font-neueLight"
               numberOfLines={1}
             >
-              Owned by
+              Di proprietà di
             </ScaledText>
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-neueBold ml-1"
+              className="ml-1 text-white font-neueBold"
               numberOfLines={1}
             >
               {studio.ownerName}
@@ -161,7 +159,7 @@ export default function StudioCard({ studio }: StudioCardProps) {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-white font-neueLight ml-1"
+                  className="ml-1 text-white font-neueLight"
                   numberOfLines={1}
                 >
                   {location?.province}, {location?.municipality}

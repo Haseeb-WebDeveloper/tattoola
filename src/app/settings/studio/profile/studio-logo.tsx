@@ -46,7 +46,7 @@ export default function StudioLogoScreen() {
         setInitialLogo(studio.logo || "");
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Failed to load studio data");
+        toast.error(error.message || "Impossibile caricare i dati dello studio");
       } finally {
         setIsFetching(false);
       }
@@ -99,7 +99,7 @@ export default function StudioLogoScreen() {
       // Check file size (5MB max)
       const maxSize = 5 * 1024 * 1024;
       if (file.fileSize && file.fileSize > maxSize) {
-        toast.error("Image size must be less than 5MB");
+        toast.error("L'immagine deve essere inferiore a 5MB");
         setIsUploading(false);
         return;
       }
@@ -118,7 +118,7 @@ export default function StudioLogoScreen() {
       }
     } catch (error: any) {
       console.error("Error picking logo:", error);
-      toast.error(error.message || "Failed to upload image");
+      toast.error(error.message || "Impossibile caricare l'immagine");
     } finally {
       setIsUploading(false);
     }
@@ -133,18 +133,18 @@ export default function StudioLogoScreen() {
       const result = await updateStudioLogo(user.id, newLogo);
 
       if (result.success) {
-        toast.success("Studio logo updated successfully!");
+        toast.success("Logo dello studio aggiornato con successo!");
         setInitialLogo(newLogo);
         setNewLogo(null);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update logo");
+        toast.error(result.error || "Impossibile aggiornare il logo");
       }
     } catch (error: any) {
       console.error("Error updating logo:", error);
-      toast.error(error.message || "Failed to update logo");
+      toast.error(error.message || "Impossibile aggiornare il logo");
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +212,7 @@ export default function StudioLogoScreen() {
                 className="text-white font-neueSemibold"
                 style={{ marginBottom: mvs(8) }}
               >
-                Upload your studio logo
+                Carica il logo del tuo studio
               </ScaledText>
 
               {/* Subtitle */}
@@ -222,7 +222,7 @@ export default function StudioLogoScreen() {
                 className="text-gray font-neueSemibold"
                 style={{ marginBottom: mvs(24) }}
               >
-                Supporta JPG, PNG, max size 5MB
+                Supportiamo JPG e PNG, dimensione massima 5MB
               </ScaledText>
 
               {/* Logo Upload Area */}
@@ -329,7 +329,7 @@ export default function StudioLogoScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -367,7 +367,7 @@ export default function StudioLogoScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the logo
+              Hai modifiche non salvate nel logo
             </ScaledText>
 
             {/* Subtitle */}
@@ -377,7 +377,7 @@ export default function StudioLogoScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -404,7 +404,7 @@ export default function StudioLogoScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -423,7 +423,7 @@ export default function StudioLogoScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

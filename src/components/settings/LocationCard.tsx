@@ -32,7 +32,7 @@ export function LocationCard({
   const displayText =
     location.provinceName && location.municipalityName
       ? `${location.municipalityName}, ${location.provinceName}`
-      : "Select location";
+      : "Seleziona posizione";
 
   return (
     <View

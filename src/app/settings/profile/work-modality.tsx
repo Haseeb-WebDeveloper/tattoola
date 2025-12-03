@@ -63,7 +63,7 @@ export default function WorkModalitySettingsScreen() {
           .single();
 
         if (profileError || !profileData) {
-          throw new Error("Artist profile not found");
+          throw new Error("Profilo artista non trovato");
         }
 
         if (mounted) {
@@ -73,7 +73,9 @@ export default function WorkModalitySettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading work modality:", error);
-        toast.error(error.message || "Failed to load work modality");
+        toast.error(
+          error.message || "Caricamento della modalità di lavoro non riuscito"
+        );
       } finally {
         if (mounted) {
           setLoading(false);
@@ -127,7 +129,7 @@ export default function WorkModalitySettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Work modality updated successfully");
+      toast.success("Modalità di lavoro aggiornata con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -135,7 +137,9 @@ export default function WorkModalitySettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating work modality:", err);
-      toast.error(err.message || "Failed to update work modality");
+      toast.error(
+        err.message || "Impossibile aggiornare la modalità di lavoro"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -308,7 +312,7 @@ export default function WorkModalitySettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -345,7 +349,7 @@ export default function WorkModalitySettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in work modality
+              Hai modifiche non salvate nella modalità di lavoro
             </ScaledText>
 
             {/* Subtitle */}
@@ -355,7 +359,7 @@ export default function WorkModalitySettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -382,7 +386,7 @@ export default function WorkModalitySettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -401,7 +405,7 @@ export default function WorkModalitySettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

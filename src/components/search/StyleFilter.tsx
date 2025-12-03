@@ -58,10 +58,10 @@ export default function StyleFilter({
 
   const displayText =
     selectedIds.length === 0
-      ? "All"
+      ? "Tutti"
       : selectedIds.length === 1
-        ? styles.find((s) => s.id === selectedIds[0])?.name || "1 selected"
-        : `${selectedIds.length} selected`;
+        ? styles.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        : `${selectedIds.length} selezionati`;
 
   return (
     <>
@@ -69,7 +69,7 @@ export default function StyleFilter({
       <TouchableOpacity
         activeOpacity={1}
         onPress={() => setIsExpanded(true)}
-        className="bg-tat-foreground border-gray flex-row items-center justify-between"
+        className="flex-row items-center justify-between bg-tat-foreground border-gray"
         style={{
           paddingVertical: mvs(10),
           paddingHorizontal: s(16),
@@ -101,7 +101,7 @@ export default function StyleFilter({
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
             <View
-              className="bg-background border-gray flex-row items-center justify-between"
+              className="flex-row items-center justify-between bg-background border-gray"
               style={{
                 marginTop: mvs(16),
                 marginHorizontal: s(20),
@@ -143,7 +143,7 @@ export default function StyleFilter({
                     variant="sm"
                     className="text-white font-montserratMedium"
                   >
-                    Done
+                    Fatto
                   </ScaledText>
                 </TouchableOpacity>
               )}

@@ -242,15 +242,15 @@ export default function UploadMediaStep() {
                 variant="11"
                 className="text-gray font-neueMedium mb-6"
               >
-                You need to select atleast{" "}
+                Devi selezionare almeno{" "}
                 <ScaledText
                   allowScaling={false}
                   variant="11"
                   className="text-[#FF7F56] font-neueMedium"
                 >
-                  one photo
+                  una foto
                 </ScaledText>{" "}
-                and 3 photos/videos
+                e 3 foto/video
               </ScaledText>
             </View>
 
@@ -290,7 +290,7 @@ export default function UploadMediaStep() {
                       variant="md"
                       className="text-foreground font-neueBold"
                     >
-                      Upload files
+                      Carica file
                     </ScaledText>
                   </TouchableOpacity>
                 </>
@@ -298,13 +298,13 @@ export default function UploadMediaStep() {
               <ScaledText
                 allowScaling={false}
                 variant="11"
-                className="text-foreground/80 text-center font-neueBold"
+                className="text-center text-foreground/80 font-neueBold"
                 style={{
                   marginTop: s(12),
                   paddingHorizontal: s(16),
                 }}
               >
-                JPG/PNG up to 5MB. MP4/MOV/AVI up to 10MB.
+                JPG/PNG fino a 5MB. MP4/MOV/AVI fino a 10MB.
               </ScaledText>
             </View>
 
@@ -318,7 +318,7 @@ export default function UploadMediaStep() {
                     marginTop: s(16),
                   }}
                 >
-                  Uploaded files
+                  File caricati
                 </ScaledText>
                 <View style={{ maxHeight: 350 }}>
                   <DraggableFlatList
@@ -345,8 +345,8 @@ export default function UploadMediaStep() {
           onBack={() => router.back()}
           onNext={() => router.push("/upload/description")}
           nextDisabled={!canProceed}
-          nextLabel="Next"
-          backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
         />
       </View>
     </View>

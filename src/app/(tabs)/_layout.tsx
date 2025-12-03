@@ -1,9 +1,9 @@
 import { RequireAuth } from "@/components/AuthGuard";
 import CustomTabBar from "@/components/CustomTabBar";
+import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import { BlurView } from "expo-blur";
+import { StyleSheet, View } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 // import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -46,25 +46,25 @@ export default function TabLayout() {
             <Tabs.Screen
               name="search"
               options={{
-                title: "Search",
+                title: "Cerca",
               }}
             />
             <Tabs.Screen
               name="upload"
               options={{
-                title: "Upload",
+                title: "Carica",
               }}
             />
             <Tabs.Screen
               name="inbox"
               options={{
-                title: "Inbox",
+                title: "Messaggi",
               }}
             />
             <Tabs.Screen
               name="profile"
               options={{
-                title: "Profile",
+                title: "Profilo",
               }}
             />
           </Tabs>

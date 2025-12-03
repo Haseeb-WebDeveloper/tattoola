@@ -26,7 +26,7 @@ export default function VerifyScreen() {
   // No logic - just show loading while deepLinking.ts handles verification
   return (
     <SafeAreaView className="flex-1 bg-background items-center justify-center">
-      <LoadingSpinner message="Verifying your email..." overlay />
+      <LoadingSpinner message="Verifica della tua email..." overlay />
       
       {/* Fallback button in case verification takes too long */}
       <View className="absolute bottom-10 px-6 w-full">
@@ -35,7 +35,7 @@ export default function VerifyScreen() {
           className="bg-foreground/10 py-3 rounded-full items-center"
         >
           <Text className="text-foreground text-sm">
-            Taking too long? Go back
+            Sta impiegando troppo tempo? Torna indietro
           </Text>
         </TouchableOpacity>
       </View>

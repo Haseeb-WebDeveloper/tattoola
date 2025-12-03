@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { UsernameService } from "@/services/username.service";
 import { ValidationRules, ValidationUtils } from "@/utils/validation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type UsernameValidationState = {
   checking: boolean;
@@ -29,72 +29,74 @@ export function useUsernameValidation(username: string) {
   }, []);
 
   // Check availability
-  const checkAvailability = useCallback(async (value: string) => {
-    const trimmed = value.trim();
-    
-    // Don't check if too short
-    if (trimmed.length < 3) {
+  const checkAvailability = useCallback(
+    async (value: string) => {
+      const trimmed = value.trim();
+
+      // Don't check if too short
+      if (trimmed.length < 3) {
+        setState((prev) => ({
+          ...prev,
+          checking: false,
+          available: null,
+        }));
+        return;
+      }
+
+      // Check cache first
+      if (cacheRef.current.has(trimmed)) {
+        const cached = cacheRef.current.get(trimmed)!;
+        setState((prev) => ({
+          ...prev,
+          checking: false,
+          available: cached,
+        }));
+        return;
+      }
+
+      // Check format first - only check availability if format is valid
+      const formatError = validateFormat(trimmed);
+      if (formatError) {
+        setState((prev) => ({
+          ...prev,
+          checking: false,
+          available: null,
+          formatError,
+          isFormatValid: false,
+        }));
+        return;
+      }
+
+      // Format is valid, check availability
       setState((prev) => ({
         ...prev,
-        checking: false,
-        available: null,
+        checking: true,
+        formatError: null,
+        isFormatValid: true,
       }));
-      return;
-    }
 
-    // Check cache first
-    if (cacheRef.current.has(trimmed)) {
-      const cached = cacheRef.current.get(trimmed)!;
-      setState((prev) => ({
-        ...prev,
-        checking: false,
-        available: cached,
-      }));
-      return;
-    }
+      try {
+        const isAvailable =
+          await UsernameService.checkUsernameAvailability(trimmed);
 
-    // Check format first - only check availability if format is valid
-    const formatError = validateFormat(trimmed);
-    if (formatError) {
-      setState((prev) => ({
-        ...prev,
-        checking: false,
-        available: null,
-        formatError,
-        isFormatValid: false,
-      }));
-      return;
-    }
+        // Cache the result
+        cacheRef.current.set(trimmed, isAvailable);
 
-    // Format is valid, check availability
-    setState((prev) => ({
-      ...prev,
-      checking: true,
-      formatError: null,
-      isFormatValid: true,
-    }));
-
-    try {
-      const isAvailable = await UsernameService.checkUsernameAvailability(
-        trimmed
-      );
-
-      // Cache the result
-      cacheRef.current.set(trimmed, isAvailable);
-
-      setState((prev) => ({
-        ...prev,
-        checking: false,
-        available: isAvailable,
-      }));
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        checking: false,
-        available: null,
-      }));
-    }
-  }, [validateFormat]);
+        setState((prev) => ({
+          ...prev,
+          checking: false,
+          available: isAvailable,
+        }));
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          checking: false,
+          available: null,
+        }));
+      }
+    },
+    [validateFormat]
+  );
 
   // Debounced check
   useEffect(() => {
@@ -159,7 +161,7 @@ export function useUsernameValidation(username: string) {
     if (trimmed.length < 3) {
       setState((prev) => ({
         ...prev,
-        formatError: "Username must be at least 3 characters",
+        formatError: "Lo username deve contenere almeno 3 caratteri",
         isFormatValid: false,
       }));
       return false;
@@ -186,9 +188,8 @@ export function useUsernameValidation(username: string) {
     }));
 
     try {
-      const isAvailable = await UsernameService.checkUsernameAvailability(
-        trimmed
-      );
+      const isAvailable =
+        await UsernameService.checkUsernameAvailability(trimmed);
       cacheRef.current.set(trimmed, isAvailable);
 
       setState((prev) => ({
@@ -214,4 +215,3 @@ export function useUsernameValidation(username: string) {
     isValid: state.isFormatValid && state.available === true,
   };
 }
-

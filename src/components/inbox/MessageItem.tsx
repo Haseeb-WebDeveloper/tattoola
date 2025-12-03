@@ -76,7 +76,7 @@ export default function MessageItem({
       }
     } catch (error) {
       console.error("Download error:", error);
-      toast.error("Failed to download file");
+      toast.error("Impossibile scaricare il file");
     } finally {
       setShowMenu(false);
     }

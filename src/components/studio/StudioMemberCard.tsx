@@ -47,7 +47,7 @@ export const StudioMemberCard: React.FC<StudioMemberCardProps> = ({
   const isPending = item.status === "PENDING";
   const locationText = item.location
     ? `${item.location.municipality} (${item.location.province})`
-    : "Location not set";
+    : "Località non impostata";
   const diamondType = item.planType === "STUDIO" ? "red" : "yellow";
 
   return (

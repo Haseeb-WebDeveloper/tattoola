@@ -58,12 +58,12 @@ export default function StudioArtistsScreen() {
           setStudioId(studio.id);
           await loadMembers(studio.id);
         } else {
-          toast.error("Studio not found");
+          toast.error("Studio non trovato");
           router.back();
         }
       } catch (error: any) {
         console.error("Error loading studio:", error);
-        toast.error(error.message || "Failed to load studio");
+        toast.error(error.message || "Impossibile caricare lo studio");
         router.back();
       } finally {
         setLoading(false);
@@ -83,7 +83,7 @@ export default function StudioArtistsScreen() {
       }
     } catch (error: any) {
       console.error("Error loading members:", error);
-      toast.error(error.message || "Failed to load members");
+      toast.error(error.message || "Impossibile caricare i membri");
     }
   };
 
@@ -108,7 +108,7 @@ export default function StudioArtistsScreen() {
         }
       } catch (error: any) {
         console.error("Error searching artists:", error);
-        toast.error(error.message || "Failed to search artists");
+        toast.error(error.message || "Impossibile cercare gli artisti");
       } finally {
         setSearching(false);
       }
@@ -146,11 +146,11 @@ export default function StudioArtistsScreen() {
         setSearchResults([]);
         await loadMembers(studioId);
       } else {
-        toast.error(result.error || "Failed to send invitation");
+        toast.error(result.error || "Impossibile inviare l'invito");
       }
     } catch (error: any) {
       console.error("Error inviting artist:", error);
-      toast.error(error.message || "Failed to send invitation");
+      toast.error(error.message || "Impossibile inviare l'invito");
     } finally {
       setInviting(null);
     }
@@ -178,11 +178,11 @@ export default function StudioArtistsScreen() {
         toast.success("Membro rimosso");
         await loadMembers(studioId);
       } else {
-        toast.error(result.error || "Failed to remove member");
+        toast.error(result.error || "Impossibile rimuovere il membro");
       }
     } catch (error: any) {
       console.error("Error removing member:", error);
-      toast.error(error.message || "Failed to remove member");
+      toast.error(error.message || "Impossibile rimuovere il membro");
     } finally {
       setRemoving(null);
       setMemberToRemove(null);
@@ -206,11 +206,11 @@ export default function StudioArtistsScreen() {
           />
         );
       } else {
-        toast.error(result.error || "Failed to resend invitation");
+        toast.error(result.error || "Impossibile reinviare l'invito");
       }
     } catch (error: any) {
       console.error("Error resending invitation:", error);
-      toast.error(error.message || "Failed to resend invitation");
+      toast.error(error.message || "Impossibile reinviare l'invito");
     } finally {
       setResending(null);
     }

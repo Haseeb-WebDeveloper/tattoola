@@ -8,7 +8,7 @@ export const sizeOptions = [
 
 // 2nd step: References
 export const referancesQuestion =
-  "Can you post some examples of tattoos that resemble the result you'd like?";
+  "Puoi caricare alcuni esempi di tatuaggi che assomigliano al risultato che vorresti ottenere?";
 
 // 3rd step: Color
 export const colorOptions = [
@@ -17,7 +17,8 @@ export const colorOptions = [
 ] as const;
 
 // 4th step: Description
-export const descriptionQuestion = "Describe your tattoo design in brief";
+export const descriptionQuestion =
+  "Descrivi brevemente il tatuaggio che hai in mente";
 
 // 5th step: Age
 export const ageOptions = [

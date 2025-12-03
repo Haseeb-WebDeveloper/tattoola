@@ -24,7 +24,7 @@ export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
         className="text-foreground font-montserratSemibold"
         style={{ marginBottom: mvs(8) }}
       >
-        Preferred styles
+        Stili preferiti
       </ScaledText>
 
       {/* Styles Pills - Horizontal Scroll */}

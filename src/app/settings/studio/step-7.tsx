@@ -158,7 +158,7 @@ export default function StudioStep7() {
             className="text-foreground font-neueSemibold"
             style={{ marginBottom: mvs(8) }}
           >
-            Select services
+            Seleziona i servizi
           </ScaledText>
         </View>
 

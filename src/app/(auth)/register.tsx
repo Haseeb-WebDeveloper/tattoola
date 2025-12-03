@@ -65,7 +65,7 @@ export default function RegisterScreen() {
         required: true,
         custom: (value: string) => {
           if (value !== formData.password) {
-            return "Passwords do not match";
+            return "Le password non coincidono";
           }
           return true;
         },
@@ -78,7 +78,7 @@ export default function RegisterScreen() {
     if (!formErrors.username && formData.username.trim().length >= 3) {
       const isAvailable = await usernameValidation.manualCheck();
       if (!isAvailable) {
-        formErrors.username = "This username is already taken";
+        formErrors.username = "Questo username è già stato utilizzato";
       }
     }
 
@@ -88,12 +88,13 @@ export default function RegisterScreen() {
         formData.email
       );
       if (!isEmailAvailable) {
-        formErrors.email = "This email is already registered";
+        formErrors.email = "Questa email è già registrata";
       }
     }
 
     if (!acceptedTerms) {
-      formErrors.terms = "You must accept the Terms of Use and Privacy Policy";
+      formErrors.terms =
+        "Devi accettare i Termini di utilizzo e l'Informativa sulla privacy";
     }
 
     setErrors(formErrors);
@@ -119,7 +120,9 @@ export default function RegisterScreen() {
       //   router.push("/(auth)/welcome");
       // }
     } catch (error: any) {
-      const message = error?.message || "An error occurred during registration";
+      const message =
+        error?.message ||
+        "Si è verificato un errore durante la registrazione";
       setError(message);
       router.replace("/(auth)/register");
       toast.error(message);
@@ -156,7 +159,7 @@ export default function RegisterScreen() {
       />
 
       {/* Inputs */}
-      <View className="px-6">
+        <View className="px-6">
         <ScaledText
           variant="sm"
           className="text-tat textcenter mb-2 font-montserratSemibold"
@@ -209,7 +212,7 @@ export default function RegisterScreen() {
               variant="sm"
               className="text-xs text-error mt-1 font-neueLight"
             >
-              This username is already taken
+              Questo username è già stato utilizzato
             </ScaledText>
           )}
         {!usernameValidation.formatError &&
@@ -218,7 +221,7 @@ export default function RegisterScreen() {
               variant="sm"
               className="text-xs text-success mt-1 font-neueLight"
             >
-              Username is available
+              Username disponibile
             </ScaledText>
           )}
         {/* Show form validation errors (from form submit) */}
@@ -363,7 +366,7 @@ export default function RegisterScreen() {
               variant="body1"
               className="text-foreground font-neueBold"
             >
-              Submit
+              Invia
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -374,13 +377,13 @@ export default function RegisterScreen() {
             variant="sm"
             className="text-[#A49A99] text-center font-montserratLight"
           >
-            Already have an account?{" "}
+            Hai già un account?{" "}
             <ScaledText
               variant="sm"
               className="text-foreground font-montserratSemibold"
               onPress={handleLogin}
             >
-              Sign in
+              Accedi
             </ScaledText>
           </ScaledText>
           <View className="mt-2" />
@@ -389,7 +392,7 @@ export default function RegisterScreen() {
             className="text-foreground font-montserratSemibold"
             onPress={handleArtistRegister}
           >
-            Are you an Artist?
+            Sei un artista?
           </ScaledText>
         </View>
       </View>

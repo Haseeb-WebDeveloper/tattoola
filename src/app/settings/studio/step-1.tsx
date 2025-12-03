@@ -133,8 +133,8 @@ export default function StudioStep1() {
         <StudioStepHeader
           currentStep={1}
           totalSteps={8}
-          stepName="Add a Cover "
-          stepDescription="Choose how you want to display your studio's cover"
+          stepName="Aggiungi una cover"
+          stepDescription="Scegli come vuoi mostrare la cover del tuo studio"
           icon={<SVGIcons.Magic width={s(19)} height={s(19)} />}
         />
 
@@ -216,7 +216,7 @@ export default function StudioStep1() {
                             variant="md"
                             className="text-foreground font-neueSemibold"
                           >
-                            Upload image
+                            Carica immagine
                           </ScaledText>
                         </View>
                       </View>

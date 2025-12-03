@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { router } from "expo-router";
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   children: ReactNode;
@@ -25,17 +25,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ error, errorInfo });
-    
+
     // Log error in development
     if (__DEV__) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+      console.error("ErrorBoundary caught an error:", error, errorInfo);
     }
   }
 
   handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
     try {
-      router.replace('/(auth)/welcome');
+      router.replace("/(auth)/welcome");
     } catch (e) {
       // If navigation fails, just reset the error state
       this.setState({ hasError: false });
@@ -49,29 +49,29 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <View className="flex-1 bg-background items-center justify-center px-6">
-          <ScrollView 
-            contentContainerStyle={{ 
-              flexGrow: 1, 
-              justifyContent: 'center', 
-              alignItems: 'center' 
+        <View className="items-center justify-center flex-1 px-6 bg-background">
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
-            <Text className="text-foreground text-2xl font-neueSemibold mb-4 text-center">
-              Oops! Something went wrong
+            <Text className="mb-4 text-2xl text-center text-foreground font-neueSemibold">
+              Ops! Qualcosa è andato storto
             </Text>
-            
-            <Text className="text-foreground/70 text-base mb-6 text-center">
-              We're sorry for the inconvenience. Please try again.
+
+            <Text className="mb-6 text-base text-center text-foreground/70">
+              Ci dispiace per il disagio. Per favore riprova.
             </Text>
 
             {__DEV__ && this.state.error && (
-              <View className="bg-foreground/10 p-4 rounded-lg mb-6 max-w-full">
-                <Text className="text-foreground text-xs font-mono">
+              <View className="max-w-full p-4 mb-6 rounded-lg bg-foreground/10">
+                <Text className="font-mono text-xs text-foreground">
                   {this.state.error.toString()}
                 </Text>
                 {this.state.errorInfo && (
-                  <Text className="text-foreground/70 text-xs font-mono mt-2">
+                  <Text className="mt-2 font-mono text-xs text-foreground/70">
                     {this.state.errorInfo.componentStack}
                   </Text>
                 )}
@@ -80,10 +80,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <TouchableOpacity
               onPress={this.handleReset}
-              className="bg-primary px-8 py-4 rounded-full"
+              className="px-8 py-4 rounded-full bg-primary"
             >
-              <Text className="text-foreground font-neueSemibold text-base">
-                Go to Home
+              <Text className="text-base text-foreground font-neueSemibold">
+                Vai alla Home
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -94,4 +94,3 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-

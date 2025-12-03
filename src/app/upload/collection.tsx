@@ -284,7 +284,7 @@ export default function UploadCollectionStep() {
             marginBottom: mvs(8),
           }}
         >
-          Add to collection
+          Aggiungi a una collection
         </ScaledText>
         {/* Grid of collections */}
         <View className="mb-4">
@@ -386,7 +386,7 @@ export default function UploadCollectionStep() {
                   variant="md"
                   className="text-foreground text-center font-neueMedium"
                 >
-                  Create new collection
+                  Crea nuova collection
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -398,8 +398,8 @@ export default function UploadCollectionStep() {
         onBack={() => router.back()}
         onNext={() => router.push("/upload/preview")}
         nextDisabled={!canProceed}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
       />
 
       {/* Create collection modal */}
@@ -420,13 +420,13 @@ export default function UploadCollectionStep() {
               className="text-foreground font-neueBold"
               style={{ marginBottom: mvs(8) }}
             >
-              Create new collection
+              Crea nuova collection
             </ScaledText>
             <ScaledTextInput
               containerClassName="rounded-xl border border-gray"
               className="text-foreground rounded-xl font-montserratSemibold"
               style={{ fontSize: s(12) }}
-              placeholder="Collection name"
+              placeholder="Nome collection"
               value={newName}
               onChangeText={setNewName}
             />
@@ -454,7 +454,7 @@ export default function UploadCollectionStep() {
                   variant="sm"
                   className="text-foreground font-neueSemibold text-center"
                 >
-                  Cancel
+                  Annulla
                 </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -475,7 +475,7 @@ export default function UploadCollectionStep() {
                   variant="sm"
                   className="text-foreground font-neueSemibold text-center"
                 >
-                  Create
+                  Crea
                 </ScaledText>
               </TouchableOpacity>
             </View>

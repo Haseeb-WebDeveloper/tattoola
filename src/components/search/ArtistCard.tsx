@@ -19,15 +19,13 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
     router.push(`/user/${artist.userId}`);
   };
 
-  const displayName = [artist.user.firstName, artist.user.lastName]
-    .filter(Boolean)
-    .join(" ") || artist.user.username;
+  const displayName =
+    [artist.user.firstName, artist.user.lastName].filter(Boolean).join(" ") ||
+    artist.user.username;
 
-  const videoMedia = artist.bannerMedia.find(
-    (b) => b.mediaType === "VIDEO"
-  );
+  const videoMedia = artist.bannerMedia.find((b) => b.mediaType === "VIDEO");
   // Always call hook at top level
-  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || '', (player) => {
+  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || "", (player) => {
     if (videoMedia) {
       player.loop = true;
       player.muted = true;
@@ -39,7 +37,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
     <TouchableOpacity
       activeOpacity={1}
       onPress={handlePress}
-      className="bg-background border border-gray/50  overflow-hidden"
+      className="overflow-hidden border bg-background border-gray/50"
       style={{
         marginHorizontal: s(16),
         marginBottom: mvs(16),
@@ -51,7 +49,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
         {/* Subscription Badge */}
         {artist.isStudioOwner && (
           <View
-            className="absolute right-0 top-0 bg-gray flex-row items-center justify-center"
+            className="absolute top-0 right-0 flex-row items-center justify-center bg-gray"
             style={{
               paddingLeft: s(8),
               paddingRight: s(25),
@@ -66,7 +64,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
               variant="11"
               className="text-primary font-neueMedium"
             >
-              Artist profile
+              Profilo artista
             </ScaledText>
           </View>
         )}
@@ -77,7 +75,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
           style={{ marginBottom: mvs(8) }}
         >
           <View
-            className="rounded-full border border-black overflow-hidden"
+            className="overflow-hidden border border-black rounded-full"
             style={{ width: s(61), height: s(61), marginRight: s(12) }}
           >
             {artist.user.avatar ? (
@@ -96,7 +94,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-foreground font-neueBold leading-none "
+                className="leading-none text-foreground font-neueBold "
               >
                 {displayName}
               </ScaledText>
@@ -176,9 +174,9 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
 
         {/* Styles Pills */}
         {artist.styles.length > 0 && (
-         <View style={{ marginTop: mvs(4) }}>
-          <StylePills styles={artist.styles} />
-         </View>
+          <View style={{ marginTop: mvs(4) }}>
+            <StylePills styles={artist.styles} />
+          </View>
         )}
 
         {/* Studio Profile Label */}
@@ -189,7 +187,7 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
             className="text-primary font-neueRoman"
             style={{ marginTop: mvs(8) }}
           >
-            Studio profile
+            Profilo studio
           </ScaledText>
         )} */}
       </View>

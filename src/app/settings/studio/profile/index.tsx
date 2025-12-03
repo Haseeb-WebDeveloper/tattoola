@@ -104,7 +104,7 @@ export default function StudioProfileSettingsScreen() {
               variant="lg"
               className="text-white font-neueSemibold"
             >
-              Studio page
+              Pagina Studio
             </ScaledText>
             <SVGIcons.DimondRed width={s(18)} height={s(18)} />
           </View>
@@ -121,31 +121,31 @@ export default function StudioProfileSettingsScreen() {
             onPress={handleBannerPress}
           />
           <StudioProfileSettingsItem
-            title="logo"
+            title="Logo"
             onPress={handleLogoPress}
           />
           <StudioProfileSettingsItem
-            title="Studio name and address"
+            title="Nome e indirizzo dello Studio"
             onPress={handleNameAndAddressPress}
           />
           <StudioProfileSettingsItem
-            title="Social links"
+            title="Link social"
             onPress={handleSocialLinksPress}
           />
           <StudioProfileSettingsItem
-            title="Description"
+            title="Descrizione"
             onPress={handleDescriptionPress}
           />
           <StudioProfileSettingsItem
-            title="Styles"
+            title="Stili"
             onPress={handleStylesPress}
           />
           <StudioProfileSettingsItem
-            title="Services"
+            title="Servizi"
             onPress={handleServicesPress}
           />
           <StudioProfileSettingsItem
-            title="FAQs"
+            title="FAQ"
             onPress={handleFaqsPress}
           />
         </ScrollView>

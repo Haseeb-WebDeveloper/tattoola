@@ -126,7 +126,7 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
         variant="xl"
         className="text-white font-neueSemibold"
       >
-        Setup your Studio Page 🪄
+        Imposta la pagina del tuo Studio 🪄
       </ScaledText>
       <ScaledText
         allowScaling={false}
@@ -137,7 +137,7 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
           width: "100%",
         }}
       >
-        Add details, photos, and style to build{"\n"}your studio’s presence.
+        Aggiungi dettagli, foto e stile per costruire{"\n"}la presenza del tuo studio.
       </ScaledText>
     </View>
     {/* Button absolute near the bottom */}
@@ -166,9 +166,9 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="font-neueSemibold text-white"
+        className="text-white font-neueSemibold"
       >
-        Get started
+        Inizia
       </ScaledText>
     </TouchableOpacity>
   </View>
@@ -249,7 +249,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
         variant="xl"
         className="text-white font-neueSemibold"
       >
-        Your Studio Page is Live ✨
+        La tua pagina Studio è online ✨
       </ScaledText>
       <ScaledText
         allowScaling={false}
@@ -260,7 +260,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
           width: "100%",
         }}
       >
-        See how your profile looks to others.
+        Scopri come appare il tuo profilo agli altri.
       </ScaledText>
     </View>
     {/* Button absolute near the bottom */}
@@ -289,9 +289,9 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="font-neueSemibold text-white"
+        className="text-white font-neueSemibold"
       >
-        View Studio Page
+        Vedi pagina Studio
       </ScaledText>
     </TouchableOpacity>
   </View>
@@ -477,7 +477,7 @@ export default function StudioSettingsScreen() {
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="relative flex-row items-center justify-center"
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
@@ -486,7 +486,7 @@ export default function StudioSettingsScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
+            className="absolute items-center justify-center rounded-full bg-foreground/20"
             style={{
               width: s(34),
               height: s(34),
@@ -520,7 +520,7 @@ export default function StudioSettingsScreen() {
             }}
           >
             <StudioSettingsItem
-              title="Studio page"
+              title="Pagina studio"
               onPress={handleStudioPagePress}
             />
             {/* Show "Artisti Collegati" and "Foto dello studio" only for OWNER or MANAGER */}
@@ -561,18 +561,18 @@ export default function StudioSettingsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-foreground font-neueBold text-center"
+                className="text-center text-foreground font-neueBold"
                 style={{ marginBottom: mvs(8) }}
               >
-                Studio Features Locked
+                Funzionalità Studio bloccate
               </ScaledText>
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-gray font-neueMedium text-center"
+                className="text-center text-gray font-neueMedium"
                 style={{ marginBottom: mvs(16) }}
               >
-                You don't have STUDIO plan. Please subscribe to Studio plan to get access to Studio features.
+                Non hai un piano STUDIO. Abbonati al piano Studio per avere accesso alle funzionalità Studio.
               </ScaledText>
               <TouchableOpacity
                 onPress={handleUpgradePress}
@@ -589,9 +589,9 @@ export default function StudioSettingsScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="font-neueSemibold text-white"
+                  className="text-white font-neueSemibold"
                 >
-                  Upgrade to Studio
+                  Passa al piano Studio
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -610,7 +610,7 @@ export default function StudioSettingsScreen() {
         onRequestClose={() => setShowUpgradeModal(false)}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -628,25 +628,25 @@ export default function StudioSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
-              Studio Features Locked
+              Funzionalità Studio bloccate
             </ScaledText>
 
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
-              You don't have STUDIO plan. Please subscribe to Studio plan to get access to Studio features.
+              Non hai un piano STUDIO. Abbonati al piano Studio per avere accesso alle funzionalità Studio.
             </ScaledText>
 
             <View style={{ gap: mvs(4) }} className="flex-row justify-center">
               <TouchableOpacity
                 onPress={handleUpgradePress}
-                className="rounded-full items-center justify-center flex-row"
+                className="flex-row items-center justify-center rounded-full"
                 style={{
                   backgroundColor: "#AE0E0E",
                   paddingVertical: mvs(10.5),
@@ -659,13 +659,13 @@ export default function StudioSettingsScreen() {
                   variant="md"
                   className="font-montserratMedium text-foreground"
                 >
-                  Upgrade to Studio
+                  Passa al piano Studio
                 </ScaledText>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setShowUpgradeModal(false)}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
@@ -677,7 +677,7 @@ export default function StudioSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Cancel
+                  Annulla
                 </ScaledText>
               </TouchableOpacity>
             </View>

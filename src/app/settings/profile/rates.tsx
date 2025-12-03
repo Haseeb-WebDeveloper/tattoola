@@ -55,7 +55,7 @@ export default function RatesSettingsScreen() {
           .single();
 
         if (profileError || !profileData) {
-          throw new Error("Artist profile not found");
+          throw new Error("Profilo artista non trovato");
         }
 
         if (mounted) {
@@ -67,7 +67,7 @@ export default function RatesSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading rates:", error);
-        toast.error(error.message || "Failed to load rates");
+        toast.error(error.message || "Caricamento delle tariffe non riuscito");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -138,7 +138,7 @@ export default function RatesSettingsScreen() {
       minimumPrice === null ||
       minimumPrice === 0
     ) {
-      setMinPriceError("Prezzo minimo è obbligatorio");
+      setMinPriceError("Il prezzo minimo è obbligatorio");
       toast.error("Il prezzo minimo è obbligatorio.");
       return;
     }
@@ -159,7 +159,7 @@ export default function RatesSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Rates updated successfully");
+      toast.success("Tariffe aggiornate con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -167,7 +167,7 @@ export default function RatesSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating rates:", err);
-      toast.error(err.message || "Failed to update rates");
+      toast.error(err.message || "Impossibile aggiornare le tariffe");
     } finally {
       setIsLoading(false);
     }
@@ -401,7 +401,7 @@ export default function RatesSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : loading ? "Loading..." : "Save"}
+              {isLoading ? "Salvataggio..." : loading ? "Caricamento..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -438,7 +438,7 @@ export default function RatesSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes
+              Hai modifiche non salvate
             </ScaledText>
 
             {/* Subtitle */}
@@ -448,7 +448,7 @@ export default function RatesSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -475,7 +475,7 @@ export default function RatesSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -494,7 +494,7 @@ export default function RatesSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

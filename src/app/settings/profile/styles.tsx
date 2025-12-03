@@ -91,10 +91,12 @@ export default function StylesSettingsScreen() {
         if (isArtist) {
           // Fetch subscription plan limits for artist
           try {
-            const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
+            const subscription =
+              await SubscriptionService.getActiveSubscriptionWithPlan();
             const planMaxStyles = subscription?.subscription_plans?.maxStyles;
-            const planMaxFavoriteStyles = subscription?.subscription_plans?.maxFavoritesStyles;
-            
+            const planMaxFavoriteStyles =
+              subscription?.subscription_plans?.maxFavoritesStyles;
+
             if (mounted) {
               setMaxStyles(
                 planMaxStyles !== null && planMaxStyles !== undefined
@@ -102,7 +104,8 @@ export default function StylesSettingsScreen() {
                   : AR_MAX_STYLES
               );
               setMaxFavoriteStyles(
-                planMaxFavoriteStyles !== null && planMaxFavoriteStyles !== undefined
+                planMaxFavoriteStyles !== null &&
+                  planMaxFavoriteStyles !== undefined
                   ? planMaxFavoriteStyles
                   : AR_MAX_FAVORITE_STYLES
               );
@@ -161,7 +164,7 @@ export default function StylesSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading styles:", error);
-        toast.error(error.message || "Failed to load styles");
+        toast.error(error.message || "Caricamento degli stili non riuscito");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -211,7 +214,7 @@ export default function StylesSettingsScreen() {
       } else {
         // Selecting - check if we can select more
         if (prev.length >= maxStyles) {
-          toast.error(`You can select up to ${maxStyles} styles`);
+          toast.error(`Puoi selezionare fino a ${maxStyles} stili`);
           return prev;
         }
         return [...prev, styleId];
@@ -229,7 +232,9 @@ export default function StylesSettingsScreen() {
       } else {
         // Mark as favorite - check limit
         if (prev.length >= maxFavoriteStyles) {
-          toast.error(`You can mark up to ${maxFavoriteStyles} styles as favorites`);
+          toast.error(
+            `Puoi contrassegnare fino a ${maxFavoriteStyles} stili come preferiti`
+          );
           return prev;
         }
         return [...prev, styleId];
@@ -244,9 +249,9 @@ export default function StylesSettingsScreen() {
   const handleSave = async () => {
     if (!canProceed) {
       if (isArtist) {
-        toast.error("Please select at least 1 styles");
+        toast.error("Seleziona almeno 1 stile");
       } else {
-        toast.error("Please select at least 1 style");
+        toast.error("Seleziona almeno 1 stile");
       }
       return;
     }
@@ -266,7 +271,11 @@ export default function StylesSettingsScreen() {
     try {
       if (isArtist && artistId) {
         // For artists, pass all styles and favorite style IDs
-        await updateArtistFavoriteStyles(artistId, selectedStyles, favoriteStyleIds);
+        await updateArtistFavoriteStyles(
+          artistId,
+          selectedStyles,
+          favoriteStyleIds
+        );
       } else {
         await updateUserFavoriteStyles(user!.id, selectedStyles);
       }
@@ -274,7 +283,7 @@ export default function StylesSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Styles updated successfully");
+      toast.success("Stili aggiornati con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -282,7 +291,7 @@ export default function StylesSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating styles:", err);
-      toast.error(err.message || "Failed to update styles");
+      toast.error(err.message || "Impossibile aggiornare gli stili");
     } finally {
       setIsLoading(false);
     }
@@ -432,8 +441,8 @@ export default function StylesSettingsScreen() {
             className="text-white font-montserratMedium"
           >
             {isArtist
-              ? `Choose at least 1 styles (max ${maxStyles}). You can mark up to ${maxFavoriteStyles} as your favorite styles (★)`
-              : "Choose your favorite tattoo styles (at least 1)"}
+              ? `Scegli almeno 1 stile (max ${maxStyles}). Puoi contrassegnare fino a ${maxFavoriteStyles} come stili preferiti (★)`
+              : "Scegli i tuoi stili di tatuaggio preferiti (almeno 1)"}
           </ScaledText>
         </View>
 
@@ -498,7 +507,7 @@ export default function StylesSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -535,7 +544,7 @@ export default function StylesSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in styles
+              Hai modifiche non salvate negli stili
             </ScaledText>
 
             {/* Subtitle */}
@@ -545,7 +554,7 @@ export default function StylesSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -572,7 +581,7 @@ export default function StylesSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -591,7 +600,7 @@ export default function StylesSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

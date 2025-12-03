@@ -120,7 +120,7 @@ export default function PostDetailScreen() {
     } catch (err: any) {
       // Only show error if we don't have initial data to display
       if (!parsedInitial) {
-        setError(err.message || "Failed to load post");
+        setError(err.message || "Impossibile caricare il post");
       }
       console.error("Failed to load post details:", err);
     } finally {
@@ -329,13 +329,13 @@ export default function PostDetailScreen() {
     return (
       <View className="flex-1 bg-background items-center justify-center px-6">
         <Text className="text-foreground text-center mb-4">
-          {error || "Post not found"}
+          {error || "Post non trovato"}
         </Text>
         <TouchableOpacity
           onPress={handleBack}
           className="bg-primary px-6 py-3 rounded-lg"
         >
-          <Text className="text-white font-neueSemibold">Go Back</Text>
+          <Text className="text-white font-neueSemibold">Torna indietro</Text>
         </TouchableOpacity>
       </View>
     );
@@ -457,7 +457,7 @@ export default function PostDetailScreen() {
                   variant="lg"
                   className="text-foreground mb-2 font-neueBold"
                 >
-                  {post.caption || "No caption"}
+                  {post.caption || "Nessuna descrizione"}
                 </ScaledText>
 
                 {/* Style tag */}

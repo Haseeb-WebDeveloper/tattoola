@@ -39,13 +39,13 @@ export default function EditCollectionNameModal({
             className="text-foreground font-neueBold"
             style={{ marginBottom: mvs(8) }}
           >
-            Edit collection name
+            Modifica nome collection
           </ScaledText>
           <ScaledTextInput
             containerClassName="rounded-xl border border-gray"
             className="text-foreground rounded-xl font-montserratSemibold"
             style={{ fontSize: s(12) }}
-            placeholder="Collection name"
+            placeholder="Nome collection"
             value={value}
             onChangeText={onChangeValue}
             autoFocus
@@ -74,7 +74,7 @@ export default function EditCollectionNameModal({
                 variant="sm"
                 className="text-foreground font-neueSemibold text-center"
               >
-                Cancel
+                Annulla
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -95,7 +95,7 @@ export default function EditCollectionNameModal({
                 variant="sm"
                 className="text-foreground font-neueSemibold text-center"
               >
-                Save
+                Salva
               </ScaledText>
             </TouchableOpacity>
           </View>

@@ -238,7 +238,7 @@ export default function LocationPicker({
                   className="text-gray font-neueSemibold"
                   style={{ paddingHorizontal: s(20), paddingBottom: mvs(6) }}
                 >
-                  Popular cities
+                  Città più popolari
                 </ScaledText>
                 <View
                   className="flex-row flex-wrap  bg-background"
@@ -295,10 +295,10 @@ export default function LocationPicker({
                 style={{ paddingHorizontal: s(20), paddingBottom: mvs(6) }}
               >
                 {isSearching
-                  ? "Search results"
+                  ? "Risultati della ricerca"
                   : modalStep === "province"
-                    ? "Other provinces"
-                    : `Comunes under ${selectedProvince?.name || "Selected province"}`}
+                    ? "Altre province"
+                    : `Comuni in ${selectedProvince?.name || "provincia selezionata"}`}
               </ScaledText>
               {listFiltered.length === 0 ? (
                 <View
@@ -312,7 +312,7 @@ export default function LocationPicker({
                     variant="lg"
                     className="text-gray text-center font-neueLight"
                   >
-                    No results found
+                    Nessun risultato trovato
                   </ScaledText>
                 </View>
               ) : (
@@ -377,7 +377,7 @@ export default function LocationPicker({
                 variant="md"
                 className="text-foreground font-neueSemibold"
               >
-                Back
+                Indietro
               </ScaledText>
             </TouchableOpacity>
             {modalStep === "province" ? (
@@ -403,7 +403,7 @@ export default function LocationPicker({
                   variant="md"
                   className="text-foreground font-neueSemibold"
                 >
-                  Next
+                  Avanti
                 </ScaledText>
                 <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
               </TouchableOpacity>

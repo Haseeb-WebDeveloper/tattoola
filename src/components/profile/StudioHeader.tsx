@@ -74,7 +74,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                   variant="md"
                   className="text-foreground font-neueLight"
                 >
-                  Owned by{" "}
+                  Di proprietà di{" "}
                   <ScaledText
                     allowScaling={false}
                     variant="md"

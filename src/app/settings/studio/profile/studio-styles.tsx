@@ -89,7 +89,7 @@ export default function StudioStylesScreen() {
         setInitialSelectedStyles(studioStyleIds);
       } catch (error: any) {
         console.error("Error loading data:", error);
-        toast.error(error.message || "Failed to load styles");
+        toast.error(error.message || "Impossibile caricare gli stili");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -145,17 +145,17 @@ export default function StudioStylesScreen() {
       const result = await updateStudioStyles(user.id, selectedStyles);
 
       if (result.success) {
-        toast.success("Studio styles updated successfully!");
+        toast.success("Stili dello studio aggiornati con successo!");
         setInitialSelectedStyles(selectedStyles);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update styles");
+        toast.error(result.error || "Impossibile aggiornare gli stili");
       }
     } catch (error: any) {
       console.error("Error updating styles:", error);
-      toast.error(error.message || "Failed to update styles");
+      toast.error(error.message || "Impossibile aggiornare gli stili");
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +238,7 @@ export default function StudioStylesScreen() {
               variant="lg"
               className="text-white font-neueSemibold"
             >
-              Styles
+              Stili
             </ScaledText>
             </View>
 
@@ -259,7 +259,7 @@ export default function StudioStylesScreen() {
               variant="lg"
               className="text-white font-neueSemibold"
             >
-              Select styles
+              Seleziona gli stili
             </ScaledText>
           </View>
 
@@ -316,7 +316,7 @@ export default function StudioStylesScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -354,7 +354,7 @@ export default function StudioStylesScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in styles
+              Hai modifiche non salvate negli stili
             </ScaledText>
 
             {/* Subtitle */}
@@ -364,7 +364,7 @@ export default function StudioStylesScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -391,7 +391,7 @@ export default function StudioStylesScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -410,7 +410,7 @@ export default function StudioStylesScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

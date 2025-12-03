@@ -73,7 +73,7 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
             marginBottom: mvs(0),
           }}
         >
-          Your Profile
+          Il tuo profilo
         </ScaledText>
         {/* Settings button */}
         <TouchableOpacity

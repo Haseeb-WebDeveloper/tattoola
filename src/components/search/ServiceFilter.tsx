@@ -57,10 +57,10 @@ export default function ServiceFilter({
 
   const displayText =
     selectedIds.length === 0
-      ? "All"
+      ? "Tutti"
       : selectedIds.length === 1
-        ? services.find((s) => s.id === selectedIds[0])?.name || "1 selected"
-        : `${selectedIds.length} selected`;
+        ? services.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        : `${selectedIds.length} selezionati`;
 
   return (
     <>
@@ -68,7 +68,7 @@ export default function ServiceFilter({
       <TouchableOpacity
         activeOpacity={1}
         onPress={() => setIsExpanded(true)}
-        className="bg-tat-foreground border-gray flex-row items-center justify-between"
+        className="flex-row items-center justify-between bg-tat-foreground border-gray"
         style={{
           paddingVertical: mvs(10),
           paddingHorizontal: s(16),
@@ -100,7 +100,7 @@ export default function ServiceFilter({
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
             <View
-              className="bg-background border-gray flex-row items-center justify-between"
+              className="flex-row items-center justify-between bg-background border-gray"
               style={{
                 marginTop: mvs(16),
                 marginHorizontal: s(20),
@@ -142,7 +142,7 @@ export default function ServiceFilter({
                     variant="sm"
                     className="text-white font-montserratMedium"
                   >
-                    Done
+                    Fatto
                   </ScaledText>
                 </TouchableOpacity>
               )}

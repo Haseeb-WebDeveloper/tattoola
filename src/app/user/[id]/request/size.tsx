@@ -38,7 +38,7 @@ export default function SizeStep() {
               paddingHorizontal: s(16),
             }}
           >
-            Approximately what size would you like the tattoo to be?
+            Che dimensioni approssimative vorresti per il tatuaggio?
           </ScaledText>
 
           <View style={{ gap: s(16) }}>
@@ -84,8 +84,8 @@ export default function SizeStep() {
         <NextBackFooter
           onBack={() => router.back()}
           onNext={() => router.push(`/user/${id}/request/references`)}
-          nextLabel="Next"
-          backLabel="Back"
+          nextLabel="Avanti"
+          backLabel="Indietro"
         />
       </ScrollView>
     </View>

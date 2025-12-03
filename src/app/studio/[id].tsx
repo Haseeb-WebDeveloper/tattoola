@@ -42,7 +42,10 @@ export default function StudioScreen() {
           setMembers(membersData as ArtistSearchResult[]);
         }
       } catch (e: any) {
-        if (mounted) setError(e?.message || "Failed to load studio profile");
+        if (mounted)
+          setError(
+            e?.message || "Impossibile caricare il profilo dello studio"
+          );
       } finally {
         if (mounted) setLoading(false);
       }
@@ -54,7 +57,7 @@ export default function StudioScreen() {
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err)
+      console.error("Impossibile aprire l'URL:", err)
     );
   };
 
@@ -64,7 +67,7 @@ export default function StudioScreen() {
 
   if (error) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
+      <View className="items-center justify-center flex-1 bg-background">
         <ScaledText
           allowScaling={false}
           variant="11"
@@ -134,7 +137,7 @@ export default function StudioScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="text-foreground font-montserratSemibold text-center"
+                className="text-center text-foreground font-montserratSemibold"
                 style={{ paddingHorizontal: s(16), marginBottom: mvs(12) }}
               >
                 Artisti collegati allo studio

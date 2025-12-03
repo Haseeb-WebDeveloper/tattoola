@@ -48,7 +48,7 @@ export default function SettingsSubscription() {
         SubscriptionService.fetchSubscriptionPlans(),
       ]);
       setSub(data);
-      
+
       // Sort plans: default plan first (similar to step-13)
       const sortedPlans = [...allPlans].sort((a, b) => {
         if (a.isDefault && !b.isDefault) return -1;
@@ -56,13 +56,15 @@ export default function SettingsSubscription() {
         return 0;
       });
       setPlans(sortedPlans);
-      
+
       // Set initial billing cycle from current subscription
       if (data?.billingCycle) {
         setSelectedBillingCycle(data.billingCycle);
       }
     } catch (e: any) {
-      toast.error(e?.message || "Failed to load subscription");
+      toast.error(
+        e?.message || "Impossibile caricare l'abbonamento"
+      );
     }
   };
 
@@ -86,7 +88,9 @@ export default function SettingsSubscription() {
       await SubscriptionService.toggleAutoRenew(sub.id, !sub.autoRenew);
       setSub({ ...sub, autoRenew: !sub.autoRenew });
     } catch (e: any) {
-      toast.error(e?.message || "Failed to update auto-renew");
+      toast.error(
+        e?.message || "Impossibile aggiornare il rinnovo automatico"
+      );
     } finally {
       setSaving(false);
     }
@@ -158,12 +162,14 @@ export default function SettingsSubscription() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
+        throw new Error("Nessun utente autenticato trovato");
       }
 
       const priceId = plan.stripeYearlyPriceId;
       if (!priceId) {
-        throw new Error("Stripe price ID not configured for yearly plan");
+        throw new Error(
+          "Stripe price ID non configurato per il piano annuale"
+        );
       }
 
       const planType = getPlanTypeFromName(plan.name);
@@ -179,10 +185,12 @@ export default function SettingsSubscription() {
       if (supported) {
         await Linking.openURL(checkoutUrl);
       } else {
-        throw new Error(`Cannot open URL: ${checkoutUrl}`);
+        throw new Error(`Impossibile aprire l'URL: ${checkoutUrl}`);
       }
     } catch (error: any) {
-      toast.error(error?.message || "Failed to start upgrade");
+      toast.error(
+        error?.message || "Impossibile avviare l'aggiornamento"
+      );
     } finally {
       setUpgrading(false);
     }
@@ -205,22 +213,23 @@ export default function SettingsSubscription() {
 
   const handleStartFreeTrial = async (planId: string) => {
     if (!planId) return;
-    
+
     try {
       // Get current user ID
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
+        throw new Error("Nessun utente autenticato trovato");
       }
 
       const userId = session.user.id;
 
       // Check if user already has active subscription
-      const hasActive = await SubscriptionService.hasActiveSubscription(userId);
+      const hasActive =
+        await SubscriptionService.hasActiveSubscription(userId);
       if (hasActive) {
-        toast.success("You already have an active subscription");
+        toast.success("Hai già un abbonamento attivo");
         await loadSubscription();
         return;
       }
@@ -233,11 +242,15 @@ export default function SettingsSubscription() {
         true // isTrial: true
       );
 
-      toast.success("Free trial started! Enjoy Premium features for 30 days.");
+      toast.success(
+        "Prova gratuita avviata! Goditi le funzionalità Premium per 30 giorni."
+      );
       await loadSubscription();
     } catch (error: any) {
       logger.error("Free trial error:", error);
-      toast.error(error?.message || "Failed to start free trial");
+      toast.error(
+        error?.message || "Impossibile avviare la prova gratuita"
+      );
     }
   };
 
@@ -245,15 +258,19 @@ export default function SettingsSubscription() {
     if (!planId) return;
     const picked = plans.find((p) => p.id === planId);
     if (!picked) {
-      toast.error("Plan not found");
+      toast.error("Piano non trovato");
       return;
     }
 
     // Get Stripe price ID based on billing cycle
-    const priceId = isYearly ? picked.stripeYearlyPriceId : picked.stripeMonthlyPriceId;
+    const priceId = isYearly
+      ? picked.stripeYearlyPriceId
+      : picked.stripeMonthlyPriceId;
 
     if (!priceId) {
-      toast.error("Stripe price ID not configured for this plan. Please contact support.");
+      toast.error(
+        "Stripe price ID non configurato per questo piano. Contatta il supporto."
+      );
       return;
     }
 
@@ -262,7 +279,7 @@ export default function SettingsSubscription() {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session?.user?.id) {
-      toast.error("No authenticated user found");
+      toast.error("Nessun utente autenticato trovato");
       return;
     }
 
@@ -285,11 +302,13 @@ export default function SettingsSubscription() {
       if (supported) {
         await Linking.openURL(checkoutUrl);
       } else {
-        throw new Error(`Cannot open URL: ${checkoutUrl}`);
+        throw new Error(`Impossibile aprire l'URL: ${checkoutUrl}`);
       }
     } catch (error: any) {
       logger.error("Checkout error:", error);
-      toast.error(error?.message || "Failed to start checkout");
+      toast.error(
+        error?.message || "Impossibile avviare il checkout"
+      );
     }
   };
 
@@ -312,13 +331,15 @@ export default function SettingsSubscription() {
     setCancelling(true);
     try {
       await SubscriptionService.toggleAutoRenew(sub.id, false);
-      toast.success("Subscription cancelled successfully");
+      toast.success("Abbonamento annullato con successo");
       // Add a small delay to ensure database updates are reflected
       await new Promise((resolve) => setTimeout(resolve, 500));
       await loadSubscription();
       setShowCancelModal(false);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to cancel subscription");
+      toast.error(
+        e?.message || "Impossibile annullare l'abbonamento"
+      );
     } finally {
       setCancelling(false);
     }
@@ -329,12 +350,14 @@ export default function SettingsSubscription() {
     setCancelling(true);
     try {
       await SubscriptionService.toggleAutoRenew(sub.id, true);
-      toast.success("Subscription resumed successfully");
+      toast.success("Abbonamento riattivato con successo");
       // Add a small delay to ensure database updates are reflected
       await new Promise((resolve) => setTimeout(resolve, 500));
       await loadSubscription();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to resume subscription");
+      toast.error(
+        e?.message || "Impossibile riattivare l'abbonamento"
+      );
     } finally {
       setCancelling(false);
     }
@@ -381,7 +404,7 @@ export default function SettingsSubscription() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Your subscription
+            Il tuo abbonamento
           </ScaledText>
         </View>
 
@@ -405,7 +428,7 @@ export default function SettingsSubscription() {
               className="text-foreground font-montserratMedium"
               style={{ marginBottom: mvs(8) }}
             >
-              Your current plan
+              Il tuo piano attuale
             </ScaledText>
             {loading ? (
               <PlanCardSkeleton />
@@ -430,14 +453,14 @@ export default function SettingsSubscription() {
                   className="text-foreground font-neueBold text-center"
                   style={{ marginBottom: mvs(4) }}
                 >
-                  You haven't subscribed to any plan
+                  Non sei iscritto ad alcun piano
                 </ScaledText>
                 <ScaledText
                   allowScaling={false}
                   variant="sm"
                   className="text-error font-neueMedium text-center"
                 >
-                  Your profile will not be visible to public.
+                  Il tuo profilo non sarà visibile al pubblico.
                 </ScaledText>
               </View>
             ) : (
@@ -497,10 +520,10 @@ export default function SettingsSubscription() {
                     >
                       (
                       {isCancelled
-                        ? "Ends on"
+                        ? "Termina il"
                         : isTrial
-                          ? "Renews on"
-                          : "Renews on"}{" "}
+                          ? "Si rinnova il"
+                          : "Si rinnova il"}{" "}
                       {new Date(nextDate).toLocaleDateString(undefined, {
                         day: "2-digit",
                         month: "long",
@@ -544,28 +567,28 @@ export default function SettingsSubscription() {
 
           {sub?.endDate ? (
             <>
-              <ScaledText
-                allowScaling={false}
-                variant="11"
-                className="text-gray font-neueMedium"
-              >
-                Expires on{" "}
-                {new Date(sub.endDate).toLocaleDateString(undefined, {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-                {sub?.autoRenew && sub?.plan ? (
-                  <ScaledText
-                    allowScaling={false}
-                    variant="11"
-                    className="text-green font-neueMedium"
-                    style={{ marginTop: mvs(5) }}
-                  >
-                    {`Renews automatically at €${sub.plan.price} / ${sub.plan.billingPeriod?.toLowerCase() || selectedBillingCycle.toLowerCase()}`}
-                  </ScaledText>
-                ) : null}
-              </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-gray font-neueMedium"
+                >
+                  Scade il{" "}
+                  {new Date(sub.endDate).toLocaleDateString(undefined, {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  {sub?.autoRenew && sub?.plan ? (
+                    <ScaledText
+                      allowScaling={false}
+                      variant="11"
+                      className="text-green font-neueMedium"
+                      style={{ marginTop: mvs(5) }}
+                    >
+                      {`Si rinnova automaticamente a €${sub.plan.price} / ${sub.plan.billingPeriod?.toLowerCase() || selectedBillingCycle.toLowerCase()}`}
+                    </ScaledText>
+                  ) : null}
+                </ScaledText>
               {isCancelled && (
                 <View
                   style={{
@@ -582,7 +605,7 @@ export default function SettingsSubscription() {
                     variant="sm"
                     className="text-error font-neueMedium text-center"
                   >
-                    Your subscription is cancelled
+                    Il tuo abbonamento è stato annullato
                   </ScaledText>
                 </View>
               )}
@@ -610,7 +633,7 @@ export default function SettingsSubscription() {
                     variant="sm"
                     className="text-foreground font-montserratSemibold"
                   >
-                    {upgrading ? "Processing..." : "Upgrade to yearly"}
+                    {upgrading ? "Elaborazione..." : "Passa ad annuale"}
                   </ScaledText>
                 </TouchableOpacity>
               )}
@@ -632,7 +655,9 @@ export default function SettingsSubscription() {
                       variant="sm"
                       className="text-success font-montserratSemibold"
                     >
-                      {cancelling ? "Resuming..." : "Resume subscription"}
+                      {cancelling
+                        ? "Riattivazione..."
+                        : "Riattiva abbonamento"}
                     </ScaledText>
                   </>
                 ) : (
@@ -643,7 +668,7 @@ export default function SettingsSubscription() {
                       variant="sm"
                       className="text-error font-montserratSemibold"
                     >
-                      Cancel subscription
+                      Annulla abbonamento
                     </ScaledText>
                   </>
                 )}
@@ -686,7 +711,7 @@ export default function SettingsSubscription() {
                 className="text-center font-neueLight"
                 style={{ color: "#FFFFFF" }}
               >
-                Monthly
+                Mensile
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -709,7 +734,7 @@ export default function SettingsSubscription() {
                 className="text-center font-neueLight"
                 style={{ color: "#FFFFFF" }}
               >
-                Annually
+                Annuale
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -730,7 +755,7 @@ export default function SettingsSubscription() {
                     const price = isYearly
                       ? plan.yearlyPrice
                       : plan.monthlyPrice;
-                    const unit = isYearly ? "year" : "month";
+                    const unit = isYearly ? "anno" : "mese";
                     const isDefaultPlan = plan.isDefault;
                     const showTrialCta = isDefaultPlan;
 
@@ -813,13 +838,15 @@ export default function SettingsSubscription() {
                               className="font-neueSemibold"
                               style={{ color: "#080101" }}
                             >
-                              Includes:
+                              Include:
                             </ScaledText>
                             <View>
                               {(() => {
-                                const features = isYearly ? plan.yearlyFeatures : plan.monthlyFeatures;
+                                const features = isYearly
+                                  ? plan.yearlyFeatures
+                                  : plan.monthlyFeatures;
                                 return Array.isArray(features) &&
-                                features.length > 0 ? (
+                                  features.length > 0 ? (
                                   features.map(
                                     (feature: any, idx: number) => (
                                       <TouchableOpacity
@@ -850,7 +877,7 @@ export default function SettingsSubscription() {
                                     variant="11"
                                     style={{ color: "#080101" }}
                                   >
-                                    No features listed
+                                    Nessuna funzionalità elencata
                                   </ScaledText>
                                 );
                               })()}
@@ -879,7 +906,9 @@ export default function SettingsSubscription() {
                                     style={{ color: "#FFFFFF" }}
                                     className="font-neueMedium"
                                   >
-                                    {upgrading ? "Processing..." : "Start free trial"}
+                                    {upgrading
+                                      ? "Elaborazione..."
+                                      : "Inizia prova gratuita"}
                                   </ScaledText>
                                 </TouchableOpacity>
 
@@ -899,7 +928,9 @@ export default function SettingsSubscription() {
                                     style={{ color: "#AE0E0E" }}
                                     className="font-neueMedium"
                                   >
-                                    {upgrading ? "Processing..." : "Buy Premium"}
+                                    {upgrading
+                                      ? "Elaborazione..."
+                                      : "Acquista Premium"}
                                   </ScaledText>
                                 </TouchableOpacity>
                               </>
@@ -923,7 +954,7 @@ export default function SettingsSubscription() {
                                   style={{ color: "#FFFFFF" }}
                                   className="font-neueMedium"
                                 >
-                                  Subscribe
+                                  Abbonati
                                 </ScaledText>
                               </TouchableOpacity>
                             )}
@@ -1004,7 +1035,7 @@ export default function SettingsSubscription() {
                           className="font-neueMedium"
                           style={{ color: "#080101", marginLeft: s(2) }}
                         >
-                          {isYearly ? "year" : "month"}
+                          {isYearly ? "anno" : "mese"}
                         </ScaledText>
                       </View>
                       <ScaledText
@@ -1025,13 +1056,15 @@ export default function SettingsSubscription() {
                         className="font-neueSemibold"
                         style={{ color: "#080101" }}
                       >
-                        Includes:
+                        Include:
                       </ScaledText>
                       <View>
                         {(() => {
-                          const features = isYearly ? oppositePlan.yearlyFeatures : oppositePlan.monthlyFeatures;
+                          const features = isYearly
+                            ? oppositePlan.yearlyFeatures
+                            : oppositePlan.monthlyFeatures;
                           return Array.isArray(features) &&
-                          features.length > 0 ? (
+                            features.length > 0 ? (
                             features.map(
                               (feature: any, idx: number) => (
                                 <TouchableOpacity
@@ -1062,7 +1095,7 @@ export default function SettingsSubscription() {
                               variant="11"
                               style={{ color: "#080101" }}
                             >
-                              No features listed
+                              Nessuna funzionalità elencata
                             </ScaledText>
                           );
                         })()}
@@ -1086,7 +1119,7 @@ export default function SettingsSubscription() {
                           style={{ color: "#FFFFFF" }}
                           className="font-neueMedium"
                         >
-                          Upgrade to {oppositePlan.name}
+                          Passa a {oppositePlan.name}
                         </ScaledText>
                       </TouchableOpacity>
                     </View>
@@ -1127,7 +1160,7 @@ export default function SettingsSubscription() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(6) }}
             >
-              Are you sure you want to{"\n"}cancel your subscription?
+              Sei sicuro di voler{"\n"}annullare il tuo abbonamento?
             </ScaledText>
             <ScaledText
               allowScaling={false}
@@ -1135,7 +1168,7 @@ export default function SettingsSubscription() {
               className="text-background text-center font-montserratSemibold"
               style={{ marginBottom: mvs(20) }}
             >
-              Once cancelled, your plan stays active until{" "}
+              Una volta annullato, il tuo piano rimarrà attivo fino al{" "}
               <ScaledText
                 allowScaling={false}
                 variant="sm"
@@ -1170,7 +1203,7 @@ export default function SettingsSubscription() {
                   variant="md"
                   className="text-primary font-montserratSemibold"
                 >
-                  {cancelling ? "Cancelling..." : "Cancel plan"}
+                  {cancelling ? "Annullamento..." : "Annulla piano"}
                 </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1189,7 +1222,7 @@ export default function SettingsSubscription() {
                   variant="md"
                   className="text-gray font-montserratSemibold"
                 >
-                  Don't cancel
+                  Non annullare
                 </ScaledText>
               </TouchableOpacity>
             </View>

@@ -207,7 +207,7 @@ export default function ChatThreadScreen() {
       });
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      toast.error("Invio del messaggio non riuscito");
     } finally {
       if (hasFile) {
         setUploading(false);
@@ -229,14 +229,14 @@ export default function ChatThreadScreen() {
       // Check file size (100MB limit)
       const maxSize = 100 * 1024 * 1024; // 100MB in bytes
       if (file.size && file.size > maxSize) {
-        toast.error("File Too Large");
+        toast.error("File troppo grande");
         return;
       }
 
       setSelectedFile(file);
     } catch (error) {
       console.error("Error picking file:", error);
-      toast.error("Failed to pick file");
+      toast.error("Selezione del file non riuscita");
     }
   };
 
@@ -245,10 +245,10 @@ export default function ChatThreadScreen() {
       if (!user?.id || !peer?.id || !conversationId) return;
       try {
         await reportUser(user.id, peer.id, conversationId, reason);
-        toast.success("Report Submitted");
+        toast.success("Segnalazione inviata");
       } catch (error) {
         console.error("Error reporting user:", error);
-        toast.error("Failed to submit report");
+        toast.error("Invio della segnalazione non riuscito");
       }
     },
     [user?.id, peer?.id, conversationId]
@@ -258,10 +258,10 @@ export default function ChatThreadScreen() {
     if (!user?.id || !peer?.id || !conversationId) return;
     try {
       await blockUser(user.id, peer.id, conversationId);
-      toast.success("User Blocked");
+      toast.success("Utente bloccato");
     } catch (error) {
       console.error("Error blocking user:", error);
-      toast.error("Failed to block user");
+      toast.error("Blocco dell'utente non riuscito");
     }
   }, [user?.id, peer?.id, conversationId]);
 
@@ -269,12 +269,12 @@ export default function ChatThreadScreen() {
     if (!user?.id || !conversationId) return;
     try {
       await deleteConversation(conversationId, user.id);
-      toast.success("Chat Deleted");
+      toast.success("Chat eliminata");
       // Reload messages to apply deletedAt filter (will hide old messages)
       await loadLatest(conversationId, user.id);
     } catch (error) {
       console.error("Error deleting conversation:", error);
-      toast.error("Failed to delete conversation");
+      toast.error("Eliminazione della conversazione non riuscita");
     }
   }, [user?.id, conversationId, loadLatest]);
 
@@ -411,7 +411,8 @@ export default function ChatThreadScreen() {
                 variant="md"
                 className="text-gray text-center font-montserratMedium"
               >
-                Chat history deleted.{"\n"}New messages will appear here.
+                Cronologia della chat eliminata.{"\n"}I nuovi messaggi
+                verranno mostrati qui.
               </ScaledText>
             </View>
           )}
@@ -447,8 +448,8 @@ export default function ChatThreadScreen() {
                       marginBottom: mvs(12),
                     }}
                   >
-                    You have received a private request. Accept to start
-                    chatting.
+                    Hai ricevuto una richiesta privata. Accetta per iniziare a
+                    chattare.
                   </ScaledText>
                   <View
                     className="flex-row"
@@ -479,7 +480,7 @@ export default function ChatThreadScreen() {
                         variant="md"
                         className="text-white font-neueBold"
                       >
-                        Accept
+                        Accetta
                       </ScaledText>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -505,7 +506,7 @@ export default function ChatThreadScreen() {
                         variant="md"
                         className="text-foreground font-neueBold"
                       >
-                        Reject
+                        Rifiuta
                       </ScaledText>
                     </TouchableOpacity>
                   </View>
@@ -614,7 +615,7 @@ export default function ChatThreadScreen() {
                 <ScaledTextInput
                   value={text}
                   onChangeText={setText}
-                  placeholder="Type your message here..."
+                  placeholder="Scrivi il tuo messaggio qui..."
                   className="text-foreground"
                   containerClassName="bg-transparent"
                   multiline={true}
@@ -712,8 +713,8 @@ export default function ChatThreadScreen() {
               style={{ marginBottom: mvs(4) }}
             >
               {conv?.status === "BLOCKED"
-                ? "Conversation is blocked"
-                : "Request pending"}
+                ? "La conversazione è bloccata"
+                : "Richiesta in sospeso"}
             </ScaledText>
 
             {/* Subtitle */}
@@ -724,8 +725,8 @@ export default function ChatThreadScreen() {
               style={{ marginBottom: mvs(18) }}
             >
               {conv?.status === "BLOCKED"
-                ? "You cannot send messages in a blocked conversation."
-                : "You cannot send messages until the artist accepts your request."}
+                ? "Non puoi inviare messaggi in una conversazione bloccata."
+                : "Non puoi inviare messaggi finché l'artista non accetta la tua richiesta."}
             </ScaledText>
 
             {/* Action Button */}

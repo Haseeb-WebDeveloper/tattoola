@@ -38,7 +38,7 @@ export function BannerTypeSelector({
         className="text-foreground font-neueLight"
         style={{ marginBottom: mvs(16) }}
       >
-        In this section you can choose the cover of your page.
+        In questa sezione puoi scegliere la copertina della tua pagina.
       </ScaledText>
 
       {/* Option 1: 4 Images */}

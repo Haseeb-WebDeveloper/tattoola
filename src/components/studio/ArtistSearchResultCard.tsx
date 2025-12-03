@@ -35,7 +35,7 @@ export const ArtistSearchResultCard: React.FC<ArtistSearchResultCardProps> = ({
   const fullName = [item.firstName, item.lastName].filter(Boolean).join(" ");
   const locationText = item.location
     ? `${item.location.municipality} (${item.location.province})`
-    : "Location not set";
+    : "Località non impostata";
   const diamondType = item.planType === "STUDIO" ? "red" : "yellow";
 
   return (

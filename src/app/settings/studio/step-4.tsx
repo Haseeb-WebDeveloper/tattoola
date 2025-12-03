@@ -56,7 +56,7 @@ export default function StudioStep4() {
         <StudioStepHeader
           currentStep={4}
           totalSteps={8}
-          stepName="Social Links"
+          stepName="Link social"
           icon={<SVGIcons.Magic width={s(19)} height={s(19)} />}
         />
 
@@ -76,7 +76,7 @@ export default function StudioStep4() {
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
               style={{ fontSize: s(12) }}
-              placeholder="https://yourwebsite.com"
+              placeholder="https://iltuositoweb.com"
                 
               value={formData.website}
               onChangeText={(value) => handleInputChange("website", value)}

@@ -67,7 +67,7 @@ export function FourImagesUpload({
         className="text-foreground font-neueLight text-center"
         style={{ marginBottom: mvs(14), paddingHorizontal: s(16) }}
       >
-        This is how your banner will look
+        Questo è come apparirà il tuo banner
       </ScaledText>
 
       {/* Always show Preview Banner, show gray bg if not 4 images */}
@@ -113,7 +113,7 @@ export function FourImagesUpload({
         className="text-foreground font-neueLight"
         style={{ marginBottom: mvs(12), paddingHorizontal: s(16) }}
       >
-        Selected images :
+        Immagini selezionate:
       </ScaledText>
 
       <View

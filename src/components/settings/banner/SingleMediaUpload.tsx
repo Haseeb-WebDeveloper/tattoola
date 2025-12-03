@@ -52,7 +52,7 @@ export function SingleMediaUpload({
         className="text-foreground font-neueLight text-center"
         style={{ marginBottom: mvs(14), paddingHorizontal: s(16) }}
       >
-        This is how your banner will look
+        Questo è come apparirà il tuo banner
       </ScaledText>
 
       {/* Preview Banner */}

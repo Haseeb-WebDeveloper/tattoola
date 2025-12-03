@@ -278,7 +278,7 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(8) }}
             >
-              Discard private request?
+              Annullare la richiesta privata?
             </ScaledText>
             <ScaledText
               allowScaling={false}
@@ -286,8 +286,8 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(24) }}
             >
-              If you close now, all the information you have entered will be
-              lost. Do you want to leave this request?
+              Se chiudi ora, tutte le informazioni inserite andranno perse.
+              Vuoi uscire da questa richiesta?
             </ScaledText>
             <View
               className="flex-row justify-center"
@@ -308,7 +308,7 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                   variant="md"
                   className="text-white font-neueSemibold"
                 >
-                  No, stay
+                  No, rimani
                 </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -334,7 +334,7 @@ export default function RequestHeader({ title, stepIndex, totalSteps }: Props) {
                   variant="md"
                   className="text-white font-neueSemibold"
                 >
-                  Yes, leave
+                  Sì, esci
                 </ScaledText>
               </TouchableOpacity>
             </View>

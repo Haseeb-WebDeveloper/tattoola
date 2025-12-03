@@ -88,7 +88,7 @@ export default function UsernameSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Username updated successfully");
+      toast.success("Username aggiornato con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -96,16 +96,20 @@ export default function UsernameSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating username:", err);
-      toast.error(err.message || "Failed to update username");
+      toast.error(
+        err.message || "Impossibile aggiornare lo username"
+      );
 
       // Show error message
       if (
         err.message?.includes("duplicate") ||
         err.message?.includes("unique")
       ) {
-        toast.error("This username is already taken");
+        toast.error("Questo username è già stato utilizzato");
       } else {
-        toast.error(err.message || "Failed to update username");
+        toast.error(
+          err.message || "Impossibile aggiornare lo username"
+        );
       }
     } finally {
       setIsLoading(false);
@@ -179,7 +183,7 @@ export default function UsernameSettingsScreen() {
               className="text-tat font-montserratSemibold"
               style={{ marginBottom: mvs(4) }}
             >
-               Username (inserisci un nome univoco)
+              Username (inserisci un nome univoco)
               <ScaledText
                 allowScaling={false}
                 variant="sm"
@@ -243,7 +247,7 @@ export default function UsernameSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -280,7 +284,7 @@ export default function UsernameSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the username
+              Hai modifiche non salvate nello username
             </ScaledText>
 
             {/* Subtitle */}
@@ -290,7 +294,7 @@ export default function UsernameSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -317,7 +321,7 @@ export default function UsernameSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -336,7 +340,7 @@ export default function UsernameSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

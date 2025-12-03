@@ -55,7 +55,7 @@ export default function StudioBannerScreen() {
         setBannerImages(studio.bannerImages || []);
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Failed to load studio data");
+        toast.error(error.message || "Impossibile caricare i dati dello studio");
       } finally {
         setIsFetching(false);
       }
@@ -116,7 +116,7 @@ export default function StudioBannerScreen() {
       }
     } catch (error: any) {
       console.error("Error picking image:", error);
-      toast.error(error.message || "Failed to upload image");
+        toast.error(error.message || "Impossibile caricare l'immagine");
     } finally {
       setUploadingIndices((prev) => prev.filter((i) => i !== index));
     }
@@ -165,18 +165,18 @@ export default function StudioBannerScreen() {
       );
 
       if (result.success) {
-        toast.success("Studio banner updated successfully!");
+        toast.success("Banner dello studio aggiornato con successo!");
         setInitialType(selectedType);
         setInitialImages(bannerImages);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update banner");
+        toast.error(result.error || "Impossibile aggiornare il banner");
       }
     } catch (error: any) {
       console.error("Error updating banner:", error);
-      toast.error(error.message || "Failed to update banner");
+      toast.error(error.message || "Impossibile aggiornare il banner");
     } finally {
       setIsLoading(false);
     }
@@ -311,7 +311,7 @@ export default function StudioBannerScreen() {
                           variant="md"
                           className="text-foreground font-neueBold"
                         >
-                          Upload image
+                          Carica immagine
                         </ScaledText>
                       </View>
                     </TouchableOpacity>
@@ -573,7 +573,7 @@ export default function StudioBannerScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -611,7 +611,7 @@ export default function StudioBannerScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the cover
+              Hai modifiche non salvate nella cover
             </ScaledText>
 
             {/* Subtitle */}
@@ -621,7 +621,7 @@ export default function StudioBannerScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -648,7 +648,7 @@ export default function StudioBannerScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -667,7 +667,7 @@ export default function StudioBannerScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

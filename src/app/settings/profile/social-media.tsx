@@ -94,7 +94,7 @@ export default function SocialMediaSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Social media updated successfully");
+      toast.success("Social media aggiornati con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -102,7 +102,9 @@ export default function SocialMediaSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating social media:", err);
-      toast.error(err.message || "Failed to update social media");
+      toast.error(
+        err.message || "Impossibile aggiornare i social media"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -154,13 +156,13 @@ export default function SocialMediaSettingsScreen() {
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
           </TouchableOpacity>
-          <ScaledText
-            allowScaling={false}
-            variant="lg"
-            className="text-white font-neueSemibold"
-          >
-            Social Media
-          </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-white font-neueSemibold"
+            >
+              Social media
+            </ScaledText>
         </View>
 
         {/* Divider */}
@@ -182,7 +184,7 @@ export default function SocialMediaSettingsScreen() {
               className="text-gray font-montserratMedium"
               style={{ marginBottom: mvs(8) }}
             >
-              Inserisci il link al tuo account Tiktok (facoltativo)
+              Inserisci lo username del tuo account TikTok (facoltativo)
             </ScaledText>
             <View className="relative">
               {/* @ Symbol - Fixed */}
@@ -236,7 +238,7 @@ export default function SocialMediaSettingsScreen() {
               className="text-gray font-montserratMedium"
               style={{ marginBottom: mvs(8) }}
             >
-              Inserisci il link al tuo account Instagram(facoltativo)
+              Inserisci lo username del tuo account Instagram (facoltativo)
             </ScaledText>
             <View className="relative">
               {/* @ Symbol - Fixed */}
@@ -307,7 +309,7 @@ export default function SocialMediaSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -344,7 +346,7 @@ export default function SocialMediaSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in social media
+              Hai modifiche non salvate nei social media
             </ScaledText>
 
             {/* Subtitle */}
@@ -354,7 +356,7 @@ export default function SocialMediaSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -381,7 +383,7 @@ export default function SocialMediaSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -400,7 +402,7 @@ export default function SocialMediaSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

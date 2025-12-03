@@ -29,7 +29,7 @@ Deno.serve(async (request) => {
   // Only allow POST requests
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({
-      error: 'Method not allowed'
+      error: 'Metodo non consentito'
     }), {
       status: 405,
       headers: {
@@ -45,7 +45,7 @@ Deno.serve(async (request) => {
     // Validate required fields
     if (!subscriptionId) {
       return new Response(JSON.stringify({
-        error: 'subscriptionId is required'
+        error: 'subscriptionId è obbligatorio'
       }), {
         status: 400,
         headers: {
@@ -56,7 +56,7 @@ Deno.serve(async (request) => {
 
     if (typeof autoRenew !== 'boolean') {
       return new Response(JSON.stringify({
-        error: 'autoRenew must be a boolean'
+        error: 'autoRenew deve essere un valore booleano'
       }), {
         status: 400,
         headers: {
@@ -69,7 +69,7 @@ Deno.serve(async (request) => {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({
-        error: 'Authorization header required'
+        error: 'Header Authorization obbligatorio'
       }), {
         status: 401,
         headers: {
@@ -85,7 +85,7 @@ Deno.serve(async (request) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({
-        error: 'Invalid or expired token'
+        error: 'Token non valido o scaduto'
       }), {
         status: 401,
         headers: {
@@ -104,7 +104,7 @@ Deno.serve(async (request) => {
 
     if (subError || !subscription) {
       return new Response(JSON.stringify({
-        error: 'Subscription not found or access denied'
+        error: 'Abbonamento non trovato o accesso negato'
       }), {
         status: 404,
         headers: {
@@ -124,12 +124,12 @@ Deno.serve(async (request) => {
         .eq('id', subscriptionId);
 
       if (updateError) {
-        throw new Error(`Database update failed: ${updateError.message}`);
+        throw new Error(`Aggiornamento del database non riuscito: ${updateError.message}`);
       }
 
       return new Response(JSON.stringify({
         success: true,
-        message: 'Database updated (no Stripe subscription ID)'
+        message: 'Database aggiornato (nessuno Stripe subscription ID)'
       }), {
         status: 200,
         headers: {
@@ -165,12 +165,12 @@ Deno.serve(async (request) => {
       .eq('id', subscriptionId);
 
     if (updateError) {
-      throw new Error(`Database update failed: ${updateError.message}`);
+      throw new Error(`Aggiornamento del database non riuscito: ${updateError.message}`);
     }
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Subscription updated successfully'
+      message: 'Abbonamento aggiornato correttamente'
     }), {
       status: 200,
       headers: {
@@ -180,7 +180,7 @@ Deno.serve(async (request) => {
 
   } catch (err) {
     console.error('Update subscription error:', err);
-    const message = err instanceof Error ? err.message : 'Failed to update subscription';
+    const message = err instanceof Error ? err.message : 'Impossibile aggiornare l\'abbonamento';
     return new Response(JSON.stringify({
       error: message
     }), {

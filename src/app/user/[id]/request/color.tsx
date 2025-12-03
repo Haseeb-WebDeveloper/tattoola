@@ -35,7 +35,7 @@ export default function ColorStep() {
             className="text-foreground text-center font-montserratMedium"
             style={{ marginTop: mvs(8), marginBottom: mvs(24), paddingHorizontal: s(16) }}
           >
-            Would you like a color or black and white tattoo?
+            Preferisci un tatuaggio a colori o in bianco e nero?
           </ScaledText>
 
           <View style={{ gap: s(16) }}>
@@ -75,8 +75,8 @@ export default function ColorStep() {
         <NextBackFooter
           onBack={() => router.back()}
           onNext={() => router.push(`/user/${id}/request/description`)}
-          nextLabel="Next"
-          backLabel="Back"
+          nextLabel="Avanti"
+          backLabel="Indietro"
         />
       </ScrollView>
     </View>

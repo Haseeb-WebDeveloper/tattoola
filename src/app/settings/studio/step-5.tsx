@@ -49,7 +49,7 @@ export default function StudioStep5() {
         <StudioStepHeader
           currentStep={5}
           totalSteps={8}
-          stepName="Description"
+          stepName="Descrizione"
           icon={<SVGIcons.SafeAlert width={s(19)} height={s(19)} />}
         />
 
@@ -70,7 +70,7 @@ export default function StudioStep5() {
             <ScaledTextInput
               containerClassName="rounded-xl border border-gray"
               className="text-foreground"
-              placeholder="Write a description for your studio..."
+            placeholder="Scrivi una descrizione per il tuo studio..."
                 
               value={description}
               onChangeText={setDescription}

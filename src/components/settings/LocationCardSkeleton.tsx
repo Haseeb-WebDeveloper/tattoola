@@ -47,15 +47,15 @@ export function FullPageLocationSkeleton() {
           variant="sm"
           className="text-foreground font-montserratMedium"
         >
-          In this section you can add other cities in addition to {" "}
+          In questa sezione puoi aggiungere altre città oltre a{" "}
           <ScaledText
             allowScaling={false}
             variant="sm"
             className="text-foreground font-montserratBold"
           >
-            your primary location
+            la tua posizione principale
           </ScaledText>
-          that you chose during registration
+          che hai scelto durante la registrazione
         </ScaledText>
       </View>
 
@@ -67,7 +67,7 @@ export function FullPageLocationSkeleton() {
           className="text-gray font-neueLight"
           style={{ marginBottom: mvs(6) }}
         >
-          Primary location
+          Posizione principale
         </ScaledText>
         <LocationCardSkeleton />
       </View>
@@ -79,7 +79,7 @@ export function FullPageLocationSkeleton() {
           variant="11"
           className="text-gray/50 font-normal italic"
         >
-          Displayed as "Comune, Province"
+          Mostrata come "Comune, Provincia"
         </ScaledText>
         <ScaledText
           allowScaling={false}
@@ -87,7 +87,7 @@ export function FullPageLocationSkeleton() {
           className="text-gray/50 font-normal italic"
           style={{ marginTop: mvs(4) }}
         >
-          eg : "Battipaglia, Salerno"
+          es: "Battipaglia, Salerno"
         </ScaledText>
       </View>
 
@@ -99,7 +99,7 @@ export function FullPageLocationSkeleton() {
           className="text-foreground/50 font-neueLight"
           style={{ marginBottom: mvs(6) }}
         >
-          Other locations
+          Altre posizioni
         </ScaledText>
       </View>
 
@@ -124,7 +124,7 @@ export function FullPageLocationSkeleton() {
           variant="md"
           className="text-foreground/50 font-montserratSemibold"
         >
-          Add locations
+          Aggiungi posizioni
         </ScaledText>
       </View>
     </>

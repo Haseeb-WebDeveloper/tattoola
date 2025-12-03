@@ -91,7 +91,9 @@ export default function LocationSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading locations:", error);
-        toast.error(error.message || "Failed to load locations");
+        toast.error(
+          error.message || "Caricamento delle località non riuscito"
+        );
       } finally {
         if (mounted) {
           setLoading(false);
@@ -223,7 +225,7 @@ export default function LocationSettingsScreen() {
 
     // Validate: At least one location must exist
     if (locations.length === 0) {
-      toast.error("Please add at least one location");
+      toast.error("Aggiungi almeno una località");
       return;
     }
 
@@ -232,7 +234,7 @@ export default function LocationSettingsScreen() {
       (loc) => !loc.provinceId || !loc.municipalityId
     );
     if (invalidLocations.length > 0) {
-      toast.error("Please complete all location details");
+      toast.error("Completa tutti i dettagli delle località");
       return;
     }
 
@@ -295,7 +297,7 @@ export default function LocationSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user.id);
 
-      toast.success("Locations updated successfully");
+      toast.success("Località aggiornate con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -303,7 +305,9 @@ export default function LocationSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating locations:", err);
-      toast.error(err.message || "Failed to update locations");
+      toast.error(
+        err.message || "Impossibile aggiornare le località"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -346,7 +350,7 @@ export default function LocationSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Dove ti Trovi
+            Dove ti trovi
           </ScaledText>
         </View>
 
@@ -378,7 +382,7 @@ export default function LocationSettingsScreen() {
                   variant="sm"
                   className="text-foreground font-montserratMedium"
                 >
-                  In this section you can add other cities in addition to{" "}
+                  In questa sezione puoi aggiungere altre città oltre a{" "}
                   {locations.length > 0 &&
                   locations.find((loc) => loc.isPrimary) ? (
                     <ScaledText
@@ -400,10 +404,10 @@ export default function LocationSettingsScreen() {
                       variant="sm"
                       className="text-foreground font-montserratBold"
                     >
-                      your primary location
+                      la tua località principale
                     </ScaledText>
                   )}{" "}
-                  that you chose during registration
+                  che hai scelto durante la registrazione
                 </ScaledText>
               </View>
 
@@ -417,7 +421,7 @@ export default function LocationSettingsScreen() {
                       className="text-gray font-neueLight"
                       style={{ marginBottom: mvs(6) }}
                     >
-                      Primary location
+                      Località principale
                     </ScaledText>
                     {locations
                       .filter((loc) => loc.isPrimary)
@@ -439,7 +443,7 @@ export default function LocationSettingsScreen() {
                       variant="11"
                       className="text-gray font-neueLightItalic"
                     >
-                      Displayed as "Comune, Province"
+                      Visualizzata come "Comune, Provincia"
                     </ScaledText>
                     <ScaledText
                       allowScaling={false}
@@ -447,7 +451,7 @@ export default function LocationSettingsScreen() {
                       className="text-gray font-neueLightItalic"
                       style={{ marginTop: mvs(4) }}
                     >
-                      eg : "Battipaglia, Salerno"
+                      es.: "Battipaglia, Salerno"
                     </ScaledText>
                   </View>
                 </>
@@ -462,7 +466,7 @@ export default function LocationSettingsScreen() {
                     className="text-gray font-neueLight"
                     style={{ marginBottom: mvs(6) }}
                   >
-                    Other locations
+                    Altre località
                   </ScaledText>
                   {locations
                     .filter((loc) => !loc.isPrimary)
@@ -482,7 +486,7 @@ export default function LocationSettingsScreen() {
               {/* Add Location Button */}
               <TouchableOpacity
                 onPress={handleAddLocation}
-                className="border border-dashed border-gray/50 rounded-xl items-center  flex-row"
+                  className="border border-dashed border-gray/50 rounded-xl items-center  flex-row"
                 style={{
                   paddingVertical: mvs(13),
                   paddingHorizontal: s(13),
@@ -500,7 +504,7 @@ export default function LocationSettingsScreen() {
                   variant="sm"
                   className="text-gray font-montserratSemibold"
                 >
-                  Add locations
+                  Aggiungi località
                 </ScaledText>
               </TouchableOpacity>
             </>
@@ -541,7 +545,7 @@ export default function LocationSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -583,7 +587,7 @@ export default function LocationSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(6) }}
             >
-              Remove location?
+              Rimuovere la località?
             </ScaledText>
             <ScaledText
               allowScaling={false}
@@ -591,7 +595,7 @@ export default function LocationSettingsScreen() {
               className="text-background text-center font-montserratSemibold"
               style={{ marginBottom: mvs(20) }}
             >
-              This location will be removed from your profile.
+              Questa località verrà rimossa dal tuo profilo.
             </ScaledText>
             <View
               className="flex-row justify-center"
@@ -612,7 +616,7 @@ export default function LocationSettingsScreen() {
                   variant="md"
                   className="text-primary font-montserratSemibold"
                 >
-                  Remove
+                  Rimuovi
                 </ScaledText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -632,7 +636,7 @@ export default function LocationSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratSemibold"
                 >
-                  Cancel
+                  Annulla
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -671,7 +675,7 @@ export default function LocationSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in locations
+              Hai modifiche non salvate nelle località
             </ScaledText>
 
             {/* Subtitle */}
@@ -681,7 +685,7 @@ export default function LocationSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -708,7 +712,7 @@ export default function LocationSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -727,7 +731,7 @@ export default function LocationSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -893,7 +897,7 @@ function LocationEditModal({
                   className="text-gray font-montserratSemibold"
                   style={{ marginBottom: mvs(8) }}
                 >
-                  Address (Optional)
+              Indirizzo (facoltativo)
                 </ScaledText>
                 <ScaledTextInput
                   value={address}
@@ -934,7 +938,7 @@ function LocationEditModal({
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                Save
+                Salva
               </ScaledText>
             </TouchableOpacity>
           </View>

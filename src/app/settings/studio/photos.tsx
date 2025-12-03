@@ -66,7 +66,7 @@ export default function StudioPhotosScreen() {
       setPhotos(result.photos);
     } catch (error: any) {
       console.error("Error loading photos:", error);
-      toast.error(error.message || "Failed to load photos");
+      toast.error(error.message || "Impossibile caricare le foto");
     } finally {
       setLoading(false);
     }
@@ -97,10 +97,11 @@ export default function StudioPhotosScreen() {
       }
 
       toast.success("Photos uploaded successfully");
+      // Foto caricate con successo
       await loadPhotos();
     } catch (error: any) {
       console.error("Error uploading photos:", error);
-      toast.error("Failed to upload photos");
+      toast.error("Impossibile caricare le foto");
     } finally {
       setUploading(false);
     }
@@ -120,14 +121,14 @@ export default function StudioPhotosScreen() {
 
       const result = await deleteStudioPhoto(photoToDelete.id);
       if (result.success) {
-        toast.success("Photo deleted");
+        toast.success("Foto eliminata");
         setPhotos((prev) => prev.filter((p) => p.id !== photoToDelete.id));
       } else {
-        toast.error(result.error || "Failed to delete photo");
+        toast.error(result.error || "Impossibile eliminare la foto");
       }
     } catch (error: any) {
       console.error("Error deleting photo:", error);
-      toast.error("Failed to delete photo");
+      toast.error("Impossibile eliminare la foto");
     } finally {
       setDeleting(null);
       setPhotoToDelete(null);
@@ -200,7 +201,7 @@ export default function StudioPhotosScreen() {
               e.stopPropagation();
               handleDeletePress(item);
             }}
-            className="absolute bg-white rounded-full items-center justify-center"
+            className="absolute items-center justify-center bg-white rounded-full"
             style={{
               width: s(16),
               height: s(16),
@@ -223,9 +224,9 @@ export default function StudioPhotosScreen() {
       <ScaledText
         allowScaling={false}
         variant="md"
-        className="text-gray font-neueLight text-center"
+        className="text-center text-gray font-neueLight"
       >
-        No photos yet
+        Nessuna foto ancora
       </ScaledText>
     </View>
   );
@@ -248,7 +249,7 @@ export default function StudioPhotosScreen() {
           >
             {/* Header */}
             <View
-              className="flex-row items-center justify-center relative"
+              className="relative flex-row items-center justify-center"
               style={{
                 paddingHorizontal: s(16),
                 paddingVertical: mvs(16),
@@ -257,7 +258,7 @@ export default function StudioPhotosScreen() {
             >
               <TouchableOpacity
                 onPress={handleBack}
-                className="absolute rounded-full bg-foreground/20 items-center justify-center"
+                className="absolute items-center justify-center rounded-full bg-foreground/20"
                 style={{
                   width: s(34),
                   height: s(34),
@@ -283,7 +284,11 @@ export default function StudioPhotosScreen() {
             {/* Divider */}
             <View
               className="bg-gray"
-              style={{ height: s(1), marginBottom: mvs(24), marginHorizontal: s(16) }}
+              style={{
+                height: s(1),
+                marginBottom: mvs(24),
+                marginHorizontal: s(16),
+              }}
             />
 
             {/* Description */}
@@ -301,7 +306,7 @@ export default function StudioPhotosScreen() {
             <TouchableOpacity
               onPress={handleUploadPhotos}
               disabled={uploading || fileUploading || loading}
-              className="border border-dashed items-center justify-center"
+              className="items-center justify-center border border-dashed"
               style={{
                 marginHorizontal: s(16),
                 paddingVertical: mvs(32),
@@ -327,14 +332,16 @@ export default function StudioPhotosScreen() {
                   variant="md"
                   className="text-foreground font-neueBold"
                 >
-                  {uploading || fileUploading ? "Uploading..." : "Upload files"}
+                  {uploading || fileUploading
+                    ? "Caricamento..."
+                    : "Carica file"}
                 </ScaledText>
               </View>
 
               <ScaledText
                 allowScaling={false}
                 variant="body4"
-                className="text-gray font-neueBold text-center"
+                className="text-center text-gray font-neueBold"
               >
                 Supporta JPG, PNG, max size 5MB
               </ScaledText>
@@ -383,11 +390,11 @@ export default function StudioPhotosScreen() {
         onRequestClose={() => setDeleteModalVisible(false)}
       >
         <View
-          className="flex-1 items-center justify-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
         >
           <View
-            className="bg-white items-center"
+            className="items-center bg-white"
             style={{
               width: s(361),
               paddingTop: mvs(20),
@@ -414,32 +421,32 @@ export default function StudioPhotosScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-black font-neueBold text-center"
+              className="text-center text-black font-neueBold"
               style={{ marginBottom: mvs(8), lineHeight: mvs(20) }}
             >
-              Delete this photo?
+              Eliminare questa foto?
             </ScaledText>
 
             {/* Description */}
             <ScaledText
               allowScaling={false}
               variant="body3Button"
-              className="text-neutral-800 font-montserratSemibold text-center"
+              className="text-center text-neutral-800 font-montserratSemibold"
               style={{
                 lineHeight: mvs(16),
                 marginBottom: mvs(24),
                 paddingHorizontal: s(12),
               }}
             >
-              Once deleted, this image won't appear in your studio gallery
-              anymore.
+              Una volta eliminata, questa immagine non sarà più visibile nella
+              galleria del tuo studio.
             </ScaledText>
 
             {/* Buttons */}
             <View className="flex-row" style={{ gap: s(16) }}>
               <TouchableOpacity
                 onPress={handleConfirmDelete}
-                className="border border-red rounded-full flex-row items-center justify-center"
+                className="flex-row items-center justify-center border rounded-full border-red"
                 style={{
                   paddingHorizontal: s(18),
                   paddingVertical: mvs(6),
@@ -455,13 +462,13 @@ export default function StudioPhotosScreen() {
                   className="font-montserratSemibold"
                   style={{ color: "#AE0E0E" }}
                 >
-                  Delete
+                  Elimina
                 </ScaledText>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setDeleteModalVisible(false)}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   paddingHorizontal: s(18),
                   paddingVertical: mvs(6),
@@ -472,7 +479,7 @@ export default function StudioPhotosScreen() {
                   variant="body3Button"
                   className="text-gray font-montserratSemibold"
                 >
-                  Cancel
+                  Annulla
                 </ScaledText>
               </TouchableOpacity>
             </View>
@@ -490,7 +497,7 @@ export default function StudioPhotosScreen() {
         <View className="flex-1 bg-black">
           {/* Header */}
           <View
-            className="flex-row items-center justify-center relative"
+            className="relative flex-row items-center justify-center"
             style={{
               paddingHorizontal: s(16),
               paddingTop: mvs(56),
@@ -499,7 +506,7 @@ export default function StudioPhotosScreen() {
           >
             <TouchableOpacity
               onPress={() => setPreviewModalVisible(false)}
-              className="absolute rounded-full bg-foreground/20 items-center justify-center"
+              className="absolute items-center justify-center rounded-full bg-foreground/20"
               style={{
                 width: s(34),
                 height: s(34),
@@ -521,7 +528,7 @@ export default function StudioPhotosScreen() {
           </View>
 
           {/* Full-screen Photo */}
-          <View className="flex-1 items-center justify-center">
+          <View className="items-center justify-center flex-1">
             {photos[selectedPhotoIndex] && (
               <Image
                 source={{ uri: photos[selectedPhotoIndex].imageUrl }}
@@ -563,14 +570,14 @@ export default function StudioPhotosScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white text-center"
+              className="text-center text-white"
               style={{
                 fontFamily: "Neue Haas Grotesk Display Pro",
                 fontWeight: "300",
                 fontStyle: "italic",
               }}
             >
-              Your photo will be seen like this by the tattoolers
+              La tua foto verrà mostrata così ai tattooler
             </ScaledText>
           </View>
         </View>

@@ -73,7 +73,7 @@ export default function ArtistRegisterScreen() {
         required: true,
         custom: (value: string) => {
           if (value !== formData.password) {
-            return "Passwords do not match";
+            return "Le password non coincidono";
           }
           return true;
         },
@@ -86,7 +86,7 @@ export default function ArtistRegisterScreen() {
     if (!formErrors.username && formData.username.trim().length >= 3) {
       const isAvailable = await usernameValidation.manualCheck();
       if (!isAvailable) {
-        formErrors.username = "This username is already taken";
+        formErrors.username = "Questo username è già stato utilizzato";
       }
     }
 
@@ -96,7 +96,7 @@ export default function ArtistRegisterScreen() {
         formData.email
       );
       if (!isEmailAvailable) {
-        formErrors.email = "This email is already registered";
+        formErrors.email = "Questa email è già registrata";
       }
     }
 
@@ -122,7 +122,7 @@ export default function ArtistRegisterScreen() {
       const message =
         error instanceof Error
           ? error.message
-          : "An error occurred during registration";
+          : "Si è verificato un errore durante la registrazione";
       setError(message);
       // Go back to the form and show the error
       router.replace("/(auth)/artist-register");
@@ -168,7 +168,7 @@ export default function ArtistRegisterScreen() {
         {/* Username */}
         <ScaledText
           variant="sm"
-          className="text-tat font-montserratSemibold mb-2"
+          className="mb-2 text-tat font-montserratSemibold"
         >
           Username (inserisci un nome univoco)
         </ScaledText>
@@ -207,7 +207,7 @@ export default function ArtistRegisterScreen() {
         {usernameValidation.formatError && (
           <ScaledText
             variant="sm"
-            className="text-xs text-error mt-1 font-neueLight"
+            className="mt-1 text-xs text-error font-neueLight"
           >
             {usernameValidation.formatError}
           </ScaledText>
@@ -216,18 +216,18 @@ export default function ArtistRegisterScreen() {
           usernameValidation.available === false && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
-              This username is already taken
+              Questo username è già stato utilizzato
             </ScaledText>
           )}
         {!usernameValidation.formatError &&
           usernameValidation.available === true && (
             <ScaledText
               variant="sm"
-              className="text-xs text-success mt-1 font-neueLight"
+              className="mt-1 text-xs text-success font-neueLight"
             >
-              Username is available
+              Username disponibile
             </ScaledText>
           )}
         {/* Show form validation errors (from form submit) */}
@@ -236,7 +236,7 @@ export default function ArtistRegisterScreen() {
           usernameValidation.available !== false && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.username}
             </ScaledText>
@@ -246,7 +246,7 @@ export default function ArtistRegisterScreen() {
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
             variant="sm"
-            className="text-tat mb-2 font-montserratSemibold"
+            className="mb-2 text-tat font-montserratSemibold"
           >
             Email
           </ScaledText>
@@ -267,7 +267,7 @@ export default function ArtistRegisterScreen() {
           {!!errors.email && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.email}
             </ScaledText>
@@ -278,7 +278,7 @@ export default function ArtistRegisterScreen() {
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
             variant="sm"
-            className="text-tat mb-2 font-montserratSemibold"
+            className="mb-2 text-tat font-montserratSemibold"
           >
             Password (min. 8 caratteri, di cui almeno un numero)
           </ScaledText>
@@ -310,7 +310,7 @@ export default function ArtistRegisterScreen() {
           {!!errors.password && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.password}
             </ScaledText>
@@ -321,7 +321,7 @@ export default function ArtistRegisterScreen() {
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
             variant="sm"
-            className="text-tat mb-2 font-montserratSemibold"
+            className="mb-2 text-tat font-montserratSemibold"
           >
             Conferma Password
           </ScaledText>
@@ -355,7 +355,7 @@ export default function ArtistRegisterScreen() {
           {!!errors.confirmPassword && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.confirmPassword}
             </ScaledText>
@@ -368,14 +368,14 @@ export default function ArtistRegisterScreen() {
             accessibilityRole="button"
             onPress={handleRegister}
             disabled={loading}
-            className="bg-primary-brand rounded-full items-center w-full"
+            className="items-center w-full rounded-full bg-primary-brand"
             style={{ paddingVertical: mvs(12), paddingHorizontal: s(32) }}
           >
             <ScaledText
               variant="body1"
               className="text-foreground font-neueBold"
             >
-              Register
+              Registrati
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -386,13 +386,13 @@ export default function ArtistRegisterScreen() {
             variant="md"
             className="text-[#A49A99] font-montserratLight"
           >
-            Already have an account?{" "}
+            Hai già un account?{" "}
             <ScaledText
               variant="md"
               className="text-foreground font-montserratSemibold"
               onPress={handleLogin}
             >
-              Sign in
+              Accedi
             </ScaledText>
           </ScaledText>
         </View>

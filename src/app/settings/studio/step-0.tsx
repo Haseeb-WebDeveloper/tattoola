@@ -98,7 +98,7 @@ export default function StudioStep0() {
             marginBottom: mvs(6),
           }}
         >
-          Setup your Studio Page 🪄
+          Imposta la pagina del tuo Studio 🪄
         </ScaledText>
 
         {/* Description */}
@@ -110,8 +110,8 @@ export default function StudioStep0() {
           }}
           className="text-foreground font-neueLight"
         >
-          Create a dedicated page for your studio. Add details, photos, and
-          services to showcase your work and attract more clients.
+          Crea una pagina dedicata per il tuo studio. Aggiungi dettagli, foto e
+          servizi per mostrare il tuo lavoro e attirare più clienti.
         </ScaledText>
 
         {/* Checklist items */}
@@ -128,8 +128,8 @@ export default function StudioStep0() {
             className="text-foreground font-neueSemibold"
           >
             🖼 Cover & Logo {"\n"}
-            📍 Location & Links {"\n"}
-            🎨 Styles & Services {"\n"}❓ FAQs
+            📍 Posizione & Link {"\n"}
+            🎨 Stili & Servizi {"\n"}❓ FAQ
           </ScaledText>
         </View>
 
@@ -142,7 +142,7 @@ export default function StudioStep0() {
           }}
           className="text-foreground font-neueLight"
         >
-          You can edit everything later at any time.
+          Potrai modificare tutto anche in un secondo momento.
         </ScaledText>
 
         {/* Get started button */}
@@ -169,7 +169,7 @@ export default function StudioStep0() {
             variant="md"
             className="text-white font-neueSemibold"
           >
-            Get started
+            Inizia
           </ScaledText>
         </TouchableOpacity>
       </View>

@@ -92,7 +92,9 @@ export default function BodyPartsSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading body parts:", error);
-        toast.error(error.message || "Failed to load body parts");
+        toast.error(
+          error.message || "Caricamento delle parti del corpo non riuscito"
+        );
       } finally {
         if (mounted) {
           setLoading(false);
@@ -153,7 +155,7 @@ export default function BodyPartsSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Body parts updated successfully");
+      toast.success("Parti del corpo aggiornate con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -161,7 +163,9 @@ export default function BodyPartsSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating body parts:", err);
-      toast.error(err.message || "Failed to update body parts");
+      toast.error(
+        err.message || "Impossibile aggiornare le parti del corpo"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -323,7 +327,7 @@ export default function BodyPartsSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -360,7 +364,7 @@ export default function BodyPartsSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in body parts
+              Hai modifiche non salvate nelle parti del corpo
             </ScaledText>
 
             {/* Subtitle */}
@@ -370,7 +374,7 @@ export default function BodyPartsSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -397,7 +401,7 @@ export default function BodyPartsSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -416,7 +420,7 @@ export default function BodyPartsSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

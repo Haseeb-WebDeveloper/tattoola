@@ -87,7 +87,7 @@ export default function StudioServicesScreen() {
         setInitialSelectedServices(studioServiceIds);
       } catch (error: any) {
         console.error("Error loading data:", error);
-        toast.error(error.message || "Failed to load services");
+        toast.error(error.message || "Impossibile caricare i servizi");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -143,17 +143,17 @@ export default function StudioServicesScreen() {
       const result = await updateStudioServices(user.id, selectedServices);
 
       if (result.success) {
-        toast.success("Studio services updated successfully!");
+        toast.success("Servizi dello studio aggiornati con successo!");
         setInitialSelectedServices(selectedServices);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Failed to update services");
+        toast.error(result.error || "Impossibile aggiornare i servizi");
       }
     } catch (error: any) {
       console.error("Error updating services:", error);
-      toast.error(error.message || "Failed to update services");
+      toast.error(error.message || "Impossibile aggiornare i servizi");
     } finally {
       setIsLoading(false);
     }
@@ -235,7 +235,7 @@ export default function StudioServicesScreen() {
               variant="lg"
               className="text-white font-neueSemibold"
             >
-              Services
+              Servizi
             </ScaledText>
           </View>
 
@@ -256,7 +256,7 @@ export default function StudioServicesScreen() {
               variant="lg"
               className="text-white font-neueSemibold"
             >
-              Select services
+              Seleziona i servizi
             </ScaledText>
           </View>
 
@@ -321,7 +321,7 @@ export default function StudioServicesScreen() {
                 variant="md"
                 className="text-foreground font-neueMedium"
               >
-                {isLoading ? "Saving..." : "Save"}
+                {isLoading ? "Salvataggio..." : "Salva"}
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -359,7 +359,7 @@ export default function StudioServicesScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in services
+              Hai modifiche non salvate nei servizi
             </ScaledText>
 
             {/* Subtitle */}
@@ -369,7 +369,7 @@ export default function StudioServicesScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi ignorarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -396,7 +396,7 @@ export default function StudioServicesScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -415,7 +415,7 @@ export default function StudioServicesScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Ignora modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

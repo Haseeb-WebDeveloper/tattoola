@@ -67,7 +67,7 @@ export default function BioSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user!.id);
 
-      toast.success("Bio updated successfully");
+      toast.success("Bio aggiornata con successo");
 
       // Navigate back on success
       setTimeout(() => {
@@ -75,7 +75,7 @@ export default function BioSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating bio:", err);
-      toast.error(err.message || "Failed to update bio");
+      toast.error(err.message || "Impossibile aggiornare la bio");
     } finally {
       setIsLoading(false);
     }
@@ -160,8 +160,7 @@ export default function BioSettingsScreen() {
             <TextInput
               value={bio}
               onChangeText={handleBioChange}
-              placeholder="Tattoo artist passionate about fine line and blackwork. 8+ years of experience creating custom designs"
-                
+              placeholder="Tattoo artist appassionato di fine line e blackwork. Più di 8 anni di esperienza nella creazione di design personalizzati"
               multiline
               textAlignVertical="top"
               editable={!isLoading}
@@ -214,7 +213,7 @@ export default function BioSettingsScreen() {
               variant="md"
               className="text-foreground font-neueMedium"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Salvataggio..." : "Salva"}
             </ScaledText>
           </TouchableOpacity>
         </View>
@@ -251,7 +250,7 @@ export default function BioSettingsScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in the bio
+              Hai modifiche non salvate nella bio
             </ScaledText>
 
             {/* Subtitle */}
@@ -261,7 +260,7 @@ export default function BioSettingsScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -288,7 +287,7 @@ export default function BioSettingsScreen() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua a modificare
                 </ScaledText>
               </TouchableOpacity>
 
@@ -307,7 +306,7 @@ export default function BioSettingsScreen() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta le modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>

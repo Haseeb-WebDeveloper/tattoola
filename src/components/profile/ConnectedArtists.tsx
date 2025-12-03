@@ -115,7 +115,7 @@ export const ConnectedArtists: React.FC<ConnectedArtistsProps> = ({
                       variant="sm"
                       className="text-red font-neueRoman"
                     >
-                      Studio profile
+                      Profilo studio
                     </ScaledText>
                   </View>
                 )}

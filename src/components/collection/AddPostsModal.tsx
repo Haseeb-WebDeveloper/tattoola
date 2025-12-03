@@ -77,7 +77,7 @@ export default function AddPostsModal({
                 variant="lg"
                 className="text-foreground font-neueSemibold"
               >
-                Select tattoos
+                Seleziona i tatuaggi
               </ScaledText>
             </View>
             <View style={{ height: mvs(30), width: mvs(30) }} />
@@ -117,7 +117,7 @@ export default function AddPostsModal({
                   className="text-foreground text-center font-neueLight"
                   style={{ marginTop: mvs(8) }}
                 >
-                  Create new post
+                  Crea un nuovo post
                 </ScaledText>
               </TouchableOpacity>
               {items.map((p) => {
@@ -156,7 +156,7 @@ export default function AddPostsModal({
                           className="text-foreground font-neueMedium"
                           numberOfLines={1}
                         >
-                          {p.caption || "Untitled"}
+                          {p.caption || "Senza titolo"}
                         </ScaledText>
                       </LinearGradient>
                     </View>
@@ -191,7 +191,7 @@ export default function AddPostsModal({
                 variant="md"
                 className="text-foreground font-neueSemibold"
               >
-                Cancel
+                Annulla
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -209,7 +209,7 @@ export default function AddPostsModal({
                 variant="md"
                 className="text-foreground font-neueSemibold"
               >
-                Add to collection
+                Aggiungi alla collection
               </ScaledText>
               <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
             </TouchableOpacity>

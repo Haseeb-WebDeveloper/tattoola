@@ -27,7 +27,7 @@ export default function SuccessScreen() {
         className="text-foreground text-center font-montserratMedium"
         style={{ marginBottom: mvs(8) }}
       >
-        🎉 Request Sent Successfully!
+        🎉 Richiesta inviata con successo!
       </ScaledText>
       <ScaledText
         allowScaling={false}
@@ -35,7 +35,7 @@ export default function SuccessScreen() {
         className="text-foreground text-center font-montserratMedium"
         style={{ marginBottom: mvs(8) }}
       >
-        Your request has been shared with {}
+        La tua richiesta è stata condivisa con {}
       </ScaledText>
       <NextBackFooter
         showBack={false}
@@ -43,7 +43,7 @@ export default function SuccessScreen() {
           reset();
           router.replace("/(tabs)/inbox");
         }}
-        nextLabel="Close"
+        nextLabel="Chiudi"
       />
     </View>
   );

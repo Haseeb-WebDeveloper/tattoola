@@ -10,10 +10,7 @@
     "icon": "./src/assets/images/icon.png",
     "scheme": "tattoola",
     "userInterfaceStyle": "dark",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "newArchEnabled": true,
     "updates": {
       "enabled": true,

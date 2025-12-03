@@ -177,7 +177,7 @@ export default function ProfileSettingsScreen() {
             variant="lg"
             className="text-white font-neueSemibold"
           >
-            Your profile
+            Il tuo profilo
           </ScaledText>
         </View>
 
