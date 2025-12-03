@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "tattoola",
-    "slug": "tattola-app",
+    "slug": "tattoola",
     "version": "1.0.0",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -10,10 +10,7 @@
     "icon": "./src/assets/images/icon.png",
     "scheme": "tattoola",
     "userInterfaceStyle": "dark",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "newArchEnabled": true,
     "updates": {
       "enabled": true,
@@ -44,6 +41,7 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.haseebahmedrazakhan.tattoola",
       "permissions": [
+        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -81,9 +79,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b6b736c8-88fc-42ca-86f1-0b64a8133555"
+        "projectId": "624fc895-19a3-4765-9329-1f3ecb47aa61"
       }
     },
-    "owner": "pavan_1604"
+    "owner": "figmentadev"
   }
 }
