@@ -1,17 +1,24 @@
+import DiscardPostConfirmModal from "@/components/ui/DiscardPostConfirmModal";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import ScaledText from "@/components/ui/ScaledText";
+import { COLLECTION_NAME } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import {
   canProceedFromMedia,
   usePostUploadStore,
 } from "@/stores/postUploadStore";
-import { TrimText } from "@/utils/text-trim";
-import { router, useLocalSearchParams } from "expo-router";
-import { useAuth } from "@/providers/AuthProvider";
-import { COLLECTION_NAME } from "@/constants/limits";
+import { getFileNameFromUri } from "@/utils/get-file-name";
+import { s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
-import React, { useEffect, useMemo } from "react";
+import { TrimText } from "@/utils/text-trim";
+import { LinearGradient } from "expo-linear-gradient";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  BackHandler,
   Image,
   Pressable,
   StyleSheet,
@@ -21,11 +28,6 @@ import {
 import DraggableFlatList, {
   RenderItemParams,
 } from "react-native-draggable-flatlist";
-import { getFileNameFromUri } from "@/utils/get-file-name";
-import { LinearGradient } from "expo-linear-gradient";
-import ScaledText from "@/components/ui/ScaledText";
-import NextBackFooter from "@/components/ui/NextBackFooter";
-import { s } from "@/utils/scale";
 
 export default function UploadMediaStep() {
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
@@ -36,6 +38,8 @@ export default function UploadMediaStep() {
   const addMedia = usePostUploadStore((s) => s.addMedia);
   const removeMediaAt = usePostUploadStore((s) => s.removeMediaAt);
   const setCollectionId = usePostUploadStore((s) => s.setCollectionId);
+  const resetPostUpload = usePostUploadStore((s) => s.reset);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   // Set collection ID from route params if provided
   useEffect(() => {
@@ -75,6 +79,38 @@ export default function UploadMediaStep() {
   const canProceed = useMemo(
     () => canProceedFromMedia(usePostUploadStore.getState()),
     [media]
+  );
+
+  const openDiscardModal = useCallback(() => {
+    setShowDiscardModal(true);
+  }, []);
+
+  const handleConfirmDiscard = useCallback(() => {
+    resetPostUpload();
+    setShowDiscardModal(false);
+    // Match the header close behaviour: go back to the main home tab.
+    router.replace("/(tabs)");
+  }, [resetPostUpload]);
+
+  const handleCancelDiscard = useCallback(() => {
+    setShowDiscardModal(false);
+  }, []);
+
+  // Intercept Android hardware back on this screen to show the same
+  // confirmation as the header/Indietro button.
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        openDiscardModal();
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+      return () => subscription.remove();
+    }, [openDiscardModal])
   );
 
   const handlePickMedia = async () => {
@@ -128,7 +164,7 @@ export default function UploadMediaStep() {
         }}
       >
         <View
-          className="bg-gray-foreground border border-gray rounded-xl flex-row items-center py-1"
+          className="flex-row items-center py-1 border bg-gray-foreground border-gray rounded-xl"
           style={{
             paddingLeft: 0,
             minHeight: 70,
@@ -167,7 +203,7 @@ export default function UploadMediaStep() {
               />
             ) : (
               <View
-                className="items-center justify-center bg-tat-darkMaroon border border-gray rounded-lg"
+                className="items-center justify-center border rounded-lg bg-tat-darkMaroon border-gray"
                 style={{ width: "100%", height: "100%" }}
               >
                 <SVGIcons.Video width={30} height={30} />
@@ -206,7 +242,7 @@ export default function UploadMediaStep() {
               elevation: 4,
               zIndex: 100,
             }}
-            className="bg-foreground rounded-full border border-foreground p-2 items-center justify-center  elevation-2 w-8 h-8"
+            className="items-center justify-center w-8 h-8 p-2 border rounded-full bg-foreground border-foreground elevation-2"
             accessibilityLabel="Remove"
           >
             <SVGIcons.Trash className="w-5 h-5" style={{ color: "#ff4c4c" }} />
@@ -218,6 +254,11 @@ export default function UploadMediaStep() {
 
   return (
     <View className="flex-1 bg-background">
+      <DiscardPostConfirmModal
+        visible={showDiscardModal}
+        onCancel={handleCancelDiscard}
+        onConfirm={handleConfirmDiscard}
+      />
       <LinearGradient
         colors={["#000000", "#0F0202"]}
         locations={[0, 1]}
@@ -240,7 +281,7 @@ export default function UploadMediaStep() {
               <ScaledText
                 allowScaling={false}
                 variant="11"
-                className="text-gray font-neueMedium mb-6"
+                className="mb-6 text-gray font-neueMedium"
               >
                 Devi selezionare almeno{" "}
                 <ScaledText
@@ -255,7 +296,7 @@ export default function UploadMediaStep() {
             </View>
 
             <View
-              className="border-dashed border-error/70 rounded-2xl bg-primary/20 items-center"
+              className="items-center border-dashed border-error/70 rounded-2xl bg-primary/20"
               style={{
                 paddingVertical: s(24),
                 paddingHorizontal: s(16),
@@ -278,7 +319,7 @@ export default function UploadMediaStep() {
                   <TouchableOpacity
                     onPress={handlePickMedia}
                     disabled={uploading}
-                    className="bg-primary rounded-full"
+                    className="rounded-full bg-primary"
                     style={{
                       marginTop: s(12),
                       paddingVertical: s(8),
@@ -342,11 +383,11 @@ export default function UploadMediaStep() {
         </View>
 
         <NextBackFooter
-          onBack={() => router.back()}
+          onBack={openDiscardModal}
           onNext={() => router.push("/upload/description")}
           nextDisabled={!canProceed}
-        nextLabel="Avanti"
-        backLabel="Indietro"
+          nextLabel="Avanti"
+          backLabel="Indietro"
         />
       </View>
     </View>

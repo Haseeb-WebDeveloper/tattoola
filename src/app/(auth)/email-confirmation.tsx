@@ -9,8 +9,14 @@ import { UserRole } from "@/types/auth";
 import { logger } from "@/utils/logger";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Image, ScrollView, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  AppState,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { toast } from "sonner-native";
 
 export default function EmailConfirmationScreen() {
@@ -20,30 +26,65 @@ export default function EmailConfirmationScreen() {
   const [imageError, setImageError] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(60); // seconds remaining before user can resend
+  const cooldownEndTimeRef = useRef<number | null>(null); // Timestamp when cooldown ends
 
   const isLoading = status === "in_progress";
 
+  // Calculate remaining cooldown based on timestamp
+  const calculateRemainingCooldown = useCallback((): number => {
+    if (!cooldownEndTimeRef.current) return 0;
+    const now = Date.now();
+    const remaining = Math.ceil((cooldownEndTimeRef.current - now) / 1000);
+    return Math.max(0, remaining);
+  }, []);
+
+  // Start cooldown timer
+  const startCooldown = useCallback((seconds: number) => {
+    const now = Date.now();
+    cooldownEndTimeRef.current = now + seconds * 1000;
+    setCooldown(seconds);
+  }, []);
+
   // Initial cooldown when landing on the screen (first 60s)
   useEffect(() => {
-    setCooldown(60);
-  }, []);
+    startCooldown(60);
+  }, [startCooldown]);
+
+  // Handle app state changes (background/foreground)
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active" && cooldownEndTimeRef.current) {
+        // App came to foreground, recalculate cooldown
+        const remaining = calculateRemainingCooldown();
+        setCooldown(remaining);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [calculateRemainingCooldown]);
 
   // Countdown effect for resend cooldown
   useEffect(() => {
-    if (cooldown <= 0) return;
+    if (cooldown <= 0) {
+      cooldownEndTimeRef.current = null;
+      return;
+    }
 
     const interval = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = calculateRemainingCooldown();
+      if (remaining <= 0) {
+        setCooldown(0);
+        cooldownEndTimeRef.current = null;
+        clearInterval(interval);
+      } else {
+        setCooldown(remaining);
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [cooldown]);
+  }, [cooldown, calculateRemainingCooldown]);
 
   logger.log("Email confirmation screen - status:", status);
 
@@ -123,7 +164,7 @@ export default function EmailConfirmationScreen() {
               setIsResending(true);
               await resendVerificationEmail(pendingVerificationEmail);
               // Start a 60 second cooldown after a successful resend
-              setCooldown(60);
+              startCooldown(60);
               let toastId: any;
               toastId = toast.custom(
                 <CustomToast

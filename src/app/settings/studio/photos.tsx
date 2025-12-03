@@ -396,7 +396,8 @@ export default function StudioPhotosScreen() {
           <View
             className="items-center bg-white"
             style={{
-              width: s(361),
+              marginHorizontal: s(24),
+              alignSelf: "stretch",
               paddingTop: mvs(20),
               paddingBottom: mvs(24),
               paddingHorizontal: s(20),

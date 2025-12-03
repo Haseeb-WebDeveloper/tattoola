@@ -6,6 +6,10 @@ import { logger } from "./logger";
 import { supabase } from "./supabase";
 
 export function initializeDeepLinking() {
+  // Ensure we only handle the initial URL once (to avoid unwanted redirects
+  // when the app returns to foreground, e.g. after picking media).
+  let hasHandledInitialUrl = false;
+
   // Handle deep links when app is already running
   const handleDeepLink = async (url: string) => {
     try {
@@ -20,7 +24,10 @@ export function initializeDeepLinking() {
             await supabase.auth.exchangeCodeForSession(code);
 
           if (exchangeError) {
-            logger.error("Deep link: code exchange failed:", exchangeError.message);
+            logger.error(
+              "Deep link: code exchange failed:",
+              exchangeError.message
+            );
             router.replace("/(auth)/welcome");
             return;
           }
@@ -45,7 +52,9 @@ export function initializeDeepLinking() {
             .eq("id", userId)
             .maybeSingle();
 
-          const hasCompletedProfile = !!(existingUser && existingUser.firstName);
+          const hasCompletedProfile = !!(
+            existingUser && existingUser.firstName
+          );
 
           // Clear signup state since email is now verified
           useSignupStore.getState().reset();
@@ -157,7 +166,9 @@ export function initializeDeepLinking() {
         const token = urlObj.searchParams.get("token");
 
         if (!token) {
-          logger.error("Deep link: studio invitation link missing token parameter");
+          logger.error(
+            "Deep link: studio invitation link missing token parameter"
+          );
           return;
         }
 
@@ -293,9 +304,10 @@ export function initializeDeepLinking() {
     });
   });
 
-  // Handle deep link if app was opened via deep link
+  // Handle deep link if app was opened via deep link (only once)
   Linking.getInitialURL().then((url) => {
-    if (url) {
+    if (url && !hasHandledInitialUrl) {
+      hasHandledInitialUrl = true;
       handleDeepLink(url);
     }
   });
@@ -308,7 +320,12 @@ export function initializeDeepLinking() {
       if (state === "active") {
         try {
           const initial = await Linking.getInitialURL();
-          if (initial) {
+          // Only handle the stored initial URL once; when app comes back
+          // from background (e.g. after selecting media), we don't want
+          // to re-trigger deep-link navigation that can kick the user
+          // out of the current flow.
+          if (initial && !hasHandledInitialUrl) {
+            hasHandledInitialUrl = true;
             handleDeepLink(initial);
           }
         } catch (e) {
