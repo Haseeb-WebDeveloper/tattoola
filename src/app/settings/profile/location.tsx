@@ -49,6 +49,8 @@ export default function LocationSettingsScreen() {
     null
   );
 
+  const isArtist = user?.role === "ARTIST";
+
   // Load user locations
   useEffect(() => {
     let mounted = true;
@@ -91,9 +93,7 @@ export default function LocationSettingsScreen() {
         }
       } catch (error: any) {
         console.error("Error loading locations:", error);
-        toast.error(
-          error.message || "Caricamento delle località non riuscito"
-        );
+        toast.error(error.message || "Caricamento delle località non riuscito");
       } finally {
         if (mounted) {
           setLoading(false);
@@ -130,6 +130,13 @@ export default function LocationSettingsScreen() {
   };
 
   const handleAddLocation = () => {
+    // Tattoo lovers are limited to a single location; allow add only for artists
+    // or in the rare case where a tattoo lover has no location yet.
+    if (!isArtist && locations.length >= 1) {
+      toast.error("Puoi impostare solo una località principale");
+      return;
+    }
+
     const newLocation: LocationItem = {
       id: `temp-${Date.now()}`, // Temporary ID until saved
       provinceId: "",
@@ -137,7 +144,8 @@ export default function LocationSettingsScreen() {
       municipalityId: "",
       municipalityName: "",
       address: "",
-      isPrimary: locations.length === 0, // First location is primary by default
+      // First location is primary by default; for artists, others start as non‑primary
+      isPrimary: locations.length === 0,
       isNew: true,
     };
     setLocations([...locations, newLocation]);
@@ -152,32 +160,51 @@ export default function LocationSettingsScreen() {
 
   const confirmRemoveLocation = () => {
     if (!locationToDelete) return;
-    
-    const locationToRemove = locations.find((loc) => loc.id === locationToDelete);
-    const updatedLocations = locations.filter((loc) => loc.id !== locationToDelete);
+
+    const locationToRemove = locations.find(
+      (loc) => loc.id === locationToDelete
+    );
+    const updatedLocations = locations.filter(
+      (loc) => loc.id !== locationToDelete
+    );
+
+    // For non‑artists we never want to end up with zero locations
+    if (!isArtist && updatedLocations.length === 0) {
+      toast.error("Devi avere almeno una località");
+      setShowDeleteModal(false);
+      setLocationToDelete(null);
+      return;
+    }
 
     // If we removed the primary location and there are others, make the first one primary
-    if (
-      locationToRemove?.isPrimary &&
-      updatedLocations.length > 0
-    ) {
+    if (locationToRemove?.isPrimary && updatedLocations.length > 0) {
       updatedLocations[0].isPrimary = true;
     }
 
     setLocations(updatedLocations);
     setShowDeleteModal(false);
     setLocationToDelete(null);
-    
+
     // Show toast if it was a saved location (not a new one)
-    if (locationToRemove && !locationToRemove.isNew && !locationToRemove.id.startsWith("temp-")) {
+    if (
+      locationToRemove &&
+      !locationToRemove.isNew &&
+      !locationToRemove.id.startsWith("temp-")
+    ) {
       toast.success("Location removed");
     }
   };
 
   const handleSetPrimary = (locationId: string) => {
+    // For tattoo lovers we always treat the single location as primary;
+    // there is no need to switch primary between multiple entries.
+    if (!isArtist) {
+      return;
+    }
+
     const previousPrimary = locations.find((loc) => loc.isPrimary);
     const newPrimary = locations.find((loc) => loc.id === locationId);
-    
+
     // Only show toast if actually changing primary (not setting the same one)
     if (previousPrimary && previousPrimary.id !== locationId) {
       setLocations(
@@ -244,12 +271,25 @@ export default function LocationSettingsScreen() {
       locations[0].isPrimary = true;
     }
 
+    // Enforce single‑location rule for tattoo lovers on save.
+    let locationsToPersist = locations;
+    if (!isArtist && locations.length > 1) {
+      locationsToPersist = [
+        {
+          ...locations[0],
+          isPrimary: true,
+        },
+      ];
+    }
+
     setIsLoading(true);
 
     try {
       // Delete removed locations
       const removedLocationIds = initialLocations
-        .filter((initial) => !locations.find((loc) => loc.id === initial.id))
+        .filter(
+          (initial) => !locationsToPersist.find((loc) => loc.id === initial.id)
+        )
         .map((loc) => loc.id);
 
       if (removedLocationIds.length > 0) {
@@ -262,7 +302,7 @@ export default function LocationSettingsScreen() {
       }
 
       // Process all locations
-      for (const location of locations) {
+      for (const location of locationsToPersist) {
         const locationData = {
           userId: user.id,
           provinceId: location.provinceId,
@@ -305,9 +345,7 @@ export default function LocationSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating locations:", err);
-      toast.error(
-        err.message || "Impossibile aggiornare le località"
-      );
+      toast.error(err.message || "Impossibile aggiornare le località");
     } finally {
       setIsLoading(false);
     }
@@ -326,7 +364,7 @@ export default function LocationSettingsScreen() {
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="relative flex-row items-center justify-center"
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
@@ -335,7 +373,7 @@ export default function LocationSettingsScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
+            className="absolute items-center justify-center rounded-full bg-foreground/20"
             style={{
               width: s(34),
               height: s(34),
@@ -375,43 +413,57 @@ export default function LocationSettingsScreen() {
             <FullPageLocationSkeleton />
           ) : (
             <>
-              {/* Description */}
+              {/* Description + layout depend on role */}
               <View style={{ marginBottom: mvs(24) }}>
-                <ScaledText
-                  allowScaling={false}
-                  variant="sm"
-                  className="text-foreground font-montserratMedium"
-                >
-                  In questa sezione puoi aggiungere altre città oltre a{" "}
-                  {locations.length > 0 &&
-                  locations.find((loc) => loc.isPrimary) ? (
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-foreground font-montserratBold"
-                    >
-                      {locations.find((loc) => loc.isPrimary)?.municipalityName}{" "}
-                      (
-                      {locations
-                        .find((loc) => loc.isPrimary)
-                        ?.provinceName?.substring(0, 2)
-                        ?.toUpperCase()}
-                      )
-                    </ScaledText>
-                  ) : (
-                    <ScaledText
-                      allowScaling={false}
-                      variant="sm"
-                      className="text-foreground font-montserratBold"
-                    >
-                      la tua località principale
-                    </ScaledText>
-                  )}{" "}
-                  che hai scelto durante la registrazione
-                </ScaledText>
+                {isArtist ? (
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-foreground font-montserratMedium"
+                  >
+                    In questa sezione puoi aggiungere altre città oltre a{" "}
+                    {locations.length > 0 &&
+                    locations.find((loc) => loc.isPrimary) ? (
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-foreground font-montserratBold"
+                      >
+                        {
+                          locations.find((loc) => loc.isPrimary)
+                            ?.municipalityName
+                        }{" "}
+                        (
+                        {locations
+                          .find((loc) => loc.isPrimary)
+                          ?.provinceName?.substring(0, 2)
+                          ?.toUpperCase()}
+                        )
+                      </ScaledText>
+                    ) : (
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-foreground font-montserratBold"
+                      >
+                        la tua località principale
+                      </ScaledText>
+                    )}{" "}
+                    che hai scelto durante la registrazione
+                  </ScaledText>
+                ) : (
+                  <ScaledText
+                    allowScaling={false}
+                    variant="sm"
+                    className="text-foreground font-montserratMedium"
+                  >
+                    Seleziona o modifica la tua città principale. Verrà mostrata
+                    come "Comune, Provincia" nel tuo profilo.
+                  </ScaledText>
+                )}
               </View>
 
-              {/* Primary Location */}
+              {/* Primary / single location */}
               {locations.filter((loc) => loc.isPrimary).length > 0 && (
                 <>
                   <View style={{ marginBottom: mvs(10) }}>
@@ -421,17 +473,20 @@ export default function LocationSettingsScreen() {
                       className="text-gray font-neueLight"
                       style={{ marginBottom: mvs(6) }}
                     >
-                      Località principale
+                      Provincia & Comune
                     </ScaledText>
                     {locations
                       .filter((loc) => loc.isPrimary)
-                      .map((location, index) => (
+                      .map((location) => (
                         <LocationCard
                           key={location.id}
                           location={location}
                           onEdit={() => setEditingLocationId(location.id)}
                           onRemove={() => handleRemoveLocation(location.id)}
                           onSetPrimary={() => handleSetPrimary(location.id)}
+                          // Tattoo lovers: single, always-primary location – no delete / primary toggle UI
+                          canRemove={isArtist}
+                          canSetPrimary={isArtist}
                         />
                       ))}
                   </View>
@@ -457,56 +512,65 @@ export default function LocationSettingsScreen() {
                 </>
               )}
 
-              {/* Other Locations - Always show header if we have a primary location */}
-              {locations.filter((loc) => loc.isPrimary).length > 0 && (
-                <View>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-gray font-neueLight"
-                    style={{ marginBottom: mvs(6) }}
-                  >
-                    Altre località
-                  </ScaledText>
-                  {locations
-                    .filter((loc) => !loc.isPrimary)
-                    .map((location, index) => (
-                      <LocationCard
-                        key={location.id}
-                        location={location}
-                        isLast={index === locations.filter((loc) => !loc.isPrimary).length - 1}
-                        onEdit={() => setEditingLocationId(location.id)}
-                        onRemove={() => handleRemoveLocation(location.id)}
-                        onSetPrimary={() => handleSetPrimary(location.id)}
-                      />
-                    ))}
-                </View>
-              )}
+              {/* Other Locations + add button only for artists */}
+              {isArtist &&
+                locations.filter((loc) => loc.isPrimary).length > 0 && (
+                  <>
+                    <View>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-gray font-neueLight"
+                        style={{ marginBottom: mvs(6) }}
+                      >
+                        Altre località
+                      </ScaledText>
+                      {locations
+                        .filter((loc) => !loc.isPrimary)
+                        .map((location, index) => (
+                          <LocationCard
+                            key={location.id}
+                            location={location}
+                            isLast={
+                              index ===
+                              locations.filter((loc) => !loc.isPrimary).length -
+                                1
+                            }
+                            onEdit={() => setEditingLocationId(location.id)}
+                            onRemove={() => handleRemoveLocation(location.id)}
+                            onSetPrimary={() => handleSetPrimary(location.id)}
+                            canRemove={true}
+                            canSetPrimary={true}
+                          />
+                        ))}
+                    </View>
 
-              {/* Add Location Button */}
-              <TouchableOpacity
-                onPress={handleAddLocation}
-                  className="border border-dashed border-gray/50 rounded-xl items-center  flex-row"
-                style={{
-                  paddingVertical: mvs(13),
-                  paddingHorizontal: s(13),
-                  gap: s(16),
-                }}
-              >
-                <View
-                  className="bg-primary rounded-full items-center justify-center"
-                  style={{ width: s(24), height: s(24) }}
-                >
-                  <SVGIcons.Plus width={s(12)} height={s(12)} />
-                </View>
-                <ScaledText
-                  allowScaling={false}
-                  variant="sm"
-                  className="text-gray font-montserratSemibold"
-                >
-                  Aggiungi località
-                </ScaledText>
-              </TouchableOpacity>
+                    {/* Add Location Button */}
+                    <TouchableOpacity
+                      onPress={handleAddLocation}
+                      className="flex-row items-center border border-dashed border-gray/50 rounded-xl"
+                      style={{
+                        paddingVertical: mvs(13),
+                        paddingHorizontal: s(13),
+                        gap: s(16),
+                      }}
+                    >
+                      <View
+                        className="items-center justify-center rounded-full bg-primary"
+                        style={{ width: s(24), height: s(24) }}
+                      >
+                        <SVGIcons.Plus width={s(12)} height={s(12)} />
+                      </View>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-gray font-montserratSemibold"
+                      >
+                        Aggiungi località
+                      </ScaledText>
+                    </TouchableOpacity>
+                  </>
+                )}
             </>
           )}
         </ScrollView>
@@ -527,7 +591,7 @@ export default function LocationSettingsScreen() {
           <TouchableOpacity
             onPress={handleSave}
             disabled={isLoading || !hasUnsavedChanges}
-            className="rounded-full items-center justify-center flex-row"
+            className="flex-row items-center justify-center rounded-full"
             style={{
               backgroundColor:
                 isLoading || !hasUnsavedChanges ? "#6B2C2C" : "#AD2E2E",
@@ -567,13 +631,14 @@ export default function LocationSettingsScreen() {
             setShowDeleteModal(false);
             setLocationToDelete(null);
           }}
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
         >
           <View
             className="bg-[#fff] rounded-xl max-w-[90vw]"
             style={{
-              width: s(342),
+              // Use percentage width so we always have side margins on small screens
+              width: "88%",
               paddingHorizontal: s(24),
               paddingVertical: mvs(28),
             }}
@@ -584,7 +649,7 @@ export default function LocationSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(6) }}
             >
               Rimuovere la località?
@@ -592,19 +657,17 @@ export default function LocationSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-background text-center font-montserratSemibold"
+              className="text-center text-background font-montserratSemibold"
               style={{ marginBottom: mvs(20) }}
             >
               Questa località verrà rimossa dal tuo profilo.
             </ScaledText>
-            <View
-              className="flex-row justify-center"
-              style={{ columnGap: s(10) }}
-            >
+            <View className="justify-center" style={{ rowGap: mvs(8) }}>
               <TouchableOpacity
                 onPress={confirmRemoveLocation}
-                className="rounded-full items-center justify-center flex-row border-primary"
+                className="flex-row items-center justify-center rounded-full border-primary"
                 style={{
+                  width: "100%",
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
@@ -624,8 +687,9 @@ export default function LocationSettingsScreen() {
                   setShowDeleteModal(false);
                   setLocationToDelete(null);
                 }}
-                className="rounded-full items-center justify-center flex-row"
+                className="flex-row items-center justify-center rounded-full"
                 style={{
+                  width: "100%",
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
@@ -652,13 +716,14 @@ export default function LocationSettingsScreen() {
         onRequestClose={handleContinueEditing}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
             className="bg-[#fff] rounded-xl"
             style={{
-              width: s(342),
+              // Use percentage width so we always have side margins on small screens
+              width: "88%",
               paddingHorizontal: s(24),
               paddingVertical: mvs(32),
             }}
@@ -672,7 +737,7 @@ export default function LocationSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
               Hai modifiche non salvate nelle località
@@ -682,19 +747,20 @@ export default function LocationSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
               Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
-            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+            <View style={{ rowGap: mvs(8) }}>
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}
-                className="rounded-full border-2 items-center justify-center flex-row"
+                className="flex-row items-center justify-center border-2 rounded-full"
                 style={{
+                  width: "100%",
                   borderColor: "#AD2E2E",
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
@@ -719,8 +785,9 @@ export default function LocationSettingsScreen() {
               {/* Discard Changes Button */}
               <TouchableOpacity
                 onPress={handleDiscardChanges}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
+                  width: "100%",
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
@@ -826,7 +893,7 @@ function LocationEditModal({
         >
           {/* Header */}
           <View
-            className="border-b border-gray flex-row items-center justify-between relative bg-primary/30"
+            className="relative flex-row items-center justify-between border-b border-gray bg-primary/30"
             style={{
               paddingBottom: mvs(20),
               paddingTop: mvs(70),
@@ -835,7 +902,7 @@ function LocationEditModal({
           >
             <TouchableOpacity
               onPress={onClose}
-              className="rounded-full bg-foreground/20 items-center justify-center"
+              className="items-center justify-center rounded-full bg-foreground/20"
               style={{
                 width: s(30),
                 height: s(30),
@@ -897,7 +964,7 @@ function LocationEditModal({
                   className="text-gray font-montserratSemibold"
                   style={{ marginBottom: mvs(8) }}
                 >
-              Indirizzo (facoltativo)
+                  Indirizzo (facoltativo)
                 </ScaledText>
                 <ScaledTextInput
                   value={address}
@@ -922,7 +989,7 @@ function LocationEditModal({
             <TouchableOpacity
               onPress={handleSave}
               disabled={!selectedProvince || !selectedMunicipality}
-              className="rounded-full items-center justify-center"
+              className="items-center justify-center rounded-full"
               style={{
                 backgroundColor:
                   !selectedProvince || !selectedMunicipality
@@ -951,7 +1018,11 @@ function LocationEditModal({
         initialProvinceId={selectedProvince?.id || null}
         initialMunicipalityId={selectedMunicipality?.id || null}
         onSelect={({ province, provinceId, municipality, municipalityId }) => {
-          setSelectedProvince({ id: provinceId, name: province, imageUrl: null });
+          setSelectedProvince({
+            id: provinceId,
+            name: province,
+            imageUrl: null,
+          });
           setSelectedMunicipality({ id: municipalityId, name: municipality });
           setPickerVisible(false);
         }}

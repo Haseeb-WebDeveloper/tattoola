@@ -19,7 +19,6 @@ export default function WelcomeScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1, backgroundColor: "#000" }}
       keyboardVerticalOffset={0}
-      // Removed className for min-h-[100svh] and set background in style
     >
       <View style={{ flex: 1 }}>
         <ScrollView
@@ -33,13 +32,13 @@ export default function WelcomeScreen() {
           <View className="relative">
             {/* Top logo */}
             <View
-              className="w-full h-fit flex justify-center items-center"
+              className="flex items-center justify-center w-full h-fit"
               style={{ height: mvs(100) }}
             >
               {/* <SVGIcons.Logo /> */}
             </View>
 
-            <View className="w-full relative">
+            <View className="relative w-full">
               <Image
                 source={require("@/assets/auth/welcome-screen.jpg")}
                 className="w-full"
@@ -52,7 +51,7 @@ export default function WelcomeScreen() {
                 locations={[0, 0.25, 0.75, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
-                className="absolute w-full top-0 left-0 right-0 bottom-0 z-10"
+                className="absolute top-0 bottom-0 left-0 right-0 z-10 w-full"
                 style={{
                   height: scaledVSize(200),
                   position: "absolute",
@@ -64,12 +63,12 @@ export default function WelcomeScreen() {
               />
               {/* Headline overlay */}
               <View
-                className="absolute left-0 right-0 p-6 z-20"
+                className="absolute left-0 right-0 z-20 p-6"
                 style={{ top: mvs(-70) }}
               >
                 {/* Top logo */}
                 <View
-                  className="w-full h-fit flex justify-center items-center" 
+                  className="flex items-center justify-center w-full h-fit"
                   style={{ height: mvs(55) }}
                 >
                   <SVGIcons.Logo height={s(50)} />
@@ -77,7 +76,7 @@ export default function WelcomeScreen() {
                 <ScaledText
                   allowScaling={false}
                   // variant="lg"
-                  className="text-foreground text-center font-montserratBold"
+                  className="text-center text-foreground font-montserratBold"
                   style={{ fontSize: scaledFont(18) }}
                 >
                   Dove i tatuaggi incontrano le loro storie.
@@ -87,22 +86,22 @@ export default function WelcomeScreen() {
           </View>
 
           {/* CTA section text */}
-          <View className="flex-1 bg-black px-6 pt-3">
+          <View className="flex-1 px-6 pt-3 bg-black">
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-center mb-2 font-montserratMediumItalic"
+              className="mb-2 text-center font-montserratMediumItalic"
               style={{ color: "#A49A99" }}
             >
               Crea un profilo per mostrare i tuoi lavori
             </ScaledText>
 
             {/* Artist Sign up */}
-            <View className="flex justify-center items-center mb-10">
+            <View className="flex items-center justify-center mb-10">
               <Pressable
                 accessibilityRole="button"
                 onPress={() => router.push("/(auth)/artist-register")}
-                className="bg-primary rounded-full items-center flex-row"
+                className="flex-row items-center rounded-full bg-primary"
                 style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
               >
                 <ScaledText
@@ -121,33 +120,33 @@ export default function WelcomeScreen() {
 
             {/* OR */}
             <View className="flex-row items-center justify-center">
-              <View className="bg-gray/80 flex-1 " style={{ height: s(0.5) }} />
+              <View className="flex-1 bg-gray/80 " style={{ height: s(0.5) }} />
               <ScaledText
                 allowScaling={false}
                 variant="sm"
-                className="text-gray mx-4 font-montserratMedium"
+                className="mx-4 text-gray font-montserratMedium"
               >
                 OPPURE
               </ScaledText>
-              <View className="bg-gray/80 flex-1" style={{ height: s(0.5) }} />
+              <View className="flex-1 bg-gray/80" style={{ height: s(0.5) }} />
             </View>
 
             {/* User Sign up text*/}
             <ScaledText
               allowScaling={false}
               variant="md"
-              className=" text-center mt-6  font-montserratMediumItalic"
+              className="mt-6 text-center  font-montserratMediumItalic"
               style={{ color: "#A49A99" }}
             >
               Scopri e connettiti con gli artisti
             </ScaledText>
 
             {/* User Sign up button */}
-            <View className="flex justify-center items-center mt-2">
+            <View className="flex items-center justify-center mt-2">
               <Pressable
                 accessibilityRole="button"
                 onPress={() => router.push("/(auth)/register")}
-                className="bg-primary rounded-full items-center flex-row"
+                className="flex-row items-center rounded-full bg-primary"
                 style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
               >
                 <ScaledText
@@ -165,7 +164,7 @@ export default function WelcomeScreen() {
             </View>
 
             {/* Divider */}
-            <View className="w-full mx-auto items-center ">
+            <View className="items-center w-full mx-auto ">
               <View
                 style={{
                   height: s(0.5),
