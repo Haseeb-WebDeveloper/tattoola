@@ -20,6 +20,9 @@ interface LocationCardProps {
   onEdit: () => void;
   onRemove: () => void;
   onSetPrimary: () => void;
+  // Optional flags to control which actions are visible (useful for role-based UI)
+  canRemove?: boolean;
+  canSetPrimary?: boolean;
 }
 
 export function LocationCard({
@@ -28,6 +31,8 @@ export function LocationCard({
   onEdit,
   onRemove,
   onSetPrimary,
+  canRemove = true,
+  canSetPrimary = true,
 }: LocationCardProps) {
   const displayText =
     location.provinceName && location.municipalityName
@@ -70,16 +75,20 @@ export function LocationCard({
           <TouchableOpacity onPress={onEdit}>
             <SVGIcons.Edit width={s(16)} height={s(16)} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={onRemove}>
-            <SVGIcons.Delete width={s(16)} height={s(16)} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onSetPrimary}>
-            {location.isPrimary ? (
-              <SVGIcons.StartCircleFilled width={s(16)} height={s(16)} />
-            ) : (
-              <SVGIcons.StartCircle width={s(16)} height={s(16)} />
-            )}
-          </TouchableOpacity>
+          {canRemove && (
+            <TouchableOpacity onPress={onRemove}>
+              <SVGIcons.Delete width={s(16)} height={s(16)} />
+            </TouchableOpacity>
+          )}
+          {canSetPrimary && (
+            <TouchableOpacity onPress={onSetPrimary}>
+              {location.isPrimary ? (
+                <SVGIcons.StartCircleFilled width={s(16)} height={s(16)} />
+              ) : (
+                <SVGIcons.StartCircle width={s(16)} height={s(16)} />
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
