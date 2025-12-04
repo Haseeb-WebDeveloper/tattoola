@@ -222,7 +222,7 @@ export default function UserRegistrationStep3() {
         <RegistrationProgress
           currentStep={3}
           totalSteps={7}
-          name="Create your profile"
+          name="Crea il tuo profilo"
           icon={<SVGIcons.Person width={25} height={25} />}
           nameVariant="2xl"
         />
@@ -287,7 +287,7 @@ export default function UserRegistrationStep3() {
               variant="sm"
               className="text-tat textcenter mb-2 font-montserratSemibold"
             >
-              Enter phone number
+              Inserisci il numero di telefono
               <ScaledText variant="sm" className="text-error">
                 *
               </ScaledText>
@@ -419,7 +419,7 @@ export default function UserRegistrationStep3() {
               >
                 {formData.municipality && formData.province
                   ? `${formData.province}, ${formData.municipality}`
-                  : "Select Province and Municipality"}
+                  : "Seleziona Provincia e Comune"}
               </ScaledText>
             </TouchableOpacity>
             {!!errors.province && (
@@ -437,7 +437,7 @@ export default function UserRegistrationStep3() {
       </KeyboardAwareScrollView>
 
       {/* Footer */}
-      <NextBackFooter onNext={handleNext} nextLabel="Next" showBack={false} />
+      <NextBackFooter onNext={handleNext} nextLabel="Avanti" showBack={false} />
 
       <LocationPicker
         visible={showLocationPicker}

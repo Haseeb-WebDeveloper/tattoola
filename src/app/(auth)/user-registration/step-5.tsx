@@ -150,8 +150,8 @@ export default function UserRegistrationStep5() {
       {/* Footer */}
       <NextBackFooter
         onNext={handleNext}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
         onBack={handleBack}
       />
     </View>

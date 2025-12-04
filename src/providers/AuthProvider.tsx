@@ -12,8 +12,9 @@ import type {
   LoginCredentials,
   RegisterCredentials,
   ResetPasswordData,
-  User,
+  User
 } from '../types/auth';
+import { UserRole } from "@/types/auth";
 import { logger } from '../utils/logger';
 import { supabase } from '../utils/supabase';
 
@@ -35,46 +36,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Get initial session
     initializeAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        logger.log('Auth state changed:', event, session?.user?.id);
-
+        logger.log("Auth state changed:", event, session?.user?.id);
+    
         if (session?.user) {
-          try {
-            const authUser: any = session.user;
-            const isVerified = !!authUser.email_confirmed_at;
-            const role = authUser.user_metadata?.displayName === 'AR' ? 'ARTIST' : 'TATTOO_LOVER';
-
-            // logger.log('Auth user:', authUser);
-            // logger.log('Auth user is verified:', isVerified);
-            // logger.log('Auth user role:', role);
-            
-            // Only fetch from database on meaningful auth events
-            // Skip on TOKEN_REFRESHED to avoid unnecessary queries
-            setSession({
-              user: user,
-              accessToken: session.access_token,
-              refreshToken: session.refresh_token,
-              expiresAt: session.expires_at || 0,
-            });
-
-          } catch (error) {
-            logger.error('Error initializing minimal auth user:', error);
-            setUser(null);
-            setSession(null);
-          }
+          const authUser = session.user;
+    
+          const isVerified = !!authUser.email_confirmed_at;
+    
+          const role: UserRole =
+            authUser.user_metadata?.displayName === "AR"
+              ? UserRole.ARTIST
+              : UserRole.TATTOO_LOVER;
+    
+          // minimal user that matches the User interface
+          const minimalUser: User = {
+            id: authUser.id,
+            email: authUser.email!,
+            username: authUser.user_metadata?.username || "",
+            isActive: true,
+            isVerified,
+            isPublic: role === UserRole.TATTOO_LOVER,
+            role, 
+            avatar: null,
+            firstName: null,
+            lastName: null,
+            bio: null,
+            phone: null,
+            instagram: null,
+            tiktok: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
+          };
+    
+          // Save minimal user
+          setUser(minimalUser);
+    
+          // session.user must come from Supabase
+          setSession({
+            user: minimalUser,
+            accessToken: session.access_token,
+            refreshToken: session.refresh_token,
+            expiresAt: session.expires_at ?? 0,
+          });
         } else {
           setUser(null);
           setSession(null);
         }
-
-        if (event === 'SIGNED_OUT') {
+    
+        if (event === "SIGNED_OUT") {
           setUser(null);
           setSession(null);
         }
       }
     );
+    
 
     return () => subscription.unsubscribe();
   }, []);

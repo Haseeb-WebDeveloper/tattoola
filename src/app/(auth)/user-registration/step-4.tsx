@@ -118,7 +118,7 @@ export default function UserRegistrationStep4() {
         <RegistrationProgress
           currentStep={4}
           totalSteps={7}
-          name="Your photo"
+          name="La tua foto"
           nameVariant="2xl"
           icon={<SVGIcons.Smile width={20} height={20} />}
         />
@@ -212,7 +212,7 @@ export default function UserRegistrationStep4() {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    Upload Photo
+                    Carica foto
                   </ScaledText>
                 </View>
               </TouchableOpacity>
@@ -225,7 +225,7 @@ export default function UserRegistrationStep4() {
               variant="sm"
               className="text-gray font-montserratSemibold"
             >
-              Supporta JPG, PNG, max size 5MB
+              Supporta JPG, PNG, dimensione massima 5MB
             </ScaledText>
           </View>
 
@@ -251,8 +251,8 @@ export default function UserRegistrationStep4() {
       {/* Footer */}
       <NextBackFooter
         onNext={handleNext}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
         onBack={handleBack}
         nextDisabled={isUploading}
       />

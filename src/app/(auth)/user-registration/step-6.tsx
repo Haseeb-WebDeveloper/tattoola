@@ -240,10 +240,10 @@ export default function UserRegistrationStep6() {
       <RegistrationProgress
         currentStep={3}
         totalSteps={7}
-        name="Your preferred styles"
+        name="I tuoi stili preferiti"
         nameVariant="2xl"
         icon={<SVGIcons.Style width={20} height={20} />}
-        description={`You can choose up to ${TL_MAX_FAVORITE_STYLES} favorite styles.`}
+        description={`Puoi scegliere fino a ${TL_MAX_FAVORITE_STYLES} stili preferiti.`}
         descriptionVariant="md"
       />
 
@@ -276,8 +276,8 @@ export default function UserRegistrationStep6() {
       <AbsoluteNextBackFooter
         onNext={handleNext}
         nextDisabled={!canProceed}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
         onBack={handleBack}
       />
 
@@ -312,7 +312,7 @@ export default function UserRegistrationStep6() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              Style Limit Reached
+              Limite di stili raggiunto
             </ScaledText>
 
             {/* Subtitle */}
@@ -322,7 +322,7 @@ export default function UserRegistrationStep6() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(16) }}
             >
-              You can only select {TL_MAX_FAVORITE_STYLES} styles.
+              Puoi selezionare solo {TL_MAX_FAVORITE_STYLES} stili.
             </ScaledText>
 
             {/* Action Button */}

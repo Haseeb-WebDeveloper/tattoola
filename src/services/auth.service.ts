@@ -114,9 +114,8 @@ export class AuthService {
       username: credentials.username,
       role: credentials.role,
     });
-
+  
     try {
-      // Create Supabase auth user only, tagging metadata for onboarding flow (TL/AR)
       logger.log("AuthService.signUp: Calling supabase.auth.signUp");
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
@@ -126,10 +125,10 @@ export class AuthService {
             displayName: credentials.role === UserRole.ARTIST ? "AR" : "TL",
             username: credentials.username,
           },
-          emailRedirectTo: "tattoola://verify", // Match expo-router route (groups don't create segments)
+          emailRedirectTo: "tattoola://verify",
         },
       });
-
+  
       logger.log("AuthService.signUp: Supabase response", {
         hasData: !!data,
         hasError: !!error,
@@ -137,27 +136,107 @@ export class AuthService {
         hasSession: !!data?.session,
         errorMessage: error?.message,
       });
-
+  
+      // --- CASE 1: Supabase threw an error ---
       if (error) {
         logger.error("AuthService.signUp: Supabase error", error);
+  
+        const msg = error.message.toLowerCase();
+  
+        const isVerifiedError =
+          msg.includes("already confirmed") ||
+          msg.includes("already registered and verified");
+  
+        if (isVerifiedError) {
+          const verifiedError = new Error(
+            "This email is already registered and verified. Please sign in to continue."
+          );
+          (verifiedError as any).code = "EMAIL_ALREADY_VERIFIED";
+          throw verifiedError;
+        }
+  
+        const existsButUnknown =
+          msg.includes("already registered") ||
+          msg.includes("user already exists");
+        
+        if (existsButUnknown) {
+          // UNVERIFIED user: resend verification email
+          logger.log("AuthService.signUp: User exists, resending verification email");
+  
+          await supabase.auth.resend({
+            type: "signup",
+            email: credentials.email,
+            options: { emailRedirectTo: "tattoola://verify" },
+          });
+  
+          return {
+            needsVerification: true,
+            user: {
+              id: "",
+              email: credentials.email,
+              username: credentials.username,
+              firstName: undefined,
+              lastName: undefined,
+              avatar: undefined,
+              bio: undefined,
+              phone: undefined,
+              instagram: undefined,
+              tiktok: undefined,
+              isActive: true,
+              isVerified: false,
+              isPublic: credentials.role === UserRole.TATTOO_LOVER,
+              role: credentials.role,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              lastLoginAt: undefined,
+              artistProfile: undefined,
+              adminProfile: undefined,
+            },
+          };
+        }
+  
         throw new Error(error.message);
       }
-
+  
+      // --- CASE 2: SignUp succeeded ---
       if (!data.user) {
         logger.error("AuthService.signUp: No user returned from Supabase");
         throw new Error("User creation failed");
       }
-
-      logger.log("AuthService.signUp: User created successfully", {
-        userId: data.user.id,
-        email: data.user.email,
-        needsVerification: !data.session,
-      });
-
-      // Build a minimal user object for the UI; full DB profile will be created after setup
-      logger.log("AuthService.signUp: Building minimal user object");
+  
+      const authUser = data.user as any;
+      const isVerified = !!authUser.email_confirmed_at;
+  
+      // --- CASE 2A: Existing VERIFIED user (signUp returns user but no session) ---
+      if (isVerified && !data.session) {
+        const verifiedError = new Error(
+          "This email is already registered and verified. Please sign in to continue."
+        );
+        (verifiedError as any).code = "EMAIL_ALREADY_VERIFIED";
+        throw verifiedError;
+      }
+  
+      // --- CASE 2B: Existing UNVERIFIED user: resend ---
+      if (!isVerified && !data.session) {
+        logger.log(
+          "AuthService.signUp: Existing unverified user, resending verification email",
+          { email: credentials.email }
+        );
+  
+        try {
+          await supabase.auth.resend({
+            type: "signup",
+            email: credentials.email,
+            options: { emailRedirectTo: "tattoola://verify" },
+          });
+        } catch (err) {
+          logger.error("AuthService.signUp: resend failed", err);
+        }
+      }
+  
+      // Build minimal user object
       const minimalUser: User = {
-        id: data.user.id,
+        id: authUser.id,
         email: credentials.email,
         username: credentials.username,
         firstName: undefined,
@@ -168,7 +247,7 @@ export class AuthService {
         instagram: undefined,
         tiktok: undefined,
         isActive: true,
-        isVerified: false,
+        isVerified: isVerified,
         isPublic: credentials.role === UserRole.TATTOO_LOVER,
         role: credentials.role,
         createdAt: new Date().toISOString(),
@@ -177,12 +256,7 @@ export class AuthService {
         artistProfile: undefined,
         adminProfile: undefined,
       };
-
-      logger.log("AuthService.signUp: Signup completed successfully", {
-        userId: minimalUser.id,
-        needsVerification: !data.session,
-      });
-
+  
       return {
         user: minimalUser,
         needsVerification: !data.session,
@@ -192,6 +266,7 @@ export class AuthService {
       throw error;
     }
   }
+  
 
   /**
    * Sign out
@@ -1361,9 +1436,45 @@ export class AuthService {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: targetEmail,
+      options: {
+        // Match the redirect used during initial signup so the app
+        // can correctly handle the verification deep link
+        emailRedirectTo: "tattoola://verify",
+      },
     });
 
     if (error) {
+      // Log full Supabase error for debugging resend issues
+      logger.error(
+        "AuthService.resendVerificationEmail: Supabase resend failed",
+        {
+          email: targetEmail,
+          message: error.message,
+          status: (error as any)?.status,
+          name: (error as any)?.name,
+        }
+      );
+
+      // Check if error indicates email is already verified
+      const errorMessage = error.message?.toLowerCase() || "";
+      const isAlreadyVerified =
+        errorMessage.includes("already registered and verified") ||
+        errorMessage.includes("email already confirmed") ||
+        errorMessage.includes("user already confirmed") ||
+        errorMessage.includes("already confirmed");
+
+      if (isAlreadyVerified) {
+        logger.warn(
+          "AuthService.resendVerificationEmail: Email appears already verified, not sending another signup email",
+          { email: targetEmail, errorMessage }
+        );
+
+        // Throw a specific error that the UI can catch and handle
+        const verifiedError = new Error("EMAIL_ALREADY_VERIFIED");
+        (verifiedError as any).code = "EMAIL_ALREADY_VERIFIED";
+        throw verifiedError;
+      }
+
       throw new Error(error.message);
     }
 

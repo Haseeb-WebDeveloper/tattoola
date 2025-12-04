@@ -132,7 +132,7 @@ export default function UserRegistrationStep7() {
           <RegistrationProgress
             currentStep={7}
             totalSteps={7}
-            name="Profile visibility"
+            name="Visibilità del profilo"
             icon={<SVGIcons.SecurePerson width={20} height={20} />}
             nameVariant="2xl"
           />
@@ -178,15 +178,14 @@ export default function UserRegistrationStep7() {
                     className="text-foreground font-montserratSemibold"
                     style={{ marginBottom: mvs(4) }}
                   >
-                    Public profile
+                    Profilo pubblico
                   </ScaledText>
                   <ScaledText
                     allowScaling={false}
                     variant="11"
                     className="text-foreground font-neueRoman"
                   >
-                    Your tattoos, the artists you follow will be visible on your
-                    page
+                    I tuoi tatuaggi, l'artista che segui sarà visibile sulla tua pagina
                   </ScaledText>
                 </View>
               </View>
@@ -238,8 +237,8 @@ export default function UserRegistrationStep7() {
                     variant="11"
                     className="text-foreground font-neueRoman"
                   >
-                    Your tattoos and the artists you follow are visible only to
-                    you
+                    I tuoi tatuaggi e gli artisti che segui sono visibili solo a
+                    te
                   </ScaledText>
                 </View>
               </View>
@@ -251,8 +250,8 @@ export default function UserRegistrationStep7() {
         <NextBackFooter
           onNext={handleComplete}
           nextDisabled={loading}
-          nextLabel="Almost there!"
-          backLabel="Back"
+          nextLabel="Quasi pronto!"
+          backLabel="Indietro"
           onBack={handleBack}
         />
       </LinearGradient>
@@ -288,7 +287,7 @@ export default function UserRegistrationStep7() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in profile visibility
+              Hai modifiche non salvate nella visibilità del profilo
             </ScaledText>
 
             {/* Subtitle */}
