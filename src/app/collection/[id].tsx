@@ -97,6 +97,8 @@ export default function CollectionDetailsScreen() {
   const NUM_COLUMNS = editMode ? 1 : 2;
   const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
   const layoutKey = editMode ? "one-col" : "two-col";
+  const isOwner =
+    !!user && !!collection && collection.author?.id === user.id;
 
   const loadCollection = useCallback(async () => {
     if (!id) return;
@@ -131,6 +133,7 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleEditName = () => {
+    if (!isOwner) return;
     setShowEditModal(true);
   };
 
@@ -169,15 +172,18 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleToggleEditMode = () => {
+    if (!isOwner) return;
     setEditMode(!editMode);
   };
 
   const handleDeletePost = (postId: string, caption: string) => {
+    if (!isOwner) return;
     setPostToDelete({ id: postId, caption });
     setDeleteModalVisible(true);
   };
 
   const confirmDeletePost = async () => {
+    if (!isOwner) return;
     if (!postToDelete || !collection) return;
     setDeleting(true);
     try {
@@ -206,6 +212,7 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleDragEnd = async (data: CollectionPost[]) => {
+    if (!isOwner) return;
     // Optimistic reorder
     previousPostsRef.current = posts;
     setPosts(data);
@@ -233,7 +240,7 @@ export default function CollectionDetailsScreen() {
 
   const openAddModal = async () => {
     try {
-      if (!user || !collection) return;
+      if (!isOwner || !user || !collection) return;
       const userPosts = await fetchUserPosts(user.id);
       setAllUserPosts(userPosts);
       setSelectModalVisible(true);
@@ -252,6 +259,7 @@ export default function CollectionDetailsScreen() {
   };
 
   const confirmAdd = async () => {
+    if (!isOwner) return;
     if (!collection) return;
     const toAdd = Array.from(selectedPostIds);
     if (!toAdd.length) {
@@ -441,9 +449,11 @@ export default function CollectionDetailsScreen() {
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
-              <TouchableOpacity onPress={handleEditName}>
-                {editMode && <SVGIcons.Edit width={16} height={16} />}
-              </TouchableOpacity>
+              {isOwner && (
+                <TouchableOpacity onPress={handleEditName}>
+                  {editMode && <SVGIcons.Edit width={16} height={16} />}
+                </TouchableOpacity>
+              )}
             </View>
             <View className="flex-row items-center mt-1">
               <Image
@@ -468,22 +478,26 @@ export default function CollectionDetailsScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
-            onPress={() => (editMode ? openAddModal() : handleToggleEditMode())}
-            style={{
-              width: 32,
-              height: 32,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            className={`${editMode ? "bg-primary rounded-full" : ""}`}
-          >
-            {editMode ? (
-              <SVGIcons.Add width={16} height={16} />
-            ) : (
-              <SVGIcons.Edit width={20} height={20} />
-            )}
-          </TouchableOpacity>
+          {isOwner && (
+            <TouchableOpacity
+              onPress={() =>
+                editMode ? openAddModal() : handleToggleEditMode()
+              }
+              style={{
+                width: 32,
+                height: 32,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              className={`${editMode ? "bg-primary rounded-full" : ""}`}
+            >
+              {editMode ? (
+                <SVGIcons.Add width={16} height={16} />
+              ) : (
+                <SVGIcons.Edit width={20} height={20} />
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Posts Grid */}

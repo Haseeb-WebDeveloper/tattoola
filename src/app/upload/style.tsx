@@ -1,9 +1,12 @@
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
-import { router } from "expo-router";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -13,9 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import NextBackFooter from "@/components/ui/NextBackFooter";
-import { ScaledText } from "@/components/ui/ScaledText";
-import { s, mvs } from "@/utils/scale";
 
 export default function UploadStyleStep() {
   const { user } = useAuth();
@@ -51,7 +51,7 @@ export default function UploadStyleStep() {
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => setStyleId(item.id)}
-        className="w-full flex-row items-center"
+        className="flex-row items-center w-full"
         style={{}}
       >
         {/* Left select box */}
@@ -110,14 +110,14 @@ export default function UploadStyleStep() {
         pointerEvents="none"
       />
       {/* Summary card with media + caption */}
-      <View className="px-6 mb-6 pt-6">
-        <View className="rounded-2xl bg-black/40 border border-gray px-3 py-3 relative">
+      <View className="px-6 pt-6 mb-6">
+        <View className="relative px-3 py-3 border rounded-2xl bg-black/40 border-gray">
           <View className="flex-row gap-3">
             {/* Left media column: big + two small */}
             <View className="flex-row items-start" style={{ minWidth: 100 }}>
               {/* Main Image */}
               <View
-                className="rounded-md overflow-hidden bg-black/40"
+                className="overflow-hidden rounded-md bg-black/40"
                 style={{
                   width: 58,
                   height: 70,
@@ -143,7 +143,7 @@ export default function UploadStyleStep() {
               {/* 2 Thumbnails Column */}
               <View className="justify-between" style={{ height: 70 }}>
                 <View
-                  className="rounded-md overflow-hidden bg-black/40"
+                  className="overflow-hidden rounded-md bg-black/40"
                   style={{
                     width: 38,
                     height: 33,
@@ -167,7 +167,7 @@ export default function UploadStyleStep() {
                   )}
                 </View>
                 <View
-                  className="rounded-md overflow-hidden bg-black/40"
+                  className="overflow-hidden rounded-md bg-black/40"
                   style={{
                     width: 38,
                     height: 33,
@@ -215,7 +215,7 @@ export default function UploadStyleStep() {
           </View>
           <Pressable
             onPress={() => router.push("/upload/description")}
-            className="absolute right-3 bottom-3 w-6 h-6 items-center justify-center"
+            className="absolute items-center justify-center w-6 h-6 right-3 bottom-3"
           >
             <SVGIcons.Pen1 className="w-5 h-5" />
           </Pressable>
@@ -247,7 +247,10 @@ export default function UploadStyleStep() {
             renderItem={renderItem}
             showsVerticalScrollIndicator={true}
             style={{ flexGrow: 0 }}
-            contentContainerStyle={{ paddingBottom: 8 }}
+            contentContainerStyle={{
+              paddingHorizontal: s(20),
+              paddingBottom: 8,
+            }}
           />
         )}
       </View>

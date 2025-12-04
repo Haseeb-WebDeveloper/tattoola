@@ -1,10 +1,14 @@
+import DiscardPostConfirmModal from "@/components/ui/DiscardPostConfirmModal";
 import { SVGIcons } from "@/constants/svg";
+import { usePostUploadStore } from "@/stores/postUploadStore";
 import { router, usePathname } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
 import { useRef, useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 
 export default function UploadHeader() {
   const pathname = usePathname();
+  const resetPostUpload = usePostUploadStore((s) => s.reset);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
   const steps = [
     "media",
     "description",
@@ -24,18 +28,12 @@ export default function UploadHeader() {
   const barRef = useRef(null);
   const [indicatorWidth, setIndicatorWidth] = useState(0);
 
-  // For the progress, subtract the diameter of a step, so that when progress is 100% the bar ends at the final dot's center
-  // We'll assume 16px as base for large dot, 8px for small dots (w-4 vs w-2 in tailwind); always ending on large dot
   const LARGE_DOT_SIZE = 16; // w-4 in px (4*4)
   const SMALL_DOT_SIZE = 8; // w-2 in px (2*4)
-  // The dot gap is 4px (gap-1 in tailwind, i.e. 0.25rem = 4px)
-
-  // Number of gaps = totalStepsDisplay-1, gap size = 4
-  // So bar total width = (LARGE_DOT_SIZE * 1) + (SMALL_DOT_SIZE * (totalStepsDisplay-1)) + (gap * (totalStepsDisplay-1))
-  // But we will just measure the row for accuracy
 
   const handleBarLayout = (e: any) => {
-    if (e?.nativeEvent?.layout?.width) setIndicatorWidth(e.nativeEvent.layout.width);
+    if (e?.nativeEvent?.layout?.width)
+      setIndicatorWidth(e.nativeEvent.layout.width);
   };
 
   // Calculate how much to fill: between first and last dot
@@ -56,74 +54,110 @@ export default function UploadHeader() {
 
   const progressPixelWidth = getProgressPixelWidth();
 
+  const handleClosePress = () => {
+    // Step index 0 => /upload/media. Show confirmation popup here.
+    if (currentIndex === 0) {
+      setShowDiscardModal(true);
+      return;
+    }
+
+    // For steps 2–5 go explicitly to the previous step in the wizard.
+    const prevIndex = currentIndex - 1;
+    if (prevIndex >= 0 && prevIndex < steps.length) {
+      const prevSlug = steps[prevIndex];
+      router.replace(`/upload/${prevSlug}` as any);
+    } else {
+      // Fallback: regular back navigation.
+      router.back();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    resetPostUpload();
+    setShowDiscardModal(false);
+
+    router.replace("/(tabs)");
+  };
+
+  const handleCancelDiscard = () => {
+    setShowDiscardModal(false);
+  };
+
   return (
-    <View className="px-4 pt-6 bg-tat-darkMaroon">
-      <View className="items-center justify-between pb-2 relative">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="absolute left-0 top-1.5 w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
-        >
-          <SVGIcons.Close className="w-8 h-8" />
-        </TouchableOpacity>
-        <Text className="text-foreground section-title font-neueBold">
-          Nuovo post
-        </Text>
-        {/* Steps Indicator */}
-        <View className="items-center mb-2 mt-4">
-          <View
-            className="flex-row items-center gap-1 relative"
-            ref={barRef}
-            onLayout={handleBarLayout}
-            style={{ alignSelf: "center" }}
+    <>
+      <View className="px-4 pt-6 bg-tat-darkMaroon">
+        <View className="relative items-center justify-between pb-2">
+          <TouchableOpacity
+            onPress={handleClosePress}
+            className="absolute left-0 top-1.5 w-8 h-8 rounded-full bg-foreground/20 items-center justify-center"
           >
-            {Array.from({ length: totalStepsDisplay }).map((_, idx) => {
-              const isCompleted = idx < currentStepDisplay - 1;
-              const isCurrent = idx === currentStepDisplay - 1;
-              const baseSize = isCurrent ? "w-4 h-4" : "w-2 h-2";
-              const colorClass = isCurrent
-                ? "bg-foreground"
-                : isCompleted
-                  ? "bg-success"
-                  : "bg-gray";
-              return (
-                <View
-                  key={idx}
-                  className={`${colorClass} ${baseSize} rounded-full z-10`}
-                  // for correct measurement of both sizes for progress math, ensure fixed width/height
-                  style={{
-                    width: isCurrent ? LARGE_DOT_SIZE : SMALL_DOT_SIZE,
-                    height: isCurrent ? LARGE_DOT_SIZE : SMALL_DOT_SIZE,
-                  }}
-                />
-              );
-            })}
-            {/* Turncut Line */}
+            <SVGIcons.Close className="w-8 h-8" />
+          </TouchableOpacity>
+          <Text className="text-foreground section-title font-neueBold">
+            Nuovo post
+          </Text>
+          {/* Steps Indicator */}
+          <View className="items-center mt-4 mb-2">
             <View
-              className="absolute left-0 right-0 top-1/2"
-              style={{
-                height: 1,
-                backgroundColor: "#A49A99",
-                zIndex: 0,
-                marginLeft: 0,
-                marginRight: 0,
-              }}
-            />
-            {/* Line that shows success progress in success color */}
-            {indicatorWidth > 0 && currentStepDisplay > 1 && (
+              className="relative flex-row items-center gap-1"
+              ref={barRef}
+              onLayout={handleBarLayout}
+              style={{ alignSelf: "center" }}
+            >
+              {Array.from({ length: totalStepsDisplay }).map((_, idx) => {
+                const isCompleted = idx < currentStepDisplay - 1;
+                const isCurrent = idx === currentStepDisplay - 1;
+                const baseSize = isCurrent ? "w-4 h-4" : "w-2 h-2";
+                const colorClass = isCurrent
+                  ? "bg-foreground"
+                  : isCompleted
+                    ? "bg-success"
+                    : "bg-gray";
+                return (
+                  <View
+                    key={idx}
+                    className={`${colorClass} ${baseSize} rounded-full z-10`}
+                    // for correct measurement of both sizes for progress math, ensure fixed width/height
+                    style={{
+                      width: isCurrent ? LARGE_DOT_SIZE : SMALL_DOT_SIZE,
+                      height: isCurrent ? LARGE_DOT_SIZE : SMALL_DOT_SIZE,
+                    }}
+                  />
+                );
+              })}
+              {/* Turncut Line */}
               <View
-                className="absolute left-0 top-1/2 bg-success"
+                className="absolute left-0 right-0 top-1/2"
                 style={{
                   height: 1,
-                  width: progressPixelWidth,
-                  zIndex: 1,
+                  backgroundColor: "#A49A99",
+                  zIndex: 0,
+                  marginLeft: 0,
+                  marginRight: 0,
                 }}
               />
-            )}
+              {/* Line that shows success progress in success color */}
+              {indicatorWidth > 0 && currentStepDisplay > 1 && (
+                <View
+                  className="absolute left-0 top-1/2 bg-success"
+                  style={{
+                    height: 1,
+                    width: progressPixelWidth,
+                    zIndex: 1,
+                  }}
+                />
+              )}
+            </View>
           </View>
+          <View className="w-10" />
         </View>
-        <View className="w-10" />
+        <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
       </View>
-      <View className="h-px bg-[#A49A99] mt-4 opacity-50" />
-    </View>
+      <DiscardPostConfirmModal
+        visible={showDiscardModal}
+        onCancel={handleCancelDiscard}
+        onConfirm={handleConfirmDiscard}
+      />
+    </>
   );
 }

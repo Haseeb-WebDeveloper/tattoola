@@ -126,6 +126,7 @@ export default function SettingsScreen() {
   const { user, logout } = useAuth();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [userPlanType, setUserPlanType] = useState<"PREMIUM" | "STUDIO" | null>(
     null
@@ -223,7 +224,7 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
-    logout();
+    setShowLogoutModal(true);
   };
 
   return (
@@ -353,7 +354,8 @@ export default function SettingsScreen() {
           <View
             className="bg-[#fff] rounded-xl"
             style={{
-              width: s(342),
+              marginHorizontal: s(24),
+              alignSelf: "stretch",
               paddingHorizontal: s(24),
               paddingVertical: mvs(32),
             }}
@@ -405,6 +407,93 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 onPress={handleCancelDeletion}
                 disabled={isDeactivating}
+                className="items-center justify-center rounded-full"
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-montserratMedium"
+                >
+                  Annulla
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View
+          className="items-center justify-center flex-1"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              marginHorizontal: s(24),
+              alignSelf: "stretch",
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(24),
+            }}
+          >
+            <View className="items-center" style={{ marginBottom: mvs(12) }}>
+              <SVGIcons.WarningYellow width={s(24)} height={s(24)} />
+            </View>
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-center text-background font-neueBold"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Uscire dall'account?
+            </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-center text-background font-montserratMedium"
+              style={{ marginBottom: mvs(24) }}
+            >
+              Verrai disconnesso da questo dispositivo. Potrai accedere di nuovo
+              in qualsiasi momento inserendo le tue credenziali.
+            </ScaledText>
+            <View
+              className="flex-row justify-center"
+              style={{ columnGap: s(12) }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setShowLogoutModal(false);
+                  logout();
+                }}
+                className="flex-row items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: "#AD2E2E",
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="font-montserratMedium text-foreground"
+                >
+                  Esci
+                </ScaledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowLogoutModal(false)}
                 className="items-center justify-center rounded-full"
                 style={{
                   paddingVertical: mvs(10.5),
