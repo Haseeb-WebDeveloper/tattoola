@@ -371,7 +371,7 @@ export class AuthService {
             (data as any).step6?.isPublic ??
             true,
           isActive: true,
-          isVerified: true,
+          isVerified: !!session.session.user.email_confirmed_at,
           role: UserRole.TATTOO_LOVER,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
