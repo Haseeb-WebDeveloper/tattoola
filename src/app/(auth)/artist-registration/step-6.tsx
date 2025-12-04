@@ -169,7 +169,7 @@ export default function ArtistStep6V2() {
               className="text-gray text-center font-neueSemibold"
               style={{ marginTop: mvs(12) }}
             >
-              Supporta PDF, DOC, DOCX. Max size 10MB
+              Supporta PDF, DOC, DOCX. Dimensione massima 10 MB
             </ScaledText>
           </View>
         </View>
@@ -232,7 +232,7 @@ export default function ArtistStep6V2() {
       <NextBackFooter
         onNext={onNext}
         nextDisabled={!canProceed}
-        backLabel="Back"
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
     </View>

@@ -331,7 +331,7 @@ export default function ArtistStep13V2() {
                 className="text-center font-neueLight"
                 style={{ color: "#FFFFFF" }}
               >
-                Annually
+                Annualmente
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -458,7 +458,7 @@ export default function ArtistStep13V2() {
                             variant="11"
                             style={{ color: "#080101" }}
                           >
-                            No features listed
+                            Nessuna funzionalità elencata
                           </ScaledText>
                         );
                       })()}

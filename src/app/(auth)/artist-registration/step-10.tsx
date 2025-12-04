@@ -166,7 +166,7 @@ export default function ArtistStep10V2() {
         <AbsoluteNextBackFooter
           onNext={onNext}
           nextDisabled={!canProceed}
-          backLabel="Back"
+          backLabel="Indietro"
           onBack={() => router.back()}
         />
       </View>

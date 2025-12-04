@@ -67,7 +67,7 @@ export default function ArtistStep7V2() {
       <RegistrationProgress
         currentStep={7}
         totalSteps={totalStepsDisplay}
-        name="Add Bio & Socials"
+        name="Aggiungi biografia e social"
         icon={<SVGIcons.Heart width={22} height={22} />}
         nameVariant="2xl"
       />
@@ -88,7 +88,7 @@ export default function ArtistStep7V2() {
         <ScaledTextInput
           containerClassName={`rounded-2xl bg-black/40 ${focused === "bio" ? "border-2 border-foreground" : "border border-gray"}`}
           className="text-foreground"
-          placeholder="Hi, I’m John. I’m a tattoo artist from the past 10 years..."
+          placeholder="Ciao, sono John. Sono un tatuatore da 10 anni..."
             
           value={step7.bio || ""}
           onChangeText={(v) => updateStep7({ bio: v })}
@@ -200,9 +200,9 @@ export default function ArtistStep7V2() {
       {/* Footer */}
       <NextBackFooter
         onNext={onNext}
-        nextLabel="Next"
+        nextLabel="Prossima"
         nextDisabled={!canProceed}
-        backLabel="Back"
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
     </KeyboardAwareScrollView>

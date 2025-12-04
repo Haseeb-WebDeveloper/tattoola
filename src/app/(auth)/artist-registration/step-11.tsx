@@ -122,21 +122,21 @@ export default function ArtistStep11V2() {
       <RegistrationProgress
         currentStep={11}
         totalSteps={totalStepsDisplay}
-        name=" Set your pricing"
-        description="Enter your minimum price and optionally your hourly rate to guide clients."
+        name=" Imposta i tuoi prezzi"
+        description="Inserisci il tuo prezzo minimo e, facoltativamente, la tua tariffa oraria per orientare i clienti."
         icon={<SVGIcons.Pricing width={19} height={19} />}
         nameVariant="2xl"
       />
 
       {renderCurrencyInput(
-        "Minimum rate",
+        "Tasso minimo",
         step11.minimumPrice,
         (n) => updateStep11({ minimumPrice: n }),
         "min",
         true // Required
       )}
       {renderCurrencyInput(
-        "Hourly rate (optional)",
+        "Tariffa oraria (facoltativa)",
         step11.hourlyRate,
         (n) => updateStep11({ hourlyRate: n }),
         "hourly",
@@ -147,7 +147,7 @@ export default function ArtistStep11V2() {
       <NextBackFooter
         onNext={onNext}
         nextDisabled={!canProceed}
-        backLabel="Back"
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
     </View>

@@ -300,7 +300,7 @@ export default function ArtistStep8V2() {
         <AbsoluteNextBackFooter
           onNext={onNext}
           nextDisabled={!canProceed}
-          backLabel="Back"
+          backLabel="Indietro"
           onBack={() => router.back()}
         />
       </View>
@@ -352,7 +352,7 @@ export default function ArtistStep8V2() {
                 className="text-foreground font-neueSemibold"
                 style={{ marginBottom: mvs(8) }}
               >
-                Why we need this data?
+                Perché abbiamo bisogno di questi dati?
               </ScaledText>
               <ScaledText
                 allowScaling={false}
@@ -443,7 +443,7 @@ export default function ArtistStep8V2() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              Style Limit Reached
+              Limite di stile raggiunto
             </ScaledText>
 
             {/* Subtitle */}
@@ -453,7 +453,7 @@ export default function ArtistStep8V2() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(16) }}
             >
-              You can only select {maxStyles} {maxStyles === 1 ? "style" : "styles"}.
+              Puoi solo selezionare {maxStyles} {maxStyles === 1 ? "style" : "styles"}.
             </ScaledText>
 
             {/* Action Button */}

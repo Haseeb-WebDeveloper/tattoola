@@ -396,8 +396,8 @@ export default function ArtistStep12V2() {
       <RegistrationProgress
         currentStep={12}
         totalSteps={totalStepsDisplay}
-        name="Add your works"
-        description="Add 4 projects. Each can include up to 5 media (max 2 videos)."
+        name="Aggiungi le tue opere"
+        description="Aggiungi 4 progetti. Ognuno può includere fino a 5 contenuti multimediali (massimo 2 video)."
         icon={<SVGIcons.Work width={19} height={19} />}
         nameVariant="2xl"
       />
@@ -438,7 +438,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               )}
@@ -465,7 +465,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               ) : (
@@ -476,7 +476,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               )}
@@ -490,8 +490,8 @@ export default function ArtistStep12V2() {
         onNext={handleSaveAndProceed}
         nextDisabled={!canProceed || submitting || uploading}
         backDisabled={submitting || uploading}
-        nextLabel={submitting ? "Saving..." : "Almost there!"}
-        backLabel="Back"
+        nextLabel={submitting ? "Saving..." : "Ci siamo quasi!"}
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
 
@@ -528,7 +528,7 @@ export default function ArtistStep12V2() {
                   variant="lg"
                   className="text-foreground font-neueSemibold"
                 >
-                  Add Design
+                  Aggiungi disegno
                 </ScaledText>
               </View>
 
@@ -558,16 +558,16 @@ export default function ArtistStep12V2() {
                         className="text-gray font-neueSemibold"
                         style={{ marginTop: mvs(3) }}
                       >
-                        You need to select atleast{" "}
+                        Devi selezionare almeno{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
                           className="font-neueSemibold"
                           style={{ color: "#FF7F56" }}
                         >
-                          one photo
+                          una foto
                         </ScaledText>{" "}
-                        and 3 photos/videos
+                        e 3 foto/video
                       </ScaledText>
                     </View>
                     {/* Upload area - matching step-6 design */}
@@ -597,7 +597,7 @@ export default function ArtistStep12V2() {
                           variant="md"
                           className="text-foreground font-neueSemibold"
                         >
-                          {uploading ? "Uploading..." : "Upload files"}
+                          {uploading ? "Uploading..." : "Carica file"}
                         </ScaledText>
                       </TouchableOpacity>
                       <ScaledText
@@ -626,16 +626,16 @@ export default function ArtistStep12V2() {
                         variant="11"
                         className="text-gray font-neueSemibold"
                       >
-                        You need to select atleast{" "}
+                        Devi selezionare almeno{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
                           className="font-neueSemibold"
                           style={{ color: "#FF7F56" }}
                         >
-                          one photo
+                          une foto
                         </ScaledText>{" "}
-                        and 3 photos/videos
+                        e 3 foto/video
                       </ScaledText>
                     </View>
 
@@ -666,7 +666,7 @@ export default function ArtistStep12V2() {
                           variant="md"
                           className="text-foreground font-neueSemibold"
                         >
-                          {uploading ? "Uploading..." : "Upload files"}
+                          {uploading ? "Uploading..." : "Carica file"}
                         </ScaledText>
                       </TouchableOpacity>
                       <ScaledText
@@ -730,7 +730,7 @@ export default function ArtistStep12V2() {
                   className="text-gray font-neueSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
-                  Describe your post in a few words.
+                  Descrivi il tuo post in poche parole.
                 </ScaledText>
 
                 {/* Display uploaded images */}
@@ -818,7 +818,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -838,7 +838,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Next
+                      Prossima
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>

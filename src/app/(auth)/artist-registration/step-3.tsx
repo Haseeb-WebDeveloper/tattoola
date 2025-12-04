@@ -115,7 +115,7 @@ export default function ArtistStep3V2() {
             className="text-foreground font-neueSemibold"
             style={{ marginBottom: mvs(2) }}
           >
-            Upload your photo
+            Carica la tua foto
             <ScaledText
               allowScaling={false}
               variant="lg"
@@ -130,7 +130,7 @@ export default function ArtistStep3V2() {
             className="text-foreground font-montserratLight"
             style={{ marginBottom: mvs(12) }}
           >
-            Supporta JPG, PNG, max size 5MB
+            Supporta JPG, PNG, dimensione massima 5 MB
           </ScaledText>
 
           <Pressable
@@ -164,7 +164,7 @@ export default function ArtistStep3V2() {
                     variant="md"
                     className="text-foreground font-neueBold"
                   >
-                    Upload image
+                    Carica immagine
                   </ScaledText>
                 </View>
               </View>
@@ -180,7 +180,7 @@ export default function ArtistStep3V2() {
             className="text-tat font-montserratSemibold"
             style={{ marginBottom: mvs(4) }}
           >
-            Name
+            Nome
             <ScaledText
               allowScaling={false}
               variant="sm"
@@ -220,7 +220,7 @@ export default function ArtistStep3V2() {
               className="text-tat font-montserratSemibold"
               style={{ marginBottom: mvs(4) }}
             >
-              Surname
+              Cognome
               <ScaledText
                 allowScaling={false}
                 variant="sm"
