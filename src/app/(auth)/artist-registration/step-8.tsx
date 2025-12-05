@@ -2,10 +2,7 @@ import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
-import {
-    AR_MAX_FAVORITE_STYLES,
-    AR_MAX_STYLES,
-} from "@/constants/limits";
+import { AR_MAX_FAVORITE_STYLES, AR_MAX_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { SubscriptionService } from "@/services/subscription.service";
@@ -15,12 +12,12 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    Modal,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 function StyleSkeleton() {
   return (
@@ -35,7 +32,7 @@ function StyleSkeleton() {
       >
         <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
       </View>
-      <View className="border-b border-gray/20 flex-row items-center justify-center">
+      <View className="flex-row items-center justify-center border-b border-gray/20">
         <View
           style={{
             width: s(120),
@@ -43,7 +40,7 @@ function StyleSkeleton() {
             backgroundColor: "#A49A9950",
           }}
         />
-        <View className="flex-1  " style={{ paddingLeft: s(16) }}>
+        <View className="flex-1 " style={{ paddingLeft: s(16) }}>
           <ScaledText
             allowScaling={false}
             style={{ fontSize: 12.445 }}
@@ -55,7 +52,6 @@ function StyleSkeleton() {
         <View style={{ paddingRight: s(16) }}>
           <SVGIcons.StartCircle className="w-5 h-5" />
         </View>
-        
       </View>
     </View>
   );
@@ -69,7 +65,7 @@ export default function ArtistStep8V2() {
     setPrimaryStyle,
     setCurrentStepDisplay,
     totalStepsDisplay,
-    reset
+    reset,
   } = useArtistRegistrationV2Store();
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +85,8 @@ export default function ArtistStep8V2() {
       try {
         // Fetch plan limits (will fallback to AR_MAX_* constants if no subscription)
         try {
-          const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
+          const subscription =
+            await SubscriptionService.getActiveSubscriptionWithPlan();
           const planMaxStyles = subscription?.subscription_plans?.maxStyles;
           const planMaxFavoriteStyles =
             subscription?.subscription_plans?.maxFavoritesStyles;
@@ -172,17 +169,28 @@ export default function ArtistStep8V2() {
           return;
         }
       }
-      
+
       toggleFavoriteStyle(item.id, maxStyles);
     };
 
     // Handle star press: toggle favourite within selected list
     const handleStarPress = () => {
-      if (!isSelected) return;
-      // maxFavoriteStyles is enforced inside the store action; cast to satisfy TS
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      setPrimaryStyle(item.id, maxFavoriteStyles);
+      // If the style is not yet selected, treat a star tap as:
+      // 1) attempt to select the style (respecting maxStyles)
+      // 2) then toggle it as favourite (respecting maxFavoriteStyles inside the store)
+      if (!isSelected) {
+        if (selected.length >= maxStyles) {
+          // Same UX as tapping the row when at the selection limit
+          setShowLimitModal(true);
+          return;
+        }
+        // This will add the style to the selected list (and keep favourites in sync)
+        toggleFavoriteStyle(item.id, maxStyles);
+      }
+
+      // Now toggle favourite status for this style
+      // maxFavoriteStyles is enforced inside the store action
+      setPrimaryStyle(item.id, maxFavoriteStyles as any);
     };
 
     return (
@@ -212,7 +220,7 @@ export default function ArtistStep8V2() {
         {img ? (
           <Image
             source={{ uri: img }}
-            className=" border-b border-gray/20"
+            className="border-b border-gray/20"
             style={{ width: s(120), height: mvs(72) }}
             resizeMode="cover"
           />
@@ -238,7 +246,7 @@ export default function ArtistStep8V2() {
         <TouchableOpacity
           onPress={handleStarPress}
           style={{ paddingRight: s(16) }}
-          disabled={!isSelected}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
         >
           {isFavourite ? (
@@ -318,7 +326,7 @@ export default function ArtistStep8V2() {
             style={{ marginTop: "auto", marginBottom: mvs(20) }}
           >
             <View
-              className="border-b border-gray flex-row items-center justify-between relative bg-background"
+              className="relative flex-row items-center justify-between border-b border-gray bg-background"
               style={{
                 paddingBottom: mvs(20),
                 paddingTop: mvs(70),
@@ -327,7 +335,7 @@ export default function ArtistStep8V2() {
             >
               <TouchableOpacity
                 onPress={() => setInfoVisible(false)}
-                className="rounded-full bg-foreground/20 items-center justify-center"
+                className="items-center justify-center rounded-full bg-foreground/20"
                 style={{
                   width: s(30),
                   height: s(30),
@@ -420,7 +428,7 @@ export default function ArtistStep8V2() {
         onRequestClose={() => setShowLimitModal(false)}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -440,7 +448,7 @@ export default function ArtistStep8V2() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
               Style Limit Reached
@@ -450,17 +458,18 @@ export default function ArtistStep8V2() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(16) }}
             >
-              You can only select {maxStyles} {maxStyles === 1 ? "style" : "styles"}.
+              You can only select {maxStyles}{" "}
+              {maxStyles === 1 ? "style" : "styles"}.
             </ScaledText>
 
             {/* Action Button */}
             <View className="flex-row justify-center">
               <TouchableOpacity
                 onPress={() => setShowLimitModal(false)}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   backgroundColor: "#AD2E2E",
                   paddingVertical: mvs(8),

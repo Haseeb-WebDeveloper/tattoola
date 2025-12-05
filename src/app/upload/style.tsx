@@ -19,13 +19,14 @@ import {
 
 export default function UploadStyleStep() {
   const { user } = useAuth();
-  const styleId = usePostUploadStore((s) => s.styleId);
-  const setStyleId = usePostUploadStore((s) => s.setStyleId);
+  const styleIds = usePostUploadStore((s) => s.styleIds);
+  const toggleStyleId = usePostUploadStore((s) => s.toggleStyleId);
   const media = usePostUploadStore((s) => s.media);
   const caption = usePostUploadStore((s) => s.caption);
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const canProceed = !!styleId;
+  const canProceed =
+    (styleIds?.length || 0) >= 1 && (styleIds?.length || 0) <= 3;
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -46,13 +47,15 @@ export default function UploadStyleStep() {
   const thumb2 = useMemo(() => media[2]?.cloud || media[2]?.uri, [media]);
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
-    const isSelected = styleId === item.id;
+    const isSelected = styleIds?.includes(item.id) || false;
+    const isDisabled = !isSelected && (styleIds?.length || 0) >= 3;
     return (
       <TouchableOpacity
         activeOpacity={0.85}
-        onPress={() => setStyleId(item.id)}
+        onPress={() => toggleStyleId(item.id)}
+        disabled={isDisabled}
         className="flex-row items-center w-full"
-        style={{}}
+        style={{ opacity: isDisabled ? 0.5 : 1 }}
       >
         {/* Left select box */}
         <View
@@ -235,6 +238,14 @@ export default function UploadStyleStep() {
         >
           Seleziona gli stili
         </ScaledText>
+        <ScaledText
+          allowScaling={false}
+          variant="11"
+          className="text-gray font-neueMedium"
+          style={{ marginTop: mvs(4) }}
+        >
+          Seleziona da 1 a 3 stili ({styleIds?.length || 0}/3)
+        </ScaledText>
       </View>
 
       <View className="flex-1">
@@ -261,7 +272,7 @@ export default function UploadStyleStep() {
             user?.role === "ARTIST" ? "/upload/collection" : "/upload/preview"
           )
         }
-        nextDisabled={!styleId}
+        nextDisabled={!canProceed}
         nextLabel="Avanti"
         backLabel="Indietro"
       />

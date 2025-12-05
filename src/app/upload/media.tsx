@@ -114,15 +114,19 @@ export default function UploadMediaStep() {
   );
 
   const handlePickMedia = async () => {
+    const currentMediaCount = media.length;
+    const remainingSlots = 5 - currentMediaCount;
+    if (remainingSlots <= 0) return;
+
     const files = await pickFiles({
       mediaType: "all",
       allowsMultipleSelection: true,
-      maxFiles: 5,
+      maxFiles: remainingSlots,
       cloudinaryOptions: cloudinaryService.getPortfolioUploadOptions("image"),
     });
     if (!files || files.length === 0) return;
 
-    const locals = files.slice(0, 5).map((f) => ({
+    const locals = files.slice(0, remainingSlots).map((f) => ({
       uri: f.uri,
       type: f.type === "video" ? "video" : ("image" as const),
     }));
@@ -291,63 +295,65 @@ export default function UploadMediaStep() {
                 >
                   una foto
                 </ScaledText>{" "}
-                e 3 foto/video
+                e massimo 5 foto/video
               </ScaledText>
             </View>
 
-            <View
-              className="items-center border-dashed border-error/70 rounded-2xl bg-primary/20"
-              style={{
-                paddingVertical: s(24),
-                paddingHorizontal: s(16),
-                borderWidth: s(1),
-              }}
-            >
-              <SVGIcons.Upload className="w-16 h-16" />
-              {uploading ? (
-                <View
-                  className="rounded-full border-warning border-r-gray animate-spin-slow"
-                  style={{
-                    width: s(24),
-                    height: s(24),
-                    borderWidth: s(2),
-                    marginTop: s(12),
-                  }}
-                />
-              ) : (
-                <>
-                  <TouchableOpacity
-                    onPress={handlePickMedia}
-                    disabled={uploading}
-                    className="rounded-full bg-primary"
-                    style={{
-                      marginTop: s(12),
-                      paddingVertical: s(8),
-                      paddingHorizontal: s(20),
-                    }}
-                  >
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className="text-foreground font-neueBold"
-                    >
-                      Carica file
-                    </ScaledText>
-                  </TouchableOpacity>
-                </>
-              )}
-              <ScaledText
-                allowScaling={false}
-                variant="11"
-                className="text-center text-foreground/80 font-neueBold"
+            {media.length < 5 && (
+              <View
+                className="items-center border-dashed border-error/70 rounded-2xl bg-primary/20"
                 style={{
-                  marginTop: s(12),
+                  paddingVertical: s(24),
                   paddingHorizontal: s(16),
+                  borderWidth: s(1),
                 }}
               >
-                JPG/PNG fino a 5MB. MP4/MOV/AVI fino a 10MB.
-              </ScaledText>
-            </View>
+                <SVGIcons.Upload className="w-16 h-16" />
+                {uploading ? (
+                  <View
+                    className="rounded-full border-warning border-r-gray animate-spin-slow"
+                    style={{
+                      width: s(24),
+                      height: s(24),
+                      borderWidth: s(2),
+                      marginTop: s(12),
+                    }}
+                  />
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      onPress={handlePickMedia}
+                      disabled={uploading}
+                      className="rounded-full bg-primary"
+                      style={{
+                        marginTop: s(12),
+                        paddingVertical: s(8),
+                        paddingHorizontal: s(20),
+                      }}
+                    >
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-foreground font-neueBold"
+                      >
+                        Carica file
+                      </ScaledText>
+                    </TouchableOpacity>
+                  </>
+                )}
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-center text-foreground/80 font-neueBold"
+                  style={{
+                    marginTop: s(12),
+                    paddingHorizontal: s(16),
+                  }}
+                >
+                  JPG/PNG fino a 5MB. MP4/MOV/AVI fino a 10MB.
+                </ScaledText>
+              </View>
+            )}
 
             {media.length > 0 && (
               <View className="">

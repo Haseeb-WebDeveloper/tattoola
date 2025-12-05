@@ -1,8 +1,11 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import { ScaledText } from "@/components/ui/ScaledText";
+import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { StylePills } from "@/components/ui/stylePills";
 import { SVGIcons } from "@/constants/svg";
 import { createCollection } from "@/services/collection.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
+import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -14,14 +17,9 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { s, mvs } from "@/utils/scale";
-import ScaledTextInput from "@/components/ui/ScaledTextInput";
-import { StylePills } from "@/components/ui/stylePills";
 type SimpleCollection = {
   id: string;
   name: string;
@@ -38,11 +36,17 @@ export default function UploadCollectionStep() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const media = usePostUploadStore((s) => s.media);
   const caption = usePostUploadStore((s) => s.caption);
-  const styleId = usePostUploadStore((s) => s.styleId);
-  const [styleName, setStyleName] = useState<string | null>(null);
+  const styleIds = usePostUploadStore((s) => s.styleIds);
+  const [styleNames, setStyleNames] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const canProceed = !!collectionId;
-  const redirectToCollectionId = usePostUploadStore((s) => s.redirectToCollectionId);
-  const setRedirectToCollectionId = usePostUploadStore((s) => s.setRedirectToCollectionId);
+  const redirectToCollectionId = usePostUploadStore(
+    (s) => s.redirectToCollectionId
+  );
+  const setRedirectToCollectionId = usePostUploadStore(
+    (s) => s.setRedirectToCollectionId
+  );
 
   // This is our added state for create button disable logic
   const isCreateDisabled = newName.trim().length === 0;
@@ -102,25 +106,26 @@ export default function UploadCollectionStep() {
     };
   }, []);
 
-  // Fetch style name for selected styleId to render chip
+  // Fetch style names for selected styleIds to render chips
   useEffect(() => {
     let active = true;
     (async () => {
-      if (!styleId) {
-        setStyleName(null);
+      if (!styleIds || styleIds.length === 0) {
+        setStyleNames([]);
         return;
       }
       const { data, error } = await supabase
         .from("tattoo_styles")
-        .select("name")
-        .eq("id", styleId)
-        .single();
-      if (!error && active) setStyleName(data?.name || null);
+        .select("id, name")
+        .in("id", styleIds);
+      if (!error && active && data) {
+        setStyleNames(data.map((s) => ({ id: s.id, name: s.name })));
+      }
     })();
     return () => {
       active = false;
     };
-  }, [styleId]);
+  }, [styleIds]);
 
   const handleCreate = async () => {
     const trimmed = newName.trim();
@@ -269,9 +274,9 @@ export default function UploadCollectionStep() {
             </View>
           </View>
           {/* styles chip at bottom right under caption */}
-          {styleId && styleName && (
+          {styleNames.length > 0 && (
             <View className="flex flex-row justify-start mt-2">
-              <StylePills styles={[{ id: styleId, name: styleName }]} />
+              <StylePills styles={styleNames} />
             </View>
           )}
         </View>

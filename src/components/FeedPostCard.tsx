@@ -38,6 +38,10 @@ function FeedPostOverlayComponent({
     }
   };
 
+  const handlePostPress = () => {
+    router.push(`/post/${post.id}` as any);
+  };
+
   return (
     <View
       className="absolute left-0 right-0"
@@ -61,14 +65,16 @@ function FeedPostOverlayComponent({
             {!!post.caption && (
               <ScaledText
                 variant="18"
-                className="text-foreground leading-7 font-neueBold"
+                className="leading-7 text-foreground font-neueBold"
                 numberOfLines={1}
               >
                 {post.caption}
               </ScaledText>
             )}
-            <View
-              className=" flex items-center justify-center"
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handlePostPress}
+              className="flex items-center justify-center"
               style={{
                 width: s(24),
                 height: s(24),
@@ -77,7 +83,7 @@ function FeedPostOverlayComponent({
               }}
             >
               <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
-            </View>
+            </TouchableOpacity>
           </View>
           <TouchableOpacity
             activeOpacity={1}
@@ -109,7 +115,7 @@ function FeedPostOverlayComponent({
         <TouchableOpacity
           activeOpacity={1}
           onPress={onLikePress}
-          className="rounded-full items-center justify-center"
+          className="items-center justify-center rounded-full"
           style={{
             width: s(48),
             height: s(48),
@@ -173,7 +179,7 @@ function FeedPostCardComponent({
 
   return (
     <View className="w-full h-[100svh] ">
-      <View className="relative w-full overflow-hidden h-full">
+      <View className="relative w-full h-full overflow-hidden">
         {/* Background media press area (post open) */}
         <TouchableOpacity
           activeOpacity={1}
@@ -183,7 +189,7 @@ function FeedPostCardComponent({
           {!!cover && (
             <Image
               source={{ uri: cover }}
-              className="absolute left-0 right-0 top-0 bottom-0"
+              className="absolute top-0 bottom-0 left-0 right-0"
               resizeMode="cover"
             />
           )}
@@ -212,14 +218,16 @@ function FeedPostCardComponent({
                   {post.caption && (
                     <ScaledText
                       variant="18"
-                      className="text-foreground leading-7 font-neueBold"
+                      className="leading-7 text-foreground font-neueBold"
                       numberOfLines={1}
                     >
                       {post.caption}
                     </ScaledText>
                   )}
-                  <View
-                    className=" flex items-center justify-center"
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={onPress}
+                    className="flex items-center justify-center"
                     style={{
                       width: s(24),
                       height: s(24),
@@ -228,7 +236,7 @@ function FeedPostCardComponent({
                     }}
                   >
                     <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
-                  </View>
+                  </TouchableOpacity>
                 </View>
                 <TouchableOpacity
                   activeOpacity={1}
@@ -260,7 +268,7 @@ function FeedPostCardComponent({
               <TouchableOpacity
                 activeOpacity={1}
                 onPress={onLikePress}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   width: s(48),
                   height: s(48),
