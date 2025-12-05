@@ -169,7 +169,6 @@ function FeedPostCardComponent({
     return cover || "";
   }, [isVideo, cover]);
 
-  console.log("videoUrl", videoUrl);
 
   // Video player - initialize with URL directly (works better on iOS)
   const videoPlayer = useVideoPlayer(isVideo ? videoUrl : "", (player) => {

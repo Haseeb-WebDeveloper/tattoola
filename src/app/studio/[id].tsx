@@ -91,6 +91,8 @@ export default function StudioScreen() {
         <ScrollView
           className="relative"
           showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          horizontal={false}
           contentContainerStyle={{ paddingBottom: mvs(50) }}
         >
           {/* Banner */}

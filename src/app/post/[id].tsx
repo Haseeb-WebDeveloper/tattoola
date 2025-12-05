@@ -109,6 +109,13 @@ export default function PostDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<PostDetail | null>(parsedInitial);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  
+  // Track content and viewport width for horizontal scroll control
+  const [contentWidth, setContentWidth] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  
+  // Only allow bouncing if content exceeds viewport (iOS only)
+  const shouldBounce = contentWidth > viewportWidth && Platform.OS === "ios";
 
   // Create video players for media items (hooks must be called unconditionally)
   // Initialize with URLs from post media if available, otherwise empty string
@@ -302,6 +309,8 @@ export default function PostDetailScreen() {
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          horizontal={false}
           contentContainerStyle={{ paddingBottom: 32 }}
         >
           {/* Media Carousel skeleton */}
@@ -451,6 +460,8 @@ export default function PostDetailScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
         contentContainerStyle={{ paddingBottom: 32 }}
       >
         {/* Media Carousel */}
@@ -463,7 +474,16 @@ export default function PostDetailScreen() {
               data={post.media}
               horizontal
               pagingEnabled
+              scrollEnabled={post.media.length > 1}
               showsHorizontalScrollIndicator={false}
+              bounces={shouldBounce}
+              onContentSizeChange={(width) => {
+                setContentWidth(width);
+              }}
+              onLayout={(event) => {
+                const { width } = event.nativeEvent.layout;
+                setViewportWidth(width);
+              }}
               onMomentumScrollEnd={(e) => {
                 const index = Math.round(
                   e.nativeEvent.contentOffset.x / screenWidth

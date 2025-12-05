@@ -264,7 +264,13 @@ export default function SettingsScreen() {
         </ScaledText>
       </View>
 
-      <ScrollView className="h-full" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="h-full"
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
+        bounces={false}
+      >
         {/* Account Management */}
         <SettingsSection
           title="Gestione account"
