@@ -304,7 +304,7 @@ export default function ArtistStep5V2() {
               style={{ fontSize: s(12) }}
               onChangeText={(v) => {
                 const digits = v.replace(/[^0-9]/g, "");
-                // Phone number part (excluding country code) can be up to 15 digits
+
                 const limitedDigits = digits.slice(0, 15);
                 const phoneValue = `+${callingCode}${limitedDigits}`;
                 updateStep5({ phone: phoneValue });
