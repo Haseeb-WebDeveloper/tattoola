@@ -71,7 +71,7 @@ export async function searchArtists({
         )
       `
       )
-      // .eq("portfolioComplete", true)
+      .eq("portfolioComplete", true)
       .order("createdAt", { ascending: false });
 
     // Apply style filter

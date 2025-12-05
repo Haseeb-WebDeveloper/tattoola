@@ -179,7 +179,7 @@ export default function SearchScreen() {
             <StudioCardSkeleton />
           )
         ) : null}
-        <View style={{ height: s(320) }} />
+        <View style={{ height: s(520) }} />
       </>
     );
   };
