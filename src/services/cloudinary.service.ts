@@ -174,6 +174,39 @@ class CloudinaryService {
   }
 
   /**
+   * Transform Cloudinary video URL to MP4 with H.264 codec and AAC audio
+   * This ensures iOS compatibility (iOS doesn't support WebM)
+   * @param videoUrl - Original Cloudinary video URL
+   * @returns Transformed URL with MP4/H.264/AAC format
+   */
+  getIOSCompatibleVideoUrl(videoUrl: string): string {
+    if (!videoUrl || !videoUrl.includes('cloudinary.com')) {
+      // Not a Cloudinary URL, return as-is
+      return videoUrl;
+    }
+
+    // Cloudinary URL format: https://res.cloudinary.com/{cloud}/video/upload/{transformations}/{publicId}.{format}
+    // We need to insert /f_mp4/vc_h264/ac_aac/ after /video/upload/
+    
+    const uploadIndex = videoUrl.indexOf('/video/upload/');
+    if (uploadIndex === -1) {
+      return videoUrl; // Invalid Cloudinary URL format
+    }
+
+    const baseUrl = videoUrl.substring(0, uploadIndex + '/video/upload/'.length);
+    const restOfUrl = videoUrl.substring(uploadIndex + '/video/upload/'.length);
+
+    // Check if f_mp4/vc_h264/ac_aac transformations already exist
+    if (restOfUrl.includes('f_mp4/vc_h264/ac_aac')) {
+      return videoUrl; // Already transformed
+    }
+
+    // Insert the transformations right after /video/upload/
+    // Format: /f_mp4/vc_h264/ac_aac/
+    return `${baseUrl}f_mp4/vc_h264/ac_aac/${restOfUrl}`;
+  }
+
+  /**
    * Get transformed avatar URL with optimizations
    */
   getAvatarUrl(publicId: string): string {

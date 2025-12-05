@@ -33,6 +33,8 @@ export const TattooLoverOtherProfileView: React.FC<
     <ScrollView
       className="flex-1 bg-background"
       showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+      horizontal={false}
       refreshControl={
         onRefresh ? (
           <RefreshControl

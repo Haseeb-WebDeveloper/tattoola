@@ -1361,6 +1361,9 @@ export class AuthService {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: targetEmail,
+      options: {
+        emailRedirectTo: "tattoola://verify",
+      },
     });
 
     if (error) {

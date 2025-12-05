@@ -40,6 +40,8 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
     <ScrollView
       className="flex-1 bg-background"
       showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+      horizontal={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

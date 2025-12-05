@@ -197,7 +197,8 @@ export default function PostDetailScreen() {
   );
   const videoPlayers = [player1, player2, player3, player4, player5];
 
-  // Update video players when media or current index changes
+  // Update video players when current index changes (for autoplay control)
+  // This ensures the correct video plays when user swipes
   useEffect(() => {
     if (!post?.media) return;
 
@@ -213,18 +214,14 @@ export default function PostDetailScreen() {
           try {
             await player.replaceAsync(mediaItem.mediaUrl);
             player.loop = true;
-            player.muted = true;
-            // Only autoplay if it's the current visible item
-            // Add small delay for iOS to ensure player is ready
+            player.muted = false;
             if (index === currentMediaIndex) {
-              setTimeout(() => {
-                player.play();
-              }, 100);
+              player.play();
             } else {
               player.pause();
             }
           } catch (error) {
-            console.error(`Error loading video ${index}:`, error);
+            // Player might be released, ignore
           }
         }
       }
@@ -428,6 +425,8 @@ export default function PostDetailScreen() {
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          horizontal={false}
           contentContainerStyle={{ paddingBottom: 32 }}
         >
           {/* Media Carousel skeleton */}
@@ -582,6 +581,8 @@ export default function PostDetailScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
         contentContainerStyle={{ paddingBottom: 32 }}
       >
         {/* Media Carousel */}
@@ -599,6 +600,7 @@ export default function PostDetailScreen() {
               data={post.media}
               horizontal
               pagingEnabled
+              scrollEnabled={post.media.length > 1}
               showsHorizontalScrollIndicator={false}
               onMomentumScrollEnd={(e) => {
                 const index = Math.round(

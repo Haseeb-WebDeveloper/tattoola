@@ -49,6 +49,15 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     while (images.length < 4) {
       images.push(""); // empty string means no image, placeholder
     }
+
+    // Helper: very naively detect "video" from extension
+    const isVideo = (url: string) =>
+      url &&
+      (url.endsWith(".mp4") ||
+        url.endsWith(".mov") ||
+        url.endsWith(".webm") ||
+        url.includes("/video/upload"));
+
     return (
       <View
         className="flex flex-row flex-wrap w-full aspect-square"
@@ -59,22 +68,55 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
             {[0, 1].map((col) => {
               const idx = row * 2 + col;
               const url = images[idx];
+              const video = isVideo(url);
               return (
                 <View
                   key={idx}
-                  className="flex-1 overflow-hidden bg-gray-200 rounded aspect-square"
+                  className="flex-1 overflow-hidden aspect-square"
                   style={{
                     minWidth: 0,
+                    borderRadius: s(8),
+                    position: "relative",
                   }}
                 >
                   {url ? (
-                    <Image
-                      source={{ uri: url }}
-                      style={{ width: "100%", height: "100%", aspectRatio: 1 }}
-                      resizeMode="cover"
-                    />
+                    <>
+                      <Image
+                        source={{ uri: url }}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          aspectRatio: 1,
+                        }}
+                        resizeMode="cover"
+                      />
+                      {video && (
+                        <View
+                          className=" border-gray/50 w-full h-full bg-background"
+                          style={{
+                            position: "absolute",
+                            bottom: s(0),
+                            right: s(0),
+                            borderRadius: s(8),
+                            padding: s(2),
+                            zIndex: 2,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderWidth: s(1),
+                          }}
+                        >
+                          <SVGIcons.Video width={s(20)} height={s(20)} />
+                        </View>
+                      )}
+                    </>
                   ) : (
-                    <View className="bg-[#100c0c77] w-full h-full" />
+                    <View
+                      className="border-gray/50 w-full h-full bg-background"
+                      style={{
+                        borderWidth: s(1),
+                        borderRadius: s(8),
+                      }}
+                    />
                   )}
                 </View>
               );
