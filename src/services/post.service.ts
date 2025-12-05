@@ -388,14 +388,12 @@ export async function addPostToCollection(
   postId: string,
   collectionId: string
 ): Promise<void> {
-  const { error } = await supabase
-    .from("collection_posts")
-    .insert({
-      id: uuidv4(),
-      collectionId,
-      postId,
-      addedAt: new Date().toISOString(),
-    });
+  const { error } = await supabase.from("collection_posts").insert({
+    id: uuidv4(),
+    collectionId,
+    postId,
+    addedAt: new Date().toISOString(),
+  });
   if (error) throw new Error(error.message);
 }
 
@@ -415,9 +413,9 @@ export async function createPostWithMediaAndCollection(args: {
     if (!authorId) throw new Error("Not authenticated");
 
     // Extract thumbnail from first image media item
-    const firstImage = args.media.find(
-      (m) => m.mediaType === "IMAGE" && m.order === 0
-    ) || args.media.find((m) => m.mediaType === "IMAGE");
+    const firstImage =
+      args.media.find((m) => m.mediaType === "IMAGE" && m.order === 0) ||
+      args.media.find((m) => m.mediaType === "IMAGE");
     const thumbnailUrl = firstImage?.mediaUrl;
 
     const { id: postId } = await createPost({
@@ -508,4 +506,102 @@ export async function fetchLikedPosts(
     .filter(Boolean) as LikedPost[];
 
   return likedPosts;
+}
+
+/**
+ * Delete a post
+ */
+export async function deletePost(
+  postId: string,
+  authorId: string
+): Promise<void> {
+  // Verify the user is the author
+  const { data: post, error: fetchError } = await supabase
+    .from("posts")
+    .select("authorId")
+    .eq("id", postId)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!post || post.authorId !== authorId) {
+    throw new Error("Unauthorized: You can only delete your own posts");
+  }
+
+  // Delete the post (cascade will handle related records)
+  const { error: deleteError } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId);
+
+  if (deleteError) throw new Error(deleteError.message);
+}
+
+/**
+ * Update a post
+ */
+export async function updatePost(
+  postId: string,
+  authorId: string,
+  updates: {
+    caption?: string;
+    styleId?: string;
+    collectionIds?: string[];
+  }
+): Promise<void> {
+  // Verify the user is the author
+  const { data: post, error: fetchError } = await supabase
+    .from("posts")
+    .select("authorId")
+    .eq("id", postId)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!post || post.authorId !== authorId) {
+    throw new Error("Unauthorized: You can only update your own posts");
+  }
+
+  // Update post fields
+  const updateData: any = {
+    updatedAt: new Date().toISOString(),
+  };
+  if (updates.caption !== undefined) {
+    updateData.caption = updates.caption;
+  }
+  if (updates.styleId !== undefined) {
+    updateData.styleId = updates.styleId;
+  }
+
+  const { error: updateError } = await supabase
+    .from("posts")
+    .update(updateData)
+    .eq("id", postId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  // Update collections if provided
+  if (updates.collectionIds !== undefined) {
+    // Remove post from all collections
+    const { error: deleteError } = await supabase
+      .from("collection_posts")
+      .delete()
+      .eq("postId", postId);
+
+    if (deleteError) throw new Error(deleteError.message);
+
+    // Add post to selected collections
+    if (updates.collectionIds.length > 0) {
+      const { error: insertError } = await supabase
+        .from("collection_posts")
+        .insert(
+          updates.collectionIds.map((collectionId) => ({
+            id: uuidv4(),
+            collectionId,
+            postId,
+            addedAt: new Date().toISOString(),
+          }))
+        );
+
+      if (insertError) throw new Error(insertError.message);
+    }
+  }
 }
