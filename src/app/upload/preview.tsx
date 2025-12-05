@@ -8,7 +8,9 @@ import { usePostUploadStore } from "@/stores/postUploadStore";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
+import React, { useEffect } from "react";
 import {
   Image,
   ScrollView,
@@ -17,6 +19,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { toast } from "sonner-native";
+import { TrimText } from "@/utils/text-trim";
 
 export default function UploadPreviewStep() {
   const {
@@ -29,8 +32,70 @@ export default function UploadPreviewStep() {
     setSubmitting,
   } = usePostUploadStore();
   const { user } = useAuth();
-  const mainImage = media[0]?.cloud || media[0]?.uri;
+  const mainMedia = media[0];
+  const mainImage = mainMedia?.cloud || mainMedia?.uri;
+  const isVideo = mainMedia?.type === "video";
   const { width: windowWidth } = useWindowDimensions();
+
+  // Video player for autoplay - prefer local URI for preview (faster), fallback to cloud URL
+  // Always call hook at top level with a URL (empty string if not video)
+  // Create two separate players - one for each preview card
+  const videoUrl = isVideo ? (mainMedia?.uri || mainMedia?.cloud || "") : "";
+  const videoPlayer1 = useVideoPlayer(videoUrl || "", (player) => {
+    if (isVideo && videoUrl) {
+      player.loop = true;
+      player.muted = true;
+      // Small delay for iOS to ensure player is ready
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+  const videoPlayer2 = useVideoPlayer(videoUrl || "", (player) => {
+    if (isVideo && videoUrl) {
+      player.loop = true;
+      player.muted = true;
+      // Small delay for iOS to ensure player is ready
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+
+  // Update player sources when URL changes
+  useEffect(() => {
+    const updatePlayers = async () => {
+      if (isVideo && videoUrl) {
+        if (videoPlayer1) {
+          try {
+            await videoPlayer1.replaceAsync(videoUrl);
+            videoPlayer1.loop = true;
+            videoPlayer1.muted = true;
+            // Small delay for iOS to ensure player is ready
+            setTimeout(() => {
+              videoPlayer1.play();
+            }, 100);
+          } catch (error) {
+            console.error("Error loading video player 1:", error);
+          }
+        }
+        if (videoPlayer2) {
+          try {
+            await videoPlayer2.replaceAsync(videoUrl);
+            videoPlayer2.loop = true;
+            videoPlayer2.muted = true;
+            // Small delay for iOS to ensure player is ready
+            setTimeout(() => {
+              videoPlayer2.play();
+            }, 100);
+          } catch (error) {
+            console.error("Error loading video player 2:", error);
+          }
+        }
+      }
+    };
+    updatePlayers();
+  }, [videoUrl, isVideo, videoPlayer1, videoPlayer2]);
 
   const onSubmit = async () => {
     try {
@@ -96,14 +161,35 @@ export default function UploadPreviewStep() {
       ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
       : user?.username || "Utente";
 
-  const PreviewCard = () => (
-    <View className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40">
+
+  const PreviewCard = ({ player }: { player: ReturnType<typeof useVideoPlayer> }) => (
+    <View className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40"
+    style={{
+      borderWidth: s(1),
+      borderColor: "#A49A99",
+    }}
+    >
       {mainImage ? (
-        <Image
-          source={{ uri: mainImage }}
-          className="absolute top-0 left-0 w-full h-full"
-          resizeMode="cover"
-        />
+        isVideo ? (
+          <VideoView
+            player={player}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+            }}
+            contentFit="cover"
+            nativeControls={false}
+          />
+        ) : (
+          <Image
+            source={{ uri: mainImage }}
+            className="absolute top-0 left-0 w-full h-full"
+            resizeMode="cover"
+          />
+        )
       ) : (
         <View className="absolute top-0 left-0 w-full h-full bg-black/20" />
       )}
@@ -117,29 +203,33 @@ export default function UploadPreviewStep() {
         {!!caption && (
           <ScaledText
             allowScaling={false}
-            variant="sm"
+            variant="xs"
             className="text-foreground font-neueBold"
             numberOfLines={1}
           >
-            {caption}
+            {TrimText(caption, 30)}
           </ScaledText>
         )}
-        <View className="flex-row items-center gap-2 mt-1">
+        <View className="flex-row items-center mt-1" style={{ gap: s(4) }}>
           {user?.avatar ? (
             <Image
               source={{ uri: user.avatar }}
-              className="w-5 h-5 rounded-full"
+              className="rounded-full"
+              style={{
+                width: s(16),
+                height: s(16),
+              }}
             />
           ) : (
-            <View className="w-4 h-4 rounded-full bg-background/80 border-[0.51px] border-error" />
+            <View className="rounded-full bg-background/80 border-[0.51px] border-error" style={{ width: s(16), height: s(16) }} />
           )}
           <ScaledText
             allowScaling={false}
-            variant="sm"
-            className="text-foreground/90 font-neueBold"
+            variant="9"
+            className="text-foreground font-montserratMedium"
             numberOfLines={1}
           >
-            {DisplayName}
+            {TrimText(DisplayName, 15)}
           </ScaledText>
         </View>
       </View>
@@ -188,7 +278,7 @@ export default function UploadPreviewStep() {
             >
               Vista feed
             </ScaledText>
-            <PreviewCard />
+            <PreviewCard player={videoPlayer1} />
           </View>
           <View style={{ width: cardWidth }}>
             <ScaledText
@@ -199,7 +289,7 @@ export default function UploadPreviewStep() {
             >
               Vista dettagliata
             </ScaledText>
-            <PreviewCard />
+            <PreviewCard player={videoPlayer2} />
           </View>
         </View>
       </ScrollView>
