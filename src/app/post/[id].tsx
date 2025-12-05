@@ -1050,7 +1050,7 @@ export default function PostDetailScreen() {
               bottom: 0,
               left: 0,
               right: 0,
-              height: screenHeight * 0.65,
+              top: screenHeight * 0.3,
               backgroundColor: "#0F0202",
               paddingTop: s(20),
 
