@@ -1,4 +1,3 @@
-import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";

@@ -169,14 +169,19 @@ export default function SearchScreen() {
   };
 
   const renderFooter = () => {
-    if (!isLoadingMore) return null;
-
-    // Show skeleton based on active tab
-    if (activeTab === "artists" || activeTab === "all") {
-      return <ArtistCardSkeleton />;
-    } else {
-      return <StudioCardSkeleton />;
-    }
+    // Always render a spacer at the end so last card is visible, even if no loading skeleton
+    return (
+      <>
+        {isLoadingMore ? (
+          activeTab === "artists" || activeTab === "all" ? (
+            <ArtistCardSkeleton />
+          ) : (
+            <StudioCardSkeleton />
+          )
+        ) : null}
+        <View style={{ height: s(320) }} />
+      </>
+    );
   };
 
   const totalResults =
@@ -239,9 +244,8 @@ export default function SearchScreen() {
         >
           <TouchableOpacity
             onPress={() => handleTabPress("all")}
-            className={`rounded-full items-center justify-center border border-gray ${
-              activeTab === "all" ? "bg-primary border-primary" : ""
-            }`}
+            className={`rounded-full items-center justify-center border border-gray ${activeTab === "all" ? "bg-primary border-primary" : ""
+              }`}
             style={{
               paddingVertical: mvs(3),
               paddingHorizontal: s(18),
@@ -250,9 +254,8 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className={`font-neueLight ${
-                activeTab === "all" ? "text-white" : "text-gray"
-              }`}
+              className={`font-neueLight ${activeTab === "all" ? "text-white" : "text-gray"
+                }`}
             >
               Tutto
             </ScaledText>
@@ -260,9 +263,8 @@ export default function SearchScreen() {
 
           <TouchableOpacity
             onPress={() => handleTabPress("artists")}
-            className={`rounded-full items-center justify-center border border-gray ${
-              activeTab === "artists" ? "bg-primary border-primary" : ""
-            }`}
+            className={`rounded-full items-center justify-center border border-gray ${activeTab === "artists" ? "bg-primary border-primary" : ""
+              }`}
             style={{
               paddingVertical: mvs(3),
               paddingHorizontal: s(18),
@@ -271,9 +273,8 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className={`font-neueLight ${
-                activeTab === "artists" ? "text-white" : "text-gray"
-              }`}
+              className={`font-neueLight ${activeTab === "artists" ? "text-white" : "text-gray"
+                }`}
             >
               Artisti
             </ScaledText>
@@ -281,9 +282,8 @@ export default function SearchScreen() {
 
           <TouchableOpacity
             onPress={() => handleTabPress("studios")}
-            className={`rounded-full items-center justify-center border border-gray ${
-              activeTab === "studios" ? "bg-primary border-primary" : ""
-            }`}
+            className={`rounded-full items-center justify-center border border-gray ${activeTab === "studios" ? "bg-primary border-primary" : ""
+              }`}
             style={{
               paddingVertical: mvs(3),
               paddingHorizontal: s(18),
@@ -292,16 +292,16 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className={`font-neueLight ${
-                activeTab === "studios" ? "text-white" : "text-gray"
-              }`}
+              className={`font-neueLight ${activeTab === "studios" ? "text-white" : "text-gray"
+                }`}
             >
               Studi
             </ScaledText>
           </TouchableOpacity>
         </View>
 
-        <View className="min-h-screen">
+        <View className="min-h-screen"
+        >
           {/* Location Display */}
           {locationText && !isInitializing && (
             <View
@@ -371,28 +371,33 @@ export default function SearchScreen() {
               ) : null}
             </View>
           ) : (
-            <FlatList
-              data={combinedResults}
-              renderItem={renderItem}
-              keyExtractor={(item: any) => {
-                // Add type prefix to ensure unique keys when combining artists and studios
-                const type = "businessName" in item ? "artist" : "studio";
-                return `${type}-${item.id}`;
-              }}
-              contentContainerStyle={{}}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRefresh}
-                  tintColor="#AE0E0E"
-                />
-              }
-              onEndReached={handleLoadMore}
-              onEndReachedThreshold={0.5}
-              ListFooterComponent={renderFooter}
-              ListEmptyComponent={renderEmpty}
-            />
+            <>
+              <FlatList
+                data={combinedResults}
+                renderItem={renderItem}
+                keyExtractor={(item: any) => {
+                  // Add type prefix to ensure unique keys when combining artists and studios
+                  const type = "businessName" in item ? "artist" : "studio";
+                  return `${type}-${item.id}`;
+                }}
+                contentContainerStyle={{
+                  // Add more space at the end, e.g. s(80) instead of s(40)
+                  marginBottom: s(80),
+                }}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    tintColor="#AE0E0E"
+                  />
+                }
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={renderFooter}
+                ListEmptyComponent={renderEmpty}
+              />
+            </>
           )}
         </View>
       </LinearGradient>

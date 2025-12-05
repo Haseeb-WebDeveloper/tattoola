@@ -128,7 +128,7 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
   },
   "2xl": {
     fontSize: scaledFont(24),
-    lineHeight: scaledFont(42),
+    lineHeight: scaledFont(32),
     letterSpacing: -0.5,
   },
   "3xl": {

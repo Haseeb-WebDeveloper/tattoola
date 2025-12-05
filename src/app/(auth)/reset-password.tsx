@@ -1,4 +1,5 @@
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import AuthStepHeader from '@/components/ui/auth-step-header';
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
@@ -9,20 +10,20 @@ import { ResetPasswordValidationSchema, ValidationUtils } from '@/utils/validati
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toast } from "sonner-native";
 
 export default function ResetPasswordScreen() {
-  const { resetPassword, loading } = useAuth();
+  const { resetPassword, loading, session } = useAuth();
   const { token } = useLocalSearchParams<{ token: string }>();
-  
+
   const [formData, setFormData] = useState<ResetPasswordData>({
     token: token || '',
     password: '',
@@ -35,7 +36,7 @@ export default function ResetPasswordScreen() {
 
   const handleInputChange = (field: keyof ResetPasswordData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error for this field
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -66,7 +67,9 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    if (!token) {
+    // Check if we have a session (from code exchange) or a token
+    // With PKCE flow, code exchange creates a session, so token is not needed
+    if (!session && !token) {
       toast.error(
         "Questo link per il reset della password non è valido o è scaduto. Richiedine uno nuovo."
       );
@@ -77,7 +80,12 @@ export default function ResetPasswordScreen() {
     }
 
     try {
-      await resetPassword(formData);
+      // If we have a session, we don't need the token in formData
+      const resetData: ResetPasswordData = session
+        ? { token: '', password: formData.password, confirmPassword: formData.confirmPassword }
+        : formData;
+
+      await resetPassword(resetData);
       setPasswordReset(true);
     } catch (error) {
       toast.error(
@@ -94,7 +102,7 @@ export default function ResetPasswordScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView className="flex-1 bg-background">
         <LoadingSpinner message="Reimpostazione della password..." overlay />
       </SafeAreaView>
     );
@@ -102,14 +110,14 @@ export default function ResetPasswordScreen() {
 
   if (passwordReset) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
+      <SafeAreaView className="flex-1 bg-background">
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ paddingHorizontal: s(24), paddingVertical: mvs(32) }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <SVGIcons.VarifiedGreen className="w-16 h-16" />
+          <View className="items-center">
+            <View className="mb-4">
+              <SVGIcons.VarifiedGreen width={s(40)} height={s(40)} />
             </View>
             <ScaledText
               variant="2xl"
@@ -117,13 +125,15 @@ export default function ResetPasswordScreen() {
             >
               Password reimpostata con successo
             </ScaledText>
-            <ScaledText variant="body2" className="text-gray text-center">
+            <ScaledText variant="body2" className="text-gray text-center font-neueLight ">
               La tua password è stata reimpostata correttamente. Ora puoi
               accedere con la nuova password.
             </ScaledText>
           </View>
 
-          <View style={styles.actions}>
+          <View className="items-center"
+            style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
+          >
             <TouchableOpacity
               accessibilityRole="button"
               onPress={handleBackToLogin}
@@ -132,7 +142,7 @@ export default function ResetPasswordScreen() {
             >
               <ScaledText
                 variant="body1"
-                className="text-foreground font-neueBold"
+                className="text-foreground font-neueBold text-center"
               >
                 Vai al login
               </ScaledText>
@@ -144,189 +154,121 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      className="flex-1 bg-background"
+      contentContainerStyle={{ flexGrow: 1 }}
+      style={{ zIndex: 1 }}
+    >
+      <AuthStepHeader />
+
+      <View
+        className="items-center"
+        style={{ paddingHorizontal: s(24), }}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <ScaledText
+          variant="2xl"
+          className="text-foreground font-neueBold"
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBackToLogin}
-          >
-            <SVGIcons.ChevronLeft className="w-6 h-6" />
-          </TouchableOpacity>
+          Reimposta la tua password
+        </ScaledText>
+        <ScaledText variant="body2" className="text-gray text-center font-montserratLight">
+          Inserisci qui sotto la tua nuova password
+        </ScaledText>
+      </View>
 
-          <View style={styles.header}>
-            <ScaledText
-              variant="2xl"
-              className="text-foreground font-neueBold"
-            >
-              Reimposta la tua password
-            </ScaledText>
-            <ScaledText variant="body2" className="text-gray text-center">
-              Inserisci qui sotto la tua nuova password
-            </ScaledText>
-          </View>
-
-          <View style={styles.form}>
-            <ScaledText variant="sm" className="text-foreground mb-2">
-              Nuova password
-            </ScaledText>
-            <ScaledTextInput
-              containerClassName={`flex-row items-center rounded-xl ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
-              className="flex-1 text-foreground rounded-xl"
-              placeholder="Inserisci la tua nuova password"
-              secureTextEntry={!showPassword}
-              value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
-              rightAccessory={
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  className="px-3 py-2"
-                  onPress={() => setShowPassword((v) => !v)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  {showPassword ? (
-                    <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
-                  ) : (
-                    <SVGIcons.EyeClose width={s(18)} height={s(18)} />
-                  )}
-                </TouchableOpacity>
-              }
-            />
-
-            <View style={{ height: mvs(12) }} />
-
-            <ScaledText variant="sm" className="text-foreground mb-2">
-              Conferma nuova password
-            </ScaledText>
-            <ScaledTextInput
-              containerClassName={`flex-row items-center rounded-xl ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
-              className="flex-1 text-foreground rounded-xl"
-              placeholder="Conferma la tua nuova password"
-              secureTextEntry={!showConfirmPassword}
-              value={formData.confirmPassword}
-              onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              rightAccessory={
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  className="px-3 py-2"
-                  onPress={() => setShowConfirmPassword((v) => !v)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  {showConfirmPassword ? (
-                    <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
-                  ) : (
-                    <SVGIcons.EyeClose width={s(18)} height={s(18)} />
-                  )}
-                </TouchableOpacity>
-              }
-            />
-
-            <View style={styles.passwordRequirements}>
-              <ScaledText
-                variant="body2"
-                className="text-foreground font-montserratSemibold"
-              >
-                Requisiti della password:
-              </ScaledText>
-              <ScaledText variant="body2" className="text-gray">
-                • Almeno 8 caratteri{"\n"}
-                • Contiene almeno un numero{"\n"}
-                • Consigliato un mix di lettere e numeri
-              </ScaledText>
-            </View>
-
+      <View
+        style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
+      >
+        <ScaledText variant="sm" className="text-foreground mb-2 font-montserratMedium">
+          Nuova password
+        </ScaledText>
+        <ScaledTextInput
+          containerClassName={`flex-row items-center rounded-xl ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
+          className="flex-1 text-foreground rounded-xl"
+          placeholder="Inserisci la tua nuova password"
+          secureTextEntry={!showPassword}
+          value={formData.password}
+          onChangeText={(value) => handleInputChange('password', value)}
+          rightAccessory={
             <TouchableOpacity
               accessibilityRole="button"
-              onPress={handleResetPassword}
-              disabled={loading}
-              className="bg-primary rounded-full"
-              style={[styles.resetButton, { paddingVertical: mvs(10), paddingHorizontal: s(32) }]}
+              className="px-3 py-2"
+              onPress={() => setShowPassword((v) => !v)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <ScaledText
-                variant="body1"
-                className="text-foreground font-neueBold"
-              >
-                Reimposta password
-              </ScaledText>
+              {showPassword ? (
+                <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
+              ) : (
+                <SVGIcons.EyeClose width={s(18)} height={s(18)} />
+              )}
             </TouchableOpacity>
-          </View>
+          }
+        />
 
-          <View style={styles.footer}>
+        <View style={{ height: mvs(12) }} />
+
+        <ScaledText variant="sm" className="text-foreground mb-2 font-montserratMedium">
+          Conferma nuova password
+        </ScaledText>
+        <ScaledTextInput
+          containerClassName={`flex-row items-center rounded-xl ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
+          className="flex-1 text-foreground rounded-xl"
+          placeholder="Conferma la tua nuova password"
+          secureTextEntry={!showConfirmPassword}
+          value={formData.confirmPassword}
+          onChangeText={(value) => handleInputChange('confirmPassword', value)}
+          rightAccessory={
             <TouchableOpacity
-              style={styles.loginLink}
-              onPress={handleBackToLogin}
+              accessibilityRole="button"
+              className="px-3 py-2"
+              onPress={() => setShowConfirmPassword((v) => !v)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <ScaledText variant="body2" className="text-gray text-center">
-                Ti sei ricordato la password?{" "}
-                <ScaledText
-                  variant="body2"
-                  className="text-foreground font-montserratSemibold"
-                >
-                  Accedi
-                </ScaledText>
-              </ScaledText>
+              {showConfirmPassword ? (
+                <SVGIcons.EyeOpen width={s(18)} height={s(18)} />
+              ) : (
+                <SVGIcons.EyeClose width={s(18)} height={s(18)} />
+              )}
             </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          }
+        />
+
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={handleResetPassword}
+          disabled={loading}
+          className="bg-primary rounded-full"
+          style={{ paddingVertical: mvs(10), paddingHorizontal: s(32), marginTop: mvs(24) }}
+        >
+          <ScaledText
+            variant="body1"
+            className="text-foreground font-neueBold text-center"
+          >
+            Reimposta password
+          </ScaledText>
+        </TouchableOpacity>
+      </View>
+
+      <View className="items-center"
+        style={{ paddingHorizontal: s(16), paddingTop: mvs(8) }}
+      >
+        <TouchableOpacity
+          onPress={handleBackToLogin}
+          className="rounded-full items-center justify-center"
+          style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
+        >
+          <ScaledText variant="body2" className="text-gray text-center font-montserratMedium">
+            Ti sei ricordato la password?{" "}
+            <ScaledText
+              variant="body2"
+              className="text-foreground font-montserratSemibold text-center"
+            >
+              Accedi
+            </ScaledText>
+          </ScaledText>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    padding: 8,
-    marginBottom: 16,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  iconContainer: {
-    marginBottom: 24,
-  },
-  form: {
-    flex: 1,
-    marginBottom: 32,
-  },
-  passwordRequirements: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 24,
-  },
-  resetButton: {
-    marginTop: 8,
-  },
-  actions: {
-    alignItems: 'center',
-  },
-  continueButton: {
-    width: '100%',
-  },
-  footer: {
-    alignItems: 'center',
-  },
-  loginLink: {
-    padding: 8,
-  },
-});

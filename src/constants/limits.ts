@@ -3,8 +3,8 @@ export const FEED_POSTS_PER_PAGE = 12;
 
 // Style selection limits
 export const TL_MAX_FAVORITE_STYLES = 3; // Tattoola Lover
-export const AR_MAX_STYLES = 4; // Artist
-export const AR_MAX_FAVORITE_STYLES = 4; // Artist fav styles
+export const AR_MAX_STYLES = 3; // Artist
+export const AR_MAX_FAVORITE_STYLES = 2; // Artist fav styles
 
 // Metadata tags used on Supabase auth user
 export const DISPLAY_NAME_TL = "TL";

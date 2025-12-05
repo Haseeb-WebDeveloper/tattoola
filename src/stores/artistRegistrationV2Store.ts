@@ -128,36 +128,28 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
       (set) => ({
         ...initialState,
         updateStep3: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 3 updated:', data);
           set((s) => ({ step3: { ...s.step3, ...data } }));
         },
         setAvatar: (uri) => {
-          console.log('[ArtistRegistrationV2Store] Step 3 avatar updated:', uri);
           set((s) => ({ step3: { ...s.step3, avatar: uri } }));
         },
         updateStep4: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 4 updated:', data);
           set((s) => ({ step4: { ...s.step4, ...data } }));
         },
         // Convenience setter for certificate URL
         setCertificateUrl: (url?: string) => {
-          console.log('[ArtistRegistrationV2Store] Step 4 certificateUrl updated:', url);
           set((s) => ({ step4: { ...s.step4, certificateUrl: url } }));
         },
         setWorkArrangement: (w) => {
-          console.log('[ArtistRegistrationV2Store] Step 4 workArrangement updated:', w);
           set((s) => ({ step4: { ...s.step4, workArrangement: w } }));
         },
         updateStep5: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 5 updated:', data);
           set((s) => ({ step5: { ...s.step5, ...data } }));
         },
         updateStep7: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 7 updated:', data);
           set((s) => ({ step7: { ...s.step7, ...data } }));
         },
         updateStep8: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 8 updated:', data);
           set((s) => ({ step8: { ...s.step8, ...data } }));
         },
         // Toggle a style in the overall selected list (checkbox)
@@ -219,7 +211,6 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           });
         },
         updateStep9: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 9 updated:', data);
           set((s) => ({ step9: { ...s.step9, ...data } }));
         },
         toggleService: (serviceId) => {
@@ -231,7 +222,6 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           });
         },
         updateStep10: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 10 updated:', data);
           set((s) => ({ step10: { ...s.step10, ...data } }));
         },
         toggleBodyPart: (bodyPartId) => {
@@ -243,11 +233,9 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           });
         },
         updateStep11: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 11 updated:', data);
           set((s) => ({ step11: { ...s.step11, ...data } }));
         },
         updateStep12: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 12 updated:', data);
           set((s) => ({ step12: { ...s.step12, ...data } }));
         },
         setProjectAtIndex: (idx, project) => {
@@ -258,7 +246,6 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           });
         },
         updateStep13: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 13 updated:', data);
           set((s) => ({ step13: { ...s.step13, ...data } }));
         },
         setCurrentStepDisplay: (n) => set({ currentStepDisplay: n }),
