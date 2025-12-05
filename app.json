@@ -19,7 +19,7 @@
       "url": "https://u.expo.dev/624fc895-19a3-4765-9329-1f3ecb47aa61"
     },
     "ios": {
-      "buildNumber": "3",
+      "buildNumber": "4",
       "supportsTablet": true,
       "bundleIdentifier": "com.figmentalabs.tattoola",
       "infoPlist": {
@@ -29,7 +29,7 @@
       }
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./src/assets/images/android-icon-foreground.png",

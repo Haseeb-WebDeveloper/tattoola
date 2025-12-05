@@ -32,14 +32,14 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
           Parti del corpo su cui non lavoro
         </ScaledText>
       </View>
-      <View className="flex-row flex-wrap" style={{ gap: s(2) }}>
+      <View className="flex-row flex-wrap" style={{ gap: s(5) }}>
         {bodyParts.map((bodyPart) => (
           <View
             key={bodyPart.id}
             className="rounded-xl bg-black/40 border border-error"
             style={{
-              paddingHorizontal: s(8),
-              paddingVertical: mvs(3),
+              paddingHorizontal: s(8.53),
+              paddingVertical: mvs(5.118),
             }}
           >
             <ScaledText

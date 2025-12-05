@@ -38,6 +38,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionMessage, setRejectionMessage] = useState<string>("");
 
+
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
       console.error("Failed to open URL:", err)

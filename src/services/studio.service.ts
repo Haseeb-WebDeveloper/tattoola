@@ -320,15 +320,12 @@ export async function saveStudioSetup(
 
     // 6. Handle studio FAQs (delete existing and insert new)
     // Delete existing FAQs
-    console.log('Deleting existing FAQs');
     await supabase
       .from('studio_faqs')
       .delete()
       .eq('studioId', studioId);
 
-    console.log('Inserting new FAQs');
     if (step8.faqs.length > 0) {
-      console.log('Inserting new FAQs', step8.faqs);
       // Insert new FAQs
       const { error: faqsError } = await supabase
         .from('studio_faqs')
@@ -343,7 +340,6 @@ export async function saveStudioSetup(
           }))
         );
 
-      console.log('Failed to save studio FAQs:', faqsError);
       if (faqsError) {
         console.error('Failed to save studio FAQs:', faqsError);
       }
@@ -874,7 +870,6 @@ export async function updateStudioFAQs(
  */
 export async function fetchStudioPublicProfile(studioId: string) {
   try {
-    console.log('🔍 Fetching studio profile for ID:', studioId);
     
     // Get studio basic info
     const { data: studio, error: studioError } = await supabase
@@ -904,8 +899,6 @@ export async function fetchStudioPublicProfile(studioId: string) {
       console.error('❌ No studio data returned for ID:', studioId);
       throw new Error('Studio not found');
     }
-
-    console.log('✅ Studio found:', studio.name);
 
     // Get studio location
     const { data: studioLocation } = await supabase

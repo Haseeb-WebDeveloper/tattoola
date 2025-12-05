@@ -288,9 +288,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const result = await AuthService.signIn(credentials);
 
+      // Fetch full user profile from database to get avatar and other fields
+      let fullUser = result.user;
+      try {
+        logger.log('SIGN IN: Trying to fetch full user profile from database');
+        logger.log('SIGN IN: User ID:', result.user.id);
+        const { data: dbUser, error: dbError } = await supabase
+          .from('users')
+          .select('id, email, username, firstName, lastName, avatar, bio, phone, instagram, tiktok, isActive, isVerified, isPublic, role, createdAt, updatedAt, lastLoginAt')
+          .eq('id', result.user.id)
+          .maybeSingle();
 
-      setUser(result.user);
-      setSession(result.session);
+        logger.log('SIGN IN: Query completed. User:', !!dbUser, 'Error:', !!dbError);
+        if (dbError) {
+          logger.log('SIGN IN: Database error details:', dbError);
+        }
+        
+        if (dbUser) {
+          // User exists in database, use full profile with avatar
+          logger.log('SIGN IN: Loaded full user profile from database');
+          fullUser = dbUser as any;
+        } else {
+          // User not in database yet, use minimal profile
+          logger.log('SIGN IN: User not in database, using minimal profile');
+        }
+      } catch (dbError) {
+        logger.warn('SIGN IN: Could not fetch user from database, using minimal profile:', dbError);
+        // Fallback to minimal user if database fetch fails
+      }
+
+      setUser(fullUser);
+      setSession({
+        user: fullUser,
+        accessToken: result.session.accessToken,
+        refreshToken: result.session.refreshToken,
+        expiresAt: result.session.expiresAt,
+      });
       
       // Check for pending studio invitation token after login
       try {
@@ -310,24 +343,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       // After login, check profile completion and redirect accordingly
-      if (result.user && result.user.id && result.user.role) {
-        logger.log('Sign in result user role:', result.user.role);
-        const isVerified = result.user.isVerified;
+      if (fullUser && fullUser.id && fullUser.role) {
+        logger.log('Sign in result user role:', fullUser.role);
+        const isVerified = fullUser.isVerified;
         logger.log('Sign in result user is verified:', isVerified);
         
         if (isVerified) {
-          const hasCompletedProfile = await checkProfileCompletion(result.user.id, result.user.role);
+          const hasCompletedProfile = await checkProfileCompletion(fullUser.id, fullUser.role);
           logger.log('Sign in result user has completed profile:', hasCompletedProfile);
           
           // If user does NOT exist in users table, redirect to registration steps
           if (!hasCompletedProfile) {
-            if (result.user.role === 'ARTIST') {
+            if (fullUser.role === 'ARTIST') {
               logger.log('Sign in result user role is artist, redirecting to artist management/registration steps');
               // Redirect to artist management/registration steps
               setTimeout(() => {
                 router.replace('/(auth)/artist-registration/step-3');
               }, 100);
-            } else if (result.user.role === 'TATTOO_LOVER') {
+            } else if (fullUser.role === 'TATTOO_LOVER') {
               logger.log('Sign in result user role is tattoo lover, redirecting to user management/registration steps starting at step-3');
               // Redirect to user management/registration steps (V2 starts at step-3)
               setTimeout(() => {
@@ -340,7 +373,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               }, 100);
             }
             // Return here to prevent further navigation
-            return result;
+            return { user: fullUser, session: result.session };
           } else {
             // Profile is complete, redirect to home
             logger.log('Profile is complete, redirecting to home');
@@ -353,7 +386,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
 
-      return result;
+      return { user: fullUser, session: result.session };
     } catch (error) {
       logger.error('Sign in error:', error);
       throw error;
