@@ -9,7 +9,7 @@ import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -50,6 +50,11 @@ export default function UploadCollectionStep() {
 
   // This is our added state for create button disable logic
   const isCreateDisabled = newName.trim().length === 0;
+
+  // Get media types for video icon display
+  const mainType = useMemo(() => media[0]?.type, [media]);
+  const thumb1Type = useMemo(() => media[1]?.type, [media]);
+  const thumb2Type = useMemo(() => media[2]?.type, [media]);
 
   useEffect(() => {
     let mounted = true;
@@ -213,11 +218,24 @@ export default function UploadCollectionStep() {
                 style={{ width: 58, height: 70, marginRight: 4 }}
               >
                 {media[0] ? (
-                  <Image
-                    source={{ uri: media[0].cloud || media[0].uri }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                  />
+                  mainType === "video" ? (
+                    <View
+                      className="w-full h-full items-center justify-center bg-black/60"
+                      style={{
+                        borderWidth: s(1),
+                        borderColor: "#A49A99",
+                        borderRadius: s(6),
+                      }}
+                    >
+                      <SVGIcons.Video width={s(20)} height={s(20)} />
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: media[0].cloud || media[0].uri }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                    />
+                  )
                 ) : (
                   <View />
                 )}
@@ -228,11 +246,24 @@ export default function UploadCollectionStep() {
                   style={{ width: 38, height: 33, marginBottom: 4 }}
                 >
                   {media[1] ? (
-                    <Image
-                      source={{ uri: media[1].cloud || media[1].uri }}
-                      style={{ width: "100%", height: "100%" }}
-                      resizeMode="cover"
-                    />
+                    thumb1Type === "video" ? (
+                      <View
+                        className="w-full h-full items-center justify-center bg-black/60"
+                        style={{
+                          borderWidth: s(1),
+                          borderColor: "#A49A99",
+                          borderRadius: s(6),
+                        }}
+                      >
+                        <SVGIcons.Video width={s(15)} height={s(15)} />
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: media[1].cloud || media[1].uri }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
+                    )
                   ) : (
                     <View />
                   )}
@@ -242,11 +273,24 @@ export default function UploadCollectionStep() {
                   style={{ width: 38, height: 33 }}
                 >
                   {media[2] ? (
-                    <Image
-                      source={{ uri: media[2].cloud || media[2].uri }}
-                      style={{ width: "100%", height: "100%" }}
-                      resizeMode="cover"
-                    />
+                    thumb2Type === "video" ? (
+                      <View
+                        className="w-full h-full items-center justify-center bg-black/60"
+                        style={{
+                          borderWidth: s(1),
+                          borderColor: "#A49A99",
+                          borderRadius: s(6),
+                        }}
+                      >
+                        <SVGIcons.Video width={s(15)} height={s(15)} />
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: media[2].cloud || media[2].uri }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
+                    )
                   ) : (
                     <View />
                   )}
