@@ -142,16 +142,42 @@ export const ValidationRules = {
   },
   phone: {
     required: true,
-    pattern: /^\+[1-9]\d{1,14}$/,
     custom: (value: string) => {
-      if (!value) return true;
-      // E.164 format: +[country code][number]
-      // Require between 10 and 15 digits in total (excluding the +)
-      const digitsOnly = value.replace(/\D/g, "");
-      if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-        return "Il numero di telefono deve avere tra 10 e 15 cifre";
+      if (!value || value.trim() === "") {
+        return "Questo campo è obbligatorio";
       }
-      return true;
+      // E.164 format: +[country code][number]
+      // Check format first
+      if (!/^\+[1-9]\d+$/.test(value)) {
+        return "Please enter a valid phone number";
+      }
+      // Extract all digits (excluding the +)
+      const allDigits = value.replace(/[^0-9]/g, "");
+      const totalDigits = allDigits.length;
+
+      // Minimum total must be at least 10 digits (1 digit country code + 9 digit phone minimum)
+      // Maximum total can be up to 19 digits (4 digit country code + 15 digit phone maximum)
+      if (totalDigits < 10 || totalDigits > 19) {
+        return "Please enter a valid phone number";
+      }
+
+      // Try country code lengths from 1 to 4 (to handle 4-digit country codes)
+      // Check if there's at least ONE valid split where phone number is 10-15 digits
+      // We don't require ALL splits to be valid, just that a valid split exists
+      for (
+        let ccLength = 1;
+        ccLength <= 4 && ccLength < totalDigits;
+        ccLength++
+      ) {
+        const phoneNumberLength = totalDigits - ccLength;
+        // If we find at least one valid split, the phone number is valid
+        if (phoneNumberLength >= 10 && phoneNumberLength <= 15) {
+          return true;
+        }
+      }
+
+      // No valid split found
+      return "Please enter a valid phone number";
     },
   },
   businessName: {

@@ -182,10 +182,23 @@ export default function UserRegistrationStep3() {
   };
 
   const validateForm = (): boolean => {
+    // Validate phone number using actual country code
+    const phoneNumber = formData.phone || "";
+    const phoneDigits = phoneNumber.replace(/[^0-9]/g, "");
+    const countryCodeLength = (formData.callingCode || "39").length;
+    const phoneNumberLength = phoneDigits.length - countryCodeLength;
+    const isPhoneValid = phoneNumberLength >= 10 && phoneNumberLength <= 15;
+
     const formErrors = ValidationUtils.validateForm(
       formData,
       UserStep3ValidationSchema
     );
+
+    // Override phone error if validation fails with actual country code
+    if (!isPhoneValid && phoneNumber) {
+      formErrors.phone = "Please enter a valid phone number";
+    }
+
     setLocalErrors(formErrors);
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
@@ -233,7 +246,7 @@ export default function UserRegistrationStep3() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-tat textcenter mb-2 font-montserratSemibold"
+              className="mb-2 text-tat textcenter font-montserratSemibold"
             >
               Nome
               <ScaledText variant="sm" className="text-error">
@@ -249,7 +262,7 @@ export default function UserRegistrationStep3() {
               onChangeText={(v) => handleInputChange("firstName", v)}
             />
             {!!errors.firstName && (
-              <ScaledText variant="11" className="text-error mt-1">
+              <ScaledText variant="11" className="mt-1 text-error">
                 {errors.firstName}
               </ScaledText>
             )}
@@ -259,7 +272,7 @@ export default function UserRegistrationStep3() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-tat textcenter mb-2 font-montserratSemibold"
+              className="mb-2 text-tat textcenter font-montserratSemibold"
             >
               Cognome
               <ScaledText variant="sm" className="text-error">
@@ -275,7 +288,7 @@ export default function UserRegistrationStep3() {
               onChangeText={(v) => handleInputChange("lastName", v)}
             />
             {!!errors.lastName && (
-              <ScaledText variant="11" className="text-error mt-1">
+              <ScaledText variant="11" className="mt-1 text-error">
                 {errors.lastName}
               </ScaledText>
             )}
@@ -285,14 +298,14 @@ export default function UserRegistrationStep3() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-tat textcenter mb-2 font-montserratSemibold"
+              className="mb-2 text-tat textcenter font-montserratSemibold"
             >
               Enter phone number
               <ScaledText variant="sm" className="text-error">
                 *
               </ScaledText>
             </ScaledText>
-            <View className="flex-row items-center rounded-xl border border-gray bg-tat-foreground">
+            <View className="flex-row items-center border rounded-xl border-gray bg-tat-foreground">
               <Pressable
                 onPress={() => setCountryPickerVisible(true)}
                 style={{
@@ -329,10 +342,31 @@ export default function UserRegistrationStep3() {
                 )}
                 onChangeText={(v) => {
                   const digits = v.replace(/[^0-9]/g, "");
-                  handleInputChange(
-                    "phone",
-                    `+${formData.callingCode}${digits}`
-                  );
+                  // Phone number part (excluding country code) can be up to 15 digits
+                  const limitedDigits = digits.slice(0, 15);
+                  const phoneValue = `+${formData.callingCode}${limitedDigits}`;
+
+                  // Validate phone number using actual country code
+                  // Phone number part (excluding country code) must be 10-15 digits
+                  const phoneNumberLength = limitedDigits.length;
+                  const isPhoneValid =
+                    phoneNumberLength >= 10 && phoneNumberLength <= 15;
+
+                  handleInputChange("phone", phoneValue);
+
+                  // Set error if phone number is invalid
+                  if (!isPhoneValid && limitedDigits.length > 0) {
+                    setLocalErrors((prev) => ({
+                      ...prev,
+                      phone: "Please enter a valid phone number",
+                    }));
+                  } else if (isPhoneValid) {
+                    // Clear error if valid
+                    setLocalErrors((prev) => {
+                      const { phone, ...rest } = prev;
+                      return rest;
+                    });
+                  }
                 }}
                 keyboardType="number-pad"
                 textContentType="telephoneNumber"
@@ -381,7 +415,7 @@ export default function UserRegistrationStep3() {
               </SafeAreaView>
             </Modal>
             {!!errors.phone && (
-              <ScaledText variant="11" className="text-error mt-1">
+              <ScaledText variant="11" className="mt-1 text-error">
                 {errors.phone}
               </ScaledText>
             )}
@@ -392,7 +426,7 @@ export default function UserRegistrationStep3() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-tat textcenter mb-2 font-montserratSemibold"
+              className="mb-2 text-tat textcenter font-montserratSemibold"
             >
               Provincia & Comune
               <ScaledText variant="sm" className="text-error">
@@ -402,7 +436,7 @@ export default function UserRegistrationStep3() {
             <TouchableOpacity
               accessibilityRole="button"
               onPress={() => setShowLocationPicker(true)}
-              className="rounded-xl border border-gray bg-tat-foreground"
+              className="border rounded-xl border-gray bg-tat-foreground"
               style={{ paddingVertical: mvs(12), paddingHorizontal: s(16) }}
             >
               <ScaledText
@@ -423,12 +457,12 @@ export default function UserRegistrationStep3() {
               </ScaledText>
             </TouchableOpacity>
             {!!errors.province && (
-              <ScaledText variant="11" className="text-error mt-1">
+              <ScaledText variant="11" className="mt-1 text-error">
                 {errors.province}
               </ScaledText>
             )}
             {!!errors.municipality && (
-              <ScaledText variant="11" className="text-error mt-1">
+              <ScaledText variant="11" className="mt-1 text-error">
                 {errors.municipality}
               </ScaledText>
             )}

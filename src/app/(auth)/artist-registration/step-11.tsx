@@ -49,6 +49,7 @@ export default function ArtistStep11V2() {
   };
 
   const onNext = () => {
+    validateAll();
     if (!canProceed) return;
     router.push("/(auth)/artist-registration/step-12");
   };

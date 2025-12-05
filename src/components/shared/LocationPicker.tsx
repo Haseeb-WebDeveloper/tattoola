@@ -64,16 +64,22 @@ export default function LocationPicker({
   // Load provinces on mount
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from("provinces")
-        .select("id, name, imageUrl")
-        .eq("isActive", true)
-        .order("name");
-      if (error) {
-        console.error("Error loading provinces:", error);
+      try {
+        const { data, error } = await supabase
+          .from("provinces")
+          .select("id, name, imageUrl")
+          .eq("isActive", true)
+          .order("name");
+        if (error) {
+          // Silently handle error - don't log to console to avoid LogBox errors
+          // This could be a network issue or server error, just set empty array
+          setProvinces([]);
+        } else {
+          setProvinces(data || []);
+        }
+      } catch (err) {
+        // Handle any unexpected errors silently
         setProvinces([]);
-      } else {
-        setProvinces(data || []);
       }
     })();
   }, []);
@@ -82,17 +88,22 @@ export default function LocationPicker({
   useEffect(() => {
     (async () => {
       if (modalStep === "municipality" && selectedProvince) {
-        const { data, error } = await supabase
-          .from("municipalities")
-          .select("id, name, imageUrl")
-          .eq("provinceId", selectedProvince.id)
-          .eq("isActive", true)
-          .order("name");
-        if (error) {
-          console.error("Error loading municipalities:", error);
+        try {
+          const { data, error } = await supabase
+            .from("municipalities")
+            .select("id, name, imageUrl")
+            .eq("provinceId", selectedProvince.id)
+            .eq("isActive", true)
+            .order("name");
+          if (error) {
+            // Silently handle error - don't log to console to avoid LogBox errors
+            setMunicipalities([]);
+          } else {
+            setMunicipalities(data || []);
+          }
+        } catch (err) {
+          // Handle any unexpected errors silently
           setMunicipalities([]);
-        } else {
-          setMunicipalities(data || []);
         }
       }
     })();
@@ -169,7 +180,7 @@ export default function LocationPicker({
         >
           {/* Header */}
           <View
-            className="border-b border-gray flex-row items-center justify-between relative bg-primary/30"
+            className="relative flex-row items-center justify-between border-b border-gray bg-primary/30"
             style={{
               paddingBottom: mvs(15),
               paddingTop: mvs(50),
@@ -178,7 +189,7 @@ export default function LocationPicker({
           >
             <TouchableOpacity
               onPress={handleBack}
-              className="rounded-full bg-foreground/20 items-center justify-center"
+              className="items-center justify-center rounded-full bg-foreground/20"
               style={{ width: s(30), height: s(30) }}
             >
               <SVGIcons.Close width={s(12)} height={s(12)} />
@@ -199,7 +210,7 @@ export default function LocationPicker({
 
           {/* Search */}
           <View style={{ paddingHorizontal: s(20), paddingTop: mvs(16) }}>
-            <View className="border border-gray rounded-full flex-row items-center bg-tat-foreground">
+            <View className="flex-row items-center border rounded-full border-gray bg-tat-foreground">
               <View style={{ paddingLeft: s(12) }}>
                 <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
@@ -241,7 +252,7 @@ export default function LocationPicker({
                   Città più popolari
                 </ScaledText>
                 <View
-                  className="flex-row flex-wrap  bg-background"
+                  className="flex-row flex-wrap bg-background"
                   style={{ gap: s(1) }}
                 >
                   {topSix.map((p) => {
@@ -274,7 +285,7 @@ export default function LocationPicker({
                           <ScaledText
                             allowScaling={false}
                             variant="11"
-                            className="text-foreground text-center font-neueLight"
+                            className="text-center text-foreground font-neueLight"
                           >
                             {p.name}
                           </ScaledText>
@@ -310,7 +321,7 @@ export default function LocationPicker({
                   <ScaledText
                     allowScaling={false}
                     variant="lg"
-                    className="text-gray text-center font-neueLight"
+                    className="text-center text-gray font-neueLight"
                   >
                     Nessun risultato trovato
                   </ScaledText>
@@ -354,7 +365,7 @@ export default function LocationPicker({
 
           {/* Footer actions */}
           <View
-            className="flex-row justify-between absolute left-0 right-0 bg-background border-t border-gray/20"
+            className="absolute left-0 right-0 flex-row justify-between border-t bg-background border-gray/20"
             style={{
               paddingHorizontal: s(20),
               paddingTop: mvs(16),
@@ -364,7 +375,7 @@ export default function LocationPicker({
           >
             <TouchableOpacity
               onPress={handleBack}
-              className="rounded-full border border-foreground items-center flex-row gap-3"
+              className="flex-row items-center gap-3 border rounded-full border-foreground"
               style={{
                 paddingVertical: mvs(10.5),
                 paddingLeft: s(18),

@@ -62,19 +62,31 @@ export default function ArtistStep5V2() {
   });
 
   const validateAll = () => {
+    // Validate phone number using actual country code
+    const phoneNumber = step5.phone || "";
+    const phoneDigits = phoneNumber.replace(/[^0-9]/g, "");
+    const countryCodeLength = (callingCode || "39").length;
+    const phoneNumberLength = phoneDigits.length - countryCodeLength;
+    const isPhoneValid = phoneNumberLength >= 10 && phoneNumberLength <= 15;
+
     const result = step5Schema.safeParse({
       studioName: step5.studioName || "",
       province: step5.province || "",
       municipality: step5.municipality || "",
       studioAddress: step5.studioAddress || "",
       website: step5.website || "",
-      phone: (step5.phone || "").replace(/\s+/g, ""),
+      phone: phoneNumber.replace(/\s+/g, ""),
     });
-    if (!result.success) {
+
+    if (!result.success || !isPhoneValid) {
       const errs: any = {};
       for (const issue of result.error.issues) {
         const key = String(issue.path[0]);
         errs[key] = issue.message;
+      }
+      // Override phone error if validation fails with actual country code
+      if (!isPhoneValid) {
+        errs.phone = "Please enter a valid phone number";
       }
       setErrors(errs);
     } else {
@@ -83,6 +95,7 @@ export default function ArtistStep5V2() {
   };
 
   const onNext = () => {
+    validateAll();
     if (!canProceed) return;
     router.push("/(auth)/artist-registration/step-6");
   };
@@ -291,8 +304,17 @@ export default function ArtistStep5V2() {
               style={{ fontSize: s(12) }}
               onChangeText={(v) => {
                 const digits = v.replace(/[^0-9]/g, "");
-                const phoneValue = `+${callingCode}${digits}`;
+                // Phone number part (excluding country code) can be up to 15 digits
+                const limitedDigits = digits.slice(0, 15);
+                const phoneValue = `+${callingCode}${limitedDigits}`;
                 updateStep5({ phone: phoneValue });
+
+                // Validate phone number using actual country code
+                // Phone number part (excluding country code) must be 10-15 digits
+                const phoneNumberLength = limitedDigits.length;
+                const isPhoneValid =
+                  phoneNumberLength >= 10 && phoneNumberLength <= 15;
+
                 // Real-time validation
                 const result = step5Schema.safeParse({
                   studioName: step5.studioName || "",
@@ -302,7 +324,14 @@ export default function ArtistStep5V2() {
                   website: step5.website || "",
                   phone: phoneValue.replace(/\s+/g, ""),
                 });
-                if (!result.success) {
+
+                // Check phone validation with actual country code
+                if (!isPhoneValid) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    phone: "Please enter a valid phone number",
+                  }));
+                } else if (!result.success) {
                   const phoneError = result.error.issues.find(
                     (issue) => issue.path[0] === "phone"
                   );
@@ -446,7 +475,7 @@ function ProvinceMunicipalityInput({
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => setShowLocationPicker(true)}
-        className="rounded-xl border border-gray bg-tat-foreground"
+        className="border rounded-xl border-gray bg-tat-foreground"
         style={{
           paddingVertical: mvs(12),
           paddingHorizontal: s(16),
