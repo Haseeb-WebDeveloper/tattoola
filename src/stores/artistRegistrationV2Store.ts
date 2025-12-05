@@ -1,7 +1,7 @@
-import { WorkArrangement } from '@/types/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { WorkArrangement } from "@/types/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 
 export interface ArtistV2Step3 {
   firstName: string;
@@ -16,10 +16,10 @@ export interface ArtistV2Step4 {
 
 export interface ArtistV2Step5 {
   studioName: string;
-  province: string;          // province name (for display)
-  provinceId: string;        // province ID (for DB)
-  municipality: string;      // municipality name (for display)
-  municipalityId: string;    // municipality ID (for DB)
+  province: string; // province name (for display)
+  provinceId: string; // province ID (for DB)
+  municipality: string; // municipality name (for display)
+  municipalityId: string; // municipality ID (for DB)
   studioAddress: string;
   website?: string;
   phone: string;
@@ -56,6 +56,7 @@ export interface PortfolioProjectInput {
   description?: string;
   photos: string[]; // urls
   videos: string[]; // urls
+  associatedStyles: string[]; // style IDs, max 3 per project
 }
 
 export interface ArtistV2Step12 {
@@ -64,7 +65,7 @@ export interface ArtistV2Step12 {
 
 export interface ArtistV2Step13 {
   selectedPlanId: string;
-  billingCycle: 'MONTHLY' | 'YEARLY';
+  billingCycle: "MONTHLY" | "YEARLY";
 }
 
 interface ArtistV2RegistrationState {
@@ -105,17 +106,42 @@ interface ArtistV2RegistrationState {
   reset: () => void;
 }
 
-const initialState: Pick<ArtistV2RegistrationState, 'step3'|'step4'|'step5'|'step7'|'step8'|'step9'|'step10'|'step11'|'step12'|'step13'|'currentStepDisplay'|'totalStepsDisplay'|'errors'|'isSubmitting'> = {
+const initialState: Pick<
+  ArtistV2RegistrationState,
+  | "step3"
+  | "step4"
+  | "step5"
+  | "step7"
+  | "step8"
+  | "step9"
+  | "step10"
+  | "step11"
+  | "step12"
+  | "step13"
+  | "currentStepDisplay"
+  | "totalStepsDisplay"
+  | "errors"
+  | "isSubmitting"
+> = {
   step3: {},
   step4: {},
-  step5: { studioName: '', province: '', provinceId: '', municipality: '', municipalityId: '', studioAddress: '', phone: '', website: '' },
+  step5: {
+    studioName: "",
+    province: "",
+    provinceId: "",
+    municipality: "",
+    municipalityId: "",
+    studioAddress: "",
+    phone: "",
+    website: "",
+  },
   step7: {},
   step8: { styles: [], favoriteStyles: [] },
   step9: { servicesOffered: [] },
   step10: { bodyParts: [] },
   step11: {},
   step12: { projects: [] },
-  step13: { billingCycle: 'MONTHLY' },
+  step13: { billingCycle: "MONTHLY" },
   currentStepDisplay: 3,
   totalStepsDisplay: 13,
   errors: {},
@@ -128,36 +154,45 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
       (set) => ({
         ...initialState,
         updateStep3: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 3 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 3 updated:", data);
           set((s) => ({ step3: { ...s.step3, ...data } }));
         },
         setAvatar: (uri) => {
-          console.log('[ArtistRegistrationV2Store] Step 3 avatar updated:', uri);
+          console.log(
+            "[ArtistRegistrationV2Store] Step 3 avatar updated:",
+            uri
+          );
           set((s) => ({ step3: { ...s.step3, avatar: uri } }));
         },
         updateStep4: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 4 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 4 updated:", data);
           set((s) => ({ step4: { ...s.step4, ...data } }));
         },
         // Convenience setter for certificate URL
         setCertificateUrl: (url?: string) => {
-          console.log('[ArtistRegistrationV2Store] Step 4 certificateUrl updated:', url);
+          console.log(
+            "[ArtistRegistrationV2Store] Step 4 certificateUrl updated:",
+            url
+          );
           set((s) => ({ step4: { ...s.step4, certificateUrl: url } }));
         },
         setWorkArrangement: (w) => {
-          console.log('[ArtistRegistrationV2Store] Step 4 workArrangement updated:', w);
+          console.log(
+            "[ArtistRegistrationV2Store] Step 4 workArrangement updated:",
+            w
+          );
           set((s) => ({ step4: { ...s.step4, workArrangement: w } }));
         },
         updateStep5: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 5 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 5 updated:", data);
           set((s) => ({ step5: { ...s.step5, ...data } }));
         },
         updateStep7: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 7 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 7 updated:", data);
           set((s) => ({ step7: { ...s.step7, ...data } }));
         },
         updateStep8: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 8 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 8 updated:", data);
           set((s) => ({ step8: { ...s.step8, ...data } }));
         },
         // Toggle a style in the overall selected list (checkbox)
@@ -219,35 +254,39 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           });
         },
         updateStep9: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 9 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 9 updated:", data);
           set((s) => ({ step9: { ...s.step9, ...data } }));
         },
         toggleService: (serviceId) => {
           set((s) => {
             const current = s.step9.servicesOffered || [];
             const exists = current.includes(serviceId);
-            const next = exists ? current.filter((id) => id !== serviceId) : [...current, serviceId];
+            const next = exists
+              ? current.filter((id) => id !== serviceId)
+              : [...current, serviceId];
             return { step9: { ...s.step9, servicesOffered: next } } as any;
           });
         },
         updateStep10: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 10 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 10 updated:", data);
           set((s) => ({ step10: { ...s.step10, ...data } }));
         },
         toggleBodyPart: (bodyPartId) => {
           set((s) => {
             const current = s.step10.bodyParts || [];
             const exists = current.includes(bodyPartId);
-            const next = exists ? current.filter((id) => id !== bodyPartId) : [...current, bodyPartId];
+            const next = exists
+              ? current.filter((id) => id !== bodyPartId)
+              : [...current, bodyPartId];
             return { step10: { ...s.step10, bodyParts: next } } as any;
           });
         },
         updateStep11: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 11 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 11 updated:", data);
           set((s) => ({ step11: { ...s.step11, ...data } }));
         },
         updateStep12: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 12 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 12 updated:", data);
           set((s) => ({ step12: { ...s.step12, ...data } }));
         },
         setProjectAtIndex: (idx, project) => {
@@ -258,14 +297,14 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
           });
         },
         updateStep13: (data) => {
-          console.log('[ArtistRegistrationV2Store] Step 13 updated:', data);
+          console.log("[ArtistRegistrationV2Store] Step 13 updated:", data);
           set((s) => ({ step13: { ...s.step13, ...data } }));
         },
         setCurrentStepDisplay: (n) => set({ currentStepDisplay: n }),
         reset: () => set(initialState),
       }),
       {
-        name: 'artist-registration-v2',
+        name: "artist-registration-v2",
         storage: {
           getItem: async (name: string) => {
             const v = await AsyncStorage.getItem(name);
@@ -278,9 +317,21 @@ export const useArtistRegistrationV2Store = create<ArtistV2RegistrationState>()(
             await AsyncStorage.removeItem(name);
           },
         },
-        partialize: (state) => ({ step3: state.step3, step4: state.step4, step5: state.step5, step7: state.step7, step8: state.step8, step9: state.step9, step10: state.step10, step11: state.step11, step12: state.step12, step13: state.step13, currentStepDisplay: state.currentStepDisplay }),
+        partialize: (state) => ({
+          step3: state.step3,
+          step4: state.step4,
+          step5: state.step5,
+          step7: state.step7,
+          step8: state.step8,
+          step9: state.step9,
+          step10: state.step10,
+          step11: state.step11,
+          step12: state.step12,
+          step13: state.step13,
+          currentStepDisplay: state.currentStepDisplay,
+        }),
       }
     ),
-    { name: 'artist-registration-v2-store' }
+    { name: "artist-registration-v2-store" }
   )
 );

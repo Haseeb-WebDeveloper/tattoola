@@ -4,22 +4,22 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import {
-    fetchStudioDetails,
-    updateStudioBanner,
+  fetchStudioDetails,
+  updateStudioBanner,
 } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -55,7 +55,9 @@ export default function StudioBannerScreen() {
         setBannerImages(studio.bannerImages || []);
       } catch (error: any) {
         console.error("Error fetching studio:", error);
-        toast.error(error.message || "Impossibile caricare i dati dello studio");
+        toast.error(
+          error.message || "Impossibile caricare i dati dello studio"
+        );
       } finally {
         setIsFetching(false);
       }
@@ -116,7 +118,7 @@ export default function StudioBannerScreen() {
       }
     } catch (error: any) {
       console.error("Error picking image:", error);
-        toast.error(error.message || "Impossibile caricare l'immagine");
+      toast.error(error.message || "Impossibile caricare l'immagine");
     } finally {
       setUploadingIndices((prev) => prev.filter((i) => i !== index));
     }
@@ -165,18 +167,22 @@ export default function StudioBannerScreen() {
       );
 
       if (result.success) {
-        toast.success("Banner dello studio aggiornato con successo!");
+        toast.success("Copertina dello studio aggiornata con successo!");
         setInitialType(selectedType);
         setInitialImages(bannerImages);
         setTimeout(() => {
           router.back();
         }, 500);
       } else {
-        toast.error(result.error || "Impossibile aggiornare il banner");
+        toast.error(
+          result.error || "Impossibile aggiornare la copertina dello studio"
+        );
       }
     } catch (error: any) {
       console.error("Error updating banner:", error);
-      toast.error(error.message || "Impossibile aggiornare il banner");
+      toast.error(
+        error.message || "Impossibile aggiornare la copertina dello studio"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +206,7 @@ export default function StudioBannerScreen() {
           >
             {/* Header */}
             <View
-              className="flex-row items-center justify-center relative"
+              className="relative flex-row items-center justify-center"
               style={{
                 paddingHorizontal: s(16),
                 paddingVertical: mvs(16),
@@ -210,7 +216,7 @@ export default function StudioBannerScreen() {
               <TouchableOpacity
                 onPress={handleBack}
                 disabled={isFetching}
-                className="absolute rounded-full bg-foreground/20 items-center justify-center"
+                className="absolute items-center justify-center rounded-full bg-foreground/20"
                 style={{
                   width: s(34),
                   height: s(34),
@@ -271,7 +277,7 @@ export default function StudioBannerScreen() {
                       {/* Remove button */}
                       <TouchableOpacity
                         onPress={() => handlePickImage(0)}
-                        className="absolute top-2 right-2 bg-foreground rounded-full"
+                        className="absolute rounded-full top-2 right-2 bg-foreground"
                         style={{
                           width: s(28),
                           height: s(28),
@@ -286,7 +292,7 @@ export default function StudioBannerScreen() {
                     <TouchableOpacity
                       onPress={() => handlePickImage(0)}
                       disabled={uploadingIndices.includes(0)}
-                      className="border border-error/60  border-dashed items-center justify-center"
+                      className="items-center justify-center border border-dashed border-error/60"
                       style={{
                         height: mvs(180),
                         borderRadius: s(12),
@@ -299,7 +305,7 @@ export default function StudioBannerScreen() {
                         <SVGIcons.Upload width={s(48)} height={s(48)} />
                       )}
                       <View
-                        className="bg-primary rounded-full"
+                        className="rounded-full bg-primary"
                         style={{
                           paddingVertical: mvs(8),
                           paddingHorizontal: s(16),
@@ -362,7 +368,7 @@ export default function StudioBannerScreen() {
                             {/* Edit button */}
                             <TouchableOpacity
                               onPress={() => handlePickImage(index)}
-                              className="absolute top-2 right-2 bg-foreground rounded-full"
+                              className="absolute rounded-full top-2 right-2 bg-foreground"
                               style={{
                                 width: s(24),
                                 height: s(24),
@@ -377,7 +383,7 @@ export default function StudioBannerScreen() {
                           <TouchableOpacity
                             onPress={() => handlePickImage(index)}
                             disabled={uploadingIndices.includes(index)}
-                            className=" border-dashed items-center justify-center border-primary bg-tat-darkMaroon"
+                            className="items-center justify-center border-dashed  border-primary bg-tat-darkMaroon"
                             style={{
                               height: mvs(120),
                               borderRadius: s(12),
@@ -432,7 +438,7 @@ export default function StudioBannerScreen() {
                             {/* Edit button */}
                             <TouchableOpacity
                               onPress={() => handlePickImage(index)}
-                              className="absolute top-2 right-2 bg-foreground rounded-full"
+                              className="absolute rounded-full top-2 right-2 bg-foreground"
                               style={{
                                 width: s(24),
                                 height: s(24),
@@ -447,7 +453,7 @@ export default function StudioBannerScreen() {
                           <TouchableOpacity
                             onPress={() => handlePickImage(index)}
                             disabled={uploadingIndices.includes(index)}
-                            className=" border-dashed items-center justify-center border-primary bg-tat-darkMaroon"
+                            className="items-center justify-center border-dashed  border-primary bg-tat-darkMaroon"
                             style={{
                               height: mvs(120),
                               borderRadius: s(12),
@@ -498,7 +504,7 @@ export default function StudioBannerScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="sm"
-                    className="text-white flex-1 font-montserratSemibold"
+                    className="flex-1 text-white font-montserratSemibold"
                   >
                     Voglio caricare una sola foto di sfondo
                   </ScaledText>
@@ -533,7 +539,7 @@ export default function StudioBannerScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="sm"
-                    className="text-white flex-1 font-montserratSemibold"
+                    className="flex-1 text-white font-montserratSemibold"
                   >
                     Voglio caricare 4 foto verticali per comporre la cover
                   </ScaledText>
@@ -556,8 +562,10 @@ export default function StudioBannerScreen() {
           >
             <TouchableOpacity
               onPress={handleSave}
-              disabled={isLoading || isFetching || !hasUnsavedChanges || !canSave}
-              className="rounded-full items-center justify-center"
+              disabled={
+                isLoading || isFetching || !hasUnsavedChanges || !canSave
+              }
+              className="items-center justify-center rounded-full"
               style={{
                 backgroundColor:
                   isLoading || isFetching || !hasUnsavedChanges || !canSave
@@ -588,7 +596,7 @@ export default function StudioBannerScreen() {
         onRequestClose={handleContinueEditing}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -608,7 +616,7 @@ export default function StudioBannerScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
               Hai modifiche non salvate nella cover
@@ -618,7 +626,7 @@ export default function StudioBannerScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
               Vuoi ignorarle?
@@ -629,7 +637,7 @@ export default function StudioBannerScreen() {
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}
-                className="rounded-full border-2 items-center justify-center flex-row"
+                className="flex-row items-center justify-center border-2 rounded-full"
                 style={{
                   borderColor: "#AD2E2E",
                   paddingVertical: mvs(10.5),
@@ -655,7 +663,7 @@ export default function StudioBannerScreen() {
               {/* Discard Changes Button */}
               <TouchableOpacity
                 onPress={handleDiscardChanges}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
