@@ -6,7 +6,7 @@ import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -78,6 +78,18 @@ export default function HomeScreen() {
       }
     }
   }, [feedEntries, currentPostId]);
+
+  // Pause all videos when screen loses focus (navigating away)
+  useFocusEffect(
+    useCallback(() => {
+      // Screen is focused - onViewableItemsChanged will handle setting currentPostId
+      return () => {
+        // Screen is blurred - pause all videos by setting currentPostId to null
+        // This makes all FeedPostCards have isVisible=false, pausing their videos
+        setCurrentPostId(null);
+      };
+    }, [])
+  );
 
   // Get current post from store (always up-to-date)
   const currentPost =
@@ -167,6 +179,7 @@ export default function HomeScreen() {
                 {entry.kind === "post" ? (
                   <FeedPostCard
                     post={entry.post}
+                    isVisible={currentPostId === entry.post.id}
                     onPress={() =>
                       router.push({
                         pathname: `/post/${entry.post.id}`,

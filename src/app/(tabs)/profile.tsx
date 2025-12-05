@@ -237,6 +237,8 @@ export default function ProfileScreen() {
       <ScrollView
         className="relative"
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

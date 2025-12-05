@@ -142,6 +142,8 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
       <ScrollView
         className="relative"
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
         contentContainerStyle={{ paddingBottom: 10 }}
       >
         {/* Back icon */}

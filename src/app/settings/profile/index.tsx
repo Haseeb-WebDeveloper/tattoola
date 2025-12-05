@@ -185,7 +185,9 @@ export default function ProfileSettingsScreen() {
         <ScrollView
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
-          bounces={true}
+          showsHorizontalScrollIndicator={false}
+          horizontal={false}
+          bounces={false}
         >
           {itemsToShow.map((item, idx) => (
             <ProfileSettingsItem
