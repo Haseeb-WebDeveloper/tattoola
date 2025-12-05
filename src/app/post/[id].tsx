@@ -9,6 +9,7 @@ import {
 import { toggleFollow } from "@/services/profile.service";
 import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -106,6 +107,89 @@ export default function PostDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<PostDetail | null>(parsedInitial);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+
+  // Create video players for media items (hooks must be called unconditionally)
+  // Create up to 5 players to handle most posts
+  // Initialize with URLs if available, otherwise empty string
+  const player1 = useVideoPlayer(post?.media?.[0]?.mediaType === "VIDEO" ? post.media[0].mediaUrl || "" : "", (player) => {
+    if (post?.media?.[0]?.mediaType === "VIDEO" && currentMediaIndex === 0) {
+      player.loop = true;
+      player.muted = true;
+      // Small delay for iOS to ensure player is ready
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+  const player2 = useVideoPlayer(post?.media?.[1]?.mediaType === "VIDEO" ? post.media[1].mediaUrl || "" : "", (player) => {
+    if (post?.media?.[1]?.mediaType === "VIDEO" && currentMediaIndex === 1) {
+      player.loop = true;
+      player.muted = true;
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+  const player3 = useVideoPlayer(post?.media?.[2]?.mediaType === "VIDEO" ? post.media[2].mediaUrl || "" : "", (player) => {
+    if (post?.media?.[2]?.mediaType === "VIDEO" && currentMediaIndex === 2) {
+      player.loop = true;
+      player.muted = true;
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+  const player4 = useVideoPlayer(post?.media?.[3]?.mediaType === "VIDEO" ? post.media[3].mediaUrl || "" : "", (player) => {
+    if (post?.media?.[3]?.mediaType === "VIDEO" && currentMediaIndex === 3) {
+      player.loop = true;
+      player.muted = true;
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+  const player5 = useVideoPlayer(post?.media?.[4]?.mediaType === "VIDEO" ? post.media[4].mediaUrl || "" : "", (player) => {
+    if (post?.media?.[4]?.mediaType === "VIDEO" && currentMediaIndex === 4) {
+      player.loop = true;
+      player.muted = true;
+      setTimeout(() => {
+        player.play();
+      }, 100);
+    }
+  });
+  const videoPlayers = [player1, player2, player3, player4, player5];
+
+  // Update video players when media or current index changes
+  useEffect(() => {
+    if (!post?.media) return;
+    
+    const updatePlayers = async () => {
+      for (let index = 0; index < post.media.length && index < videoPlayers.length; index++) {
+        const mediaItem = post.media[index];
+        const player = videoPlayers[index];
+        if (player && mediaItem.mediaType === "VIDEO") {
+          try {
+            await player.replaceAsync(mediaItem.mediaUrl);
+            player.loop = true;
+            player.muted = true;
+            // Only autoplay if it's the current visible item
+            // Add small delay for iOS to ensure player is ready
+            if (index === currentMediaIndex) {
+              setTimeout(() => {
+                player.play();
+              }, 100);
+            } else {
+              player.pause();
+            }
+          } catch (error) {
+            console.error(`Error loading video ${index}:`, error);
+          }
+        }
+      }
+    };
+    
+    updatePlayers();
+  }, [post?.media, currentMediaIndex, videoPlayers]);
 
   const loadPost = useCallback(async () => {
     if (!id || !user) return;
@@ -376,19 +460,36 @@ export default function PostDetailScreen() {
                 setCurrentMediaIndex(index);
               }}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={{ width: screenWidth }}>
-                  <Image
-                    source={{ uri: item.mediaUrl }}
-                    style={{
-                      width: screenWidth,
-                      height: (screenWidth * 16) / 9,
-                    }}
-                    resizeMode="cover"
-                    className="bg-primary"
-                  />
-                </View>
-              )}
+              renderItem={({ item, index }) => {
+                const isVideo = item.mediaType === "VIDEO";
+                const player = videoPlayers[index];
+
+                return (
+                  <View style={{ width: screenWidth }}>
+                    {isVideo && player ? (
+                      <VideoView
+                        player={player}
+                        style={{
+                          width: screenWidth,
+                          height: (screenWidth * 16) / 9,
+                        }}
+                        contentFit="cover"
+                        nativeControls={false}
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: item.mediaUrl }}
+                        style={{
+                          width: screenWidth,
+                          height: (screenWidth * 16) / 9,
+                        }}
+                        resizeMode="cover"
+                        className="bg-primary"
+                      />
+                    )}
+                  </View>
+                );
+              }}
             />
 
             {/* Top fade gradient for header/back contrast */}

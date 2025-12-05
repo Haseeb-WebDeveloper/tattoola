@@ -74,10 +74,19 @@ export default function UploadDescriptionStep() {
             {media.map((m, idx) => (
               <View
                 key={`${m.uri}-${idx}`}
-                className="rounded-xl overflow-hidden bg-black/40 w-24 aspect-[9/16] relative"
+                className=" overflow-hidden bg-black/40 w-24 aspect-[9/16] relative"
+                style={{
+                  borderRadius: s(12),
+                }}
               >
                 {m.type === "video" ? (
-                  <View className="w-full h-full items-center justify-center bg-black/60">
+                  <View className="w-full h-full items-center justify-center bg-black/60"
+                    style={{
+                      borderWidth: s(1),
+                      borderColor: "#A49A99",
+                      borderRadius: s(12),
+                    }}
+                  >
                     <SVGIcons.Video width={s(30)} height={s(30)} />
                   </View>
                 ) : (

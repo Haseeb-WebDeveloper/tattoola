@@ -43,8 +43,11 @@ export default function UploadStyleStep() {
   }, []);
 
   const main = useMemo(() => media[0]?.cloud || media[0]?.uri, [media]);
+  const mainType = useMemo(() => media[0]?.type, [media]);
   const thumb1 = useMemo(() => media[1]?.cloud || media[1]?.uri, [media]);
+  const thumb1Type = useMemo(() => media[1]?.type, [media]);
   const thumb2 = useMemo(() => media[2]?.cloud || media[2]?.uri, [media]);
+  const thumb2Type = useMemo(() => media[2]?.type, [media]);
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = styleIds?.includes(item.id) || false;
@@ -128,11 +131,24 @@ export default function UploadStyleStep() {
                 }}
               >
                 {main ? (
-                  <Image
-                    source={{ uri: main }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                  />
+                  mainType === "video" ? (
+                    <View
+                      className="w-full h-full items-center justify-center bg-black/60"
+                      style={{
+                        borderWidth: s(1),
+                        borderColor: "#A49A99",
+                        borderRadius: s(6),
+                      }}
+                    >
+                      <SVGIcons.Video width={s(20)} height={s(20)} />
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: main }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                    />
+                  )
                 ) : (
                   <View
                     style={{
@@ -154,11 +170,24 @@ export default function UploadStyleStep() {
                   }}
                 >
                   {thumb1 ? (
-                    <Image
-                      source={{ uri: thumb1 }}
-                      style={{ width: "100%", height: "100%" }}
-                      resizeMode="cover"
-                    />
+                    thumb1Type === "video" ? (
+                      <View
+                        className="w-full h-full items-center justify-center bg-black/60"
+                        style={{
+                          borderWidth: s(1),
+                          borderColor: "#A49A99",
+                          borderRadius: s(6),
+                        }}
+                      >
+                        <SVGIcons.Video width={s(15)} height={s(15)} />
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: thumb1 }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
+                    )
                   ) : (
                     <View
                       style={{
@@ -177,11 +206,24 @@ export default function UploadStyleStep() {
                   }}
                 >
                   {thumb2 ? (
-                    <Image
-                      source={{ uri: thumb2 }}
-                      style={{ width: "100%", height: "100%" }}
-                      resizeMode="cover"
-                    />
+                    thumb2Type === "video" ? (
+                      <View
+                        className="w-full h-full items-center justify-center bg-black/60"
+                        style={{
+                          borderWidth: s(1),
+                          borderColor: "#A49A99",
+                          borderRadius: s(6),
+                        }}
+                      >
+                        <SVGIcons.Video width={s(15)} height={s(15)} />
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: thumb2 }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
+                    )
                   ) : (
                     <View
                       style={{
