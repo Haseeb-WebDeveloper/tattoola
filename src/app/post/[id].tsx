@@ -1053,28 +1053,39 @@ export default function PostDetailScreen() {
               left: 0,
               right: 0,
               top: screenHeight * 0.3,
-              backgroundColor: "#0F0202",
-              paddingTop: s(20),
-
               transform: [{ translateY: bottomSheetTranslateY }],
               zIndex: 101,
+              overflow: "hidden",
             }}
           >
-            <EditPostModal
-              visible={showEditModal}
-              post={{
-                id: post.id,
-                caption: post.caption,
-                style: post.style,
-                media: post.media,
+            <LinearGradient
+              colors={["#0F0202", "#000000"]}
+              locations={[0, 1]}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
               }}
-              onClose={handleCloseEdit}
-              onSave={async (data) => {
-                await handleSaveEdit(data);
-                handleCloseEdit();
-              }}
-              isBottomSheet={true}
             />
+            <View style={{ paddingTop: s(20), flex: 1 }}>
+              <EditPostModal
+                visible={showEditModal}
+                post={{
+                  id: post.id,
+                  caption: post.caption,
+                  style: post.style,
+                  media: post.media,
+                }}
+                onClose={handleCloseEdit}
+                onSave={async (data) => {
+                  await handleSaveEdit(data);
+                  handleCloseEdit();
+                }}
+                isBottomSheet={true}
+              />
+            </View>
           </Animated.View>
         </>
       )}

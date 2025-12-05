@@ -199,7 +199,7 @@ export default function EditPostModal({
   ]);
 
   const content = (
-    <View className="flex-1 bg-[#0F0202]">
+    <View className="flex-1" style={{ backgroundColor: "transparent" }}>
       {/* Header - only show if not bottom sheet */}
       {!isBottomSheet && (
         <View
