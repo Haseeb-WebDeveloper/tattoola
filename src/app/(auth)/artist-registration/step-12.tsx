@@ -7,6 +7,7 @@ import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import {
   PortfolioProjectInput,
   useArtistRegistrationV2Store,
@@ -36,9 +37,10 @@ import { toast } from "sonner-native";
 type DraftProject = {
   media: { uri: string; type: "image" | "video"; cloud?: string }[];
   description?: string;
+  styles: string[]; // style IDs, max 3
 };
 
-type ModalStep = "upload" | "description";
+type ModalStep = "upload" | "description" | "styles";
 
 export default function ArtistStep12V2() {
   const {
@@ -50,13 +52,35 @@ export default function ArtistStep12V2() {
   const { completeArtistRegistration } = useAuth();
   const { pickFiles, uploadToCloudinary, uploading } = useFileUpload();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [draft, setDraft] = useState<DraftProject>({ media: [] });
+  const [draft, setDraft] = useState<DraftProject>({ media: [], styles: [] });
   const [modalStep, setModalStep] = useState<ModalStep>("upload");
   const insets = useSafeAreaInsets();
   const [submitting, setSubmitting] = useState(false);
+  const [allStyles, setAllStyles] = useState<TattooStyleItem[]>([]);
+  const [loadingStyles, setLoadingStyles] = useState(false);
 
   useEffect(() => {
     setCurrentStepDisplay(12);
+  }, []);
+
+  // Load tattoo styles for project style selection
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingStyles(true);
+        const data = await fetchTattooStyles();
+        if (mounted) setAllStyles(data);
+      } catch (error) {
+        console.error("Error loading tattoo styles:", error);
+        if (mounted) setAllStyles([]);
+      } finally {
+        if (mounted) setLoadingStyles(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const grid = useMemo(
@@ -81,22 +105,31 @@ export default function ArtistStep12V2() {
           cloud: u,
         })),
       ];
-      setDraft({ media, description: existing.description });
+      setDraft({
+        media,
+        description: existing.description,
+        styles: existing.associatedStyles || [],
+      });
     } else {
-      setDraft({ media: [] });
+      setDraft({ media: [], styles: [] });
     }
   };
 
   const handlePickMedia = async () => {
+    // Calculate how many more files can be added
+    const currentCount = draft.media.length;
+    const remainingSlots = 5 - currentCount;
+    if (remainingSlots <= 0) return; // Already at max
+
     const files = await pickFiles({
       mediaType: "all",
       allowsMultipleSelection: true,
-      maxFiles: 5,
+      maxFiles: Math.min(remainingSlots, 5),
       cloudinaryOptions: cloudinaryService.getPortfolioUploadOptions("image"),
     });
     if (files.length === 0) return;
     // show local immediately
-    const locals = files.slice(0, 5).map((f) => ({
+    const locals = files.slice(0, remainingSlots).map((f) => ({
       uri: f.uri,
       type: f.type === "video" ? "video" : "image",
     })) as { uri: string; type: "image" | "video"; cloud?: string }[];
@@ -148,7 +181,7 @@ export default function ArtistStep12V2() {
     return (
       <View style={{ position: "relative", marginBottom: mvs(4) }}>
         <View
-          className="bg-tat-foreground border-gray rounded-xl flex-row items-center"
+          className="flex-row items-center bg-tat-foreground border-gray rounded-xl"
           style={{
             paddingLeft: s(10),
             paddingRight: s(16),
@@ -184,7 +217,7 @@ export default function ArtistStep12V2() {
               />
             ) : (
               <View
-                className="items-center justify-center bg-tat-darkMaroon border border-gray rounded-xl"
+                className="items-center justify-center border bg-tat-darkMaroon border-gray rounded-xl"
                 style={{ width: "100%", height: "100%" }}
               >
                 <SVGIcons.Video style={{ width: s(30), height: s(30) }} />
@@ -250,6 +283,7 @@ export default function ArtistStep12V2() {
       photos,
       videos,
       description: draft.description,
+      associatedStyles: draft.styles || [],
     };
     setProjectAtIndex(activeIndex, proj);
     setActiveIndex(null);
@@ -327,7 +361,7 @@ export default function ArtistStep12V2() {
             description: project.description,
             photos: project.photos,
             videos: project.videos,
-            associatedStyles: [],
+            associatedStyles: project.associatedStyles || [],
             order: index + 1,
           })),
         },
@@ -388,7 +422,7 @@ export default function ArtistStep12V2() {
   };
 
   return (
-    <View className="flex-1 bg-black pb-40 relative">
+    <View className="relative flex-1 pb-40 bg-black">
       {/* Header */}
       <AuthStepHeader />
 
@@ -397,7 +431,7 @@ export default function ArtistStep12V2() {
         currentStep={12}
         totalSteps={totalStepsDisplay}
         name="Add your works"
-        description="Add 4 projects. Each can include up to 5 media (max 2 videos)."
+        description="Add 4 projects. Each project: upload media (1-5), add description, select styles (0-3)."
         icon={<SVGIcons.Work width={19} height={19} />}
         nameVariant="2xl"
       />
@@ -412,11 +446,11 @@ export default function ArtistStep12V2() {
             <Pressable
               key={i}
               onPress={() => openProjectModal(i)}
-              className="flex-1 h-full aspect-square bg-tat-darkMaroon border-dashed border-primary rounded-xl items-center justify-center overflow-hidden"
+              className="items-center justify-center flex-1 h-full overflow-hidden border-dashed aspect-square bg-tat-darkMaroon border-primary rounded-xl"
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="w-full h-full items-center justify-between gap-2 pb-2">
+                <View className="items-center justify-between w-full h-full gap-2 pb-2">
                   <Image
                     source={{ uri: firstAsset(grid[i])! }}
                     className="w-full h-32"
@@ -450,11 +484,11 @@ export default function ArtistStep12V2() {
             <Pressable
               key={i}
               onPress={() => openProjectModal(i)}
-              className="flex-1 h-full aspect-square bg-tat-darkMaroon border-dashed border-primary rounded-xl items-center justify-center overflow-hidden"
+              className="items-center justify-center flex-1 h-full overflow-hidden border-dashed aspect-square bg-tat-darkMaroon border-primary rounded-xl"
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="w-full h-full items-center justify-between gap-2 pb-2">
+                <View className="items-center justify-between w-full h-full gap-2 pb-2">
                   <Image
                     source={{ uri: firstAsset(grid[i])! }}
                     className="w-full h-32"
@@ -505,7 +539,7 @@ export default function ArtistStep12V2() {
         <View className="flex-1  min-h-[100dvh] bg-background  ">
           <View className="flex-1 w-full rounded-t-3xl">
             <View
-              className="border-b border-gray flex-row items-center justify-between relative bg-tat-darkMaroon"
+              className="relative flex-row items-center justify-between border-b border-gray bg-tat-darkMaroon"
               style={{
                 paddingBottom: mvs(20),
                 paddingTop: mvs(60),
@@ -514,7 +548,7 @@ export default function ArtistStep12V2() {
             >
               <TouchableOpacity
                 onPress={() => setActiveIndex(null)}
-                className=" rounded-full bg-foreground/20 items-center justify-center"
+                className="items-center justify-center rounded-full bg-foreground/20"
                 style={{
                   width: s(30),
                   height: s(30),
@@ -522,7 +556,7 @@ export default function ArtistStep12V2() {
               >
                 <SVGIcons.Close className="w-8 h-8" />
               </TouchableOpacity>
-              <View className="flex-row items-center  justify-center">
+              <View className="flex-row items-center justify-center">
                 <ScaledText
                   allowScaling={false}
                   variant="lg"
@@ -558,21 +592,21 @@ export default function ArtistStep12V2() {
                         className="text-gray font-neueSemibold"
                         style={{ marginTop: mvs(3) }}
                       >
-                        You need to select atleast{" "}
+                        You need to select at least{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
                           className="font-neueSemibold"
                           style={{ color: "#FF7F56" }}
                         >
-                          one photo
+                          1 media
                         </ScaledText>{" "}
-                        and 3 photos/videos
+                        (maximum 5)
                       </ScaledText>
                     </View>
                     {/* Upload area - matching step-6 design */}
                     <View
-                      className="border-dashed border-primary rounded-xl bg-tat-darkMaroon items-center"
+                      className="items-center border-dashed border-primary rounded-xl bg-tat-darkMaroon"
                       style={{
                         paddingVertical: mvs(24),
                         paddingHorizontal: s(16),
@@ -583,8 +617,10 @@ export default function ArtistStep12V2() {
                       <SVGIcons.Upload width={s(42)} height={s(42)} />
                       <TouchableOpacity
                         onPress={handlePickMedia}
-                        disabled={uploading}
-                        className="bg-primary text-background rounded-full"
+                        disabled={uploading || draft.media.length >= 5}
+                        className={`text-background rounded-full ${
+                          draft.media.length >= 5 ? "bg-gray/40" : "bg-primary"
+                        }`}
                         style={{
                           paddingVertical: mvs(8),
                           paddingHorizontal: s(20),
@@ -597,13 +633,17 @@ export default function ArtistStep12V2() {
                           variant="md"
                           className="text-foreground font-neueSemibold"
                         >
-                          {uploading ? "Uploading..." : "Upload files"}
+                          {uploading
+                            ? "Uploading..."
+                            : draft.media.length >= 5
+                              ? "Maximum 5 files"
+                              : "Upload files"}
                         </ScaledText>
                       </TouchableOpacity>
                       <ScaledText
                         allowScaling={false}
                         variant="11"
-                        className="text-gray font-neueSemibold text-center"
+                        className="text-center text-gray font-neueSemibold"
                         style={{ marginTop: mvs(12) }}
                       >
                         Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
@@ -612,7 +652,7 @@ export default function ArtistStep12V2() {
                     </View>
                   </ScrollView>
                 ) : (
-                  <View className="px-6 pt-6 flex-1">
+                  <View className="flex-1 px-6 pt-6">
                     <View className="mb-6">
                       <ScaledText
                         allowScaling={false}
@@ -626,22 +666,22 @@ export default function ArtistStep12V2() {
                         variant="11"
                         className="text-gray font-neueSemibold"
                       >
-                        You need to select atleast{" "}
+                        You need to select at least{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
                           className="font-neueSemibold"
                           style={{ color: "#FF7F56" }}
                         >
-                          one photo
+                          1 media
                         </ScaledText>{" "}
-                        and 3 photos/videos
+                        (maximum 5)
                       </ScaledText>
                     </View>
 
                     {/* Upload area */}
                     <View
-                      className="border-dashed border-primary rounded-xl bg-tat-darkMaroon items-center"
+                      className="items-center border-dashed border-primary rounded-xl bg-tat-darkMaroon"
                       style={{
                         paddingVertical: mvs(24),
                         paddingHorizontal: s(16),
@@ -652,8 +692,10 @@ export default function ArtistStep12V2() {
                       <SVGIcons.Upload width={s(42)} height={s(42)} />
                       <TouchableOpacity
                         onPress={handlePickMedia}
-                        disabled={uploading}
-                        className="bg-primary text-background rounded-full"
+                        disabled={uploading || draft.media.length >= 5}
+                        className={`text-background rounded-full ${
+                          draft.media.length >= 5 ? "bg-gray/40" : "bg-primary"
+                        }`}
                         style={{
                           paddingVertical: mvs(8),
                           paddingHorizontal: s(20),
@@ -666,13 +708,17 @@ export default function ArtistStep12V2() {
                           variant="md"
                           className="text-foreground font-neueSemibold"
                         >
-                          {uploading ? "Uploading..." : "Upload files"}
+                          {uploading
+                            ? "Uploading..."
+                            : draft.media.length >= 5
+                              ? "Maximum 5 files"
+                              : "Upload files"}
                         </ScaledText>
                       </TouchableOpacity>
                       <ScaledText
                         allowScaling={false}
                         variant="11"
-                        className="text-gray font-neueSemibold text-center"
+                        className="text-center text-gray font-neueSemibold"
                         style={{ marginTop: mvs(12), paddingHorizontal: s(16) }}
                       >
                         Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
@@ -740,7 +786,7 @@ export default function ArtistStep12V2() {
                       {draft.media.map((item, index) => (
                         <View
                           key={`${item.uri}-${index}`}
-                          className="w-20 h-32 rounded-lg overflow-hidden"
+                          className="w-20 h-32 overflow-hidden rounded-lg"
                         >
                           <Image
                             source={{ uri: item.cloud || item.uri }}
@@ -757,7 +803,7 @@ export default function ArtistStep12V2() {
                 <View className="relative">
                   <ScaledTextInput
                     containerClassName="rounded-xl border border-gray "
-                    className="text-foreground rounded-xl  bg-tat-foreground"
+                    className="text-foreground rounded-xl bg-tat-foreground"
                     style={{
                       textAlignVertical: "top",
                       minHeight: mvs(150),
@@ -767,7 +813,6 @@ export default function ArtistStep12V2() {
                     multiline
                     numberOfLines={4}
                     placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                      
                     value={draft.description || ""}
                     onChangeText={(v) =>
                       setDraft((d) => ({ ...d, description: v }))
@@ -775,20 +820,113 @@ export default function ArtistStep12V2() {
                   />
 
                   {/* Edit icon */}
-                  <View className="absolute"
-                  style={{
-                    backgroundColor: "#100C0C",
-                    borderRadius: s(70),
-                    justifyContent: "center",
-                    alignItems: "center",
-                    position: "absolute",
-                    left: s(12),
-                    top: s(15),
-                  }}
+                  <View
+                    className="absolute"
+                    style={{
+                      backgroundColor: "#100C0C",
+                      borderRadius: s(70),
+                      justifyContent: "center",
+                      alignItems: "center",
+                      position: "absolute",
+                      left: s(12),
+                      top: s(15),
+                    }}
                   >
                     <SVGIcons.Pen1 width={s(16)} height={s(16)} />
                   </View>
                 </View>
+              </ScrollView>
+            )}
+
+            {/* Step 3: styles selection */}
+            {modalStep === "styles" && (
+              <ScrollView
+                className="px-6 pt-6"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: mvs(20) }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueBold"
+                  style={{ marginBottom: mvs(6) }}
+                >
+                  Select styles for this work
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-gray font-neueSemibold"
+                  style={{ marginBottom: mvs(12) }}
+                >
+                  Choose up to 3 styles that best describe this project.
+                </ScaledText>
+
+                {loadingStyles ? (
+                  <View className="items-center justify-center py-8">
+                    <ScaledText
+                      allowScaling={false}
+                      variant="sm"
+                      className="text-gray font-montserratMedium"
+                    >
+                      Loading styles...
+                    </ScaledText>
+                  </View>
+                ) : (
+                  <View style={{ rowGap: mvs(8) }}>
+                    {allStyles.map((style) => {
+                      const selected = draft.styles.includes(style.id);
+                      const canSelectMore =
+                        !selected && draft.styles.length < 3;
+
+                      return (
+                        <TouchableOpacity
+                          key={style.id}
+                          activeOpacity={0.85}
+                          onPress={() => {
+                            setDraft((d) => {
+                              if (selected) {
+                                return {
+                                  ...d,
+                                  styles: d.styles.filter(
+                                    (id) => id !== style.id
+                                  ),
+                                };
+                              }
+                              if (!canSelectMore) return d;
+                              return { ...d, styles: [...d.styles, style.id] };
+                            });
+                          }}
+                          disabled={!selected && draft.styles.length >= 3}
+                          className={`flex-row items-center rounded-xl border px-3 py-2 ${
+                            selected
+                              ? "border-foreground bg-foreground/10"
+                              : "border-gray"
+                          } ${!selected && draft.styles.length >= 3 ? "opacity-50" : ""}`}
+                        >
+                          {selected ? (
+                            <SVGIcons.CheckedCheckbox
+                              width={s(17)}
+                              height={s(17)}
+                            />
+                          ) : (
+                            <SVGIcons.UncheckedCheckbox
+                              width={s(17)}
+                              height={s(17)}
+                            />
+                          )}
+                          <ScaledText
+                            allowScaling={false}
+                            variant="sm"
+                            className="ml-2 text-foreground font-montserratSemibold"
+                          >
+                            {style.name}
+                          </ScaledText>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </ScrollView>
             )}
 
@@ -801,11 +939,11 @@ export default function ArtistStep12V2() {
                 paddingBottom: Math.max(insets.bottom, mvs(20)),
               }}
             >
-              {modalStep === "upload" ? (
+              {modalStep === "upload" && (
                 <>
                   <TouchableOpacity
-                    onPress={() => setModalStep("upload")}
-                    className="rounded-full border border-foreground items-center flex-row gap-3"
+                    onPress={() => setActiveIndex(null)}
+                    className="flex-row items-center gap-3 border rounded-full border-foreground"
                     style={{
                       paddingVertical: mvs(10.5),
                       paddingLeft: s(18),
@@ -843,11 +981,54 @@ export default function ArtistStep12V2() {
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>
                 </>
-              ) : (
+              )}
+
+              {modalStep === "description" && (
                 <>
                   <TouchableOpacity
                     onPress={() => setModalStep("upload")}
-                    className="rounded-full border border-foreground items-center justify-center flex-row gap-3"
+                    className="flex-row items-center justify-center gap-3 border rounded-full border-foreground"
+                    style={{
+                      paddingVertical: mvs(10.5),
+                      paddingLeft: s(18),
+                      paddingRight: s(20),
+                    }}
+                  >
+                    <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-neueSemibold"
+                    >
+                      Back
+                    </ScaledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setModalStep("styles")}
+                    className="flex-row items-center justify-center gap-3 rounded-full bg-primary"
+                    style={{
+                      paddingVertical: mvs(10.5),
+                      paddingLeft: s(18),
+                      paddingRight: s(20),
+                    }}
+                  >
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-neueSemibold"
+                    >
+                      Next
+                    </ScaledText>
+                    <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {modalStep === "styles" && (
+                <>
+                  <TouchableOpacity
+                    onPress={() => setModalStep("description")}
+                    className="flex-row items-center justify-center gap-3 border rounded-full border-foreground"
                     style={{
                       paddingVertical: mvs(10.5),
                       paddingLeft: s(18),
@@ -865,7 +1046,7 @@ export default function ArtistStep12V2() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={saveDraftToProject}
-                    className="rounded-full items-center justify-center flex-row gap-3 bg-primary"
+                    className="flex-row items-center justify-center gap-3 rounded-full bg-primary"
                     style={{
                       paddingVertical: mvs(10.5),
                       paddingLeft: s(18),
@@ -877,7 +1058,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Next
+                      Save
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>

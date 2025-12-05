@@ -1,26 +1,33 @@
+import { CustomToast } from "@/components/ui/CustomToast";
+import NextBackFooter from "@/components/ui/NextBackFooter";
+import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { createPostWithMediaAndCollection } from "@/services/post.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { clearProfileCache } from "@/utils/database";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
   Image,
   ScrollView,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
-import { mvs, s } from "@/utils/scale";
-import { ScaledText } from "@/components/ui/ScaledText";
-import NextBackFooter from "@/components/ui/NextBackFooter";
+import { toast } from "sonner-native";
 
 export default function UploadPreviewStep() {
-  const { media, caption, styleId, collectionId, redirectToCollectionId, reset, setSubmitting } =
-    usePostUploadStore();
+  const {
+    media,
+    caption,
+    styleIds,
+    collectionId,
+    redirectToCollectionId,
+    reset,
+    setSubmitting,
+  } = usePostUploadStore();
   const { user } = useAuth();
   const mainImage = media[0]?.cloud || media[0]?.uri;
   const { width: windowWidth } = useWindowDimensions();
@@ -30,7 +37,7 @@ export default function UploadPreviewStep() {
       setSubmitting(true);
       const { postId } = await createPostWithMediaAndCollection({
         caption,
-        styleId,
+        styleId: styleIds?.[0], // Use first styleId for backward compatibility
         media: media.map((m, index) => ({
           mediaUrl: m.cloud || m.uri,
           mediaType: m.type === "video" ? "VIDEO" : "IMAGE",
@@ -44,12 +51,22 @@ export default function UploadPreviewStep() {
         await clearProfileCache(user.id);
       }
 
+      // Show success toast
+      const toastId = toast.custom(
+        <CustomToast
+          message="Post pubblicato con successo!"
+          iconType="success"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 3000 }
+      );
+
       // Redirect to collection page if we came from there
       // const redirectId = redirectToCollectionId || collectionId;
       reset();
 
       router.replace(`/post/${postId}`);
-      
+
       // if (redirectId) {
       //   router.replace(`/collection/${redirectId}` as any);
       // } else {
@@ -57,6 +74,19 @@ export default function UploadPreviewStep() {
       // }
     } catch (e) {
       console.error("onSubmit failed", e);
+      // Show error toast on failure
+      const toastId = toast.custom(
+        <CustomToast
+          message={
+            e instanceof Error
+              ? e.message
+              : "Errore durante la pubblicazione del post"
+          }
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
       setSubmitting(false);
     }
   };
@@ -71,11 +101,11 @@ export default function UploadPreviewStep() {
       {mainImage ? (
         <Image
           source={{ uri: mainImage }}
-          className="absolute left-0 top-0 w-full h-full"
+          className="absolute top-0 left-0 w-full h-full"
           resizeMode="cover"
         />
       ) : (
-        <View className="absolute left-0 top-0 w-full h-full bg-black/20" />
+        <View className="absolute top-0 left-0 w-full h-full bg-black/20" />
       )}
       <SVGIcons.PostPreview
         width="100%"
@@ -133,7 +163,7 @@ export default function UploadPreviewStep() {
       />
       <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false}>
         <View
-          className="items-center flex-row justify-center"
+          className="flex-row items-center justify-center"
           style={{
             marginBottom: mvs(16),
             gap: s(8),
@@ -153,7 +183,7 @@ export default function UploadPreviewStep() {
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-foreground/80 font-neueBold text-center"
+              className="text-center text-foreground/80 font-neueBold"
               style={{ marginBottom: mvs(6) }}
             >
               Vista feed
@@ -164,7 +194,7 @@ export default function UploadPreviewStep() {
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-foreground/80 font-neueBold text-center"
+              className="text-center text-foreground/80 font-neueBold"
               style={{ marginBottom: mvs(6) }}
             >
               Vista dettagliata
@@ -179,7 +209,8 @@ export default function UploadPreviewStep() {
         nextDisabled={
           !media.length ||
           !caption ||
-          !styleId ||
+          !styleIds ||
+          styleIds.length === 0 ||
           (user?.role === "ARTIST" && !collectionId)
         }
         nextLabel="Pubblica"

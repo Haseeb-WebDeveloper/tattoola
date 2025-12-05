@@ -4,7 +4,9 @@ import { usePostUploadStore } from "@/stores/postUploadStore";
 import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Image,
   ScrollView,
   StyleSheet,
@@ -13,10 +15,34 @@ import {
   View,
 } from "react-native";
 
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
 export default function UploadDescriptionStep() {
   const caption = usePostUploadStore((s) => s.caption);
   const setCaption = usePostUploadStore((s) => s.setCaption);
   const media = usePostUploadStore((s) => s.media);
+
+  // Animate the pen icon and input padding when the field is focused.
+  const [isFocused, setIsFocused] = useState(false);
+  const iconAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(iconAnim, {
+      toValue: isFocused ? 0 : 1,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
+  }, [iconAnim, isFocused]);
+
+  const paddingLeft = iconAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [s(16), s(42)],
+  });
+
+  const iconTranslateX = iconAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-8, 0],
+  });
 
   return (
     <View className="flex-1 bg-background">
@@ -33,7 +59,7 @@ export default function UploadDescriptionStep() {
         <Text className="text-foreground tat-body-1 font-neueBold mb-0.5">
           Descrizione
         </Text>
-        <Text className="tat-body-4 text-gray mb-6 font-neueMedium">
+        <Text className="mb-6 tat-body-4 text-gray font-neueMedium">
           Descrivi il tuo post in poche parole
         </Text>
 
@@ -48,42 +74,53 @@ export default function UploadDescriptionStep() {
             {media.map((m, idx) => (
               <View
                 key={`${m.uri}-${idx}`}
-                className="rounded-xl overflow-hidden bg-black/40 w-24 aspect-[9/16]"
+                className="rounded-xl overflow-hidden bg-black/40 w-24 aspect-[9/16] relative"
               >
-                <Image
-                  source={{ uri: m.cloud || m.uri }}
-                  className="w-full h-full"
-                  resizeMode="cover"
-                />
+                {m.type === "video" ? (
+                  <View className="w-full h-full items-center justify-center bg-black/60">
+                    <SVGIcons.Video width={s(30)} height={s(30)} />
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: m.cloud || m.uri }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                )}
               </View>
             ))}
           </ScrollView>
         )}
 
         {/* Description input with edit icon */}
-        <View className="rounded-2xl border border-gray relative">
-          <View
-            className="absolute items-center justify-center z-10"
+        <View className="relative border rounded-2xl border-gray">
+          <Animated.View
+            className="absolute z-10 items-center justify-center"
             style={{
               top: s(12),
               left: s(16),
+              opacity: iconAnim,
+              transform: [{ translateX: iconTranslateX }],
             }}
           >
             <SVGIcons.Pen1 width={s(20)} height={s(20)} />
-          </View>
-          <TextInput
+          </Animated.View>
+          <AnimatedTextInput
             multiline
             numberOfLines={6}
             textAlignVertical="top"
             className="text-foreground bg-tat-darkMaroon rounded-2xl min-h-[180px] font-neueMedium"
             style={{
               fontSize: s(12),
-              paddingHorizontal: s(42),
+              paddingLeft,
+              paddingRight: s(16),
               paddingVertical: s(12),
             }}
             placeholder="Scrivi una descrizione per il tuo post..."
             value={caption || ""}
             onChangeText={(v) => setCaption(v)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
           />
         </View>
       </ScrollView>
