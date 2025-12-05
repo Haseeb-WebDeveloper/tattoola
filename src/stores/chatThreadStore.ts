@@ -56,7 +56,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       // Database returns newest first, reverse to get oldest first for display
       const list = (items || []).slice().reverse();
       
-      console.log(`📥 Loaded ${list.length} messages for conversation ${conversationId}`);
       
       // Fetch receipts for messages in this conversation
       if (userId) {
@@ -90,7 +89,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
         seenMessageIds: { ...s.seenMessageIds, [conversationId]: seen }, // Replace, don't merge
       }));
       saveJSON(KEY, { messagesByConv: get().messagesByConv });
-      console.log(`✅ Marked ${Object.keys(seen).length} messages as seen`);
     } catch (e) {
       console.error("❌ Error loading messages:", e);
       set((s) => ({ loadingByConv: { ...s.loadingByConv, [conversationId]: false } }));
@@ -115,7 +113,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     const { items, nextCursor } = await fetchMessagesPage(conversationId, cursor, deletedAt);
     const older = (items || []).slice().reverse();
     
-    console.log(`📥 Loading ${older.length} older messages`);
     
     // Fetch receipts for older messages
     if (userId) {
@@ -140,7 +137,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       
       // Only add messages that don't already exist
       const newMessages = older.filter((m: any) => !existingIds.has(m.id));
-      console.log(`➕ Adding ${newMessages.length} new older messages (${older.length - newMessages.length} duplicates skipped)`);
       
       // Mark new messages as seen
       const seen = { ...s.seenMessageIds[conversationId] || {} };
@@ -184,12 +180,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       };
     });
     saveJSON(KEY, { messagesByConv: get().messagesByConv });
-    console.log("store: optimistic queued", clientId);
     try {
       await sendMessage({ id: clientId, conversationId, senderId, type: type as any, text, mediaUrl });
-      console.log("store: sendMessage OK");
     } catch (e) {
-      console.log("store: sendMessage FAIL", e);
       // keep optimistic; UI can show retry if needed
     }
     return { tempId: clientId };
@@ -206,19 +199,15 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   subscribe(conversationId, userId) {
     // Guard: if already subscribed (or in-flight), do nothing
     if (get().activeSubs[conversationId]) {
-      console.log("store: subscribe skipped (already active)", conversationId);
       return;
     }
     set((s) => ({ activeSubs: { ...s.activeSubs, [conversationId]: true } }));
-    console.log("store: subscribing", conversationId);
     const unsub = subscribeMessages(conversationId, {
       onInsert: async (row) => {
-        console.log("📨 Realtime: message INSERT", row?.id);
         
         // Check for duplicate before updating state
         const seen = get().seenMessageIds[conversationId] || {};
         if (row?.id && seen[row.id]) {
-          console.log("⏭️  Skipped duplicate message (already in seen map):", row.id);
           return; // Don't update state at all
         }
         
@@ -226,7 +215,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
         const existing = get().messagesByConv[conversationId] || [];
         const alreadyExists = existing.some((m: any) => m.id === row.id);
         if (alreadyExists) {
-          console.log("⏭️  Skipped duplicate message (already in array):", row.id);
           // Still mark as seen
           set((s) => ({
             seenMessageIds: { ...s.seenMessageIds, [conversationId]: { ...s.seenMessageIds[conversationId] || {}, [row.id]: true } },
@@ -248,7 +236,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           row.receiptStatus = 'DELIVERED';
         }
         
-        console.log("✅ Adding new message from realtime:", row.id);
         
         // Clear deletedAt if user has deleted this conversation (conversation reappears)
         const clearDeletedAt = async () => {
@@ -261,7 +248,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
               .maybeSingle();
             
             if (cuData?.deletedAt) {
-              console.log("🔄 Clearing deletedAt - conversation reappearing");
               await supabase
                 .from("conversation_users")
                 .update({ deletedAt: null })
@@ -277,7 +263,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           const messages = s.messagesByConv[conversationId] || [];
           // Simply append - messages arrive in chronological order
           const next = [...messages, row];
-          console.log(`📊 Total messages now: ${next.length}`);
           return {
             messagesByConv: { ...s.messagesByConv, [conversationId]: next },
             seenMessageIds: { ...s.seenMessageIds, [conversationId]: nextSeen },
@@ -298,7 +283,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           table: "message_receipts",
         },
         (payload) => {
-          console.log("📬 Receipt UPDATE", payload.new);
           const { messageId, status } = payload.new as any;
           // Update the receipt status for this message
           set((s) => {
@@ -327,7 +311,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           filter: `conversationId=eq.${conversationId}`,
         },
         (payload) => {
-          console.log("📨 Message UPDATE", payload.new);
           const updatedMessage = payload.new as any;
           const currentUserId = get().currentUserId || userId;
           
@@ -367,7 +350,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     const u = get().unsubByConv[conversationId];
     if (u) {
       try { u(); } catch {}
-      console.log("store: unsubscribed", conversationId);
     }
     set((s) => ({
       unsubByConv: { ...s.unsubByConv, [conversationId]: undefined as any },
@@ -389,7 +371,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     });
   },
   async refreshReceipts(conversationId, userId) {
-    console.log("🔄 Refreshing receipts for conversation", conversationId);
     const messages = get().messagesByConv[conversationId] || [];
     const messageIds = messages.map((m: any) => m.id).filter(Boolean);
     
@@ -413,7 +394,6 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       };
     });
     saveJSON(KEY, { messagesByConv: get().messagesByConv });
-    console.log("✅ Receipts refreshed");
   },
 }));
 
@@ -425,7 +405,6 @@ const originalSubscribe = useChatThreadStore.getState().subscribe;
 useChatThreadStore.setState({
   subscribe: (conversationId: string) => {
     if (activeConversationChannels.has(conversationId)) {
-      console.log("store: subscribe skipped (module guard)", conversationId);
       return;
     }
     activeConversationChannels.add(conversationId);
@@ -448,7 +427,6 @@ const baseUnsubscribe = (conversationId: string) => {
     unsubByConv: { ...s.unsubByConv, [conversationId]: undefined as any },
     activeSubs: { ...s.activeSubs, [conversationId]: false },
   }));
-  console.log("store: unsubscribed (module guard)", conversationId);
 };
 useChatThreadStore.setState({ unsubscribe: baseUnsubscribe } as any);
 

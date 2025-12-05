@@ -376,7 +376,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                       variant="md"
                       className="text-foreground font-montserratSemibold"
                     >
-                      Filtra per posizione
+                      Filtra per provincia
                     </ScaledText>
                   </View>
                   {(tempFilters.provinceId || tempFilters.municipalityId) && (

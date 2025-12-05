@@ -3,7 +3,7 @@ import { SVGIcons } from "@/constants/svg";
 import { mvs, s, scaledFont, scaledVSize } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -14,6 +14,12 @@ import {
 } from "react-native";
 
 export default function WelcomeScreen() {
+  const [contentHeight, setContentHeight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+
+  // Only allow bouncing if content exceeds viewport
+  const shouldBounce = contentHeight > viewportHeight && Platform.OS === "ios";
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -26,7 +32,14 @@ export default function WelcomeScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           style={{ zIndex: 1 }}
           showsVerticalScrollIndicator={false}
-          bounces
+          bounces={shouldBounce}
+          onContentSizeChange={(width, height) => {
+            setContentHeight(height);
+          }}
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            setViewportHeight(height);
+          }}
         >
           {/* Hero image */}
           <View className="relative">

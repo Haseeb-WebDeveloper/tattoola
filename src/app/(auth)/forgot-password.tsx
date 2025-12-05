@@ -1,3 +1,4 @@
+import AuthStepHeader from '@/components/ui/auth-step-header';
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -84,7 +85,7 @@ export default function ForgotPasswordScreen() {
   if (loading) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: "transparent" }]}
+        className="flex-1 bg-background"
       >
         <LoadingSpinner message="Invio dell'email di reset..." overlay />
       </SafeAreaView>
@@ -119,17 +120,12 @@ export default function ForgotPasswordScreen() {
         style={{ zIndex: 1 }}
       >
         {/* Header with logo */}
-        <View
-          className="w-full flex justify-center items-center"
-          style={{ marginTop: mvs(20) }}
-        >
-          <SVGIcons.LogoLight className="h-12" />
-        </View>
+        <AuthStepHeader />
 
         {/* Title and subtitle */}
         <View
           className="items-center"
-          style={{ paddingHorizontal: s(24), paddingTop: mvs(32) }}
+          style={{ paddingHorizontal: s(24), }}
         >
           <ScaledText
             allowScaling={false}
@@ -150,11 +146,11 @@ export default function ForgotPasswordScreen() {
 
         {/* Form */}
         {!emailSent && (
-          <View style={{ paddingHorizontal: s(24), paddingTop: mvs(20) }}>
+          <View style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}>
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-foreground mb-2"
+              className="text-foreground mb-2 font-montserratMedium"
             >
               Email
             </ScaledText>
@@ -188,7 +184,7 @@ export default function ForgotPasswordScreen() {
                 <ScaledText
                   allowScaling={false}
                   variant="lg"
-                  className="text-foreground font-neueBold"
+                  className="text-foreground font-neueBold text-center"
                 >
                   Invia link di reset
                 </ScaledText>
@@ -199,19 +195,21 @@ export default function ForgotPasswordScreen() {
 
         {/* Email Sent State */}
         {emailSent && (
-          <View className="px-6 mt-10 items-center">
+          <View className="items-center"
+            style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
+          >
             <View style={{ marginBottom: mvs(16) }}>
               <SVGIcons.MailSent width={s(40)} height={s(40)} />
             </View>
             <ScaledText
               variant="2xl"
-              className="text-foreground font-neueBold"
+              className="text-foreground font-neueBold text-center"
             >
               Controlla la tua email
             </ScaledText>
             <ScaledText
               variant="body2"
-              className="text-gray text-center mt-2"
+              className="text-gray text-center mt-2 font-neueLight"
             >
               Ti abbiamo inviato un link per reimpostare la password a
             </ScaledText>
@@ -237,20 +235,25 @@ export default function ForgotPasswordScreen() {
                 </ScaledText>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleResendEmail}>
+              {/* <TouchableOpacity onPress={handleResendEmail}
+                className="border-gray rounded-full"
+                style={{ paddingVertical: mvs(8), paddingHorizontal: s(20), borderWidth: 1 }}
+              >
                 <ScaledText
-                  variant="body2"
-                  className="text-foreground font-montserratSemibold"
+                  variant="sm"
+                  className="text-foreground font-montserratSemibold text-center"
                 >
-                  Non hai ricevuto l'email? Invia di nuovo
+                  inviare nuovamente
                 </ScaledText>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
         )}
 
         {/* Bottom link */}
-        <View className="items-center mt-10 px-6 pb-8">
+        <View className="items-center"
+          style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
+        >
           <TouchableOpacity onPress={handleBackToLogin}>
             <ScaledText
               allowScaling={false}
