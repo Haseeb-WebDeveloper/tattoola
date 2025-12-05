@@ -6,6 +6,7 @@ import {
   fetchPostDetails,
   togglePostLike,
 } from "@/services/post.service";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { toggleFollow } from "@/services/profile.service";
 import { s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,6 +17,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -109,87 +111,96 @@ export default function PostDetailScreen() {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   // Create video players for media items (hooks must be called unconditionally)
-  // Create up to 5 players to handle most posts
-  // Initialize with URLs if available, otherwise empty string
-  const player1 = useVideoPlayer(post?.media?.[0]?.mediaType === "VIDEO" ? post.media[0].mediaUrl || "" : "", (player) => {
-    if (post?.media?.[0]?.mediaType === "VIDEO" && currentMediaIndex === 0) {
+  // Initialize with URLs from post media if available, otherwise empty string
+  // Transform video URLs to MP4/H.264/AAC for iOS compatibility
+  const videoUrl1 = post?.media?.[0]?.mediaType === "VIDEO" 
+    ? cloudinaryService.getIOSCompatibleVideoUrl(post.media[0].mediaUrl || "") 
+    : "";
+  const videoUrl2 = post?.media?.[1]?.mediaType === "VIDEO" 
+    ? cloudinaryService.getIOSCompatibleVideoUrl(post.media[1].mediaUrl || "") 
+    : "";
+  const videoUrl3 = post?.media?.[2]?.mediaType === "VIDEO" 
+    ? cloudinaryService.getIOSCompatibleVideoUrl(post.media[2].mediaUrl || "") 
+    : "";
+  const videoUrl4 = post?.media?.[3]?.mediaType === "VIDEO" 
+    ? cloudinaryService.getIOSCompatibleVideoUrl(post.media[3].mediaUrl || "") 
+    : "";
+  const videoUrl5 = post?.media?.[4]?.mediaType === "VIDEO" 
+    ? cloudinaryService.getIOSCompatibleVideoUrl(post.media[4].mediaUrl || "") 
+    : "";
+
+  const player1 = useVideoPlayer(videoUrl1, (player) => {
+    if (videoUrl1) {
       player.loop = true;
-      player.muted = true;
-      // Small delay for iOS to ensure player is ready
-      setTimeout(() => {
+      player.muted = false;
+      // Only autoplay if it's the current visible item
+      if (currentMediaIndex === 0) {
         player.play();
-      }, 100);
+      }
     }
   });
-  const player2 = useVideoPlayer(post?.media?.[1]?.mediaType === "VIDEO" ? post.media[1].mediaUrl || "" : "", (player) => {
-    if (post?.media?.[1]?.mediaType === "VIDEO" && currentMediaIndex === 1) {
+  const player2 = useVideoPlayer(videoUrl2, (player) => {
+    if (videoUrl2) {
       player.loop = true;
-      player.muted = true;
-      setTimeout(() => {
+      player.muted = false;
+      if (currentMediaIndex === 1) {
         player.play();
-      }, 100);
+      }
     }
   });
-  const player3 = useVideoPlayer(post?.media?.[2]?.mediaType === "VIDEO" ? post.media[2].mediaUrl || "" : "", (player) => {
-    if (post?.media?.[2]?.mediaType === "VIDEO" && currentMediaIndex === 2) {
+  const player3 = useVideoPlayer(videoUrl3, (player) => {
+    if (videoUrl3) {
       player.loop = true;
-      player.muted = true;
-      setTimeout(() => {
+      player.muted = false;
+      if (currentMediaIndex === 2) {
         player.play();
-      }, 100);
+      }
     }
   });
-  const player4 = useVideoPlayer(post?.media?.[3]?.mediaType === "VIDEO" ? post.media[3].mediaUrl || "" : "", (player) => {
-    if (post?.media?.[3]?.mediaType === "VIDEO" && currentMediaIndex === 3) {
+  const player4 = useVideoPlayer(videoUrl4, (player) => {
+    if (videoUrl4) {
       player.loop = true;
-      player.muted = true;
-      setTimeout(() => {
+      player.muted = false;
+      if (currentMediaIndex === 3) {
         player.play();
-      }, 100);
+      }
     }
   });
-  const player5 = useVideoPlayer(post?.media?.[4]?.mediaType === "VIDEO" ? post.media[4].mediaUrl || "" : "", (player) => {
-    if (post?.media?.[4]?.mediaType === "VIDEO" && currentMediaIndex === 4) {
+  const player5 = useVideoPlayer(videoUrl5, (player) => {
+    if (videoUrl5) {
       player.loop = true;
-      player.muted = true;
-      setTimeout(() => {
+      player.muted = false;
+      if (currentMediaIndex === 4) {
         player.play();
-      }, 100);
+      }
     }
   });
   const videoPlayers = [player1, player2, player3, player4, player5];
 
-  // Update video players when media or current index changes
+  // Update video players when current index changes (for autoplay control)
+  // This ensures the correct video plays when user swipes
   useEffect(() => {
     if (!post?.media) return;
     
-    const updatePlayers = async () => {
-      for (let index = 0; index < post.media.length && index < videoPlayers.length; index++) {
-        const mediaItem = post.media[index];
-        const player = videoPlayers[index];
-        if (player && mediaItem.mediaType === "VIDEO") {
-          try {
-            await player.replaceAsync(mediaItem.mediaUrl);
+    post.media.forEach((mediaItem, index) => {
+      if (index >= videoPlayers.length) return;
+      const player = videoPlayers[index];
+      if (player && mediaItem.mediaType === "VIDEO") {
+        try {
+          // Only autoplay if it's the current visible item
+          if (index === currentMediaIndex) {
             player.loop = true;
-            player.muted = true;
-            // Only autoplay if it's the current visible item
-            // Add small delay for iOS to ensure player is ready
-            if (index === currentMediaIndex) {
-              setTimeout(() => {
-                player.play();
-              }, 100);
-            } else {
-              player.pause();
-            }
-          } catch (error) {
-            console.error(`Error loading video ${index}:`, error);
+            player.muted = false;
+            player.play();
+          } else {
+            player.pause();
           }
+        } catch (error) {
+          // Player might be released, ignore
         }
       }
-    };
-    
-    updatePlayers();
-  }, [post?.media, currentMediaIndex, videoPlayers]);
+    });
+  }, [currentMediaIndex, post?.media, videoPlayers]);
 
   const loadPost = useCallback(async () => {
     if (!id || !user) return;

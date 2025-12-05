@@ -1,10 +1,12 @@
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { FeedPost } from "@/services/post.service";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { useTabBarStore } from "@/stores/tabBarStore";
 import { mvs, s } from "@/utils/scale";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
-import React, { memo, useEffect } from "react";
+import React, { memo, useEffect, useMemo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 
 type Props = {
@@ -13,6 +15,7 @@ type Props = {
   onLikePress?: () => void;
   onAuthorPress?: () => void;
   hideOverlay?: boolean;
+  isVisible?: boolean; // Whether this post is currently visible in the feed
 };
 
 type OverlayProps = {
@@ -149,15 +152,75 @@ function FeedPostCardComponent({
   onLikePress,
   onAuthorPress,
   hideOverlay,
+  isVisible = false,
 }: Props) {
-  const cover = post.media[0]?.mediaUrl;
+  const firstMedia = post.media[0];
+  // console.log("firstMedia", firstMedia);
+  const cover = firstMedia?.mediaUrl;
+  const isVideo = firstMedia?.mediaType === "VIDEO";
   const tabBarHeight = useTabBarStore((state) => state.tabBarHeight);
   const bottomPosition = tabBarHeight > 0 ? tabBarHeight : mvs(119);
+
+  // Transform video URL to MP4/H.264/AAC for iOS compatibility
+  const videoUrl = useMemo(() => {
+    if (isVideo && cover) {
+      return cloudinaryService.getIOSCompatibleVideoUrl(cover);
+    }
+    return cover || "";
+  }, [isVideo, cover]);
+
+  console.log("videoUrl", videoUrl);
+
+  // Video player - initialize with URL directly (works better on iOS)
+  const videoPlayer = useVideoPlayer(isVideo ? videoUrl : "", (player) => {
+    if (isVideo && videoUrl) {
+      player.loop = true;
+      player.muted = false;
+      // Only autoplay if this post is currently visible
+      if (isVisible) {
+        player.play();
+      }
+    }
+  });
+
+  // Control video playback based on visibility
+  useEffect(() => {
+    if (isVideo && videoPlayer) {
+      if (isVisible) {
+        videoPlayer.loop = true;
+        videoPlayer.muted = false;
+        try {
+          videoPlayer.play();
+        } catch (error) {
+          // Player might be released, ignore
+        }
+      } else {
+        try {
+          videoPlayer.pause();
+        } catch (error) {
+          // Player might be released, ignore
+        }
+      }
+    }
+  }, [isVisible, isVideo, videoPlayer]);
+
+  // Cleanup: pause video when component unmounts
+  useEffect(() => {
+    return () => {
+      if (isVideo && videoPlayer) {
+        try {
+          videoPlayer.pause();
+        } catch (error) {
+          // Player already released, ignore
+        }
+      }
+    };
+  }, [isVideo, videoPlayer]);
 
   // Prefetch all post images for instant loading when navigating to detail
   useEffect(() => {
     post.media.forEach((m) => {
-      if (m.mediaUrl) {
+      if (m.mediaUrl && m.mediaType === "IMAGE") {
         Image.prefetch(m.mediaUrl).catch(() => {
           // Silently ignore prefetch errors
         });
@@ -177,6 +240,7 @@ function FeedPostCardComponent({
     }
   };
 
+
   return (
     <View className="w-full h-[100svh] ">
       <View className="relative w-full h-full overflow-hidden">
@@ -187,11 +251,26 @@ function FeedPostCardComponent({
           style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
         >
           {!!cover && (
-            <Image
-              source={{ uri: cover }}
-              className="absolute top-0 bottom-0 left-0 right-0"
-              resizeMode="cover"
-            />
+            isVideo ? (
+              <VideoView
+                player={videoPlayer}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
+                contentFit="cover"
+                nativeControls={false}
+              />
+            ) : (
+              <Image
+                source={{ uri: cover }}
+                className="absolute top-0 bottom-0 left-0 right-0"
+                resizeMode="cover"
+              />
+            )
           )}
         </TouchableOpacity>
 
