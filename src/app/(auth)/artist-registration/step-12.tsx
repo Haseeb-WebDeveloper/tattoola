@@ -58,6 +58,7 @@ export default function ArtistStep12V2() {
   const [submitting, setSubmitting] = useState(false);
   const [allStyles, setAllStyles] = useState<TattooStyleItem[]>([]);
   const [loadingStyles, setLoadingStyles] = useState(false);
+  const [descriptionFocused, setDescriptionFocused] = useState(false);
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -605,51 +606,55 @@ export default function ArtistStep12V2() {
                       </ScaledText>
                     </View>
                     {/* Upload area - matching step-6 design */}
-                    <View
-                      className="items-center border-dashed border-primary rounded-xl bg-tat-darkMaroon"
-                      style={{
-                        paddingVertical: mvs(24),
-                        paddingHorizontal: s(16),
-                        borderWidth: s(1),
-                        marginBottom: mvs(15),
-                      }}
-                    >
-                      <SVGIcons.Upload width={s(42)} height={s(42)} />
-                      <TouchableOpacity
-                        onPress={handlePickMedia}
-                        disabled={uploading || draft.media.length >= 5}
-                        className={`text-background rounded-full ${
-                          draft.media.length >= 5 ? "bg-gray/40" : "bg-primary"
-                        }`}
+                    {draft.media.length < 5 && (
+                      <View
+                        className="items-center border-dashed border-primary rounded-xl bg-tat-darkMaroon"
                         style={{
-                          paddingVertical: mvs(8),
-                          paddingHorizontal: s(20),
-                          borderRadius: s(70),
-                          marginTop: mvs(12),
+                          paddingVertical: mvs(24),
+                          paddingHorizontal: s(16),
+                          borderWidth: s(1),
+                          marginBottom: mvs(15),
                         }}
                       >
+                        <SVGIcons.Upload width={s(42)} height={s(42)} />
+                        <TouchableOpacity
+                          onPress={handlePickMedia}
+                          disabled={uploading || draft.media.length >= 5}
+                          className={`text-background rounded-full ${
+                            draft.media.length >= 5
+                              ? "bg-gray/40"
+                              : "bg-primary"
+                          }`}
+                          style={{
+                            paddingVertical: mvs(8),
+                            paddingHorizontal: s(20),
+                            borderRadius: s(70),
+                            marginTop: mvs(12),
+                          }}
+                        >
+                          <ScaledText
+                            allowScaling={false}
+                            variant="md"
+                            className="text-foreground font-neueSemibold"
+                          >
+                            {uploading
+                              ? "Uploading..."
+                              : draft.media.length >= 5
+                                ? "Maximum 5 files"
+                                : "Upload files"}
+                          </ScaledText>
+                        </TouchableOpacity>
                         <ScaledText
                           allowScaling={false}
-                          variant="md"
-                          className="text-foreground font-neueSemibold"
+                          variant="11"
+                          className="text-center text-gray font-neueSemibold"
+                          style={{ marginTop: mvs(12) }}
                         >
-                          {uploading
-                            ? "Uploading..."
-                            : draft.media.length >= 5
-                              ? "Maximum 5 files"
-                              : "Upload files"}
+                          Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
+                          Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
                         </ScaledText>
-                      </TouchableOpacity>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="11"
-                        className="text-center text-gray font-neueSemibold"
-                        style={{ marginTop: mvs(12) }}
-                      >
-                        Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
-                        Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
-                      </ScaledText>
-                    </View>
+                      </View>
+                    )}
                   </ScrollView>
                 ) : (
                   <View className="flex-1 px-6 pt-6">
@@ -680,51 +685,58 @@ export default function ArtistStep12V2() {
                     </View>
 
                     {/* Upload area */}
-                    <View
-                      className="items-center border-dashed border-primary rounded-xl bg-tat-darkMaroon"
-                      style={{
-                        paddingVertical: mvs(24),
-                        paddingHorizontal: s(16),
-                        borderWidth: s(1),
-                        marginBottom: mvs(15),
-                      }}
-                    >
-                      <SVGIcons.Upload width={s(42)} height={s(42)} />
-                      <TouchableOpacity
-                        onPress={handlePickMedia}
-                        disabled={uploading || draft.media.length >= 5}
-                        className={`text-background rounded-full ${
-                          draft.media.length >= 5 ? "bg-gray/40" : "bg-primary"
-                        }`}
+                    {draft.media.length < 5 && (
+                      <View
+                        className="items-center border-dashed border-primary rounded-xl bg-tat-darkMaroon"
                         style={{
-                          paddingVertical: mvs(8),
-                          paddingHorizontal: s(20),
-                          borderRadius: s(70),
-                          marginTop: mvs(8),
+                          paddingVertical: mvs(24),
+                          paddingHorizontal: s(16),
+                          borderWidth: s(1),
+                          marginBottom: mvs(15),
                         }}
                       >
+                        <SVGIcons.Upload width={s(42)} height={s(42)} />
+                        <TouchableOpacity
+                          onPress={handlePickMedia}
+                          disabled={uploading || draft.media.length >= 5}
+                          className={`text-background rounded-full ${
+                            draft.media.length >= 5
+                              ? "bg-gray/40"
+                              : "bg-primary"
+                          }`}
+                          style={{
+                            paddingVertical: mvs(8),
+                            paddingHorizontal: s(20),
+                            borderRadius: s(70),
+                            marginTop: mvs(8),
+                          }}
+                        >
+                          <ScaledText
+                            allowScaling={false}
+                            variant="md"
+                            className="text-foreground font-neueSemibold"
+                          >
+                            {uploading
+                              ? "Uploading..."
+                              : draft.media.length >= 5
+                                ? "Maximum 5 files"
+                                : "Upload files"}
+                          </ScaledText>
+                        </TouchableOpacity>
                         <ScaledText
                           allowScaling={false}
-                          variant="md"
-                          className="text-foreground font-neueSemibold"
+                          variant="11"
+                          className="text-center text-gray font-neueSemibold"
+                          style={{
+                            marginTop: mvs(12),
+                            paddingHorizontal: s(16),
+                          }}
                         >
-                          {uploading
-                            ? "Uploading..."
-                            : draft.media.length >= 5
-                              ? "Maximum 5 files"
-                              : "Upload files"}
+                          Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
+                          Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
                         </ScaledText>
-                      </TouchableOpacity>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="11"
-                        className="text-center text-gray font-neueSemibold"
-                        style={{ marginTop: mvs(12), paddingHorizontal: s(16) }}
-                      >
-                        Fino a 5 foto, supporta JPG, PNG. Max size 5MB{"\n"}
-                        Fino a 2 video, supporta MOV, MP4, AVI. Max size 10MB
-                      </ScaledText>
-                    </View>
+                      </View>
+                    )}
 
                     {/* <ScaledText
                       allowScaling={false}
@@ -808,7 +820,7 @@ export default function ArtistStep12V2() {
                       textAlignVertical: "top",
                       minHeight: mvs(150),
                       fontSize: s(12),
-                      paddingLeft: s(35),
+                      paddingLeft: descriptionFocused ? s(16) : s(35),
                     }}
                     multiline
                     numberOfLines={4}
@@ -817,23 +829,27 @@ export default function ArtistStep12V2() {
                     onChangeText={(v) =>
                       setDraft((d) => ({ ...d, description: v }))
                     }
+                    onFocus={() => setDescriptionFocused(true)}
+                    onBlur={() => setDescriptionFocused(false)}
                   />
 
-                  {/* Edit icon */}
-                  <View
-                    className="absolute"
-                    style={{
-                      backgroundColor: "#100C0C",
-                      borderRadius: s(70),
-                      justifyContent: "center",
-                      alignItems: "center",
-                      position: "absolute",
-                      left: s(12),
-                      top: s(15),
-                    }}
-                  >
-                    <SVGIcons.Pen1 width={s(16)} height={s(16)} />
-                  </View>
+                  {/* Edit icon - hidden when focused */}
+                  {!descriptionFocused && (
+                    <View
+                      className="absolute"
+                      style={{
+                        backgroundColor: "#100C0C",
+                        borderRadius: s(70),
+                        justifyContent: "center",
+                        alignItems: "center",
+                        position: "absolute",
+                        left: s(12),
+                        top: s(15),
+                      }}
+                    >
+                      <SVGIcons.Pen1 width={s(16)} height={s(16)} />
+                    </View>
+                  )}
                 </View>
               </ScrollView>
             )}
@@ -879,6 +895,26 @@ export default function ArtistStep12V2() {
                       const canSelectMore =
                         !selected && draft.styles.length < 3;
 
+                      // Resolve image URL
+                      const resolveImageUrl = (url?: string | null) => {
+                        if (!url) return undefined;
+                        try {
+                          if (
+                            url.includes("imgres") &&
+                            url.includes("imgurl=")
+                          ) {
+                            const u = new URL(url);
+                            const real = u.searchParams.get("imgurl");
+                            return real || url;
+                          }
+                          return url;
+                        } catch {
+                          return url;
+                        }
+                      };
+
+                      const img = resolveImageUrl(style.imageUrl);
+
                       return (
                         <TouchableOpacity
                           key={style.id}
@@ -904,6 +940,7 @@ export default function ArtistStep12V2() {
                               : "border-gray"
                           } ${!selected && draft.styles.length >= 3 ? "opacity-50" : ""}`}
                         >
+                          {/* Checkbox */}
                           {selected ? (
                             <SVGIcons.CheckedCheckbox
                               width={s(17)}
@@ -915,10 +952,36 @@ export default function ArtistStep12V2() {
                               height={s(17)}
                             />
                           )}
+                          {/* Style Image */}
+                          {img ? (
+                            <Image
+                              source={{ uri: img }}
+                              style={{
+                                width: s(60),
+                                height: s(60),
+                                borderRadius: s(8),
+                                marginLeft: s(12),
+                                marginRight: s(12),
+                              }}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <View
+                              className="bg-gray/30"
+                              style={{
+                                width: s(60),
+                                height: s(60),
+                                borderRadius: s(8),
+                                marginLeft: s(12),
+                                marginRight: s(12),
+                              }}
+                            />
+                          )}
+                          {/* Style Name */}
                           <ScaledText
                             allowScaling={false}
                             variant="sm"
-                            className="ml-2 text-foreground font-montserratSemibold"
+                            className="text-foreground font-montserratSemibold"
                           >
                             {style.name}
                           </ScaledText>

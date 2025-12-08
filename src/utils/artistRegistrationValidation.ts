@@ -25,22 +25,45 @@ export const step5Schema = z.object({
     .min(1, "Phone number is required")
     .refine(
       (val) => {
-        // Remove + and spaces, count only digits
-        const digits = val.replace(/[^0-9]/g, "");
-        // Minimum 10 digits (country code + number), maximum 15 digits (E.164 standard)
-        return digits.length >= 10 && digits.length <= 15;
-      },
-      {
-        message: "Phone number must be between 10 and 15 digits",
-      }
-    )
-    .refine(
-      (val) => {
         // Must start with + and country code
         return /^\+[1-9]\d+$/.test(val);
       },
       {
-        message: "Invalid phone number format",
+        message: "Please enter a valid phone number",
+      }
+    )
+    .refine(
+      (val) => {
+        // Extract all digits (excluding the +)
+        const allDigits = val.replace(/[^0-9]/g, "");
+        const totalDigits = allDigits.length;
+
+        // Minimum total must be at least 10 digits (1 digit country code + 9 digit phone minimum)
+        // Maximum total can be up to 19 digits (4 digit country code + 15 digit phone maximum)
+        if (totalDigits < 10 || totalDigits > 19) {
+          return false;
+        }
+
+        // Try country code lengths from 1 to 4 (to handle 4-digit country codes)
+        // Check if there's at least ONE valid split where phone number is 10-15 digits
+        // We don't require ALL splits to be valid, just that a valid split exists
+        for (
+          let ccLength = 1;
+          ccLength <= 4 && ccLength < totalDigits;
+          ccLength++
+        ) {
+          const phoneNumberLength = totalDigits - ccLength;
+          // If we find at least one valid split, the phone number is valid
+          if (phoneNumberLength >= 10 && phoneNumberLength <= 15) {
+            return true;
+          }
+        }
+
+        // No valid split found
+        return false;
+      },
+      {
+        message: "Please enter a valid phone number",
       }
     ),
 });
@@ -72,19 +95,35 @@ export const step10Schema = z.object({
 
 export const step11Schema = z.object({
   minimumPrice: z.number().positive("Must be > 0"),
-  hourlyRate: z.number().positive("Must be > 0"),
+  hourlyRate: z
+    .union([z.number().positive("Must be > 0"), z.undefined()])
+    .optional(),
 });
 
 export const step12Schema = z.object({
-  projects: z.array(z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    photos: z.array(z.string()).optional(),
-    videos: z.array(z.string()).optional(),
-  })).refine((arr) => arr.some((p) => (p.title && p.title.trim()) || (p.description && p.description.trim()) || (p.photos && p.photos.length > 0) || (p.videos && p.videos.length > 0)), {
-    message: "Add at least one project",
-    path: ["projects"],
-  }),
+  projects: z
+    .array(
+      z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        photos: z.array(z.string()).optional(),
+        videos: z.array(z.string()).optional(),
+      })
+    )
+    .refine(
+      (arr) =>
+        arr.some(
+          (p) =>
+            (p.title && p.title.trim()) ||
+            (p.description && p.description.trim()) ||
+            (p.photos && p.photos.length > 0) ||
+            (p.videos && p.videos.length > 0)
+        ),
+      {
+        message: "Add at least one project",
+        path: ["projects"],
+      }
+    ),
 });
 
 export const step13Schema = z.object({
@@ -94,5 +133,3 @@ export const step13Schema = z.object({
 export function isValid<T>(schema: z.ZodSchema<T>, data: T): boolean {
   return schema.safeParse(data).success;
 }
-
-
