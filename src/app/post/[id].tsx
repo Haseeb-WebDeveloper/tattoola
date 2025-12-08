@@ -1,4 +1,5 @@
 import EditPostModal from "@/components/post/EditPostModal";
+import { UnsavedChangesModal } from "@/components/post/UnsavedChangesModal";
 import { CustomToast } from "@/components/ui/CustomToast";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -24,6 +25,7 @@ import React, {
 } from "react";
 import {
   Animated,
+  BackHandler,
   Dimensions,
   FlatList,
   Image,
@@ -123,6 +125,9 @@ export default function PostDetailScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  const isSavingRef = useRef(false);
 
   // Animation values for edit modal
   const bottomSheetTranslateY = useRef(
@@ -337,7 +342,14 @@ export default function PostDetailScreen() {
     ]).start();
   };
 
-  const handleCloseEdit = () => {
+  const closeEditModal = (skipUnsavedCheck = false) => {
+    // If we're skipping the unsaved check (e.g., after saving), reset the flags immediately
+    // This prevents the unsaved changes modal from appearing briefly
+    if (skipUnsavedCheck) {
+      setHasUnsavedChanges(false);
+      setShowUnsavedChangesModal(false);
+    }
+
     // Animate bottom sheet sliding down and image moving back
     Animated.parallel([
       Animated.timing(bottomSheetTranslateY, {
@@ -357,25 +369,110 @@ export default function PostDetailScreen() {
       }),
     ]).start(() => {
       setShowEditModal(false);
+      // Reset flags again in callback to ensure cleanup
+      if (!skipUnsavedCheck) {
+        setHasUnsavedChanges(false);
+        setShowUnsavedChangesModal(false);
+      }
     });
   };
+
+  const handleCloseEdit = () => {
+    // Don't show unsaved changes modal if we're currently saving or if modal is closing
+    if (isSavingRef.current || !showEditModal) {
+      return;
+    }
+    if (hasUnsavedChanges) {
+      setShowUnsavedChangesModal(true);
+      return;
+    }
+    closeEditModal();
+  };
+
+  // Wrapper for onHasChangesChange that ignores changes during save
+  const handleHasChangesChange = (hasChanges: boolean) => {
+    // Ignore changes if we're currently saving or if modal is not visible
+    // This prevents the popup from appearing after save when loadPost() updates the post
+    if (isSavingRef.current || !showEditModal) {
+      return;
+    }
+    setHasUnsavedChanges(hasChanges);
+  };
+
+  const handleDiscardChanges = () => {
+    setShowUnsavedChangesModal(false);
+    closeEditModal();
+  };
+
+  // Memoize post object for EditPostModal to prevent unnecessary re-renders
+  const memoizedPostForEdit = useMemo(
+    () =>
+      post
+        ? {
+            id: post.id,
+            caption: post.caption,
+            style: post.style, // Keep for backward compatibility
+            styles: (post as any).styles || (post.style ? [post.style] : []), // Add styles array
+            media: post.media,
+          }
+        : null,
+    [
+      post?.id,
+      post?.caption,
+      post?.style?.id,
+      post?.style?.name,
+      JSON.stringify((post as any)?.styles),
+    ]
+  );
+
+  // Handle Android back button when edit modal is open
+  useEffect(() => {
+    if (showEditModal) {
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          handleCloseEdit(); // Will show modal if has changes
+          return true; // Prevent default back action
+        }
+      );
+      return () => backHandler.remove();
+    }
+  }, [showEditModal, hasUnsavedChanges, handleCloseEdit]);
 
   const handleSaveEdit = async (data: {
     caption: string;
     styleId?: string;
+    styleIds?: string[];
     collectionIds: string[];
   }) => {
     if (!post || !user) return;
 
     try {
+      // Log for debugging
+      console.log(
+        "handleSaveEdit - styleIds received:",
+        data.styleIds,
+        "styleId (backward compat):",
+        data.styleId
+      );
+
+      // Use styleIds array if provided, otherwise fall back to styleId
+      const styleIdsToSave =
+        data.styleIds && data.styleIds.length > 0
+          ? data.styleIds
+          : data.styleId
+            ? [data.styleId]
+            : [];
+
+      console.log("handleSaveEdit - styleIdsToSave:", styleIdsToSave);
+
       await updatePost(post.id, user.id, {
         caption: data.caption,
-        styleId: data.styleId,
+        styleIds: styleIdsToSave, // Pass array of style IDs (1-3 styles)
         collectionIds: data.collectionIds,
       });
 
-      // Reload post data
-      await loadPost();
+      console.log("handleSaveEdit - updatePost completed");
 
       // Show success toast
       const toastId = toast.custom(
@@ -386,6 +483,12 @@ export default function PostDetailScreen() {
         />,
         { duration: 4000 }
       );
+
+      // Reload post data after modal closes (delay to ensure modal is fully closed)
+      // This prevents EditPostModal from detecting changes when post data updates
+      setTimeout(() => {
+        loadPost();
+      }, 500);
     } catch (error) {
       console.error("Error updating post:", error);
       throw error;
@@ -1070,25 +1173,51 @@ export default function PostDetailScreen() {
               }}
             />
             <View style={{ paddingTop: s(20), flex: 1 }}>
-              <EditPostModal
-                visible={showEditModal}
-                post={{
-                  id: post.id,
-                  caption: post.caption,
-                  style: post.style,
-                  media: post.media,
-                }}
-                onClose={handleCloseEdit}
-                onSave={async (data) => {
-                  await handleSaveEdit(data);
-                  handleCloseEdit();
-                }}
-                isBottomSheet={true}
-              />
+              {memoizedPostForEdit && (
+                <EditPostModal
+                  key={post.id}
+                  visible={showEditModal}
+                  post={memoizedPostForEdit}
+                  onClose={handleCloseEdit}
+                  onSave={async (data) => {
+                    // Set saving flag FIRST to prevent unsaved changes modal from appearing
+                    isSavingRef.current = true;
+                    // Reset unsaved changes flag immediately before saving to prevent popup
+                    setHasUnsavedChanges(false);
+                    setShowUnsavedChangesModal(false);
+
+                    try {
+                      await handleSaveEdit(data);
+                      // Keep saving flag true while closing modal to prevent any popup
+                      // Close modal immediately after save completes
+                      closeEditModal(true);
+                    } catch (error) {
+                      // If save fails, reset the saving flag so user can try again
+                      isSavingRef.current = false;
+                      setHasUnsavedChanges(true); // Restore flag if save failed
+                      throw error;
+                    } finally {
+                      // Reset saving flag after modal animation completes (400ms for animation + buffer)
+                      setTimeout(() => {
+                        isSavingRef.current = false;
+                      }, 500);
+                    }
+                  }}
+                  isBottomSheet={true}
+                  onHasChangesChange={handleHasChangesChange}
+                />
+              )}
             </View>
           </Animated.View>
         </>
       )}
+
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        visible={showUnsavedChangesModal}
+        onContinueEditing={() => setShowUnsavedChangesModal(false)}
+        onDiscardChanges={handleDiscardChanges}
+      />
     </View>
   );
 }

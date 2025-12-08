@@ -3,7 +3,7 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -26,16 +26,19 @@ interface EditPostModalProps {
   post: {
     id: string;
     caption?: string;
-    style?: { id: string; name: string };
+    style?: { id: string; name: string }; // Keep for backward compatibility
+    styles?: { id: string; name: string }[]; // New: support multiple styles
     media: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO" }[];
   };
   onClose: () => void;
   onSave: (data: {
     caption: string;
-    styleId?: string;
+    styleId?: string; // Keep for backward compatibility
+    styleIds?: string[]; // New: support multiple styles
     collectionIds: string[];
   }) => Promise<void>;
   isBottomSheet?: boolean;
+  onHasChangesChange?: (hasChanges: boolean) => void;
 }
 
 export default function EditPostModal({
@@ -44,11 +47,11 @@ export default function EditPostModal({
   onClose,
   onSave,
   isBottomSheet = false,
+  onHasChangesChange,
 }: EditPostModalProps) {
-  const [caption, setCaption] = useState(post.caption || "");
-  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>(
-    post.style ? [post.style.id] : []
-  );
+  // Initialize state with empty/default values - will be set in useEffect
+  const [caption, setCaption] = useState("");
+  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(
     []
   );
@@ -60,40 +63,122 @@ export default function EditPostModal({
   const [saving, setSaving] = useState(false);
 
   // Track initial values to detect changes
-  const [initialCaption, setInitialCaption] = useState(post.caption || "");
-  const [initialStyleIds, setInitialStyleIds] = useState<string[]>(
-    post.style ? [post.style.id] : []
-  );
+  const [initialCaption, setInitialCaption] = useState("");
+  const [initialStyleIds, setInitialStyleIds] = useState<string[]>([]);
   const [initialCollectionIds, setInitialCollectionIds] = useState<string[]>(
     []
   );
 
+  // Track the post ID we've initialized for to prevent resetting on re-renders
+  const initializedPostIdRef = useRef<string | null>(null);
+  const previousVisibleRef = useRef<boolean>(false);
+  const isInitializingRef = useRef<boolean>(false);
+  // Store post data in ref to prevent re-initialization when post object changes
+  const postDataRef = useRef<{
+    id: string;
+    caption?: string;
+    style?: { id: string; name: string };
+    styles?: { id: string; name: string }[];
+  }>({
+    id: post.id,
+    caption: post.caption,
+    style: post.style,
+    styles: post.styles,
+  });
+
+  // Update postDataRef when post changes, but only if it's a different post
   useEffect(() => {
-    if (visible) {
-      const captionValue = post.caption || "";
-      const styleIdsValue = post.style ? [post.style.id] : [];
-      setCaption(captionValue);
-      setSelectedStyleIds(styleIdsValue);
-      setInitialCaption(captionValue);
-      setInitialStyleIds(styleIdsValue);
-      loadData();
+    if (post.id !== postDataRef.current.id) {
+      postDataRef.current = {
+        id: post.id,
+        caption: post.caption,
+        style: post.style,
+        styles: post.styles,
+      };
     }
-  }, [visible, post]);
+  }, [post.id, post.caption, post.style?.id, post.styles]);
+
+  useEffect(() => {
+    // Only initialize when modal becomes visible (transitions from false to true)
+    // or when the post ID actually changes (different post)
+    const isOpening = visible && !previousVisibleRef.current;
+    const currentPostId = postDataRef.current.id;
+    const isDifferentPost =
+      visible && initializedPostIdRef.current !== currentPostId;
+
+    // CRITICAL: Prevent any initialization if we're already initialized for this post and modal is open
+    // This is the key fix - we must return early to prevent any state updates
+    if (!isOpening && !isDifferentPost) {
+      previousVisibleRef.current = visible;
+      // Don't do anything if modal is already open and we're initialized
+      if (!visible) {
+        initializedPostIdRef.current = null;
+        isInitializingRef.current = false;
+      }
+      return;
+    }
+
+    // Only initialize if we're opening or it's a different post
+    if (isOpening || isDifferentPost) {
+      isInitializingRef.current = true;
+      const postData = postDataRef.current;
+      const captionValue = postData.caption || "";
+      // Use styles array if available, otherwise fall back to single style
+      // This is a temporary value - loadData will fetch the actual styles from DB
+      const styleIdsValue =
+        post.styles && post.styles.length > 0
+          ? post.styles.map((s) => s.id)
+          : postData.style
+            ? [postData.style.id]
+            : [];
+
+      // Only set state if we're actually initializing
+      setCaption(captionValue);
+      setSelectedStyleIds(styleIdsValue); // Temporary - will be updated by loadData
+      setInitialCaption(captionValue);
+      setInitialStyleIds(styleIdsValue); // Temporary - will be updated by loadData
+      initializedPostIdRef.current = currentPostId;
+
+      // loadData will fetch actual styles from database and update selectedStyleIds
+      loadData().finally(() => {
+        isInitializingRef.current = false;
+      });
+    }
+
+    // Track previous visible state
+    previousVisibleRef.current = visible;
+
+    // Reset ref when modal closes
+    if (!visible) {
+      initializedPostIdRef.current = null;
+      isInitializingRef.current = false;
+    }
+    // Only depend on visible - post data is tracked via ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [stylesData, collectionsData, postCollectionsData] =
+      const currentPostId = postDataRef.current.id;
+      const [stylesData, collectionsData, postCollectionsData, postStylesData] =
         await Promise.all([
           fetchTattooStyles(),
           fetchUserCollections(),
-          fetchPostCollections(post.id),
+          fetchPostCollections(currentPostId),
+          fetchPostStyles(currentPostId),
         ]);
 
       setStyles(stylesData);
       setCollections(collectionsData);
-      setSelectedCollectionIds(postCollectionsData);
-      setInitialCollectionIds(postCollectionsData);
+      // Only set collections and styles if we're initializing (not if user has made changes)
+      if (isInitializingRef.current) {
+        setSelectedCollectionIds(postCollectionsData);
+        setInitialCollectionIds(postCollectionsData);
+        // Update styles from database (this will override the temporary value set during initialization)
+        setSelectedStyleIds(postStylesData);
+        setInitialStyleIds(postStylesData);
+      }
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -123,6 +208,31 @@ export default function EditPostModal({
 
     if (error) throw new Error(error.message);
     return (data || []).map((item: any) => item.collectionId);
+  };
+
+  const fetchPostStyles = async (postId: string): Promise<string[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("post_styles")
+        .select("styleId, order")
+        .eq("postId", postId)
+        .order("order", { ascending: true });
+
+      // If post_styles table doesn't exist or has no data, fall back to single style from post prop
+      if (error || !data || data.length === 0) {
+        // Fallback to single style from post.style (backward compatibility)
+        return post.style ? [post.style.id] : [];
+      }
+
+      return (data || []).map((item: any) => item.styleId);
+    } catch (err) {
+      // If table doesn't exist, fall back to single style
+      console.warn(
+        "post_styles table may not exist, falling back to single style:",
+        err
+      );
+      return post.style ? [post.style.id] : [];
+    }
   };
 
   const toggleStyle = (styleId: string) => {
@@ -158,9 +268,15 @@ export default function EditPostModal({
 
     try {
       setSaving(true);
+      // Ensure we have at least one style selected
+      if (selectedStyleIds.length === 0) {
+        throw new Error("At least one style must be selected");
+      }
+
       await onSave({
         caption: caption.trim(),
-        styleId: selectedStyleIds[0], // Use first selected style as primary
+        styleIds: selectedStyleIds, // Pass all selected styles (1-3 styles)
+        styleId: selectedStyleIds[0] || undefined, // Keep for backward compatibility
         collectionIds: selectedCollectionIds,
       });
       onClose();
@@ -197,6 +313,13 @@ export default function EditPostModal({
     selectedCollectionIds,
     initialCollectionIds,
   ]);
+
+  // Notify parent when changes occur
+  useEffect(() => {
+    if (onHasChangesChange) {
+      onHasChangesChange(hasChanges);
+    }
+  }, [hasChanges, onHasChangesChange]);
 
   const content = (
     <View className="flex-1" style={{ backgroundColor: "transparent" }}>
