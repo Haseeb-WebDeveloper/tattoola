@@ -108,7 +108,7 @@ export default function UserRegistrationStep7() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "An error occurred during registration"
+          : "Si è verificato un errore durante la registrazione"
       );
     }
   };
@@ -132,7 +132,7 @@ export default function UserRegistrationStep7() {
           <RegistrationProgress
             currentStep={7}
             totalSteps={7}
-            name="Profile visibility"
+            name="Visibilità del profilo"
             icon={<SVGIcons.SecurePerson width={20} height={20} />}
             nameVariant="2xl"
           />
@@ -178,15 +178,15 @@ export default function UserRegistrationStep7() {
                     className="text-foreground font-montserratSemibold"
                     style={{ marginBottom: mvs(4) }}
                   >
-                    Public profile
+                    Profilo pubblico
                   </ScaledText>
                   <ScaledText
                     allowScaling={false}
                     variant="11"
                     className="text-foreground font-neueRoman"
                   >
-                    Your tattoos, the artists you follow will be visible on your
-                    page
+                    I tuoi tatuaggi e gli artisti che segui saranno visibili sulla tua
+                    pagina
                   </ScaledText>
                 </View>
               </View>
@@ -231,15 +231,15 @@ export default function UserRegistrationStep7() {
                     className="text-foreground font-montserratSemibold"
                     style={{ marginBottom: mvs(4) }}
                   >
-                    Private profile
+                    Profilo privato
                   </ScaledText>
                   <ScaledText
                     allowScaling={false}
                     variant="11"
                     className="text-foreground font-neueRoman"
                   >
-                    Your tattoos and the artists you follow are visible only to
-                    you
+                    I tuoi tatuaggi e gli artisti che segui sono visibili solo a
+                    te
                   </ScaledText>
                 </View>
               </View>
@@ -251,8 +251,8 @@ export default function UserRegistrationStep7() {
         <NextBackFooter
           onNext={handleComplete}
           nextDisabled={loading}
-          nextLabel="Almost there!"
-          backLabel="Back"
+          nextLabel="Quasi fatto!"
+          backLabel="Indietro"
           onBack={handleBack}
         />
       </LinearGradient>
@@ -288,7 +288,7 @@ export default function UserRegistrationStep7() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              You have unsaved changes in profile visibility
+              Hai modifiche non salvate nella visibilità del profilo
             </ScaledText>
 
             {/* Subtitle */}
@@ -298,7 +298,7 @@ export default function UserRegistrationStep7() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(32) }}
             >
-              Do you want to discard them?
+              Vuoi scartarle?
             </ScaledText>
 
             {/* Action Buttons */}
@@ -325,7 +325,7 @@ export default function UserRegistrationStep7() {
                   className="font-montserratMedium"
                   style={{ color: "#AD2E2E" }}
                 >
-                  Continue Editing
+                  Continua Modifica
                 </ScaledText>
               </TouchableOpacity>
 
@@ -344,7 +344,7 @@ export default function UserRegistrationStep7() {
                   variant="md"
                   className="text-gray font-montserratMedium"
                 >
-                  Discard changes
+                  Scarta modifiche
                 </ScaledText>
               </TouchableOpacity>
             </View>
