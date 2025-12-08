@@ -150,7 +150,6 @@ export default function LocationSettingsScreen() {
     };
     setLocations([...locations, newLocation]);
     setEditingLocationId(newLocation.id);
-    toast.success("New location added");
   };
 
   const handleRemoveLocation = (locationId: string) => {
@@ -191,7 +190,7 @@ export default function LocationSettingsScreen() {
       !locationToRemove.isNew &&
       !locationToRemove.id.startsWith("temp-")
     ) {
-      toast.success("Location removed");
+      toast.success("Posizione rimossa con successo");
     }
   };
 
@@ -301,6 +300,9 @@ export default function LocationSettingsScreen() {
         if (deleteError) throw deleteError;
       }
 
+      // Track if any new locations were added
+      let hasNewLocation = false;
+
       // Process all locations
       for (const location of locationsToPersist) {
         const locationData = {
@@ -323,6 +325,7 @@ export default function LocationSettingsScreen() {
             });
 
           if (insertError) throw insertError;
+          hasNewLocation = true;
         } else {
           // Update existing location
           const { error: updateError } = await supabase
@@ -337,7 +340,12 @@ export default function LocationSettingsScreen() {
       // Clear profile cache to force refresh
       await clearProfileCache(user.id);
 
-      toast.success("Località aggiornate con successo");
+      // Show appropriate toast message
+      if (hasNewLocation) {
+        toast.success("Nuova località aggiunta con successo");
+      } else {
+        toast.success("Località aggiornate con successo");
+      }
 
       // Navigate back on success
       setTimeout(() => {
@@ -810,7 +818,22 @@ export default function LocationSettingsScreen() {
       {editingLocationId && (
         <LocationEditModal
           location={locations.find((loc) => loc.id === editingLocationId)!}
-          onClose={() => setEditingLocationId(null)}
+          onClose={(shouldRemove) => {
+            const location = locations.find(
+              (loc) => loc.id === editingLocationId
+            );
+            // If it's a new location (temp ID) and should be removed (no data saved), remove it
+            if (
+              shouldRemove &&
+              location &&
+              (location.id.startsWith("temp-") || location.isNew)
+            ) {
+              setLocations(
+                locations.filter((loc) => loc.id !== editingLocationId)
+              );
+            }
+            setEditingLocationId(null);
+          }}
           onSave={(updates) => {
             handleUpdateLocation(editingLocationId, updates);
             setEditingLocationId(null);
@@ -828,45 +851,76 @@ function LocationEditModal({
   onSave,
 }: {
   location: LocationItem;
-  onClose: () => void;
+  onClose: (shouldRemove?: boolean) => void;
   onSave: (updates: Partial<LocationItem>) => void;
 }) {
   const insets = useSafeAreaInsets();
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+  // Store initial values to detect changes
+  const initialProvince = location.provinceId
+    ? {
+        id: location.provinceId,
+        name: location.provinceName,
+        imageUrl: null,
+      }
+    : null;
+  const initialMunicipality = location.municipalityId
+    ? {
+        id: location.municipalityId,
+        name: location.municipalityName,
+      }
+    : null;
+  const initialAddress = location.address || "";
+
   const [selectedProvince, setSelectedProvince] = useState<{
     id: string;
     name: string;
     imageUrl?: string | null;
-  } | null>(
-    location.provinceId
-      ? {
-          id: location.provinceId,
-          name: location.provinceName,
-          imageUrl: null,
-        }
-      : null
-  );
+  } | null>(initialProvince);
   const [selectedMunicipality, setSelectedMunicipality] = useState<{
     id: string;
     name: string;
-  } | null>(
-    location.municipalityId
-      ? {
-          id: location.municipalityId,
-          name: location.municipalityName,
-        }
-      : null
-  );
-  const [address, setAddress] = useState(location.address || "");
+  } | null>(initialMunicipality);
+  const [address, setAddress] = useState(initialAddress);
+
+  // Check if there are unsaved changes
+  const hasChanges =
+    selectedProvince?.id !== initialProvince?.id ||
+    selectedMunicipality?.id !== initialMunicipality?.id ||
+    address.trim() !== initialAddress.trim();
 
   const displayValue =
     selectedProvince && selectedMunicipality
       ? `${selectedMunicipality.name}, ${selectedProvince.name}`
       : "Select location";
 
+  const handleClose = () => {
+    if (hasChanges) {
+      setShowDiscardModal(true);
+    } else {
+      // If it's a new location with no data, remove it
+      const isNewLocation = location.id.startsWith("temp-") || location.isNew;
+      const hasNoData = !selectedProvince || !selectedMunicipality;
+      onClose(isNewLocation && hasNoData);
+    }
+  };
+
+  const handleDiscard = () => {
+    setShowDiscardModal(false);
+    // If it's a new location, always remove it when discarding
+    const isNewLocation = location.id.startsWith("temp-") || location.isNew;
+    onClose(isNewLocation);
+  };
+
+  const handleContinueEditing = () => {
+    setShowDiscardModal(false);
+  };
+
   const handleSave = () => {
     if (!selectedProvince || !selectedMunicipality) {
-      toast.error("Please select both province and municipality");
+      toast.error("Seleziona sia la provincia che il comune");
       return;
     }
 
@@ -884,7 +938,7 @@ function LocationEditModal({
       visible={true}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View className="flex-1 bg-black/50">
         <View
@@ -901,7 +955,7 @@ function LocationEditModal({
             }}
           >
             <TouchableOpacity
-              onPress={onClose}
+              onPress={handleClose}
               className="items-center justify-center rounded-full bg-foreground/20"
               style={{
                 width: s(30),
@@ -1011,6 +1065,105 @@ function LocationEditModal({
           </View>
         </View>
       </View>
+
+      {/* Discard Changes Confirmation Modal */}
+      <Modal
+        visible={showDiscardModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleContinueEditing}
+      >
+        <View
+          className="items-center justify-center flex-1"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: "88%",
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            {/* Warning Icon */}
+            <View className="items-center" style={{ marginBottom: mvs(20) }}>
+              <SVGIcons.WarningYellow width={s(32)} height={s(32)} />
+            </View>
+
+            {/* Title */}
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-center text-background font-neueBold"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Scartare le modifiche?
+            </ScaledText>
+
+            {/* Subtitle */}
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-center text-background font-montserratMedium"
+              style={{ marginBottom: mvs(32) }}
+            >
+              Hai selezionato una località ma non l'hai salvata. Vuoi scartare
+              le modifiche?
+            </ScaledText>
+
+            {/* Action Buttons */}
+            <View style={{ rowGap: mvs(8) }}>
+              {/* Continue Editing Button */}
+              <TouchableOpacity
+                onPress={handleContinueEditing}
+                className="flex-row items-center justify-center border-2 rounded-full"
+                style={{
+                  width: "100%",
+                  borderColor: "#AD2E2E",
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                  gap: s(8),
+                }}
+              >
+                <SVGIcons.PenRed
+                  style={{ width: s(14), height: s(14) }}
+                  fill="#AD2E2E"
+                />
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="font-montserratMedium"
+                  style={{ color: "#AD2E2E" }}
+                >
+                  Continua a modificare
+                </ScaledText>
+              </TouchableOpacity>
+
+              {/* Discard Changes Button */}
+              <TouchableOpacity
+                onPress={handleDiscard}
+                className="items-center justify-center rounded-full"
+                style={{
+                  width: "100%",
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                }}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-montserratMedium"
+                >
+                  Scarta le modifiche
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Shared LocationPicker */}
       <LocationPicker
         visible={pickerVisible}

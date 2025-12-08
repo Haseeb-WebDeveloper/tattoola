@@ -34,7 +34,7 @@ export function UnsavedChangesModal({
           style={{
             width: "100%",
             maxWidth: s(342),
-            paddingHorizontal: s(24),
+            paddingHorizontal: s(16),
             paddingVertical: mvs(32),
           }}
         >
@@ -46,36 +46,46 @@ export function UnsavedChangesModal({
           {/* Title */}
           <ScaledText
             allowScaling={false}
-            variant="lg"
+            variant="md"
             className="text-center text-background font-neueBold"
-            style={{ marginBottom: mvs(4) }}
+            style={{ marginBottom: mvs(4), fontSize: s(14) }}
           >
-            You have unsaved changes in the Tattoo details
+            Hai modifiche non salvate nei dettagli del Tatuaggio
           </ScaledText>
 
           {/* Subtitle */}
           <ScaledText
             allowScaling={false}
-            variant="md"
+            variant="sm"
             className="text-center text-background font-montserratMedium"
-            style={{ marginBottom: mvs(32) }}
+            style={{ marginBottom: mvs(32), fontSize: s(12) }}
           >
-            Do you want to discard them
+            Vuoi scartarle?
           </ScaledText>
 
           {/* Action Buttons */}
-          <View style={{ gap: mvs(12) }} className="flex-col">
+          <View
+            style={{
+              flexDirection: "row",
+              gap: s(12),
+              width: "100%",
+            }}
+          >
             {/* Continue Editing Button */}
             <TouchableOpacity
               onPress={onContinueEditing}
-              className="flex-row items-center justify-center border-2 rounded-full"
               style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 2,
                 borderColor: "#AD2E2E",
-                paddingVertical: mvs(10.5),
-                paddingLeft: s(18),
-                paddingRight: s(20),
-                gap: s(8),
-                width: "100%",
+                borderRadius: s(999),
+                paddingVertical: mvs(14),
+                paddingHorizontal: s(18),
+                gap: s(6),
+                minWidth: 0, // Allow flex to shrink
               }}
             >
               <SVGIcons.PenRed
@@ -84,31 +94,36 @@ export function UnsavedChangesModal({
               />
               <ScaledText
                 allowScaling={false}
-                variant="md"
+                variant="sm"
                 className="font-montserratMedium"
-                style={{ color: "#AD2E2E" }}
+                style={{ color: "#AD2E2E", fontSize: s(12) }}
+                numberOfLines={1}
               >
-                Continue Editing
+                Continua a modificare
               </ScaledText>
             </TouchableOpacity>
 
             {/* Discard Changes Button */}
             <TouchableOpacity
               onPress={onDiscardChanges}
-              className="items-center justify-center rounded-full"
               style={{
-                paddingVertical: mvs(10.5),
-                paddingLeft: s(18),
-                paddingRight: s(20),
-                width: "100%",
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: s(999),
+                paddingVertical: mvs(14),
+                paddingHorizontal: s(18),
+                minWidth: 0, // Allow flex to shrink
               }}
             >
               <ScaledText
                 allowScaling={false}
-                variant="md"
+                variant="sm"
                 className="text-gray font-montserratMedium"
+                style={{ fontSize: s(12) }}
+                numberOfLines={1}
               >
-                Discard changes
+                Scarta modifiche
               </ScaledText>
             </TouchableOpacity>
           </View>

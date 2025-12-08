@@ -8,9 +8,10 @@ import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
+import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
-import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Image,
@@ -20,7 +21,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { toast } from "sonner-native";
-import { TrimText } from "@/utils/text-trim";
 
 export default function UploadPreviewStep() {
   const {
@@ -126,7 +126,7 @@ export default function UploadPreviewStep() {
       setSubmitting(true);
       const { postId } = await createPostWithMediaAndCollection({
         caption,
-        styleId: styleIds?.[0], // Use first styleId for backward compatibility
+        styleId: styleIds && styleIds.length > 0 ? styleIds : undefined, // Pass styleId array (1-3 styles)
         media: media.map((m, index) => ({
           mediaUrl: m.cloud || m.uri,
           mediaType: m.type === "video" ? "VIDEO" : "IMAGE",

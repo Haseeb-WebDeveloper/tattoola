@@ -1,20 +1,90 @@
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { createCollection } from "@/services/collection.service";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
+import { LinearGradient } from "expo-linear-gradient";
+import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
   Modal,
+  Pressable,
   ScrollView,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
-const { width: screenWidth } = Dimensions.get("window");
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+// Component to display post media (image or video)
+function PostMediaDisplay({
+  media,
+}: {
+  media: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO" };
+}) {
+  const videoPlayer =
+    media.mediaType === "VIDEO"
+      ? useVideoPlayer(media.mediaUrl, (player) => {
+          player.loop = true;
+          player.muted = false;
+          // Auto-play video
+          setTimeout(() => {
+            player.play();
+          }, 100);
+        })
+      : null;
+
+  return (
+    <View
+      style={{
+        width: "100%",
+        height: screenHeight * 0.4,
+        backgroundColor: "#000",
+        borderBottomLeftRadius: s(32),
+        borderBottomRightRadius: s(32),
+        overflow: "hidden",
+      }}
+    >
+      {media.mediaType === "IMAGE" ? (
+        <Image
+          source={{ uri: media.mediaUrl }}
+          style={{
+            width: "100%",
+            height: "100%",
+            resizeMode: "cover",
+          }}
+        />
+      ) : videoPlayer ? (
+        <VideoView
+          player={videoPlayer}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+          contentFit="cover"
+          nativeControls={false}
+        />
+      ) : null}
+
+      {/* Bottom gradient overlay to reduce opacity */}
+      <LinearGradient
+        colors={["transparent", "rgba(0, 0, 0, 0.7)"]}
+        locations={[0.5, 1]}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "50%", // Cover bottom half with gradient
+        }}
+      />
+    </View>
+  );
+}
 
 interface Collection {
   id: string;
@@ -33,12 +103,12 @@ interface EditPostModalProps {
   onClose: () => void;
   onSave: (data: {
     caption: string;
-    styleId?: string; // Keep for backward compatibility
-    styleIds?: string[]; // New: support multiple styles
+    styleId?: string[]; // Array of style IDs (1-3 styles)
     collectionIds: string[];
   }) => Promise<void>;
   isBottomSheet?: boolean;
   onHasChangesChange?: (hasChanges: boolean) => void;
+  currentMediaIndex?: number; // Index of currently viewed media item
 }
 
 export default function EditPostModal({
@@ -48,6 +118,7 @@ export default function EditPostModal({
   onSave,
   isBottomSheet = false,
   onHasChangesChange,
+  currentMediaIndex = 0,
 }: EditPostModalProps) {
   // Initialize state with empty/default values - will be set in useEffect
   const [caption, setCaption] = useState("");
@@ -61,6 +132,13 @@ export default function EditPostModal({
   const [showCollectionsDropdown, setShowCollectionsDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showCreateCollectionModal, setShowCreateCollectionModal] =
+    useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [creatingCollection, setCreatingCollection] = useState(false);
+  // Track newly created collections that should be deleted if user doesn't save
+  // Track pending collections (created in frontend but not yet saved to database)
+  const pendingCollectionsRef = useRef<{ tempId: string; name: string }[]>([]);
 
   // Track initial values to detect changes
   const [initialCaption, setInitialCaption] = useState("");
@@ -152,6 +230,8 @@ export default function EditPostModal({
     if (!visible) {
       initializedPostIdRef.current = null;
       isInitializingRef.current = false;
+      // Clear pending collections (they were only in frontend, so no cleanup needed)
+      pendingCollectionsRef.current = [];
     }
     // Only depend on visible - post data is tracked via ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,6 +280,45 @@ export default function EditPostModal({
     return (data || []) as Collection[];
   };
 
+  // No cleanup needed - pending collections are only in frontend, not in database
+
+  const handleCreateCollection = async () => {
+    if (!newCollectionName.trim()) {
+      return; // Don't create empty collection
+    }
+
+    try {
+      setCreatingCollection(true);
+
+      // Generate temporary ID (don't call createCollection service - only frontend)
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Track this pending collection
+      pendingCollectionsRef.current.push({
+        tempId,
+        name: newCollectionName.trim(),
+      });
+
+      // Add to collections list (frontend only)
+      const newCollection: Collection = {
+        id: tempId,
+        name: newCollectionName.trim(),
+      };
+      setCollections((prev) => [newCollection, ...prev]);
+
+      // Automatically select the new collection
+      setSelectedCollectionIds((prev) => [...prev, tempId]);
+
+      // Close modal and reset name
+      setShowCreateCollectionModal(false);
+      setNewCollectionName("");
+    } catch (error) {
+      console.error("Error creating collection:", error);
+    } finally {
+      setCreatingCollection(false);
+    }
+  };
+
   const fetchPostCollections = async (postId: string): Promise<string[]> => {
     const { data, error } = await supabase
       .from("collection_posts")
@@ -213,25 +332,38 @@ export default function EditPostModal({
   const fetchPostStyles = async (postId: string): Promise<string[]> => {
     try {
       const { data, error } = await supabase
-        .from("post_styles")
-        .select("styleId, order")
-        .eq("postId", postId)
-        .order("order", { ascending: true });
+        .from("posts")
+        .select("styleId")
+        .eq("id", postId)
+        .single();
 
-      // If post_styles table doesn't exist or has no data, fall back to single style from post prop
-      if (error || !data || data.length === 0) {
-        // Fallback to single style from post.style (backward compatibility)
-        return post.style ? [post.style.id] : [];
+      if (error) {
+        console.warn("Error fetching post styles from DB:", error);
+        // Fallback to post prop
+        return post.style
+          ? [post.style.id]
+          : post.styles?.map((s) => s.id) || [];
       }
 
-      return (data || []).map((item: any) => item.styleId);
+      // Handle array type
+      if (data?.styleId) {
+        if (Array.isArray(data.styleId)) {
+          return data.styleId;
+        }
+        // If it's still a string (old data), convert to array
+        if (typeof data.styleId === "string") {
+          return [data.styleId];
+        }
+      }
+
+      // Fallback to empty array or post prop
+      return post.style ? [post.style.id] : post.styles?.map((s) => s.id) || [];
     } catch (err) {
-      // If table doesn't exist, fall back to single style
       console.warn(
-        "post_styles table may not exist, falling back to single style:",
+        "Error fetching post styles, falling back to post prop:",
         err
       );
-      return post.style ? [post.style.id] : [];
+      return post.style ? [post.style.id] : post.styles?.map((s) => s.id) || [];
     }
   };
 
@@ -270,15 +402,40 @@ export default function EditPostModal({
       setSaving(true);
       // Ensure we have at least one style selected
       if (selectedStyleIds.length === 0) {
-        throw new Error("At least one style must be selected");
+        throw new Error("Almeno uno stile deve essere selezionato");
       }
+
+      // Get user session
+      const { data: session } = await supabase.auth.getUser();
+      if (!session.user) throw new Error("Not authenticated");
+
+      // Create pending collections in database first
+      const tempIdToRealIdMap = new Map<string, string>();
+
+      for (const pendingCollection of pendingCollectionsRef.current) {
+        // Only create if it's selected
+        if (selectedCollectionIds.includes(pendingCollection.tempId)) {
+          const { id } = await createCollection(
+            session.user.id,
+            pendingCollection.name
+          );
+          tempIdToRealIdMap.set(pendingCollection.tempId, id);
+        }
+      }
+
+      // Replace temporary IDs with real IDs in selectedCollectionIds
+      const realCollectionIds = selectedCollectionIds.map((id) => {
+        return tempIdToRealIdMap.get(id) || id; // Use real ID if it was temp, otherwise keep original
+      });
 
       await onSave({
         caption: caption.trim(),
-        styleIds: selectedStyleIds, // Pass all selected styles (1-3 styles)
-        styleId: selectedStyleIds[0] || undefined, // Keep for backward compatibility
-        collectionIds: selectedCollectionIds,
+        styleId: selectedStyleIds, // Pass styleId array (1-3 styles)
+        collectionIds: realCollectionIds, // Use real collection IDs
       });
+
+      // Clear pending collections since they're now saved
+      pendingCollectionsRef.current = [];
       onClose();
     } catch (error) {
       console.error("Error saving post:", error);
@@ -322,323 +479,533 @@ export default function EditPostModal({
   }, [hasChanges, onHasChangesChange]);
 
   const content = (
-    <View className="flex-1" style={{ backgroundColor: "transparent" }}>
-      {/* Header - only show if not bottom sheet */}
-      {!isBottomSheet && (
+    <View className="flex-1" style={{ position: "relative" }}>
+      {/* Post Image/Media - Show when bottom sheet, positioned behind header */}
+      {isBottomSheet && post.media && post.media.length > 0 && (
         <View
-          className="flex-row items-center justify-between px-4 pb-4"
-          style={{ paddingTop: s(48) }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1,
+            height: screenHeight * 0.4,
+          }}
         >
-          <TouchableOpacity onPress={onClose}>
-            <View
-              className="rounded-full bg-white/10"
-              style={{
-                width: s(35),
-                height: s(35),
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <SVGIcons.Close width={s(20)} height={s(20)} />
-            </View>
-          </TouchableOpacity>
-          <ScaledText
-            variant="lg"
-            className="text-white font-neueMedium"
-            style={{ fontSize: s(16) }}
-          >
-            Edit tattoo details
-          </ScaledText>
-          <View style={{ width: s(35) }} />
+          <PostMediaDisplay
+            media={
+              post.media[Math.min(currentMediaIndex, post.media.length - 1)]
+            }
+          />
         </View>
       )}
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{
-          paddingBottom: 20,
+      {/* Header - show for both modal and bottom sheet, overlay on image */}
+      <View
+        className="flex-row items-center justify-between px-4 pb-4"
+        style={{
+          paddingTop: isBottomSheet ? s(20) : s(48),
+          zIndex: 10,
+          backgroundColor: "transparent",
+          position: "relative",
         }}
-        showsVerticalScrollIndicator={false}
       >
-        {/* Description */}
-        <View className="px-4 mb-4">
-          <ScaledText
-            variant="sm"
-            className="mb-2 text-gray font-montserratSemibold"
-            style={{ fontSize: s(12) }}
-          >
-            Description
-          </ScaledText>
+        <TouchableOpacity onPress={onClose}>
           <View
-            className="bg-[#100C0C] border border-gray rounded-lg"
+            className="rounded-full"
             style={{
-              minHeight: mvs(164),
-              padding: s(10),
+              width: s(35),
+              height: s(35),
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <TextInput
-              value={caption}
-              onChangeText={setCaption}
-              placeholder="A quick and short description for this tattoo. Probably it should go to two rows |"
-              placeholderTextColor="#A49A99"
-              multiline
-              className="text-white font-montserratSemibold"
-              style={{
-                fontSize: s(12),
-                lineHeight: s(23),
-                textAlignVertical: "top",
-              }}
-            />
+            <SVGIcons.Close width={s(20)} height={s(20)} />
           </View>
-        </View>
+        </TouchableOpacity>
+        <ScaledText
+          variant="lg"
+          className="text-white font-neueMedium"
+          style={{ fontSize: s(16) }}
+        >
+          Dettagli Tatuaggio
+        </ScaledText>
+        <View style={{ width: s(35) }} />
+      </View>
 
-        {/* Styles Selection */}
-        <View className="px-4 mb-4">
-          <ScaledText
-            variant="sm"
-            className="mb-2 text-gray font-montserratSemibold"
-            style={{ fontSize: s(12) }}
-          >
-            Assign styles{" "}
+      {/* Background for form area below image */}
+      {isBottomSheet && (
+        <View
+          style={{
+            position: "absolute",
+            top: screenHeight * 0.4, // Start below image
+            left: 0,
+            right: 0,
+            bottom: 0, // Extend to bottom of screen
+            backgroundColor: "#0F0202", // Background color for form area and below
+            zIndex: 2,
+          }}
+        />
+      )}
+
+      {/* Form container with background */}
+      <View
+        style={{
+          zIndex: 3,
+          height: isBottomSheet ? screenHeight * 0.6 : undefined,
+          backgroundColor: "#0F0202", // Background color for form area
+          flexDirection: "column",
+          position: "absolute",
+          top: isBottomSheet ? screenHeight * 0.4 : 0, // Start below image
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      >
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: mvs(100), // Extra padding for Save button space
+            paddingTop: s(16), // Small padding at top
+          }}
+          showsVerticalScrollIndicator={false}
+          style={{
+            flex: 1,
+          }}
+        >
+          {/* Description */}
+          <View className="px-4 mb-4">
             <ScaledText
               variant="sm"
-              className="text-gray font-montserratLight"
-              style={{ fontSize: s(11) }}
+              className="mb-2 text-gray font-montserratSemibold"
+              style={{ fontSize: s(12) }}
             >
-              (at least 1 needs to be selected)
+              Descrizione
             </ScaledText>
-          </ScaledText>
-          <TouchableOpacity
-            onPress={() => setShowStylesDropdown(!showStylesDropdown)}
-            className="bg-[#100C0C] border border-gray rounded-lg flex-row items-center justify-between"
-            style={{
-              height: mvs(48),
-              paddingHorizontal: s(13),
-            }}
-          >
             <View
-              className="flex-row items-center flex-1"
-              style={{ gap: s(10) }}
+              className="bg-[#100C0C] border border-gray rounded-lg"
+              style={{
+                minHeight: mvs(164),
+                padding: s(10),
+              }}
             >
-              {selectedStyles.length > 0 && (
-                <View className="flex-row" style={{ gap: s(-12) }}>
-                  {selectedStyles.slice(0, 3).map((style, index) => (
-                    <View
-                      key={style.id}
-                      style={{
-                        marginLeft: index > 0 ? s(-12) : 0,
-                        zIndex: 3 - index,
-                      }}
-                    >
-                      {style.imageUrl ? (
-                        <Image
-                          source={{ uri: style.imageUrl }}
-                          style={{
-                            width: s(20),
-                            height: s(20),
-                            borderRadius: s(10),
-                            borderWidth: 2,
-                            borderColor: "#100C0C",
-                          }}
-                        />
-                      ) : (
-                        <View
-                          className="bg-gray/30"
-                          style={{
-                            width: s(20),
-                            height: s(20),
-                            borderRadius: s(10),
-                            borderWidth: 2,
-                            borderColor: "#100C0C",
-                          }}
-                        />
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
+              <TextInput
+                value={caption}
+                onChangeText={setCaption}
+                placeholder="Una descrizione breve e veloce per questo tatuaggio. Probabilmente dovrebbe andare su due righe |"
+                placeholderTextColor="#A49A99"
+                multiline
+                className="text-white font-montserratSemibold"
+                style={{
+                  fontSize: s(12),
+                  lineHeight: s(23),
+                  textAlignVertical: "top",
+                }}
+              />
+            </View>
+          </View>
+
+          {/* Styles Selection */}
+          <View className="px-4 mb-4">
+            <ScaledText
+              variant="sm"
+              className="mb-2 text-gray font-montserratSemibold"
+              style={{ fontSize: s(12) }}
+            >
+              Assegna stili{" "}
+              <ScaledText
+                variant="sm"
+                className="text-gray font-montserratLight"
+                style={{ fontSize: s(11) }}
+              >
+                (almeno 1 deve essere selezionato)
+              </ScaledText>
+            </ScaledText>
+            <TouchableOpacity
+              onPress={() => setShowStylesDropdown(!showStylesDropdown)}
+              className="bg-[#100C0C] border border-gray rounded-lg flex-row items-center justify-between"
+              style={{
+                height: mvs(48),
+                paddingHorizontal: s(13),
+              }}
+            >
+              <View
+                className="flex-row items-center flex-1"
+                style={{ gap: s(10) }}
+              >
+                {selectedStyles.length > 0 && (
+                  <View className="flex-row" style={{ gap: s(-12) }}>
+                    {selectedStyles.slice(0, 3).map((style, index) => (
+                      <View
+                        key={style.id}
+                        style={{
+                          marginLeft: index > 0 ? s(-12) : 0,
+                          zIndex: 3 - index,
+                        }}
+                      >
+                        {style.imageUrl ? (
+                          <Image
+                            source={{ uri: style.imageUrl }}
+                            style={{
+                              width: s(20),
+                              height: s(20),
+                              borderRadius: s(10),
+                              borderWidth: 2,
+                              borderColor: "#100C0C",
+                            }}
+                          />
+                        ) : (
+                          <View
+                            className="bg-gray/30"
+                            style={{
+                              width: s(20),
+                              height: s(20),
+                              borderRadius: s(10),
+                              borderWidth: 2,
+                              borderColor: "#100C0C",
+                            }}
+                          />
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+                <ScaledText
+                  variant="sm"
+                  className="text-white font-montserratSemibold"
+                  style={{ fontSize: s(12) }}
+                >
+                  {`${selectedStyles.length} stile${selectedStyles.length !== 1 ? "i" : ""} selezionato${selectedStyles.length !== 1 ? "i" : ""}`}
+                </ScaledText>
+              </View>
+              <SVGIcons.ChevronDown
+                width={s(8)}
+                height={s(8)}
+                style={{
+                  transform: [
+                    { rotate: showStylesDropdown ? "180deg" : "0deg" },
+                  ],
+                }}
+              />
+            </TouchableOpacity>
+
+            {showStylesDropdown && (
+              <View
+                className="bg-[#100C0C] border border-gray rounded-lg mt-2"
+                style={{
+                  maxHeight: mvs(300), // Increased height for better scrolling
+                }}
+              >
+                <ScrollView
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  style={{
+                    maxHeight: mvs(300),
+                  }}
+                  contentContainerStyle={{
+                    paddingVertical: s(4),
+                  }}
+                >
+                  {styles.map((style) => {
+                    const isSelected = selectedStyleIds.includes(style.id);
+                    const isDisabled =
+                      !isSelected && selectedStyleIds.length >= 3;
+                    return (
+                      <TouchableOpacity
+                        key={style.id}
+                        onPress={() => toggleStyle(style.id)}
+                        disabled={isDisabled}
+                        className="flex-row items-center justify-between px-4 py-3"
+                        style={{
+                          opacity: isDisabled ? 0.5 : 1,
+                        }}
+                      >
+                        <View className="flex-row items-center flex-1">
+                          {style.imageUrl && (
+                            <Image
+                              source={{ uri: style.imageUrl }}
+                              style={{
+                                width: s(40),
+                                height: s(40),
+                                borderRadius: s(4),
+                              }}
+                            />
+                          )}
+                          <ScaledText
+                            variant="sm"
+                            className="ml-3 text-white font-neueMedium"
+                          >
+                            {style.name}
+                          </ScaledText>
+                        </View>
+                        {isSelected ? (
+                          <SVGIcons.CheckedCheckbox
+                            width={s(20)}
+                            height={s(20)}
+                          />
+                        ) : (
+                          <SVGIcons.UncheckedCheckbox
+                            width={s(20)}
+                            height={s(20)}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Collections Selection */}
+          <View className="px-4 mb-4">
+            <ScaledText
+              variant="sm"
+              className="mb-2 text-gray font-montserratSemibold"
+              style={{ fontSize: s(12) }}
+            >
+              Assegna una o più collezioni{" "}
+              <ScaledText
+                variant="sm"
+                className="text-gray font-montserratLight"
+                style={{ fontSize: s(11) }}
+              >
+                (almeno 1 deve essere selezionata)
+              </ScaledText>
+            </ScaledText>
+            <TouchableOpacity
+              onPress={() =>
+                setShowCollectionsDropdown(!showCollectionsDropdown)
+              }
+              className="bg-[#100C0C] border border-gray rounded-lg flex-row items-center justify-between"
+              style={{
+                height: mvs(48),
+                paddingHorizontal: s(13),
+              }}
+            >
               <ScaledText
                 variant="sm"
                 className="text-white font-montserratSemibold"
                 style={{ fontSize: s(12) }}
               >
-                {`${selectedStyles.length} style${selectedStyles.length !== 1 ? "s" : ""} selected`}
+                {`${selectedCollections.length} collezione${selectedCollections.length !== 1 ? "i" : ""} selezionata${selectedCollections.length !== 1 ? "e" : ""}`}
               </ScaledText>
-            </View>
-            <SVGIcons.ChevronDown
-              width={s(8)}
-              height={s(8)}
-              style={{
-                transform: [{ rotate: showStylesDropdown ? "180deg" : "0deg" }],
-              }}
-            />
-          </TouchableOpacity>
+              <SVGIcons.ChevronDown
+                width={s(8)}
+                height={s(8)}
+                style={{
+                  transform: [
+                    { rotate: showCollectionsDropdown ? "180deg" : "0deg" },
+                  ],
+                }}
+              />
+            </TouchableOpacity>
 
-          {showStylesDropdown && (
-            <View className="bg-[#100C0C] border border-gray rounded-lg mt-2 max-h-64">
-              <ScrollView>
-                {styles.map((style) => {
-                  const isSelected = selectedStyleIds.includes(style.id);
-                  const isDisabled =
-                    !isSelected && selectedStyleIds.length >= 3;
-                  return (
-                    <TouchableOpacity
-                      key={style.id}
-                      onPress={() => toggleStyle(style.id)}
-                      disabled={isDisabled}
-                      className="flex-row items-center px-4 py-3"
+            {showCollectionsDropdown && (
+              <View
+                className="bg-[#100C0C] border border-gray rounded-lg mt-2"
+                style={{
+                  maxHeight: mvs(300), // Increased height for better scrolling
+                }}
+              >
+                <ScrollView
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  style={{
+                    maxHeight: mvs(300),
+                  }}
+                  contentContainerStyle={{
+                    paddingVertical: s(4),
+                  }}
+                >
+                  {collections.map((collection) => {
+                    const isSelected = selectedCollectionIds.includes(
+                      collection.id
+                    );
+                    return (
+                      <TouchableOpacity
+                        key={collection.id}
+                        onPress={() => toggleCollection(collection.id)}
+                        className="flex-row items-center justify-between px-4 py-3"
+                      >
+                        <ScaledText
+                          variant="sm"
+                          className="text-white font-neueMedium"
+                        >
+                          {collection.name}
+                        </ScaledText>
+                        {isSelected ? (
+                          <SVGIcons.CheckedCheckbox
+                            width={s(20)}
+                            height={s(20)}
+                          />
+                        ) : (
+                          <SVGIcons.UncheckedCheckbox
+                            width={s(20)}
+                            height={s(20)}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {/* Create New Collection Option */}
+                  <View
+                    className="border-t border-gray/30"
+                    style={{
+                      borderStyle: "dashed",
+                      borderTopWidth: 1,
+                      marginTop: s(4),
+                      marginHorizontal: s(4),
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowCreateCollectionModal(true)}
+                    className="flex-col items-center justify-center"
+                    style={{
+                      backgroundColor: "#140404", // TAT- dark gray maroon
+                      borderWidth: 1,
+                      borderColor: "#AE0E0E", // TAT - Brand red
+                      borderStyle: "dashed",
+                      borderRadius: s(8),
+                      padding: s(24),
+                      marginHorizontal: s(4),
+                      marginTop: s(4),
+                      marginBottom: s(4),
+                      minHeight: mvs(70),
+                      gap: s(5),
+                    }}
+                  >
+                    <SVGIcons.Plus
+                      width={s(19)}
+                      height={s(19)}
+                      fill="#AE0E0E"
+                    />
+                    <ScaledText
+                      variant="sm"
+                      className="text-gray font-neueLight"
                       style={{
-                        opacity: isDisabled ? 0.5 : 1,
+                        fontSize: s(14),
+                        lineHeight: s(23),
+                        color: "#A49A99", // TAT- gray
                       }}
                     >
-                      {isSelected ? (
-                        <SVGIcons.CheckedCheckbox
-                          width={s(20)}
-                          height={s(20)}
-                        />
-                      ) : (
-                        <SVGIcons.UncheckedCheckbox
-                          width={s(20)}
-                          height={s(20)}
-                        />
-                      )}
-                      {style.imageUrl && (
-                        <Image
-                          source={{ uri: style.imageUrl }}
-                          style={{
-                            width: s(40),
-                            height: s(40),
-                            borderRadius: s(4),
-                            marginLeft: s(12),
-                          }}
-                        />
-                      )}
-                      <ScaledText
-                        variant="sm"
-                        className="ml-3 text-white font-neueMedium"
-                      >
-                        {style.name}
-                      </ScaledText>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
-        </View>
+                      Crea nuova collezione
+                    </ScaledText>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        </ScrollView>
 
-        {/* Collections Selection */}
-        <View className="px-4 mb-4">
-          <ScaledText
-            variant="sm"
-            className="mb-2 text-gray font-montserratSemibold"
-            style={{ fontSize: s(12) }}
-          >
-            Assign one or collections{" "}
-            <ScaledText
-              variant="sm"
-              className="text-gray font-montserratLight"
-              style={{ fontSize: s(11) }}
-            >
-              (at least 1 needs to be selected)
-            </ScaledText>
-          </ScaledText>
-          <TouchableOpacity
-            onPress={() => setShowCollectionsDropdown(!showCollectionsDropdown)}
-            className="bg-[#100C0C] border border-gray rounded-lg flex-row items-center justify-between"
-            style={{
-              height: mvs(48),
-              paddingHorizontal: s(13),
-            }}
-          >
-            <ScaledText
-              variant="sm"
-              className="text-white font-montserratSemibold"
-              style={{ fontSize: s(12) }}
-            >
-              {`${selectedCollections.length} collection${selectedCollections.length !== 1 ? "s" : ""} selected`}
-            </ScaledText>
-            <SVGIcons.ChevronDown
-              width={s(8)}
-              height={s(8)}
-              style={{
-                transform: [
-                  { rotate: showCollectionsDropdown ? "180deg" : "0deg" },
-                ],
-              }}
-            />
-          </TouchableOpacity>
-
-          {showCollectionsDropdown && (
-            <View className="bg-[#100C0C] border border-gray rounded-lg mt-2 max-h-64">
-              <ScrollView>
-                {collections.map((collection) => {
-                  const isSelected = selectedCollectionIds.includes(
-                    collection.id
-                  );
-                  return (
-                    <TouchableOpacity
-                      key={collection.id}
-                      onPress={() => toggleCollection(collection.id)}
-                      className="flex-row items-center px-4 py-3"
-                    >
-                      {isSelected ? (
-                        <SVGIcons.CheckedCheckbox
-                          width={s(20)}
-                          height={s(20)}
-                        />
-                      ) : (
-                        <SVGIcons.UncheckedCheckbox
-                          width={s(20)}
-                          height={s(20)}
-                        />
-                      )}
-                      <ScaledText
-                        variant="sm"
-                        className="ml-3 text-white font-neueMedium"
-                      >
-                        {collection.name}
-                      </ScaledText>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* Save Button */}
-      <View className="px-4 pb-8">
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={
-            saving ||
-            !hasChanges ||
-            selectedStyleIds.length === 0 ||
-            selectedCollectionIds.length === 0
-          }
-          className="items-center justify-center rounded-full bg-primary"
+        {/* Save Button - Fixed at bottom of form area */}
+        <View
+          className="px-4"
           style={{
-            height: mvs(48),
-            opacity:
+            backgroundColor: "#0F0202", // Match form background
+            paddingTop: s(12),
+            paddingBottom: s(20),
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={
               saving ||
               !hasChanges ||
               selectedStyleIds.length === 0 ||
               selectedCollectionIds.length === 0
-                ? 0.5
-                : 1,
-          }}
-        >
-          <ScaledText
-            variant="md"
-            className="text-white font-neueMedium"
-            style={{ fontSize: s(14) }}
+            }
+            className="items-center justify-center rounded-full bg-primary"
+            style={{
+              height: mvs(48),
+              opacity:
+                saving ||
+                !hasChanges ||
+                selectedStyleIds.length === 0 ||
+                selectedCollectionIds.length === 0
+                  ? 0.5
+                  : 1,
+            }}
           >
-            {saving ? "Saving..." : "Save changes"}
-          </ScaledText>
-        </TouchableOpacity>
+            <ScaledText
+              variant="md"
+              className="text-white font-neueMedium"
+              style={{ fontSize: s(14) }}
+            >
+              {saving ? "Salvataggio..." : "Salva modifiche"}
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Create Collection Modal */}
+      <Modal
+        visible={showCreateCollectionModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowCreateCollectionModal(false);
+          setNewCollectionName("");
+        }}
+      >
+        <View
+          className="items-center justify-center flex-1 px-4 bg-black/50"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <View
+            className="bg-[#100C0C] border border-gray rounded-lg w-full"
+            style={{ maxWidth: s(400), padding: s(20) }}
+          >
+            <ScaledText
+              variant="lg"
+              className="mb-4 text-white font-neueMedium"
+              style={{ fontSize: s(18) }}
+            >
+              Crea Nuova Collezione
+            </ScaledText>
+            <TextInput
+              value={newCollectionName}
+              onChangeText={setNewCollectionName}
+              placeholder="Nome collezione"
+              placeholderTextColor="#A49A99"
+              className="bg-[#1A1616] border border-gray rounded-lg text-white font-montserratSemibold px-4 py-3 mb-4"
+              style={{ fontSize: s(14) }}
+              autoFocus
+              onSubmitEditing={handleCreateCollection}
+            />
+            <View className="flex-row justify-end gap-3">
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCreateCollectionModal(false);
+                  setNewCollectionName("");
+                }}
+                className="px-6 py-3 border rounded-lg border-gray"
+              >
+                <ScaledText variant="sm" className="text-white font-neueMedium">
+                  Annulla
+                </ScaledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCreateCollection}
+                disabled={!newCollectionName.trim() || creatingCollection}
+                className="px-6 py-3 rounded-lg bg-red"
+                style={{
+                  opacity:
+                    !newCollectionName.trim() || creatingCollection ? 0.5 : 1,
+                }}
+              >
+                <ScaledText variant="sm" className="text-white font-neueMedium">
+                  {creatingCollection ? "Creazione..." : "Crea"}
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 
@@ -653,7 +1020,17 @@ export default function EditPostModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      {content}
+      <Pressable
+        style={{ flex: 1 }}
+        onPress={(e) => {
+          // Prevent closing on outside press - only allow close button or back button
+          e.stopPropagation();
+        }}
+      >
+        <View style={{ flex: 1 }} pointerEvents="box-none">
+          {content}
+        </View>
+      </Pressable>
     </Modal>
   );
 }
