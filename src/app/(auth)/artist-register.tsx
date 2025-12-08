@@ -115,18 +115,31 @@ export default function ArtistRegisterScreen() {
     router.push("/(auth)/email-confirmation");
 
     try {
-      const result = await signUp(formData);
+      await signUp(formData);
       // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
-    } catch (error) {
+    } catch (error: any) {
+      const code = error?.code;
+
+    if (code === "EMAIL_ALREADY_VERIFIED") {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Si è verificato un errore durante la registrazione";
+        "Questa email è già registrata e verificata. Accedi per continuare.";
+
       setError(message);
-      // Go back to the form and show the error
-      router.replace("/(auth)/artist-register");
       toast.error(message);
+
+      router.replace("/(auth)/login");
+      return;
+    }
+
+    const message =
+      error?.message || "Si è verificato un errore durante la registrazione";
+
+    setError(message);
+    toast.error(message);
+
+    // Do NOT redirect back to register — stay in the flow
+    router.replace("/(auth)/email-confirmation");
     }
   };
 

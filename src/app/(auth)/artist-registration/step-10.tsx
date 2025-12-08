@@ -132,8 +132,8 @@ export default function ArtistStep10V2() {
         <RegistrationProgress
           currentStep={10}
           totalSteps={totalStepsDisplay}
-          name="Body parts you work on"
-          description="Select all body areas you typically tattoo"
+          name="Parti del corpo su cui lavori"
+          description="Seleziona tutte le aree del corpo che tatu di solito"
           icon={<SVGIcons.Pricing width={19} height={19} />}
         />
 
@@ -166,7 +166,7 @@ export default function ArtistStep10V2() {
         <AbsoluteNextBackFooter
           onNext={onNext}
           nextDisabled={!canProceed}
-          backLabel="Back"
+          backLabel="Indietro"
           onBack={() => router.back()}
         />
       </View>

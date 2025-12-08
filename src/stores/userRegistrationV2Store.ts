@@ -8,6 +8,7 @@ import type {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { encryptJSON, decryptJSON } from '@/utils/encryption';
 
 interface UserV2RegistrationState {
   // Steps data
@@ -80,11 +81,36 @@ export const useUserRegistrationV2Store = create<UserV2RegistrationState>()(
         name: 'user-registration-v2',
         storage: {
           getItem: async (name: string) => {
-            const v = await AsyncStorage.getItem(name);
-            return v ? JSON.parse(v) : null;
+            try {
+              const encrypted = await AsyncStorage.getItem(name);
+              if (!encrypted) return null;
+              
+              // Try to decrypt (for backward compatibility, check if it's already encrypted)
+              const decrypted = await decryptJSON(encrypted);
+              if (decrypted) {
+                return decrypted;
+              }
+              
+              // Fallback: if decryption fails, try parsing as plain JSON (migration from unencrypted)
+              try {
+                return JSON.parse(encrypted);
+              } catch {
+                return null;
+              }
+            } catch (error) {
+              console.error('Error reading encrypted storage:', error);
+              return null;
+            }
           },
           setItem: async (name: string, value: any) => {
-            await AsyncStorage.setItem(name, JSON.stringify(value));
+            try {
+              const encrypted = await encryptJSON(value);
+              await AsyncStorage.setItem(name, encrypted);
+            } catch (error) {
+              console.error('Error encrypting storage:', error);
+              // Fallback to unencrypted storage if encryption fails
+              await AsyncStorage.setItem(name, JSON.stringify(value));
+            }
           },
           removeItem: async (name: string) => {
             await AsyncStorage.removeItem(name);

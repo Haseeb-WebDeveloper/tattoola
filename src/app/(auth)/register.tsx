@@ -107,25 +107,31 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Navigate immediately to email confirmation and start background signup.
-    // Also persist the full form data (including role) so we can route back
-    // to the correct registration screen if the user needs to edit their email.
-    setInProgress(formData.email, formData);
-    router.push("/(auth)/email-confirmation");
 
     try {
-      const result = await signUp(formData);
+      setInProgress(formData.email, formData);
+      await signUp(formData);
       setSuccess();
-      // if (!result.needsVerification) {
-      //   router.push("/(auth)/welcome");
-      // }
+      router.push("/(auth)/email-confirmation")
     } catch (error: any) {
-      const message =
-        error?.message ||
-        "Si è verificato un errore durante la registrazione";
-      setError(message);
-      router.replace("/(auth)/register");
-      toast.error(message);
+      const code = error?.code;
+
+  if (code === "EMAIL_ALREADY_VERIFIED") {
+    const message = "Questa email è già registrata e verificata. Accedi per continuare.";
+    setError(message);
+    toast.error(message);
+    router.replace("/(auth)/login");
+    return;
+  }
+
+  const message =
+    error?.message || "Si è verificato un errore durante la registrazione";
+
+  setError(message);
+  toast.error(message);
+
+  // Stay on email confirmation screen, DO NOT redirect back
+  router.replace("/(auth)/email-confirmation");
     }
   };
 

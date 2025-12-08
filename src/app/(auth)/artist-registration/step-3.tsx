@@ -102,7 +102,7 @@ export default function ArtistStep3V2() {
         <RegistrationProgress
           currentStep={3}
           totalSteps={totalStepsDisplay}
-          name="Create your profile"
+          name="Crea il tuo profilo"
           icon={<SVGIcons.Person width={25} height={25} />}
           nameVariant="2xl"
         />
@@ -115,7 +115,7 @@ export default function ArtistStep3V2() {
             className="text-foreground font-neueSemibold"
             style={{ marginBottom: mvs(2) }}
           >
-            Upload your photo
+            Carica la tua foto
             <ScaledText
               allowScaling={false}
               variant="lg"
@@ -164,7 +164,7 @@ export default function ArtistStep3V2() {
                     variant="md"
                     className="text-foreground font-neueBold"
                   >
-                    Upload image
+                    Carica immagine
                   </ScaledText>
                 </View>
               </View>
@@ -180,7 +180,7 @@ export default function ArtistStep3V2() {
             className="text-tat font-montserratSemibold"
             style={{ marginBottom: mvs(4) }}
           >
-            Name
+            Nome
             <ScaledText
               allowScaling={false}
               variant="sm"
@@ -220,7 +220,7 @@ export default function ArtistStep3V2() {
               className="text-tat font-montserratSemibold"
               style={{ marginBottom: mvs(4) }}
             >
-              Surname
+              Cognome
               <ScaledText
                 allowScaling={false}
                 variant="sm"
