@@ -151,6 +151,8 @@ import EditRed from "@/assets/icons/edit-red.svg";
 // @ts-ignore
 import PostPreview from "@/assets/icons/post-preview.svg";
 // @ts-ignore
+import MoreMedia from "@/assets/icons/more-media.svg";
+// @ts-ignore
 import DetailPreview from "@/assets/icons/detail-preview.svg";
 // @ts-ignore
 import UploadCollectionSelection from "@/assets/icons/upload-collection-selection.svg";
@@ -313,6 +315,7 @@ export const SVGIcons = {
   Edit,
   EditRed,
   PostPreview,
+  MoreMedia,
   DetailPreview,
   Like,
   LikeFilled,

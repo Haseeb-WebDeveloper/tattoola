@@ -226,6 +226,32 @@ export default function UploadPreviewStep() {
         height="100%"
         className="bg-red-500 border-2 border-blue-500"
       />
+
+      {/* Top gradient overlay for better readability (like in DetailPreviewCard) */}
+      <LinearGradient
+        colors={["rgba(0,0,0,0.5)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0)"]}
+        locations={[0, 0.5, 1]}
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: "12%",
+          zIndex: 1,
+        }}
+        pointerEvents="none"
+      />
+
+      <View
+        className="absolute w-fit"
+        style={{
+          top: s(10),
+          left: "50%",
+          transform: [{ translateX: "-50%" }],
+        }}
+      >
+        <SVGIcons.LogoLight width={s(32)} height={s(32)} />
+      </View>
       {/* Caption and user info near bottom like mockup */}
       <View className="absolute left-2 bottom-[60px]">
         {!!caption && (
@@ -280,30 +306,50 @@ export default function UploadPreviewStep() {
           borderColor: "#A49A99",
         }}
       >
-        {mainImage ? (
-          isVideo ? (
-            <VideoView
-              player={player}
+        <View
+          className="absolute top-0 left-0 w-full"
+          style={{
+            borderBottomLeftRadius: s(16),
+            borderBottomRightRadius: s(16),
+            overflow: "hidden",
+            height: "80%",
+          }}
+        >
+          {mainImage ? (
+            isVideo ? (
+              <VideoView
+                player={player}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                }}
+                contentFit="cover"
+                nativeControls={false}
+              />
+            ) : (
+              <Image
+                source={{ uri: mainImage }}
+                className="absolute top-0 left-0 w-full h-full"
+                resizeMode="cover"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+              />
+            )
+          ) : (
+            <View
+              className="absolute top-0 left-0 w-full h-full bg-black/20"
               style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
                 width: "100%",
                 height: "100%",
               }}
-              contentFit="cover"
-              nativeControls={false}
             />
-          ) : (
-            <Image
-              source={{ uri: mainImage }}
-              className="absolute top-0 left-0 w-full h-full"
-              resizeMode="cover"
-            />
-          )
-        ) : (
-          <View className="absolute top-0 left-0 w-full h-full bg-black/20" />
-        )}
+          )}
+        </View>
         <SVGIcons.DetailPreview
           width="100%"
           height="100%"
@@ -337,8 +383,9 @@ export default function UploadPreviewStep() {
           }}
         >
           {/* Caption and like button section */}
-          <View className="flex-row items-start justify-between"
-          style={{ marginBottom: s(8) }}
+          <View
+            className="flex-row items-start justify-between"
+            style={{ marginBottom: s(8) }}
           >
             <View className="flex-1 mr-2">
               {!!caption && (
@@ -388,7 +435,10 @@ export default function UploadPreviewStep() {
           {/* Author info section */}
           {user && (
             <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1">
+              <View
+                className="flex-row items-center flex-1"
+                style={{ gap: s(4) }}
+              >
                 {user?.avatar ? (
                   <Image
                     source={{ uri: user.avatar }}
