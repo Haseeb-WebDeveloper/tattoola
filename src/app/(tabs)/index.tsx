@@ -8,6 +8,7 @@ import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Text, TouchableOpacity } from "react-native";
 import {
   FlatList,
   RefreshControl,

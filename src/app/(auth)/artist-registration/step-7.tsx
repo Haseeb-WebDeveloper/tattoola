@@ -67,7 +67,7 @@ export default function ArtistStep7V2() {
       <RegistrationProgress
         currentStep={7}
         totalSteps={totalStepsDisplay}
-        name="Add Bio & Socials"
+        name="Aggiungi Bio e Social"
         icon={<SVGIcons.Heart width={22} height={22} />}
         nameVariant="2xl"
       />
@@ -200,9 +200,9 @@ export default function ArtistStep7V2() {
       {/* Footer */}
       <NextBackFooter
         onNext={onNext}
-        nextLabel="Next"
+        nextLabel="Avanti"
         nextDisabled={!canProceed}
-        backLabel="Back"
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
     </KeyboardAwareScrollView>

@@ -17,6 +17,6 @@ export const SEARCH_RESULTS_PER_PAGE = 20;
 
 // collection mame while aritst signup and we save his work posts
 export const COLLECTION_NAME = {
-  ARTIST_FAV_WORK: "prefetti",
-  ALL_POSTS: "tutti",
+  ARTIST_FAV_WORK: "Prefetti",
+  ALL_POSTS: "Tutti",
 };

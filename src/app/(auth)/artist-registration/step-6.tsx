@@ -65,7 +65,7 @@ export default function ArtistStep6V2() {
       // Check file size (10MB limit for documents)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size && file.size > maxSize) {
-        toast.error("File size must be less than 10MB");
+        toast.error("La dimensione del file deve essere inferiore a 10MB");
         setUploading(false);
         return;
       }
@@ -93,10 +93,10 @@ export default function ArtistStep6V2() {
       // Update store with certificate URL
       updateStep4({ certificateUrl });
       
-      toast.success("Certificate uploaded successfully");
+      toast.success("Certificato caricato con successo");
     } catch (error: any) {
       console.error("Error uploading certificate:", error);
-      toast.error(error.message || "Failed to upload certificate");
+      toast.error(error.message || "Caricamento certificato fallito");
       setSelectedDocument(null);
     } finally {
       setUploading(false);
@@ -160,7 +160,7 @@ export default function ArtistStep6V2() {
                 variant="md"
                 className="text-foreground font-neueSemibold"
               >
-                {uploading ? "Uploading..." : "Upload Certificate"}
+                {uploading ? "Caricamento..." : "Carica Certificato"}
               </ScaledText>
             </TouchableOpacity>
             <ScaledText
@@ -232,7 +232,7 @@ export default function ArtistStep6V2() {
       <NextBackFooter
         onNext={onNext}
         nextDisabled={!canProceed}
-        backLabel="Back"
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
     </View>

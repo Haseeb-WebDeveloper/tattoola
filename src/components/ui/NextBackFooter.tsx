@@ -13,6 +13,7 @@ type Props = {
   containerStyle?: ViewStyle;
   nextLabel?: string;
   backLabel?: string;
+  containerClassName?: string;
 };
 
 export default function NextBackFooter({
@@ -24,10 +25,11 @@ export default function NextBackFooter({
   containerStyle,
   nextLabel = "Avanti",
   backLabel = "Indietro",
+  containerClassName,
 }: Props) {
   return (
     <View
-      className="flex-row justify-between"
+      className={`flex-row justify-between ${containerClassName}`}
       style={[
         {
           paddingHorizontal: s(24),
@@ -42,7 +44,7 @@ export default function NextBackFooter({
         <TouchableOpacity
           onPress={onBack}
           disabled={backDisabled}
-          className={`rounded-full border items-center flex-row ${backDisabled ? "border-gray/40" : "border-foreground"}`}
+          className={`rounded-full border items-center flex-row bg-background ${backDisabled ? "border-gray/40" : "border-foreground"}`}
           style={{
             paddingVertical: mvs(10.5),
             paddingLeft: s(18),

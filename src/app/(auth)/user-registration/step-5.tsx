@@ -54,7 +54,7 @@ export default function UserRegistrationStep5() {
         <RegistrationProgress
           currentStep={3}
           totalSteps={7}
-          name="Socials"
+          name="Social"
           nameVariant="2xl"
           icon={<SVGIcons.Heart width={20} height={20} />}
         />
@@ -150,8 +150,8 @@ export default function UserRegistrationStep5() {
       {/* Footer */}
       <NextBackFooter
         onNext={handleNext}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
         onBack={handleBack}
       />
     </View>

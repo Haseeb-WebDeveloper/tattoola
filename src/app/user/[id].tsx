@@ -91,6 +91,7 @@ export default function UserProfileScreen() {
 
   // Render based on user role
   if (userRole === "ARTIST") {
+    console.log("data", data);
     return (
       <ArtistProfileView
         data={data as ArtistSelfProfileInterface & { isFollowing?: boolean }}

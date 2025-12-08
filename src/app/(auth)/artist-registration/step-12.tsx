@@ -182,14 +182,13 @@ export default function ArtistStep12V2() {
     return (
       <View style={{ position: "relative", marginBottom: mvs(4) }}>
         <View
-          className="flex-row items-center bg-tat-foreground border-gray rounded-xl"
+          className="flex-row items-center py-1 border bg-gray-foreground border-gray rounded-xl"
           style={{
-            paddingLeft: s(10),
-            paddingRight: s(16),
+            paddingLeft: 0,
+            minHeight: 70,
+            paddingRight: 0,
             overflow: "visible",
             position: "relative",
-            borderWidth: s(1),
-            paddingVertical: mvs(3),
           }}
         >
           {/* Drag Handle */}
@@ -197,18 +196,21 @@ export default function ArtistStep12V2() {
             onLongPress={drag}
             disabled={isActive}
             style={{
+              width: 40,
+              height: 68,
               justifyContent: "center",
               alignItems: "center",
-              marginRight: s(12),
+              marginLeft: 8,
+              marginRight: 8,
             }}
-            accessibilityLabel="Reorder"
+            accessibilityLabel="Riordina"
           >
-            <SVGIcons.Drag style={{ width: s(6), height: s(6) }} />
+            <SVGIcons.Drag className="w-6 h-6" />
           </Pressable>
           {/* Thumb */}
           <View
-            className="overflow-hidden rounded-lg h-fit aspect-square"
-            style={{ width: s(60), marginRight: s(16) }}
+            className="overflow-hidden rounded-lg h-fit aspect-square relative"
+            style={{ width: 65, marginRight: 16 }}
           >
             {item.type === "image" ? (
               <Image
@@ -217,20 +219,42 @@ export default function ArtistStep12V2() {
                 resizeMode="cover"
               />
             ) : (
-              <View
-                className="items-center justify-center border bg-tat-darkMaroon border-gray rounded-xl"
-                style={{ width: "100%", height: "100%" }}
-              >
-                <SVGIcons.Video style={{ width: s(30), height: s(30) }} />
-              </View>
+              <>
+                {item.cloud ? (
+                  <Image
+                    source={{
+                      uri: cloudinaryService.getVideoThumbnailFromUrl(
+                        item.cloud,
+                        1,
+                        200,
+                        200
+                      ),
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    className="items-center justify-center border bg-tat-darkMaroon border-gray rounded-xl"
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                )}
+                {/* Video icon overlay */}
+                <View
+                  className="absolute inset-0 items-center justify-center"
+                  style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                >
+                  <SVGIcons.Video style={{ width: s(30), height: s(30) }} />
+                </View>
+              </>
             )}
           </View>
           {/* Filename */}
           <View style={{ flex: 1 }}>
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-gray font-neueSemibold"
+              variant="11"
+              className="text-foreground font-neueLight"
             >
               {(() => {
                 const fullName = getFileNameFromUri(item.uri);
@@ -241,14 +265,13 @@ export default function ArtistStep12V2() {
                   base = fullName.slice(0, lastDot);
                   ext = fullName.slice(lastDot);
                 }
-                return `${TrimText(base, 10)}${ext}`;
+                return `${TrimText(base, 15)}${ext}`;
               })()}
             </ScaledText>
           </View>
           {/* Trash/Delete */}
           <TouchableOpacity
             onPress={() => removeMedia(index)}
-            className="bg-foreground"
             style={{
               alignItems: "center",
               justifyContent: "center",
@@ -257,15 +280,10 @@ export default function ArtistStep12V2() {
               right: 0,
               elevation: 4,
               zIndex: 100,
-              width: s(20),
-              height: s(20),
-              borderRadius: s(70),
-              borderWidth: s(1),
-              borderColor: "#A49A99",
             }}
-            accessibilityLabel="Remove"
+            accessibilityLabel="Rimuovi"
           >
-            <SVGIcons.Trash width={s(13.5)} height={s(13.5)} />
+            <SVGIcons.Trash className="w-5 h-5" style={{ color: "#ff4c4c" }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -292,6 +310,24 @@ export default function ArtistStep12V2() {
 
   const firstAsset = (p?: PortfolioProjectInput) =>
     p?.photos?.[0] || p?.videos?.[0];
+
+  // Helper to check if URL is a video
+  const isVideoUrl = (url?: string) =>
+    url &&
+    (url.endsWith(".mp4") ||
+      url.endsWith(".mov") ||
+      url.endsWith(".webm") ||
+      url.includes("/video/upload"));
+
+  // Get thumbnail URL for videos
+  const getThumbnailUrl = (url?: string) => {
+    if (!url) return null;
+    if (isVideoUrl(url)) {
+      return cloudinaryService.getVideoThumbnailFromUrl(url, 1, 400, 400);
+    }
+    return url;
+  };
+
   const canProceed =
     (step12.projects || []).filter(
       (p) => p && (p.photos?.length || 0) + (p.videos?.length || 0) > 0
@@ -431,8 +467,8 @@ export default function ArtistStep12V2() {
       <RegistrationProgress
         currentStep={12}
         totalSteps={totalStepsDisplay}
-        name="Add your works"
-        description="Add 4 projects. Each project: upload media (1-5), add description, select styles (0-3)."
+        name="Aggiungi i tuoi lavori"
+        description="Aggiungi 4 progetti. Ogni progetto: carica media (1-5), aggiungi descrizione, seleziona stili (0-3)."
         icon={<SVGIcons.Work width={19} height={19} />}
         nameVariant="2xl"
       />
@@ -451,18 +487,36 @@ export default function ArtistStep12V2() {
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="items-center justify-between w-full h-full gap-2 pb-2">
-                  <Image
-                    source={{ uri: firstAsset(grid[i])! }}
-                    className="w-full h-32"
-                    resizeMode="cover"
-                  />
+                <View className="items-center justify-between w-full h-full relative">
+                  <View className="w-full ">
+                    <Image
+                      source={{
+                        uri:
+                          getThumbnailUrl(firstAsset(grid[i])) ||
+                          firstAsset(grid[i])!,
+                      }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                    {isVideoUrl(firstAsset(grid[i])) && (
+                      <View
+                        className="absolute inset-0 items-center justify-center"
+                        style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                      >
+                        <SVGIcons.Video width={s(30)} height={s(30)} />
+                      </View>
+                    )}
+                  </View>
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-neueMedium"
+                    className="text-gray font-neueMedium absolute bottom-0 left-0 right-0 bg-tat-darkMaroon text-center"
+                    style={{
+                      paddingHorizontal: s(16),
+                      paddingVertical: mvs(6),
+                    }}
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               ) : (
@@ -473,7 +527,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               )}
@@ -489,18 +543,36 @@ export default function ArtistStep12V2() {
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="items-center justify-between w-full h-full gap-2 pb-2">
-                  <Image
-                    source={{ uri: firstAsset(grid[i])! }}
-                    className="w-full h-32"
-                    resizeMode="cover"
-                  />
+                <View className="items-center justify-between w-full h-full relative">
+                  <View className="w-full relative">
+                    <Image
+                      source={{
+                        uri:
+                          getThumbnailUrl(firstAsset(grid[i])) ||
+                          firstAsset(grid[i])!,
+                      }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                    {isVideoUrl(firstAsset(grid[i])) && (
+                      <View
+                        className="absolute inset-0 items-center justify-center"
+                        style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                      >
+                        <SVGIcons.Video width={s(30)} height={s(30)} />
+                      </View>
+                    )}
+                  </View>
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-neueMedium"
+                    className="text-gray font-neueMedium absolute bottom-0 left-0 right-0 bg-tat-darkMaroon text-center"
+                    style={{
+                      paddingHorizontal: s(16),
+                      paddingVertical: mvs(6),
+                    }}
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               ) : (
@@ -511,7 +583,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               )}
@@ -525,8 +597,8 @@ export default function ArtistStep12V2() {
         onNext={handleSaveAndProceed}
         nextDisabled={!canProceed || submitting || uploading}
         backDisabled={submitting || uploading}
-        nextLabel={submitting ? "Saving..." : "Almost there!"}
-        backLabel="Back"
+        nextLabel={submitting ? "Salvataggio..." : "Quasi fatto!"}
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
 
@@ -563,7 +635,7 @@ export default function ArtistStep12V2() {
                   variant="lg"
                   className="text-foreground font-neueSemibold"
                 >
-                  Add Design
+                  Aggiungi Design
                 </ScaledText>
               </View>
 
@@ -593,7 +665,7 @@ export default function ArtistStep12V2() {
                         className="text-gray font-neueSemibold"
                         style={{ marginTop: mvs(3) }}
                       >
-                        You need to select at least{" "}
+                        Devi selezionare almeno{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
@@ -602,7 +674,7 @@ export default function ArtistStep12V2() {
                         >
                           1 media
                         </ScaledText>{" "}
-                        (maximum 5)
+                        (massimo 5)
                       </ScaledText>
                     </View>
                     {/* Upload area - matching step-6 design */}
@@ -638,10 +710,10 @@ export default function ArtistStep12V2() {
                             className="text-foreground font-neueSemibold"
                           >
                             {uploading
-                              ? "Uploading..."
+                              ? "Caricamento..."
                               : draft.media.length >= 5
-                                ? "Maximum 5 files"
-                                : "Upload files"}
+                                ? "Massimo 5 file"
+                                : "Carica file"}
                           </ScaledText>
                         </TouchableOpacity>
                         <ScaledText
@@ -671,7 +743,7 @@ export default function ArtistStep12V2() {
                         variant="11"
                         className="text-gray font-neueSemibold"
                       >
-                        You need to select at least{" "}
+                        Devi selezionare almeno{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
@@ -680,7 +752,7 @@ export default function ArtistStep12V2() {
                         >
                           1 media
                         </ScaledText>{" "}
-                        (maximum 5)
+                        (massimo 5)
                       </ScaledText>
                     </View>
 
@@ -717,10 +789,10 @@ export default function ArtistStep12V2() {
                             className="text-foreground font-neueSemibold"
                           >
                             {uploading
-                              ? "Uploading..."
+                              ? "Caricamento..."
                               : draft.media.length >= 5
-                                ? "Maximum 5 files"
-                                : "Upload files"}
+                                ? "Massimo 5 file"
+                                : "Carica file"}
                           </ScaledText>
                         </TouchableOpacity>
                         <ScaledText
@@ -747,7 +819,7 @@ export default function ArtistStep12V2() {
                       Uploaded files
                     </ScaledText> */}
 
-                    <View style={{ maxHeight: 350, marginTop: mvs(15) }}>
+                    <View style={{ marginTop: mvs(15) }}>
                       <DraggableFlatList
                         data={draft.media}
                         onDragEnd={onDragEnd}
@@ -755,11 +827,12 @@ export default function ArtistStep12V2() {
                         renderItem={renderMediaItem}
                         scrollEnabled={true}
                         removeClippedSubviews={false}
-                        style={{ maxHeight: 350 }}
+                        style={{ maxHeight: draft.media.length * 100 }}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{
                           paddingBottom: mvs(90),
                           paddingTop: mvs(14),
+                          rowGap: mvs(12),
                         }}
                       />
                     </View>
@@ -788,33 +861,73 @@ export default function ArtistStep12V2() {
                   className="text-gray font-neueSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
-                  Describe your post in a few words.
+                  Descrivi il tuo post in poche parole.
                 </ScaledText>
 
                 {/* Display uploaded images */}
                 {draft.media.length > 0 && (
                   <View className="mb-6">
                     <View className="flex-row flex-wrap gap-2">
-                      {draft.media.map((item, index) => (
-                        <View
-                          key={`${item.uri}-${index}`}
-                          className="w-20 h-32 overflow-hidden rounded-lg"
-                        >
-                          <Image
-                            source={{ uri: item.cloud || item.uri }}
-                            className="w-full h-full"
-                            resizeMode="cover"
-                          />
-                        </View>
-                      ))}
+                      {draft.media.map((item, index) => {
+                        const thumbnailUrl =
+                          item.type === "video" && item.cloud
+                            ? cloudinaryService.getVideoThumbnailFromUrl(
+                                item.cloud,
+                                1,
+                                200,
+                                320
+                              )
+                            : null;
+                        return (
+                          <View
+                            key={`${item.uri}-${index}`}
+                            className="w-20 h-32 overflow-hidden rounded-lg relative"
+                          >
+                            {thumbnailUrl ? (
+                              <Image
+                                source={{ uri: thumbnailUrl }}
+                                className="w-full h-full"
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <Image
+                                source={{ uri: item.cloud || item.uri }}
+                                className="w-full h-full"
+                                resizeMode="cover"
+                              />
+                            )}
+                            {item.type === "video" && (
+                              <View
+                                className="absolute inset-0 items-center justify-center"
+                                style={{
+                                  backgroundColor: "rgba(0, 0, 0, 0.3)",
+                                }}
+                              >
+                                <SVGIcons.Video width={s(20)} height={s(20)} />
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })}
                     </View>
                   </View>
                 )}
 
                 {/* Description input */}
                 <View className="relative">
+                  {!descriptionFocused && (
+                    <View
+                      className="absolute z-10 items-center justify-center"
+                      style={{
+                        top: s(12),
+                        left: s(12),
+                      }}
+                    >
+                      <SVGIcons.Pen1 width={s(18)} height={s(18)} />
+                    </View>
+                  )}
                   <ScaledTextInput
-                    containerClassName="rounded-xl border border-gray "
+                    containerClassName="rounded-xl border border-gray"
                     className="text-foreground rounded-xl bg-tat-foreground"
                     style={{
                       textAlignVertical: "top",
@@ -832,24 +945,6 @@ export default function ArtistStep12V2() {
                     onFocus={() => setDescriptionFocused(true)}
                     onBlur={() => setDescriptionFocused(false)}
                   />
-
-                  {/* Edit icon - hidden when focused */}
-                  {!descriptionFocused && (
-                    <View
-                      className="absolute"
-                      style={{
-                        backgroundColor: "#100C0C",
-                        borderRadius: s(70),
-                        justifyContent: "center",
-                        alignItems: "center",
-                        position: "absolute",
-                        left: s(12),
-                        top: s(15),
-                      }}
-                    >
-                      <SVGIcons.Pen1 width={s(16)} height={s(16)} />
-                    </View>
-                  )}
                 </View>
               </ScrollView>
             )}
@@ -865,9 +960,8 @@ export default function ArtistStep12V2() {
                   allowScaling={false}
                   variant="lg"
                   className="text-foreground font-neueBold"
-                  style={{ marginBottom: mvs(6) }}
                 >
-                  Select styles for this work
+                  Seleziona stili per questo lavoro
                 </ScaledText>
                 <ScaledText
                   allowScaling={false}
@@ -875,7 +969,7 @@ export default function ArtistStep12V2() {
                   className="text-gray font-neueSemibold"
                   style={{ marginBottom: mvs(12) }}
                 >
-                  Choose up to 3 styles that best describe this project.
+                  Scegli fino a 3 stili che descrivono meglio questo progetto.
                 </ScaledText>
 
                 {loadingStyles ? (
@@ -885,15 +979,14 @@ export default function ArtistStep12V2() {
                       variant="sm"
                       className="text-gray font-montserratMedium"
                     >
-                      Loading styles...
+                      Caricamento stili...
                     </ScaledText>
                   </View>
                 ) : (
-                  <View style={{ rowGap: mvs(8) }}>
+                  <View style={{ rowGap: mvs(0) }}>
                     {allStyles.map((style) => {
                       const selected = draft.styles.includes(style.id);
-                      const canSelectMore =
-                        !selected && draft.styles.length < 3;
+                      const isDisabled = !selected && draft.styles.length >= 3;
 
                       // Resolve image URL
                       const resolveImageUrl = (url?: string | null) => {
@@ -929,62 +1022,64 @@ export default function ArtistStep12V2() {
                                   ),
                                 };
                               }
-                              if (!canSelectMore) return d;
+                              if (isDisabled) return d;
                               return { ...d, styles: [...d.styles, style.id] };
                             });
                           }}
-                          disabled={!selected && draft.styles.length >= 3}
-                          className={`flex-row items-center rounded-xl border px-3 py-2 ${
-                            selected
-                              ? "border-foreground bg-foreground/10"
-                              : "border-gray"
-                          } ${!selected && draft.styles.length >= 3 ? "opacity-50" : ""}`}
+                          disabled={isDisabled}
+                          className="flex-row items-center"
+                          style={{ opacity: isDisabled ? 0.5 : 1 }}
                         >
-                          {/* Checkbox */}
-                          {selected ? (
-                            <SVGIcons.CheckedCheckbox
-                              width={s(17)}
-                              height={s(17)}
-                            />
-                          ) : (
-                            <SVGIcons.UncheckedCheckbox
-                              width={s(17)}
-                              height={s(17)}
-                            />
-                          )}
-                          {/* Style Image */}
+                          {/* Left select box */}
+                          <View
+                            style={{
+                              alignItems: "center",
+                              justifyContent: "center",
+                              paddingVertical: mvs(6),
+                              paddingRight: s(16),
+                            }}
+                          >
+                            {selected ? (
+                              <SVGIcons.CheckedCheckbox
+                                width={s(20)}
+                                height={s(20)}
+                              />
+                            ) : (
+                              <SVGIcons.UncheckedCheckbox
+                                width={s(20)}
+                                height={s(20)}
+                              />
+                            )}
+                          </View>
+
+                          {/* Image */}
                           {img ? (
                             <Image
                               source={{ uri: img }}
-                              style={{
-                                width: s(60),
-                                height: s(60),
-                                borderRadius: s(8),
-                                marginLeft: s(12),
-                                marginRight: s(12),
-                              }}
+                              className="border-b border-gray/20"
+                              style={{ width: s(120), height: mvs(72) }}
                               resizeMode="cover"
                             />
                           ) : (
                             <View
                               className="bg-gray/30"
-                              style={{
-                                width: s(60),
-                                height: s(60),
-                                borderRadius: s(8),
-                                marginLeft: s(12),
-                                marginRight: s(12),
-                              }}
+                              style={{ width: s(155), height: mvs(72) }}
                             />
                           )}
-                          {/* Style Name */}
-                          <ScaledText
-                            allowScaling={false}
-                            variant="sm"
-                            className="text-foreground font-montserratSemibold"
+
+                          {/* Name */}
+                          <View
+                            className="flex-1"
+                            style={{ paddingLeft: s(16) }}
                           >
-                            {style.name}
-                          </ScaledText>
+                            <ScaledText
+                              allowScaling={false}
+                              style={{ fontSize: 12.445 }}
+                              className="text-foreground font-montserratSemibold"
+                            >
+                              {style.name}
+                            </ScaledText>
+                          </View>
                         </TouchableOpacity>
                       );
                     })}
@@ -1019,7 +1114,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1039,7 +1134,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Next
+                      Avanti
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>
@@ -1063,7 +1158,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1080,7 +1175,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Next
+                      Avanti
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>
@@ -1104,7 +1199,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1121,7 +1216,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Save
+                      Salva
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>
