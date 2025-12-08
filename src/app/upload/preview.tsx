@@ -7,9 +7,10 @@ import { createPostWithMediaAndCollection } from "@/services/post.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
+import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
-import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React, { useEffect } from "react";
 import {
   Image,
@@ -19,7 +20,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { toast } from "sonner-native";
-import { TrimText } from "@/utils/text-trim";
 
 export default function UploadPreviewStep() {
   const {
@@ -40,7 +40,7 @@ export default function UploadPreviewStep() {
   // Video player for autoplay - prefer local URI for preview (faster), fallback to cloud URL
   // Always call hook at top level with a URL (empty string if not video)
   // Create two separate players - one for each preview card
-  const videoUrl = isVideo ? (mainMedia?.uri || mainMedia?.cloud || "") : "";
+  const videoUrl = isVideo ? mainMedia?.uri || mainMedia?.cloud || "" : "";
   const videoPlayer1 = useVideoPlayer(videoUrl || "", (player) => {
     if (isVideo && videoUrl) {
       player.loop = true;
@@ -102,7 +102,7 @@ export default function UploadPreviewStep() {
       setSubmitting(true);
       const { postId } = await createPostWithMediaAndCollection({
         caption,
-        styleId: styleIds?.[0], // Use first styleId for backward compatibility
+        styleId: styleIds && styleIds.length > 0 ? styleIds : undefined, // Pass styleId array (1-3 styles)
         media: media.map((m, index) => ({
           mediaUrl: m.cloud || m.uri,
           mediaType: m.type === "video" ? "VIDEO" : "IMAGE",
@@ -161,13 +161,17 @@ export default function UploadPreviewStep() {
       ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
       : user?.username || "Utente";
 
-
-  const PreviewCard = ({ player }: { player: ReturnType<typeof useVideoPlayer> }) => (
-    <View className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40"
-    style={{
-      borderWidth: s(1),
-      borderColor: "#A49A99",
-    }}
+  const PreviewCard = ({
+    player,
+  }: {
+    player: ReturnType<typeof useVideoPlayer>;
+  }) => (
+    <View
+      className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40"
+      style={{
+        borderWidth: s(1),
+        borderColor: "#A49A99",
+      }}
     >
       {mainImage ? (
         isVideo ? (
@@ -221,7 +225,10 @@ export default function UploadPreviewStep() {
               }}
             />
           ) : (
-            <View className="rounded-full bg-background/80 border-[0.51px] border-error" style={{ width: s(16), height: s(16) }} />
+            <View
+              className="rounded-full bg-background/80 border-[0.51px] border-error"
+              style={{ width: s(16), height: s(16) }}
+            />
           )}
           <ScaledText
             allowScaling={false}

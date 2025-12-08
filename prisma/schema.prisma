@@ -424,7 +424,7 @@ model Post {
   authorId           String
   caption            String?
   thumbnailUrl       String?
-  styleId            String?
+  styleId            String[]          @default([]) // Array of style IDs (1-3 styles)
   projectId          String?
   isActive           Boolean           @default(true)
   status             PostStatus        @default(PUBLISHED)
@@ -438,13 +438,13 @@ model Post {
   comments           Comment[]
   likes              PostLike[]
   author             User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  style              TattooStyle?      @relation(fields: [styleId], references: [id])
+  // style relation removed - can't have foreign key on array column
   project            PortfolioProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   adminConversations Conversation[]    @relation("AdminPostConversations")
   feedItems          FeedItem[]
 
   @@index([authorId])
-  @@index([styleId])
+  // @@index([styleId]) - removed, can't index array column directly
   @@index([createdAt])
   @@index([likesCount])
   @@map("posts")

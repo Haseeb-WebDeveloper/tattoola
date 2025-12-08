@@ -127,7 +127,6 @@ export async function fetchFeedItemsPage(args: {
       .select(
         `
         id,caption,thumbnailUrl,likesCount,commentsCount,createdAt,authorId,styleId,
-        tattoo_styles(id,name),
         users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
         post_media(id,mediaType,mediaUrl,order)
       `
@@ -138,7 +137,37 @@ export async function fetchFeedItemsPage(args: {
       console.error("[feed.service] error fetching posts for ARTIST/USER feed items", postsError);
     } else {
       const rows = (postRows || []) as any[];
+      
+      // Collect all style IDs and fetch styles separately
+      const allStyleIds = new Set<string>();
       rows.forEach((r) => {
+        const styleIds = r.styleId || [];
+        if (Array.isArray(styleIds)) {
+          styleIds.forEach((id: string) => allStyleIds.add(id));
+        }
+      });
+
+      // Fetch all styles in one query
+      let stylesMap: Record<string, { id: string; name: string }> = {};
+      if (allStyleIds.size > 0) {
+        const { data: stylesData } = await supabase
+          .from("tattoo_styles")
+          .select("id, name")
+          .in("id", Array.from(allStyleIds));
+        
+        if (stylesData) {
+          stylesData.forEach((style: any) => {
+            stylesMap[style.id] = { id: style.id, name: style.name };
+          });
+        }
+      }
+
+      rows.forEach((r) => {
+        // Get first style from array (for backward compatibility with FeedPost type)
+        const styleIds = r.styleId || [];
+        const firstStyleId = Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
+        const firstStyle = firstStyleId ? stylesMap[firstStyleId] : undefined;
+
         postsById[r.id] = {
           id: r.id,
           caption: r.caption,
@@ -148,12 +177,7 @@ export async function fetchFeedItemsPage(args: {
           // For now we don't compute isLiked here (only required for feed overlay / like state);
           // store will still handle optimistic toggling by postId.
           isLiked: false,
-          style: r.tattoo_styles
-            ? {
-                id: r.tattoo_styles.id,
-                name: r.tattoo_styles.name,
-              }
-            : undefined,
+          style: firstStyle,
           author: {
             id: r.users.id,
             username: r.users.username,
@@ -179,7 +203,6 @@ export async function fetchFeedItemsPage(args: {
         collectionId,
         posts:posts!collection_posts_postId_fkey(
           id,caption,thumbnailUrl,likesCount,commentsCount,createdAt,authorId,styleId,
-          tattoo_styles(id,name),
           users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
           post_media(id,mediaType,mediaUrl,order)
         )
@@ -194,10 +217,44 @@ export async function fetchFeedItemsPage(args: {
       );
     } else {
       const rows = (collectionRows || []) as any[];
+      
+      // Collect all style IDs from collection posts
+      const allCollectionStyleIds = new Set<string>();
+      rows.forEach((row) => {
+        const post = row.posts;
+        if (post && post.styleId) {
+          const styleIds = post.styleId || [];
+          if (Array.isArray(styleIds)) {
+            styleIds.forEach((id: string) => allCollectionStyleIds.add(id));
+          }
+        }
+      });
+
+      // Fetch all styles in one query
+      let collectionStylesMap: Record<string, { id: string; name: string }> = {};
+      if (allCollectionStyleIds.size > 0) {
+        const { data: stylesData } = await supabase
+          .from("tattoo_styles")
+          .select("id, name")
+          .in("id", Array.from(allCollectionStyleIds));
+        
+        if (stylesData) {
+          stylesData.forEach((style: any) => {
+            collectionStylesMap[style.id] = { id: style.id, name: style.name };
+          });
+        }
+      }
+
       rows.forEach((row) => {
         const colId = row.collectionId as string;
         const post = row.posts;
         if (!post) return;
+        
+        // Get first style from array (for backward compatibility with FeedPost type)
+        const styleIds = post.styleId || [];
+        const firstStyleId = Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
+        const firstStyle = firstStyleId ? collectionStylesMap[firstStyleId] : undefined;
+
         const mapped: FeedPost = {
           id: post.id,
           caption: post.caption,
@@ -205,12 +262,7 @@ export async function fetchFeedItemsPage(args: {
           likesCount: post.likesCount,
           commentsCount: post.commentsCount,
           isLiked: false,
-          style: post.tattoo_styles
-            ? {
-                id: post.tattoo_styles.id,
-                name: post.tattoo_styles.name,
-              }
-            : undefined,
+          style: firstStyle,
           author: {
             id: post.users.id,
             username: post.users.username,
