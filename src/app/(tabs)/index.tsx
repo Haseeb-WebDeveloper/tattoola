@@ -1,4 +1,5 @@
 import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
+import { BannerCard } from "@/components/BannerCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { FeedEntry } from "@/services/feed.service";
@@ -190,32 +191,14 @@ export default function HomeScreen() {
                     hideOverlay // Hide bottom content, it's rendered at screen level
                   />
                 ) : (
-                  // Simple banner representation in the feed
-                  <FeedPostCard
-                    post={{
-                      // Minimal shape to satisfy the card; actual content reads from banner
-                      id: entry.banner.id,
-                      caption: entry.banner.title,
-                      createdAt: "",
-                      likesCount: 0,
-                      commentsCount: 0,
-                      isLiked: false,
-                      style: undefined,
-                      author: {
-                        id: "",
-                        username: "",
-                        firstName: undefined,
-                        lastName: undefined,
-                        avatar: entry.banner.thumbnailUrl || undefined,
-                      },
-                      media: [],
-                    }}
+                  // Banner card with grayscale background and colored overlay
+                  <BannerCard
+                    banner={entry.banner}
                     onPress={() => {
                       const cleaned = entry.banner.redirectUrl.replace(/^\/?/, "");
                       const path = `/${cleaned}`;
                       router.push(path as any);
                     }}
-                    hideOverlay
                   />
                 )}
               </View>
