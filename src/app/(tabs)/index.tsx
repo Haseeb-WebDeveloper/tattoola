@@ -108,7 +108,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-background" style={{ overflow: "hidden" }}>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() =>
           router.push("/user/23377731-a5cf-4d99-8de7-61f952c177a7")
         }
@@ -146,7 +146,7 @@ export default function HomeScreen() {
         className="bg-foreground text-background p-4 rounded-full"
       >
         <Text>Studio invitation accept</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* FlatList container - scrollable content */}
       <View style={{ flex: 1 }}>
