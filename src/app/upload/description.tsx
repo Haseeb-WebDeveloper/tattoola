@@ -1,7 +1,8 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
+import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { usePostUploadStore } from "@/stores/postUploadStore";
-import { s } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -54,14 +55,27 @@ export default function UploadDescriptionStep() {
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
-      <ScrollView className="px-6 pt-6">
-        {/* Title + helper */}
-        <Text className="text-foreground tat-body-1 font-neueBold mb-0.5">
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: s(16),
+          paddingTop: mvs(16),
+        }}
+      >
+        {/* Title + helper */}  
+        <ScaledText
+          allowScaling={false}
+          variant="lg"
+          className="text-foreground font-neueBold mb-0.5"
+        >
           Descrizione
-        </Text>
-        <Text className="mb-6 tat-body-4 text-gray font-neueMedium">
+        </ScaledText>
+        <ScaledText
+          allowScaling={false}
+          variant="11"
+          className="mb-6 text-gray font-neueMedium"
+        >
           Descrivi il tuo post in poche parole
-        </Text>
+        </ScaledText>
 
         {/* Media previews (9/16 aspect, horizontal scroll) */}
         {media.length > 0 && (
@@ -80,7 +94,8 @@ export default function UploadDescriptionStep() {
                 }}
               >
                 {m.type === "video" ? (
-                  <View className="w-full h-full items-center justify-center bg-black/60"
+                  <View
+                    className="w-full h-full items-center justify-center bg-black/60"
                     style={{
                       borderWidth: s(1),
                       borderColor: "#A49A99",

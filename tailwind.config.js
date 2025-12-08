@@ -19,7 +19,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        background: "##0A0101",
+        background: "#0A0101",
         foreground: "#FFFFFF",
         primary: {
           DEFAULT: "#AE0E0E", // Black background from SVG

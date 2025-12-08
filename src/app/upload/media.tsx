@@ -367,7 +367,7 @@ export default function UploadMediaStep() {
                 >
                   File caricati
                 </ScaledText>
-                <View style={{ maxHeight: 350 }}>
+                <View>
                   <DraggableFlatList
                     data={media}
                     onDragEnd={onDragEnd}
@@ -375,7 +375,7 @@ export default function UploadMediaStep() {
                     renderItem={renderMediaItem}
                     scrollEnabled={true}
                     removeClippedSubviews={false}
-                    style={{ maxHeight: 350 }}
+                    style={{ maxHeight: media.length * 100 }}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{
                       paddingBottom: 90,
@@ -389,6 +389,7 @@ export default function UploadMediaStep() {
         </View>
 
         <NextBackFooter
+          containerClassName="bg-red-500"
           onBack={openDiscardModal}
           onNext={() => router.push("/upload/description")}
           nextDisabled={!canProceed}
