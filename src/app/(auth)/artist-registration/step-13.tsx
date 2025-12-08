@@ -281,7 +281,7 @@ export default function ArtistStep13V2() {
         <RegistrationProgress
           currentStep={13}
           totalSteps={totalStepsDisplay}
-          name="Choose your plan"
+          name="Scegli il tuo piano"
           icon={<SVGIcons.Wallet width={20} height={20} />}
           nameVariant="2xl"
         />
@@ -310,7 +310,7 @@ export default function ArtistStep13V2() {
                 className="text-center font-neueLight"
                 style={{ color: "#FFFFFF" }}
               >
-                Monthly
+                Mensile
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -331,7 +331,7 @@ export default function ArtistStep13V2() {
                 className="text-center font-neueLight"
                 style={{ color: "#FFFFFF" }}
               >
-                Annually
+                Annuale
               </ScaledText>
             </TouchableOpacity>
           </View>
@@ -434,7 +434,7 @@ export default function ArtistStep13V2() {
                       className="font-neueSemibold"
                       style={{ color: "#080101" }}
                     >
-                      Includes:
+                      Include:
                     </ScaledText>
                     <View>
                       {(() => {
@@ -458,7 +458,7 @@ export default function ArtistStep13V2() {
                             variant="11"
                             style={{ color: "#080101" }}
                           >
-                            No features listed
+                            Nessuna funzionalità elencata
                           </ScaledText>
                         );
                       })()}
@@ -487,7 +487,7 @@ export default function ArtistStep13V2() {
                             style={{ color: "#FFFFFF" }}
                             className="font-neueMedium"
                           >
-                            {submitting ? "Saving..." : "Start free trial"}
+                            {submitting ? "Salvataggio..." : "Inizia prova gratuita"}
                           </ScaledText>
                         </TouchableOpacity>
 
@@ -507,7 +507,7 @@ export default function ArtistStep13V2() {
                             style={{ color: "#AE0E0E" }}
                             className="font-neueMedium"
                           >
-                            {submitting ? "Processing..." : "Buy Premium"}
+                            {submitting ? "Elaborazione..." : "Acquista Premium"}
                           </ScaledText>
                         </TouchableOpacity>
                       </>
@@ -530,7 +530,7 @@ export default function ArtistStep13V2() {
                           style={{ color: "#FFFFFF" }}
                           className="font-neueMedium"
                         >
-                          {submitting ? "Processing..." : "Get started"}
+                          {submitting ? "Elaborazione..." : "Inizia"}
                         </ScaledText>
                       </TouchableOpacity>
                     )}

@@ -122,8 +122,8 @@ export default function ArtistStep9V2() {
         <RegistrationProgress
           currentStep={9}
           totalSteps={totalStepsDisplay}
-          name="Services you offer"
-          description="Select all services you provide"
+          name="Servizi che offri"
+          description="Seleziona tutti i servizi che fornisci"
           icon={<SVGIcons.Magic width={19} height={19} />}
           nameVariant="2xl"
         />
@@ -157,7 +157,7 @@ export default function ArtistStep9V2() {
         <AbsoluteNextBackFooter
           onNext={onNext}
           nextDisabled={!canProceed}
-          backLabel="Back"
+          backLabel="Indietro"
           onBack={() => router.back()}
         />
       </View>

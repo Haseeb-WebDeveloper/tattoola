@@ -201,7 +201,7 @@ export default function ArtistStep12V2() {
               alignItems: "center",
               marginRight: s(12),
             }}
-            accessibilityLabel="Reorder"
+            accessibilityLabel="Riordina"
           >
             <SVGIcons.Drag style={{ width: s(6), height: s(6) }} />
           </Pressable>
@@ -263,7 +263,7 @@ export default function ArtistStep12V2() {
               borderWidth: s(1),
               borderColor: "#A49A99",
             }}
-            accessibilityLabel="Remove"
+            accessibilityLabel="Rimuovi"
           >
             <SVGIcons.Trash width={s(13.5)} height={s(13.5)} />
           </TouchableOpacity>
@@ -431,8 +431,8 @@ export default function ArtistStep12V2() {
       <RegistrationProgress
         currentStep={12}
         totalSteps={totalStepsDisplay}
-        name="Add your works"
-        description="Add 4 projects. Each project: upload media (1-5), add description, select styles (0-3)."
+        name="Aggiungi i tuoi lavori"
+        description="Aggiungi 4 progetti. Ogni progetto: carica media (1-5), aggiungi descrizione, seleziona stili (0-3)."
         icon={<SVGIcons.Work width={19} height={19} />}
         nameVariant="2xl"
       />
@@ -462,7 +462,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               ) : (
@@ -473,7 +473,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               )}
@@ -500,7 +500,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               ) : (
@@ -511,7 +511,7 @@ export default function ArtistStep12V2() {
                     variant="md"
                     className="text-gray font-neueMedium"
                   >
-                    Work {i + 1}
+                    Lavoro {i + 1}
                   </ScaledText>
                 </View>
               )}
@@ -525,8 +525,8 @@ export default function ArtistStep12V2() {
         onNext={handleSaveAndProceed}
         nextDisabled={!canProceed || submitting || uploading}
         backDisabled={submitting || uploading}
-        nextLabel={submitting ? "Saving..." : "Almost there!"}
-        backLabel="Back"
+        nextLabel={submitting ? "Salvataggio..." : "Quasi fatto!"}
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
 
@@ -563,7 +563,7 @@ export default function ArtistStep12V2() {
                   variant="lg"
                   className="text-foreground font-neueSemibold"
                 >
-                  Add Design
+                  Aggiungi Design
                 </ScaledText>
               </View>
 
@@ -593,7 +593,7 @@ export default function ArtistStep12V2() {
                         className="text-gray font-neueSemibold"
                         style={{ marginTop: mvs(3) }}
                       >
-                        You need to select at least{" "}
+                        Devi selezionare almeno{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
@@ -602,7 +602,7 @@ export default function ArtistStep12V2() {
                         >
                           1 media
                         </ScaledText>{" "}
-                        (maximum 5)
+                        (massimo 5)
                       </ScaledText>
                     </View>
                     {/* Upload area - matching step-6 design */}
@@ -638,10 +638,10 @@ export default function ArtistStep12V2() {
                             className="text-foreground font-neueSemibold"
                           >
                             {uploading
-                              ? "Uploading..."
+                              ? "Caricamento..."
                               : draft.media.length >= 5
-                                ? "Maximum 5 files"
-                                : "Upload files"}
+                                ? "Massimo 5 file"
+                                : "Carica file"}
                           </ScaledText>
                         </TouchableOpacity>
                         <ScaledText
@@ -671,7 +671,7 @@ export default function ArtistStep12V2() {
                         variant="11"
                         className="text-gray font-neueSemibold"
                       >
-                        You need to select at least{" "}
+                        Devi selezionare almeno{" "}
                         <ScaledText
                           allowScaling={false}
                           variant="11"
@@ -680,7 +680,7 @@ export default function ArtistStep12V2() {
                         >
                           1 media
                         </ScaledText>{" "}
-                        (maximum 5)
+                        (massimo 5)
                       </ScaledText>
                     </View>
 
@@ -717,10 +717,10 @@ export default function ArtistStep12V2() {
                             className="text-foreground font-neueSemibold"
                           >
                             {uploading
-                              ? "Uploading..."
+                              ? "Caricamento..."
                               : draft.media.length >= 5
-                                ? "Maximum 5 files"
-                                : "Upload files"}
+                                ? "Massimo 5 file"
+                                : "Carica file"}
                           </ScaledText>
                         </TouchableOpacity>
                         <ScaledText
@@ -788,7 +788,7 @@ export default function ArtistStep12V2() {
                   className="text-gray font-neueSemibold"
                   style={{ marginBottom: mvs(6) }}
                 >
-                  Describe your post in a few words.
+                  Descrivi il tuo post in poche parole.
                 </ScaledText>
 
                 {/* Display uploaded images */}
@@ -867,7 +867,7 @@ export default function ArtistStep12V2() {
                   className="text-foreground font-neueBold"
                   style={{ marginBottom: mvs(6) }}
                 >
-                  Select styles for this work
+                  Seleziona stili per questo lavoro
                 </ScaledText>
                 <ScaledText
                   allowScaling={false}
@@ -875,7 +875,7 @@ export default function ArtistStep12V2() {
                   className="text-gray font-neueSemibold"
                   style={{ marginBottom: mvs(12) }}
                 >
-                  Choose up to 3 styles that best describe this project.
+                  Scegli fino a 3 stili che descrivono meglio questo progetto.
                 </ScaledText>
 
                 {loadingStyles ? (
@@ -885,7 +885,7 @@ export default function ArtistStep12V2() {
                       variant="sm"
                       className="text-gray font-montserratMedium"
                     >
-                      Loading styles...
+                      Caricamento stili...
                     </ScaledText>
                   </View>
                 ) : (
@@ -1019,7 +1019,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1039,7 +1039,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Next
+                      Avanti
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>
@@ -1063,7 +1063,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1080,7 +1080,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Next
+                      Avanti
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>
@@ -1104,7 +1104,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Back
+                      Indietro
                     </ScaledText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1121,7 +1121,7 @@ export default function ArtistStep12V2() {
                       variant="md"
                       className="text-foreground font-neueSemibold"
                     >
-                      Save
+                      Salva
                     </ScaledText>
                     <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
                   </TouchableOpacity>

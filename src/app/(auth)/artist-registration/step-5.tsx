@@ -116,7 +116,7 @@ export default function ArtistStep5V2() {
       <RegistrationProgress
         currentStep={currentStepDisplay}
         totalSteps={totalStepsDisplay}
-        name="Studio Details"
+        name="Dettagli Studio"
         icon={<SVGIcons.Studio width={19} height={19} />}
         nameVariant="2xl"
       />
@@ -131,7 +131,7 @@ export default function ArtistStep5V2() {
             className="text-tat font-montserratSemibold"
             style={{ marginBottom: mvs(4) }}
           >
-            Name of the Studio
+            Nome dello Studio
             <ScaledText
               allowScaling={false}
               variant="sm"
@@ -234,7 +234,7 @@ export default function ArtistStep5V2() {
             className="text-tat font-montserratSemibold"
             style={{ marginBottom: mvs(4) }}
           >
-            Studio website
+            Sito web dello Studio
           </ScaledText>
           <ScaledTextInput
             containerClassName={`rounded-xl ${focused === "website" ? "border-2 border-foreground" : "border border-gray"} bg-tat-foreground`}
@@ -257,7 +257,7 @@ export default function ArtistStep5V2() {
             className="text-tat font-montserratSemibold"
             style={{ marginBottom: mvs(4) }}
           >
-            Enter phone number
+            Inserisci il numero di telefono
             <ScaledText
               allowScaling={false}
               variant="sm"
@@ -426,7 +426,7 @@ export default function ArtistStep5V2() {
       <NextBackFooter
         onNext={onNext}
         nextDisabled={!canProceed}
-        backLabel="Back"
+        backLabel="Indietro"
         onBack={() => router.back()}
       />
     </KeyboardAwareScrollView>
@@ -463,7 +463,7 @@ function ProvinceMunicipalityInput({
         className="text-tat font-montserratSemibold"
         style={{ marginBottom: mvs(6) }}
       >
-        Enter province and municipality
+        Inserisci provincia e comune
         <ScaledText
           allowScaling={false}
           variant="sm"

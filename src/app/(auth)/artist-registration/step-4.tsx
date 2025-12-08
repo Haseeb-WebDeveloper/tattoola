@@ -56,7 +56,7 @@ export default function ArtistStep4V2() {
       <RegistrationProgress
         currentStep={activeStep}
         totalSteps={totalStepsDisplay}
-        name="How do you work as an artist?"
+        name="Come lavori come artista?"
         icon={<SVGIcons.Pen2 width={18} height={18} />}
         nameVariant="2xl"
       />
