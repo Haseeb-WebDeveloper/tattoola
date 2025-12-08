@@ -1,5 +1,5 @@
 import { FEED_POSTS_PER_PAGE } from '@/constants/limits';
-import { togglePostLike } from '@/services/post.service';
+import { PostDetail, togglePostLike } from '@/services/post.service';
 import { FeedEntry, FeedItemsPage, fetchFeedItemsPage } from '@/services/feed.service';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -17,7 +17,7 @@ interface FeedState {
   loadMore: (userId: string) => Promise<void>;
   refresh: (userId: string) => Promise<void>;
   toggleLikeOptimistic: (postId: string, userId: string) => Promise<void>;
-  upsertPost: (post: FeedPost) => void;
+  upsertPost: (post: PostDetail) => void;
 }
 
 export const useFeedStore = create<FeedState>()(

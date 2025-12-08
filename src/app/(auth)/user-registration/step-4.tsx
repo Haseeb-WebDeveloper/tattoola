@@ -60,7 +60,7 @@ export default function UserRegistrationStep4() {
       // Check file size (5MB max)
       const maxSize = 5 * 1024 * 1024;
       if (file.fileSize && file.fileSize > maxSize) {
-        toast.error("Image size must be less than 5MB");
+        toast.error("La dimensione dell'immagine deve essere inferiore a 5MB");
         setIsUploading(false);
         return;
       }
@@ -79,7 +79,7 @@ export default function UserRegistrationStep4() {
       }
     } catch (error: any) {
       console.error("Error picking avatar:", error);
-      toast.error(error.message || "Failed to upload image");
+      toast.error(error.message || "Caricamento immagine fallito");
       setNewAvatar(null);
     } finally {
       setIsUploading(false);
@@ -118,7 +118,7 @@ export default function UserRegistrationStep4() {
         <RegistrationProgress
           currentStep={4}
           totalSteps={7}
-          name="Your photo"
+          name="La tua foto"
           nameVariant="2xl"
           icon={<SVGIcons.Smile width={20} height={20} />}
         />
@@ -212,7 +212,7 @@ export default function UserRegistrationStep4() {
                     variant="md"
                     className="text-foreground font-neueSemibold"
                   >
-                    Upload Photo
+                    Carica Foto
                   </ScaledText>
                 </View>
               </TouchableOpacity>
@@ -251,8 +251,8 @@ export default function UserRegistrationStep4() {
       {/* Footer */}
       <NextBackFooter
         onNext={handleNext}
-        nextLabel="Next"
-        backLabel="Back"
+        nextLabel="Avanti"
+        backLabel="Indietro"
         onBack={handleBack}
         nextDisabled={isUploading}
       />

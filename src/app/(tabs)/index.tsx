@@ -13,7 +13,7 @@ import {
   RefreshControl,
   useWindowDimensions,
   View,
-  ViewToken
+  ViewToken,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -111,38 +111,38 @@ export default function HomeScreen() {
         onPress={() =>
           router.push("/user/23377731-a5cf-4d99-8de7-61f952c177a7")
         }
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Artist</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={() => logout()}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Logout</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/user-registration/step-3")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>User registration</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/artist-registration/step-3")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Artist registration</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/artist-registration/step-13")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Plan subscription</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/(studio-invitation)/accept?token=021f4d87-75cb-4ebb-bd87-0c61fb7f0e25")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Studio invitation accept</Text>
       </TouchableOpacity> */}
@@ -151,8 +151,10 @@ export default function HomeScreen() {
       <View style={{ flex: 1 }}>
         <FlatList
           data={feedEntries}
-          keyExtractor={(item) =>
-            item.kind === "post" ? `post-${item.post.id}` : `banner-${item.banner.id}`
+          keyExtractor={(item, index) =>
+            item.kind === "post"
+              ? `post-${item.post.id}-${item.position}-${index}`
+              : `banner-${item.banner.id}-${item.position}-${index}`
           }
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.5}
@@ -210,7 +212,10 @@ export default function HomeScreen() {
                       media: [],
                     }}
                     onPress={() => {
-                      const cleaned = entry.banner.redirectUrl.replace(/^\/?/, "");
+                      const cleaned = entry.banner.redirectUrl.replace(
+                        /^\/?/,
+                        ""
+                      );
                       const path = `/${cleaned}`;
                       router.push(path as any);
                     }}
@@ -275,7 +280,9 @@ export default function HomeScreen() {
       {currentPost && (
         <FeedPostOverlay
           post={currentPost}
-          onAuthorPress={() => router.push(`/user/${currentPost.author.id}` as any)}
+          onAuthorPress={() =>
+            router.push(`/user/${currentPost.author.id}` as any)
+          }
           onLikePress={() => {
             console.log("onLikePress", currentPost.id, user?.id);
             if (user?.id) {
@@ -296,7 +303,7 @@ export default function HomeScreen() {
         }}
       >
         <View
-          className="rounded-full items-center justify-center"
+          className="items-center justify-center rounded-full"
           style={{ width: s(20), height: s(20) }}
         >
           {/* <SVGIcons.Flash  /> */}

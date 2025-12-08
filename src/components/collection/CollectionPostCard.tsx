@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs } from "@/utils/scale";
+import { cloudinaryService } from "@/services/cloudinary.service";
 
 type Props = {
   thumbnailUrl?: string | null;
   mediaUrl?: string | null;
+  mediaType?: "IMAGE" | "VIDEO";
   caption?: string;
   editMode: boolean;
   isActive: boolean;
@@ -24,6 +26,7 @@ type Props = {
 export default function CollectionPostCard({
   thumbnailUrl,
   mediaUrl,
+  mediaType,
   caption,
   editMode,
   isActive,
@@ -36,6 +39,22 @@ export default function CollectionPostCard({
   marginTop,
   fixedHeight,
 }: Props) {
+  // Generate thumbnail URL for videos if needed
+  const imageUrl = useMemo(() => {
+    // If we have a thumbnail URL, use it
+    if (thumbnailUrl) {
+      return thumbnailUrl;
+    }
+    
+    // If it's a video and we have a mediaUrl, generate thumbnail from video URL
+    if (mediaType === "VIDEO" && mediaUrl) {
+      return cloudinaryService.getVideoThumbnailFromUrl(mediaUrl);
+    }
+    
+    // Otherwise, use mediaUrl as-is (for images)
+    return mediaUrl || undefined;
+  }, [thumbnailUrl, mediaUrl, mediaType]);
+
   return (
     <TouchableOpacity
       activeOpacity={1}
@@ -55,7 +74,7 @@ export default function CollectionPostCard({
         }}
       >
         <Image
-          source={{ uri: thumbnailUrl || mediaUrl || undefined }}
+          source={{ uri: imageUrl }}
           className={
             editMode
               ? "w-full h-full rounded-lg"

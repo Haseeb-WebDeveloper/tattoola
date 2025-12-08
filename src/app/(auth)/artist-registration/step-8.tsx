@@ -269,8 +269,8 @@ export default function ArtistStep8V2() {
         <RegistrationProgress
           currentStep={8}
           totalSteps={totalStepsDisplay}
-          name="Your preferred styles"
-          description={`Choose at least 1 styles (max ${maxStyles}). You can mark up to ${maxFavoriteStyles} as your favourite styles (★)`}
+          name="I tuoi stili preferiti"
+          description={`Scegli almeno 1 stile (max ${maxStyles}). Puoi segnare fino a ${maxFavoriteStyles} come stili preferiti (★)`}
           descriptionVariant="md"
           icon={<SVGIcons.Style width={19} height={19} />}
           isIconPressable={true}
@@ -308,7 +308,7 @@ export default function ArtistStep8V2() {
         <AbsoluteNextBackFooter
           onNext={onNext}
           nextDisabled={!canProceed}
-          backLabel="Back"
+          backLabel="Indietro"
           onBack={() => router.back()}
         />
       </View>
@@ -360,7 +360,7 @@ export default function ArtistStep8V2() {
                 className="text-foreground font-neueSemibold"
                 style={{ marginBottom: mvs(8) }}
               >
-                Why we need this data?
+                Perché abbiamo bisogno di questi dati?
               </ScaledText>
               <ScaledText
                 allowScaling={false}
@@ -451,7 +451,7 @@ export default function ArtistStep8V2() {
               className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
-              Style Limit Reached
+              Limite Stili Raggiunto
             </ScaledText>
 
             {/* Subtitle */}
@@ -461,8 +461,8 @@ export default function ArtistStep8V2() {
               className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(16) }}
             >
-              You can only select {maxStyles}{" "}
-              {maxStyles === 1 ? "style" : "styles"}.
+              Puoi selezionare solo {maxStyles}{" "}
+              {maxStyles === 1 ? "stile" : "stili"}.
             </ScaledText>
 
             {/* Action Button */}
