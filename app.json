@@ -33,9 +33,9 @@
       "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#0A0101",
-        "foregroundImage": "./src/assets/images/android-icon-foreground.png",
+        "foregroundImage": "./src/assets/app-icons/android-icon-foreground.png",
         "backgroundImage": "./src/assets/app-icons/icon-background.png",
-        "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
+        "monochromeImage": "./src/assets/app-icons/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",

@@ -3,6 +3,7 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { StylePills } from "@/components/ui/stylePills";
 import { SVGIcons } from "@/constants/svg";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { createCollection } from "@/services/collection.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { mvs, s } from "@/utils/scale";
@@ -55,6 +56,43 @@ export default function UploadCollectionStep() {
   const mainType = useMemo(() => media[0]?.type, [media]);
   const thumb1Type = useMemo(() => media[1]?.type, [media]);
   const thumb2Type = useMemo(() => media[2]?.type, [media]);
+
+  // Generate thumbnail URLs for videos in summary card
+  const mainThumbnail = useMemo(() => {
+    if (mainType === "video" && media[0]?.cloud) {
+      return cloudinaryService.getVideoThumbnailFromUrl(
+        media[0].cloud,
+        1,
+        200,
+        240
+      );
+    }
+    return null;
+  }, [mainType, media]);
+
+  const thumb1Thumbnail = useMemo(() => {
+    if (thumb1Type === "video" && media[1]?.cloud) {
+      return cloudinaryService.getVideoThumbnailFromUrl(
+        media[1].cloud,
+        1,
+        150,
+        125
+      );
+    }
+    return null;
+  }, [thumb1Type, media]);
+
+  const thumb2Thumbnail = useMemo(() => {
+    if (thumb2Type === "video" && media[2]?.cloud) {
+      return cloudinaryService.getVideoThumbnailFromUrl(
+        media[2].cloud,
+        1,
+        150,
+        125
+      );
+    }
+    return null;
+  }, [thumb2Type, media]);
 
   useEffect(() => {
     let mounted = true;
@@ -167,7 +205,7 @@ export default function UploadCollectionStep() {
     const images = thumbnails.slice(0, 4);
     while (images.length < 4) images.push("");
 
-    // Helper: very naively detect "video" from extension
+    // Helper: detect video from extension or Cloudinary video URL
     const isVideo = (url: string) =>
       url &&
       (url.endsWith(".mp4") ||
@@ -183,6 +221,12 @@ export default function UploadCollectionStep() {
               const idx = row * 2 + col;
               const url = images[idx];
               const video = isVideo(url);
+              // Generate thumbnail URL for videos
+              const thumbnailUrl =
+                video && url
+                  ? cloudinaryService.getVideoThumbnailFromUrl(url, 1, 200, 200)
+                  : null;
+
               return (
                 <View
                   key={idx}
@@ -195,29 +239,31 @@ export default function UploadCollectionStep() {
                 >
                   {url ? (
                     <>
-                      <Image
-                        source={{ uri: url }}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          aspectRatio: 1,
-                        }}
-                        resizeMode="cover"
-                      />
+                      {video && thumbnailUrl ? (
+                        <Image
+                          source={{ uri: thumbnailUrl }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            aspectRatio: 1,
+                          }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Image
+                          source={{ uri: url }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            aspectRatio: 1,
+                          }}
+                          resizeMode="cover"
+                        />
+                      )}
                       {video && (
                         <View
-                          className="border-gray/50 w-full h-full bg-background"
-                          style={{
-                            position: "absolute",
-                            bottom: s(0),
-                            right: s(0),
-                            borderRadius: s(8),
-                            padding: s(2),
-                            zIndex: 2,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderWidth: s(1),
-                          }}
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
                         >
                           <SVGIcons.Video width={s(20)} height={s(20)} />
                         </View>
@@ -226,7 +272,10 @@ export default function UploadCollectionStep() {
                   ) : (
                     <View
                       className="border-gray/50 w-full h-full bg-background"
-                      style={{ borderWidth: s(1), borderRadius: s(8) }}
+                      style={{
+                        backgroundColor: "rgba(255,255,255,0.008)",
+                        borderRadius: s(8),
+                      }}
                     />
                   )}
                 </View>
@@ -255,21 +304,36 @@ export default function UploadCollectionStep() {
             {/* media (large + two small) */}
             <View className="flex-row items-start" style={{ minWidth: 100 }}>
               <View
-                className="rounded-md overflow-hidden bg-black/40"
+                className="rounded-md overflow-hidden bg-black/40 relative"
                 style={{ width: 58, height: 70, marginRight: 4 }}
               >
                 {media[0] ? (
                   mainType === "video" ? (
-                    <View
-                      className="w-full h-full items-center justify-center bg-black/60"
-                      style={{
-                        borderWidth: s(1),
-                        borderColor: "#A49A99",
-                        borderRadius: s(6),
-                      }}
-                    >
-                      <SVGIcons.Video width={s(20)} height={s(20)} />
-                    </View>
+                    <>
+                      {mainThumbnail ? (
+                        <Image
+                          source={{ uri: mainThumbnail }}
+                          style={{ width: "100%", height: "100%" }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View
+                          className="w-full h-full items-center justify-center bg-black/60"
+                          style={{
+                            borderWidth: s(1),
+                            borderColor: "#A49A99",
+                            borderRadius: s(6),
+                          }}
+                        />
+                      )}
+                      {/* Video icon overlay */}
+                      <View
+                        className="absolute inset-0 items-center justify-center"
+                        style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                      >
+                        <SVGIcons.Video width={s(20)} height={s(20)} />
+                      </View>
+                    </>
                   ) : (
                     <Image
                       source={{ uri: media[0].cloud || media[0].uri }}
@@ -283,21 +347,36 @@ export default function UploadCollectionStep() {
               </View>
               <View className="justify-between" style={{ height: 70 }}>
                 <View
-                  className="rounded-md overflow-hidden bg-black/40"
+                  className="rounded-md overflow-hidden bg-black/40 relative"
                   style={{ width: 38, height: 33, marginBottom: 4 }}
                 >
                   {media[1] ? (
                     thumb1Type === "video" ? (
-                      <View
-                        className="w-full h-full items-center justify-center bg-black/60"
-                        style={{
-                          borderWidth: s(1),
-                          borderColor: "#A49A99",
-                          borderRadius: s(6),
-                        }}
-                      >
-                        <SVGIcons.Video width={s(15)} height={s(15)} />
-                      </View>
+                      <>
+                        {thumb1Thumbnail ? (
+                          <Image
+                            source={{ uri: thumb1Thumbnail }}
+                            style={{ width: "100%", height: "100%" }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View
+                            className="w-full h-full items-center justify-center bg-black/60"
+                            style={{
+                              borderWidth: s(1),
+                              borderColor: "#A49A99",
+                              borderRadius: s(6),
+                            }}
+                          />
+                        )}
+                        {/* Video icon overlay */}
+                        <View
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                        >
+                          <SVGIcons.Video width={s(15)} height={s(15)} />
+                        </View>
+                      </>
                     ) : (
                       <Image
                         source={{ uri: media[1].cloud || media[1].uri }}
@@ -310,21 +389,36 @@ export default function UploadCollectionStep() {
                   )}
                 </View>
                 <View
-                  className="rounded-md overflow-hidden bg-black/40"
+                  className="rounded-md overflow-hidden bg-black/40 relative"
                   style={{ width: 38, height: 33 }}
                 >
                   {media[2] ? (
                     thumb2Type === "video" ? (
-                      <View
-                        className="w-full h-full items-center justify-center bg-black/60"
-                        style={{
-                          borderWidth: s(1),
-                          borderColor: "#A49A99",
-                          borderRadius: s(6),
-                        }}
-                      >
-                        <SVGIcons.Video width={s(15)} height={s(15)} />
-                      </View>
+                      <>
+                        {thumb2Thumbnail ? (
+                          <Image
+                            source={{ uri: thumb2Thumbnail }}
+                            style={{ width: "100%", height: "100%" }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View
+                            className="w-full h-full items-center justify-center bg-black/60"
+                            style={{
+                              borderWidth: s(1),
+                              borderColor: "#A49A99",
+                              borderRadius: s(6),
+                            }}
+                          />
+                        )}
+                        {/* Video icon overlay */}
+                        <View
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                        >
+                          <SVGIcons.Video width={s(15)} height={s(15)} />
+                        </View>
+                      </>
                     ) : (
                       <Image
                         source={{ uri: media[2].cloud || media[2].uri }}

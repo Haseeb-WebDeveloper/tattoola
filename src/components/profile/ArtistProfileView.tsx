@@ -219,42 +219,44 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         {/* Body Parts Section */}
         <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
 
-        {/* Bottom actions */}
-        <View className="bg-background px-4 py-3">
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={handleFollowToggle}
-              disabled={isTogglingFollow}
-              className={`flex-1 flex-row rounded-full items-center justify-center ${
-                isFollowing ? "border border-gray" : "border border-gray"
-              }`}
-              style={{ gap: s(8), paddingVertical: mvs(8) }}
-            >
-              <SVGIcons.Follow width={s(14)} height={s(14)} />
-              <ScaledText
-                allowScaling={false}
-                variant="lg"
-                className="text-foreground font-neueMedium"
+        {/* Bottom actions - only show if not viewing own profile */}
+        {currentUserId && currentUserId !== data.user.id && (
+          <View className="bg-background px-4 py-3">
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={handleFollowToggle}
+                disabled={isTogglingFollow}
+                className={`flex-1 flex-row rounded-full items-center justify-center ${
+                  isFollowing ? "border border-gray" : "border border-gray"
+                }`}
+                style={{ gap: s(8), paddingVertical: mvs(8) }}
               >
-                {isFollowing ? "Seguendo" : "Segui"}
-              </ScaledText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSendRequest}
-              className="flex-1 flex-row gap-2 rounded-full bg-primary items-center justify-center"
-              style={{ gap: s(8), paddingVertical: mvs(8) }}
-            >
-              <SVGIcons.Send2 width={s(14)} height={s(14)} />
-              <ScaledText
-                allowScaling={false}
-                variant="lg"
-                className="text-white font-neueMedium"
+                <SVGIcons.Follow width={s(14)} height={s(14)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-foreground font-neueMedium"
+                >
+                  {isFollowing ? "Seguendo" : "Segui"}
+                </ScaledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSendRequest}
+                className="flex-1 flex-row gap-2 rounded-full bg-primary items-center justify-center"
+                style={{ gap: s(8), paddingVertical: mvs(8) }}
               >
-                Invia richiesta
-              </ScaledText>
-            </TouchableOpacity>
+                <SVGIcons.Send2 width={s(14)} height={s(14)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="text-white font-neueMedium"
+                >
+                  Invia richiesta
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
 
       {/* Rejection Modal */}

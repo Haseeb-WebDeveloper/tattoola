@@ -1,6 +1,7 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
@@ -85,34 +86,56 @@ export default function UploadDescriptionStep() {
             className="mb-6"
             contentContainerStyle={{ gap: 12 }}
           >
-            {media.map((m, idx) => (
-              <View
-                key={`${m.uri}-${idx}`}
-                className=" overflow-hidden bg-black/40 w-24 aspect-[9/16] relative"
-                style={{
-                  borderRadius: s(12),
-                }}
-              >
-                {m.type === "video" ? (
-                  <View
-                    className="w-full h-full items-center justify-center bg-black/60"
-                    style={{
-                      borderWidth: s(1),
-                      borderColor: "#A49A99",
-                      borderRadius: s(12),
-                    }}
-                  >
-                    <SVGIcons.Video width={s(30)} height={s(30)} />
-                  </View>
-                ) : (
-                  <Image
-                    source={{ uri: m.cloud || m.uri }}
-                    className="w-full h-full"
-                    resizeMode="cover"
-                  />
-                )}
-              </View>
-            ))}
+            {media.map((m, idx) => {
+              // Generate thumbnail URL for videos
+              const thumbnailUrl = m.type === "video" && m.cloud
+                ? cloudinaryService.getVideoThumbnailFromUrl(m.cloud, 1, 300, 533)
+                : null;
+              
+              return (
+                <View
+                  key={`${m.uri}-${idx}`}
+                  className=" overflow-hidden bg-black/40 w-24 aspect-[9/16] relative"
+                  style={{
+                    borderRadius: s(12),
+                  }}
+                >
+                  {m.type === "video" ? (
+                    <>
+                      {thumbnailUrl ? (
+                        <Image
+                          source={{ uri: thumbnailUrl }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View
+                          className="w-full h-full items-center justify-center bg-black/60"
+                          style={{
+                            borderWidth: s(1),
+                            borderColor: "#A49A99",
+                            borderRadius: s(12),
+                          }}
+                        />
+                      )}
+                      {/* Video icon overlay */}
+                      <View
+                        className="absolute inset-0 items-center justify-center"
+                        style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                      >
+                        <SVGIcons.Video width={s(30)} height={s(30)} />
+                      </View>
+                    </>
+                  ) : (
+                    <Image
+                      source={{ uri: m.cloud || m.uri }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  )}
+                </View>
+              );
+            })}
           </ScrollView>
         )}
 
