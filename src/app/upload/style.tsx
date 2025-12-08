@@ -2,6 +2,7 @@ import NextBackFooter from "@/components/ui/NextBackFooter";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { mvs, s } from "@/utils/scale";
@@ -48,6 +49,28 @@ export default function UploadStyleStep() {
   const thumb1Type = useMemo(() => media[1]?.type, [media]);
   const thumb2 = useMemo(() => media[2]?.cloud || media[2]?.uri, [media]);
   const thumb2Type = useMemo(() => media[2]?.type, [media]);
+  
+  // Generate thumbnail URLs for videos
+  const mainThumbnail = useMemo(() => {
+    if (mainType === "video" && main) {
+      return cloudinaryService.getVideoThumbnailFromUrl(main, 1, 200, 240);
+    }
+    return null;
+  }, [mainType, main]);
+  
+  const thumb1Thumbnail = useMemo(() => {
+    if (thumb1Type === "video" && thumb1) {
+      return cloudinaryService.getVideoThumbnailFromUrl(thumb1, 1, 150, 125);
+    }
+    return null;
+  }, [thumb1Type, thumb1]);
+  
+  const thumb2Thumbnail = useMemo(() => {
+    if (thumb2Type === "video" && thumb2) {
+      return cloudinaryService.getVideoThumbnailFromUrl(thumb2, 1, 150, 125);
+    }
+    return null;
+  }, [thumb2Type, thumb2]);
 
   const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = styleIds?.includes(item.id) || false;
@@ -123,7 +146,7 @@ export default function UploadStyleStep() {
             <View className="flex-row items-start" style={{ minWidth: 100 }}>
               {/* Main Image */}
               <View
-                className="overflow-hidden rounded-md bg-black/40"
+                className="overflow-hidden rounded-md bg-black/40 relative"
                 style={{
                   width: 58,
                   height: 70,
@@ -132,16 +155,31 @@ export default function UploadStyleStep() {
               >
                 {main ? (
                   mainType === "video" ? (
-                    <View
-                      className="w-full h-full items-center justify-center bg-black/60"
-                      style={{
-                        borderWidth: s(1),
-                        borderColor: "#A49A99",
-                        borderRadius: s(6),
-                      }}
-                    >
-                      <SVGIcons.Video width={s(20)} height={s(20)} />
-                    </View>
+                    <>
+                      {mainThumbnail ? (
+                        <Image
+                          source={{ uri: mainThumbnail }}
+                          style={{ width: "100%", height: "100%" }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View
+                          className="w-full h-full items-center justify-center bg-black/60"
+                          style={{
+                            borderWidth: s(1),
+                            borderColor: "#A49A99",
+                            borderRadius: s(6),
+                          }}
+                        />
+                      )}
+                      {/* Video icon overlay */}
+                      <View
+                        className="absolute inset-0 items-center justify-center"
+                        style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                      >
+                        <SVGIcons.Video width={s(20)} height={s(20)} />
+                      </View>
+                    </>
                   ) : (
                     <Image
                       source={{ uri: main }}
@@ -162,7 +200,7 @@ export default function UploadStyleStep() {
               {/* 2 Thumbnails Column */}
               <View className="justify-between" style={{ height: 70 }}>
                 <View
-                  className="overflow-hidden rounded-md bg-black/40"
+                  className="overflow-hidden rounded-md bg-black/40 relative"
                   style={{
                     width: 38,
                     height: 33,
@@ -171,16 +209,31 @@ export default function UploadStyleStep() {
                 >
                   {thumb1 ? (
                     thumb1Type === "video" ? (
-                      <View
-                        className="w-full h-full items-center justify-center bg-black/60"
-                        style={{
-                          borderWidth: s(1),
-                          borderColor: "#A49A99",
-                          borderRadius: s(6),
-                        }}
-                      >
-                        <SVGIcons.Video width={s(15)} height={s(15)} />
-                      </View>
+                      <>
+                        {thumb1Thumbnail ? (
+                          <Image
+                            source={{ uri: thumb1Thumbnail }}
+                            style={{ width: "100%", height: "100%" }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View
+                            className="w-full h-full items-center justify-center bg-black/60"
+                            style={{
+                              borderWidth: s(1),
+                              borderColor: "#A49A99",
+                              borderRadius: s(6),
+                            }}
+                          />
+                        )}
+                        {/* Video icon overlay */}
+                        <View
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                        >
+                          <SVGIcons.Video width={s(15)} height={s(15)} />
+                        </View>
+                      </>
                     ) : (
                       <Image
                         source={{ uri: thumb1 }}
@@ -199,7 +252,7 @@ export default function UploadStyleStep() {
                   )}
                 </View>
                 <View
-                  className="overflow-hidden rounded-md bg-black/40"
+                  className="overflow-hidden rounded-md bg-black/40 relative"
                   style={{
                     width: 38,
                     height: 33,
@@ -207,16 +260,31 @@ export default function UploadStyleStep() {
                 >
                   {thumb2 ? (
                     thumb2Type === "video" ? (
-                      <View
-                        className="w-full h-full items-center justify-center bg-black/60"
-                        style={{
-                          borderWidth: s(1),
-                          borderColor: "#A49A99",
-                          borderRadius: s(6),
-                        }}
-                      >
-                        <SVGIcons.Video width={s(15)} height={s(15)} />
-                      </View>
+                      <>
+                        {thumb2Thumbnail ? (
+                          <Image
+                            source={{ uri: thumb2Thumbnail }}
+                            style={{ width: "100%", height: "100%" }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View
+                            className="w-full h-full items-center justify-center bg-black/60"
+                            style={{
+                              borderWidth: s(1),
+                              borderColor: "#A49A99",
+                              borderRadius: s(6),
+                            }}
+                          />
+                        )}
+                        {/* Video icon overlay */}
+                        <View
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                        >
+                          <SVGIcons.Video width={s(15)} height={s(15)} />
+                        </View>
+                      </>
                     ) : (
                       <Image
                         source={{ uri: thumb2 }}

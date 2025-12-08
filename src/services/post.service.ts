@@ -1,5 +1,6 @@
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
+import { cloudinaryService } from "@/services/cloudinary.service";
 
 export type PostDetail = {
   id: string;
@@ -454,11 +455,22 @@ export async function createPostWithMediaAndCollection(args: {
     const authorId = session.user?.id;
     if (!authorId) throw new Error("Not authenticated");
 
-    // Extract thumbnail from first image media item
-    const firstImage =
-      args.media.find((m) => m.mediaType === "IMAGE" && m.order === 0) ||
-      args.media.find((m) => m.mediaType === "IMAGE");
-    const thumbnailUrl = firstImage?.mediaUrl;
+    // Extract thumbnail from first media item
+    // If first media is VIDEO, generate thumbnail URL from video
+    // Otherwise, use first IMAGE as thumbnail
+    let thumbnailUrl: string | undefined;
+    const firstMedia = args.media[0];
+    
+    if (firstMedia?.mediaType === "VIDEO") {
+      // Generate thumbnail URL from video using Cloudinary
+      thumbnailUrl = cloudinaryService.getVideoThumbnailFromUrl(firstMedia.mediaUrl);
+    } else {
+      // Fall back to finding first image media item
+      const firstImage =
+        args.media.find((m) => m.mediaType === "IMAGE" && m.order === 0) ||
+        args.media.find((m) => m.mediaType === "IMAGE");
+      thumbnailUrl = firstImage?.mediaUrl;
+    }
 
     const { id: postId } = await createPost({
       caption: args.caption,

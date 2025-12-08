@@ -61,7 +61,7 @@ export default function ArtistStep11V2() {
     field: string,
     required?: boolean
   ) => (
-    <View style={{ paddingHorizontal: s(24), marginBottom: mvs(12) }}>
+    <View style={{ paddingHorizontal: s(16), marginBottom: mvs(12) }}>
       <View
         className="flex-row items-center"
         style={{ marginBottom: mvs(4), gap: s(4) }}

@@ -4,13 +4,14 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { createPostWithMediaAndCollection } from "@/services/post.service";
+import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -36,11 +37,34 @@ export default function UploadPreviewStep() {
   const mainImage = mainMedia?.cloud || mainMedia?.uri;
   const isVideo = mainMedia?.type === "video";
   const { width: windowWidth } = useWindowDimensions();
+  const [allStyles, setAllStyles] = useState<TattooStyleItem[]>([]);
+
+  // Fetch all styles to get names for selected styleIds
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await fetchTattooStyles();
+        if (mounted) setAllStyles(data);
+      } catch (error) {
+        console.error("Failed to fetch styles:", error);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Get selected styles based on styleIds
+  const selectedStyles = useMemo(() => {
+    if (!styleIds || styleIds.length === 0 || allStyles.length === 0) return [];
+    return allStyles.filter((style) => styleIds.includes(style.id));
+  }, [styleIds, allStyles]);
 
   // Video player for autoplay - prefer local URI for preview (faster), fallback to cloud URL
   // Always call hook at top level with a URL (empty string if not video)
   // Create two separate players - one for each preview card
-  const videoUrl = isVideo ? (mainMedia?.uri || mainMedia?.cloud || "") : "";
+  const videoUrl = isVideo ? mainMedia?.uri || mainMedia?.cloud || "" : "";
   const videoPlayer1 = useVideoPlayer(videoUrl || "", (player) => {
     if (isVideo && videoUrl) {
       player.loop = true;
@@ -161,13 +185,17 @@ export default function UploadPreviewStep() {
       ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
       : user?.username || "Utente";
 
-
-  const PreviewCard = ({ player }: { player: ReturnType<typeof useVideoPlayer> }) => (
-    <View className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40"
-    style={{
-      borderWidth: s(1),
-      borderColor: "#A49A99",
-    }}
+  const PreviewCard = ({
+    player,
+  }: {
+    player: ReturnType<typeof useVideoPlayer>;
+  }) => (
+    <View
+      className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40"
+      style={{
+        borderWidth: s(1),
+        borderColor: "#A49A99",
+      }}
     >
       {mainImage ? (
         isVideo ? (
@@ -198,6 +226,32 @@ export default function UploadPreviewStep() {
         height="100%"
         className="bg-red-500 border-2 border-blue-500"
       />
+
+      {/* Top gradient overlay for better readability (like in DetailPreviewCard) */}
+      <LinearGradient
+        colors={["rgba(0,0,0,0.5)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0)"]}
+        locations={[0, 0.5, 1]}
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: "12%",
+          zIndex: 1,
+        }}
+        pointerEvents="none"
+      />
+
+      <View
+        className="absolute w-fit"
+        style={{
+          top: s(10),
+          left: "50%",
+          transform: [{ translateX: "-50%" }],
+        }}
+      >
+        <SVGIcons.LogoLight width={s(32)} height={s(32)} />
+      </View>
       {/* Caption and user info near bottom like mockup */}
       <View className="absolute left-2 bottom-[60px]">
         {!!caption && (
@@ -221,7 +275,10 @@ export default function UploadPreviewStep() {
               }}
             />
           ) : (
-            <View className="rounded-full bg-background/80 border-[0.51px] border-error" style={{ width: s(16), height: s(16) }} />
+            <View
+              className="rounded-full bg-background/80 border-[0.51px] border-error"
+              style={{ width: s(16), height: s(16) }}
+            />
           )}
           <ScaledText
             allowScaling={false}
@@ -235,6 +292,219 @@ export default function UploadPreviewStep() {
       </View>
     </View>
   );
+
+  const DetailPreviewCard = ({
+    player,
+  }: {
+    player: ReturnType<typeof useVideoPlayer>;
+  }) => {
+    return (
+      <View
+        className="flex-1 aspect-[393/852] rounded-2xl overflow-hidden relative bg-black/40"
+        style={{
+          borderWidth: s(1),
+          borderColor: "#A49A99",
+        }}
+      >
+        <View
+          className="absolute top-0 left-0 w-full"
+          style={{
+            borderBottomLeftRadius: s(16),
+            borderBottomRightRadius: s(16),
+            overflow: "hidden",
+            height: "80%",
+          }}
+        >
+          {mainImage ? (
+            isVideo ? (
+              <VideoView
+                player={player}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                }}
+                contentFit="cover"
+                nativeControls={false}
+              />
+            ) : (
+              <Image
+                source={{ uri: mainImage }}
+                className="absolute top-0 left-0 w-full h-full"
+                resizeMode="cover"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+              />
+            )
+          ) : (
+            <View
+              className="absolute top-0 left-0 w-full h-full bg-black/20"
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+            />
+          )}
+        </View>
+        <SVGIcons.DetailPreview
+          width="100%"
+          height="100%"
+          className="bg-red-500 border-2 border-blue-500"
+        />
+
+        {/* Bottom gradient overlay for better text readability */}
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.7)"]}
+          locations={[0, 1]}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: "40%",
+            zIndex: 1,
+          }}
+          pointerEvents="none"
+        />
+
+        {/* Content section - matching post detail layout */}
+        <View
+          className="absolute left-0 right-0"
+          style={{
+            bottom: s(-6),
+            paddingHorizontal: s(12),
+            paddingBottom: s(12),
+            paddingTop: s(28),
+            zIndex: 2,
+          }}
+        >
+          {/* Caption and like button section */}
+          <View
+            className="flex-row items-start justify-between"
+            style={{ marginBottom: s(8) }}
+          >
+            <View className="flex-1 mr-2">
+              {!!caption && (
+                <ScaledText
+                  allowScaling={false}
+                  variant="xs"
+                  className="text-foreground font-neueMedium"
+                  numberOfLines={1}
+                >
+                  {TrimText(caption, 50)}
+                </ScaledText>
+              )}
+
+              {/* Style tags */}
+              {selectedStyles.length > 0 && (
+                <View className="flex-row flex-wrap gap-1">
+                  {selectedStyles.slice(0, 1).map((style) => (
+                    <View
+                      key={style.id}
+                      className="inline-flex self-start  rounded-full border-gray max-w-fit"
+                      style={{
+                        paddingHorizontal: s(2),
+                        paddingVertical: s(1),
+                        borderRadius: s(12),
+                        borderWidth: s(0.5),
+                      }}
+                    >
+                      <ScaledText
+                        allowScaling={false}
+                        variant="6"
+                        className="text-gray font-neueLight"
+                      >
+                        {style.name}
+                      </ScaledText>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Like button placeholder */}
+            <View style={{ marginTop: s(2) }}>
+              <SVGIcons.LikeFilled width={s(12)} height={s(12)} />
+            </View>
+          </View>
+
+          {/* Author info section */}
+          {user && (
+            <View className="flex-row items-center justify-between">
+              <View
+                className="flex-row items-center flex-1"
+                style={{ gap: s(4) }}
+              >
+                {user?.avatar ? (
+                  <Image
+                    source={{ uri: user.avatar }}
+                    className="rounded-full"
+                    style={{
+                      width: s(20),
+                      height: s(20),
+                    }}
+                  />
+                ) : (
+                  <View
+                    className="rounded-full bg-background/80 border border-gray"
+                    style={{
+                      width: s(20),
+                      height: s(20),
+                    }}
+                  />
+                )}
+                <View className="flex-1">
+                  <ScaledText
+                    allowScaling={false}
+                    variant="6"
+                    className="text-foreground font-neueMedium"
+                    numberOfLines={1}
+                  >
+                    {TrimText(DisplayName, 14)}
+                  </ScaledText>
+                  {user?.username && (
+                    <ScaledText
+                      allowScaling={false}
+                      variant="6"
+                      className="text-gray font-neueLight"
+                      numberOfLines={1}
+                    >
+                      {`@${TrimText(user.username, 15)}`}
+                    </ScaledText>
+                  )}
+                </View>
+              </View>
+
+              {/* Follow button - scaled down for preview */}
+              <View
+                className="rounded-full flex-row items-center"
+                style={{
+                  borderColor: "#A49A99",
+                  paddingHorizontal: s(6),
+                  paddingVertical: s(3),
+                  gap: s(2),
+                  borderWidth: s(0.5),
+                }}
+              >
+                <SVGIcons.Follow width={s(6)} height={s(6)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="5"
+                  className="text-foreground font-montserratSemibold"
+                >
+                  Segui
+                </ScaledText>
+              </View>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   // Calculate half of container minus gap (gap is e.g. 16px)
   const containerPadding = 24; // px-6 == 24px
@@ -289,7 +559,7 @@ export default function UploadPreviewStep() {
             >
               Vista dettagliata
             </ScaledText>
-            <PreviewCard player={videoPlayer2} />
+            <DetailPreviewCard player={videoPlayer2} />
           </View>
         </View>
       </ScrollView>

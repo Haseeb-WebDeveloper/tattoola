@@ -97,8 +97,7 @@ export default function CollectionDetailsScreen() {
   const NUM_COLUMNS = editMode ? 1 : 2;
   const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
   const layoutKey = editMode ? "one-col" : "two-col";
-  const isOwner =
-    !!user && !!collection && collection.author?.id === user.id;
+  const isOwner = !!user && !!collection && collection.author?.id === user.id;
 
   const loadCollection = useCallback(async () => {
     if (!id) return;
@@ -353,6 +352,7 @@ export default function CollectionDetailsScreen() {
         <CollectionPostCard
           thumbnailUrl={item.thumbnailUrl}
           mediaUrl={item.media[0]?.mediaUrl}
+          mediaType={item.media[0]?.mediaType}
           caption={item.caption}
           editMode={editMode}
           isActive={isActive}
@@ -394,7 +394,6 @@ export default function CollectionDetailsScreen() {
             {Array.from({ length: 6 }).map((_, idx) => (
               <View key={idx} style={{ width: POST_WIDTH }} className="mb-2">
                 <View className="rounded-lg bg-foreground/10 aspect-[9/16]" />
-                <View className="w-5/6 h-4 mt-2 rounded bg-foreground/10" />
               </View>
             ))}
           </View>
@@ -444,7 +443,7 @@ export default function CollectionDetailsScreen() {
                 className="mr-2 text-foreground font-neueSemibold border-foreground"
                 style={{
                   lineHeight: mvs(20),
-                  borderBottomWidth: mvs(0.5),
+                  borderBottomWidth: editMode ? mvs(0.5) : 0,
                 }}
               >
                 {TrimText(collection.name, 15)}

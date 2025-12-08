@@ -14,6 +14,7 @@ import { logger } from "../utils/logger";
 import { supabase } from "../utils/supabase";
 import { buildGoogleMapsUrl } from "./location.service";
 import { COLLECTION_NAME } from "@/constants/limits";
+import { cloudinaryService } from "./cloudinary.service";
 
 export class AuthService {
   // In-memory throttle for resend verification email (per app instance)
@@ -1193,7 +1194,14 @@ export class AuthService {
 
         const projectTitle =
           project.title || project.description || `Portfolio Work ${postOrder}`;
-        const thumbnailUrl = project.photos?.[0] || project.videos?.[0];
+        
+        // Generate thumbnail URL - use first photo if available, otherwise generate from first video
+        let thumbnailUrl: string | undefined;
+        if (project.photos?.[0]) {
+          thumbnailUrl = project.photos[0];
+        } else if (project.videos?.[0]) {
+          thumbnailUrl = cloudinaryService.getVideoThumbnailFromUrl(project.videos[0]);
+        }
 
         // Create post
         const firstFavoriteStyle = (data.step8.favoriteStyles || [])[0] || null;

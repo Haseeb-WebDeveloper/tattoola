@@ -159,6 +159,12 @@ export default function UploadMediaStep() {
     cloud?: string;
   }>) => {
     const index = media.findIndex((m) => m.uri === item.uri);
+    
+    // Generate thumbnail URL for videos
+    const thumbnailUrl = item.type === "video" && item.cloud
+      ? cloudinaryService.getVideoThumbnailFromUrl(item.cloud, 1, 200, 200)
+      : null;
+    
     // precise to screenshot: show box with border, dark background, round corners, trash at top right, drag handle at left.
     return (
       <View
@@ -196,7 +202,7 @@ export default function UploadMediaStep() {
           </Pressable>
           {/* Thumb */}
           <View
-            className="overflow-hidden rounded-lg h-fit aspect-square"
+            className="overflow-hidden rounded-lg h-fit aspect-square relative"
             style={{ width: 65, marginRight: 16 }}
           >
             {item.type === "image" ? (
@@ -206,12 +212,27 @@ export default function UploadMediaStep() {
                 resizeMode="cover"
               />
             ) : (
-              <View
-                className="items-center justify-center border rounded-lg bg-tat-darkMaroon border-gray"
-                style={{ width: "100%", height: "100%" }}
-              >
-                <SVGIcons.Video width={30} height={30} />
-              </View>
+              <>
+                {thumbnailUrl ? (
+                  <Image
+                    source={{ uri: thumbnailUrl }}
+                    style={{ width: "100%", height: "100%" }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    className="items-center justify-center border rounded-lg bg-tat-darkMaroon border-gray"
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                )}
+                {/* Video icon overlay */}
+                <View
+                  className="absolute inset-0 items-center justify-center"
+                  style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+                >
+                  <SVGIcons.Video width={30} height={30} />
+                </View>
+              </>
             )}
           </View>
           {/* Filename */}
@@ -367,7 +388,7 @@ export default function UploadMediaStep() {
                 >
                   File caricati
                 </ScaledText>
-                <View style={{ maxHeight: 350 }}>
+                <View>
                   <DraggableFlatList
                     data={media}
                     onDragEnd={onDragEnd}
@@ -375,7 +396,7 @@ export default function UploadMediaStep() {
                     renderItem={renderMediaItem}
                     scrollEnabled={true}
                     removeClippedSubviews={false}
-                    style={{ maxHeight: 350 }}
+                    style={{ maxHeight: media.length * 100 }}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{
                       paddingBottom: 90,
@@ -389,6 +410,7 @@ export default function UploadMediaStep() {
         </View>
 
         <NextBackFooter
+          containerClassName="bg-red-500"
           onBack={openDiscardModal}
           onNext={() => router.push("/upload/description")}
           nextDisabled={!canProceed}

@@ -97,7 +97,7 @@ export async function fetchFeedItemsPage(args: {
     throw new Error(error.message);
   }
 
-  const items = (rawItems || []) as RawFeedItem[];
+  const items = (rawItems || []) as unknown as RawFeedItem[];
 
   if (!items.length) {
     return { items: [], nextOffset: null };

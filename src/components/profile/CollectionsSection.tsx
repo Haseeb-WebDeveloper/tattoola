@@ -1,5 +1,6 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -50,7 +51,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
       images.push(""); // empty string means no image, placeholder
     }
 
-    // Helper: very naively detect "video" from extension
+    // Helper: detect video from extension or Cloudinary video URL
     const isVideo = (url: string) =>
       url &&
       (url.endsWith(".mp4") ||
@@ -61,7 +62,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     return (
       <View
         className="flex flex-row flex-wrap w-full aspect-square"
-        style={{ gap: s(8) }}
+        style={{ gap: s(8),  }}
       >
         {[0, 1].map((row) => (
           <View className="flex-1 w-full" key={row} style={{ gap: s(8) }}>
@@ -69,6 +70,11 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
               const idx = row * 2 + col;
               const url = images[idx];
               const video = isVideo(url);
+              // Generate thumbnail URL for videos
+              const thumbnailUrl = video && url
+                ? cloudinaryService.getVideoThumbnailFromUrl(url, 1, 200, 200)
+                : null;
+              
               return (
                 <View
                   key={idx}
@@ -81,29 +87,31 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                 >
                   {url ? (
                     <>
-                      <Image
-                        source={{ uri: url }}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          aspectRatio: 1,
-                        }}
-                        resizeMode="cover"
-                      />
+                      {video && thumbnailUrl ? (
+                        <Image
+                          source={{ uri: thumbnailUrl }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            aspectRatio: 1,
+                          }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Image
+                          source={{ uri: url }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            aspectRatio: 1,
+                          }}
+                          resizeMode="cover"
+                        />
+                      )}
                       {video && (
                         <View
-                          className=" border-gray/50 w-full h-full bg-background"
-                          style={{
-                            position: "absolute",
-                            bottom: s(0),
-                            right: s(0),
-                            borderRadius: s(8),
-                            padding: s(2),
-                            zIndex: 2,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderWidth: s(1),
-                          }}
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
                         >
                           <SVGIcons.Video width={s(20)} height={s(20)} />
                         </View>
@@ -113,7 +121,8 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                     <View
                       className="border-gray/50 w-full h-full bg-background"
                       style={{
-                        borderWidth: s(1),
+                        // borderWidth: s(1),
+                        backgroundColor: "rgba(255,255,255,0.02)",
                         borderRadius: s(8),
                       }}
                     />

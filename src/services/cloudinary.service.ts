@@ -174,6 +174,55 @@ class CloudinaryService {
   }
 
   /**
+   * Convert a Cloudinary video URL to a thumbnail URL
+   * Inserts thumbnail transformation and changes extension to .jpg
+   * @param videoUrl - Cloudinary video URL
+   * @param time - Frame time in seconds (default: 1)
+   * @param width - Thumbnail width (default: 800)
+   * @param height - Thumbnail height (default: 1200)
+   * @returns Thumbnail URL or original URL if not a Cloudinary video URL
+   */
+  getVideoThumbnailFromUrl(
+    videoUrl: string,
+    time: number = 1,
+    width: number = 800,
+    height: number = 1200
+  ): string {
+    if (!videoUrl || !videoUrl.includes('cloudinary.com')) {
+      // Not a Cloudinary URL, return as-is
+      return videoUrl;
+    }
+
+    // Cloudinary video URL format: 
+    // https://res.cloudinary.com/{cloud}/video/upload/{transformations}/{publicId}.{format}
+    const uploadIndex = videoUrl.indexOf('/video/upload/');
+    if (uploadIndex === -1) {
+      return videoUrl; // Invalid Cloudinary video URL format
+    }
+
+    // Split URL into base and path parts
+    const baseUrl = videoUrl.substring(0, uploadIndex + '/video/upload/'.length);
+    const restOfUrl = videoUrl.substring(uploadIndex + '/video/upload/'.length);
+    
+    // Remove query parameters if any
+    const [pathPart, queryPart] = restOfUrl.split('?');
+    
+    // Replace video file extension with .jpg
+    const pathWithJpg = pathPart.replace(/\.(mp4|webm|mov|avi|mkv)$/i, '.jpg');
+    
+    // Insert thumbnail transformation right after /video/upload/
+    // Format: so_{time},c_fill,w_{width},h_{height},q_auto
+    const transformation = `so_${time},c_fill,w_${width},h_${height},q_auto`;
+    
+    // Build the thumbnail URL by inserting transformation
+    // If there are existing transformations, they'll be preserved in the path
+    // and our transformation will be applied first
+    const thumbnailUrl = `${baseUrl}${transformation}/${pathWithJpg}${queryPart ? `?${queryPart}` : ''}`;
+    
+    return thumbnailUrl;
+  }
+
+  /**
    * Transform Cloudinary video URL to MP4 with H.264 codec and AAC audio
    * This ensures iOS compatibility (iOS doesn't support WebM)
    * @param videoUrl - Original Cloudinary video URL

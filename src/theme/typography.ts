@@ -13,6 +13,8 @@ export type TypographyVariant =
   | "body4"
   | "label"
   | "boldMontserrat18"
+  | "5"
+  | "6"
   | "xs"
   | "sm"
   | "md"
@@ -27,7 +29,7 @@ export type TypographyVariant =
   | "4xl"
   | "5xl"
   | "6xl"
-  | "7xl"
+  | "7xl";
 
 type VariantStyle = Pick<
   TextStyle,
@@ -86,6 +88,16 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
     lineHeight: scaledFont(30),
     fontWeight: "900",
     letterSpacing: 0,
+  },
+  "5": {
+    fontSize: scaledFont(5),
+    lineHeight: scaledFont(5 * 1.3),
+    letterSpacing: -0.5,
+  },
+  "6": {
+    fontSize: scaledFont(6),
+    lineHeight: scaledFont(6 * 1.3),
+    letterSpacing: -0.5,
   },
   xs: {
     fontSize: scaledFont(10),
@@ -152,5 +164,3 @@ export const typography: Record<TypographyVariant, VariantStyle> = {
     lineHeight: scaledFont(72),
   },
 };
-
-
