@@ -14,6 +14,7 @@ export { ServicesSection } from './ServicesSection';
 export { SocialMediaIcons } from './SocialMediaIcons';
 export { StudioFAQs } from './StudioFAQs';
 export { StudioHeader } from './StudioHeader';
+export { StudioPhotoViewer } from './StudioPhotoViewer';
 export { StudioPhotos } from './StudioPhotos';
 export { StudioSkeleton } from './StudioSkeleton';
 export { StylesSection } from './StylesSection';
