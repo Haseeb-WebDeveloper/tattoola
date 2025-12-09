@@ -32,10 +32,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -248,6 +250,24 @@ export default function ProfileScreen() {
           />
         }
       >
+        {/* Back button */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="z-10 "
+          style={{
+            paddingHorizontal: s(12),
+            paddingVertical: mvs(12),
+            backgroundColor: "rgba(255, 255, 255, 0.15)",
+            borderRadius: s(100),
+            position: "absolute",
+            top: Math.max(insets.top, mvs(6)),
+            left: s(16),
+            zIndex: 10,
+          }}
+        >
+          <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
+        </TouchableOpacity>
+
         {/* settings button */}
         <View
           className="absolute right-0 z-10 top-2"

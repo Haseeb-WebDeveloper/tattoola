@@ -440,10 +440,11 @@ export default function CollectionDetailsScreen() {
               <ScaledText
                 allowScaling={false}
                 variant="2xl"
-                className="mr-2 text-foreground font-neueSemibold border-foreground"
+                className="mr-2 text-foreground font-neueSemibold"
                 style={{
                   lineHeight: mvs(20),
                   borderBottomWidth: editMode ? mvs(0.5) : 0,
+                  borderBottomColor: editMode ? undefined : 'transparent',
                 }}
               >
                 {TrimText(collection.name, 15)}

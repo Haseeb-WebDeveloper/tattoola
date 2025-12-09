@@ -16,12 +16,16 @@ import {
 import type { ArtistSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Linking, ScrollView, View } from "react-native";
+import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
+import { SVGIcons } from "@/constants/svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StudioScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
@@ -95,6 +99,24 @@ export default function StudioScreen() {
           horizontal={false}
           contentContainerStyle={{ paddingBottom: mvs(50) }}
         >
+          {/* Back icon */}
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="z-10 "
+            style={{
+              paddingHorizontal: s(12),
+              paddingVertical: mvs(12),
+              backgroundColor: "rgba(255, 255, 255, 0.15)",
+              borderRadius: s(100),
+              position: "absolute",
+              top: Math.max(insets.top, mvs(6)),
+              left: s(16),
+              zIndex: 10,
+            }}
+          >
+            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
+          </TouchableOpacity>
+
           {/* Banner */}
           <Banner banner={data?.banner || []} />
 

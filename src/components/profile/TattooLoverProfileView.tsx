@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScaledText } from "../ui/ScaledText";
 import { FollowedArtistsList } from "./FollowedArtistsList";
 import { FollowedTattooLoversList } from "./FollowedTattooLoversList";
@@ -28,6 +29,7 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
   refreshing,
   onRefresh,
 }) => {
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<
     "my-tattoos" | "liked" | "artists-you-follow" | "tattoolers"
   >("my-tattoos");
@@ -57,6 +59,7 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
         style={{
           height: s(80),
           paddingHorizontal: s(16),
+          paddingTop: Math.max(insets.top, mvs(6)),
         }}
       >
         {/* Back button */}
