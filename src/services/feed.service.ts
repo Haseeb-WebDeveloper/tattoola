@@ -67,6 +67,7 @@ export async function fetchFeedItemsPage(args: {
   const { userId, offset = 0, limit = FEED_ITEMS_PER_PAGE } = args;
 
   // Fetch raw feed items ordered by position, including joined banner data.
+  // Only show PUBLISHED items (exclude DRAFT and SCHEDULED)
   const { data: rawItems, error } = await supabase
     .from("feed_items")
     .select(
@@ -89,6 +90,7 @@ export async function fetchFeedItemsPage(args: {
     `
     )
     .eq("isActive", true)
+    .eq("publicationType", "PUBLISHED")
     .order("position", { ascending: true })
     .range(offset, offset + limit - 1);
 
