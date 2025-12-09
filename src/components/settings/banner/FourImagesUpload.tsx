@@ -163,7 +163,7 @@ export function FourImagesUpload({
                     </View>
                   )}
                   {/* Drag Icon */}
-                  <View
+                  {/* <View
                     className="absolute"
                     style={{
                       top: s(8),
@@ -171,7 +171,7 @@ export function FourImagesUpload({
                     }}
                   >
                     <SVGIcons.Drag width={s(16)} height={s(16)} />
-                  </View>
+                  </View> */}
                   {/* Delete Button */}
                   <TouchableOpacity
                     onPress={() => onRemoveMedia(index)}

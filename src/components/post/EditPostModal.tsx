@@ -43,8 +43,7 @@ function PostMediaDisplay({
     <View
       style={{
         width: "100%",
-        height: screenHeight * 0.4,
-        backgroundColor: "#000",
+        height: screenHeight * 0.35,
         borderBottomLeftRadius: s(32),
         borderBottomRightRadius: s(32),
         overflow: "hidden",
@@ -70,19 +69,6 @@ function PostMediaDisplay({
           nativeControls={false}
         />
       ) : null}
-
-      {/* Bottom gradient overlay to reduce opacity */}
-      <LinearGradient
-        colors={["transparent", "rgba(0, 0, 0, 0.7)"]}
-        locations={[0.5, 1]}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "50%", // Cover bottom half with gradient
-        }}
-      />
     </View>
   );
 }
@@ -491,7 +477,7 @@ export default function EditPostModal({
             left: 0,
             right: 0,
             zIndex: 1,
-            height: screenHeight * 0.4,
+            height: screenHeight * 0.35,
           }}
         >
           <PostMediaDisplay
@@ -512,18 +498,14 @@ export default function EditPostModal({
           position: "relative",
         }}
       >
-        <TouchableOpacity onPress={onClose}>
-          <View
-            className="rounded-full"
-            style={{
-              width: s(35),
-              height: s(35),
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <SVGIcons.Close width={s(20)} height={s(20)} />
-          </View>
+        <TouchableOpacity
+          onPress={onClose}
+          className="items-center justify-center rounded-full bg-foreground/30"
+          style={{
+            padding: mvs(10),
+          }}
+        >
+          <SVGIcons.Close width={s(12)} height={s(12)} />
         </TouchableOpacity>
         <ScaledText
           variant="lg"
@@ -540,7 +522,7 @@ export default function EditPostModal({
         <View
           style={{
             position: "absolute",
-            top: screenHeight * 0.4, // Start below image
+            top: screenHeight * 0.35, // Start below image
             left: 0,
             right: 0,
             bottom: 0, // Extend to bottom of screen
@@ -558,7 +540,7 @@ export default function EditPostModal({
           backgroundColor: "#0F0202", // Background color for form area
           flexDirection: "column",
           position: "absolute",
-          top: isBottomSheet ? screenHeight * 0.4 : 0, // Start below image
+          top: isBottomSheet ? screenHeight * 0.35 : 0, // Start below image
           left: 0,
           right: 0,
           bottom: 0,
@@ -566,7 +548,7 @@ export default function EditPostModal({
       >
         <ScrollView
           contentContainerStyle={{
-            paddingBottom: mvs(100), // Extra padding for Save button space
+            paddingBottom: mvs(40), // Extra padding for Save button space
             paddingTop: s(16), // Small padding at top
           }}
           showsVerticalScrollIndicator={false}
@@ -575,49 +557,45 @@ export default function EditPostModal({
           }}
         >
           {/* Description */}
-          <View className="px-4 mb-4">
+          <View style={{ marginBottom: mvs(16), paddingHorizontal: s(16) }}>
             <ScaledText
               variant="sm"
-              className="mb-2 text-gray font-montserratSemibold"
-              style={{ fontSize: s(12) }}
+              className="mb-2 text-gray font-montserratMedium"
             >
               Descrizione
             </ScaledText>
             <View
               className="bg-[#100C0C] border border-gray rounded-lg"
               style={{
-                minHeight: mvs(164),
-                padding: s(10),
+                minHeight: mvs(150),
+                paddingHorizontal: s(10),
               }}
             >
               <TextInput
                 value={caption}
                 onChangeText={setCaption}
                 placeholder="Una descrizione breve e veloce per questo tatuaggio. Probabilmente dovrebbe andare su due righe |"
-                placeholderTextColor="#A49A99"
+                placeholderTextColor="#262626"
                 multiline
-                className="text-white font-montserratSemibold"
+                className="text-white font-montserratMedium"
                 style={{
-                  fontSize: s(12),
-                  lineHeight: s(23),
                   textAlignVertical: "top",
+                  color: "#FFFFFF",
                 }}
               />
             </View>
           </View>
 
           {/* Styles Selection */}
-          <View className="px-4 mb-4">
+          <View style={{ marginBottom: mvs(16), paddingHorizontal: s(16) }}>
             <ScaledText
               variant="sm"
-              className="mb-2 text-gray font-montserratSemibold"
-              style={{ fontSize: s(12) }}
+              className="mb-2 text-gray font-montserratMedium"
             >
               Assegna stili{" "}
               <ScaledText
                 variant="sm"
-                className="text-gray font-montserratLight"
-                style={{ fontSize: s(11) }}
+                className="text-tat-chat font-montserratMedium"
               >
                 (almeno 1 deve essere selezionato)
               </ScaledText>
@@ -674,7 +652,6 @@ export default function EditPostModal({
                 <ScaledText
                   variant="sm"
                   className="text-white font-montserratSemibold"
-                  style={{ fontSize: s(12) }}
                 >
                   {`${selectedStyles.length} stile${selectedStyles.length !== 1 ? "i" : ""} selezionato${selectedStyles.length !== 1 ? "i" : ""}`}
                 </ScaledText>
@@ -767,17 +744,15 @@ export default function EditPostModal({
           </View>
 
           {/* Collections Selection */}
-          <View className="px-4 mb-4">
+          <View style={{ marginBottom: mvs(16), paddingHorizontal: s(16) }}>
             <ScaledText
               variant="sm"
-              className="mb-2 text-gray font-montserratSemibold"
-              style={{ fontSize: s(12) }}
+              className="text-gray font-montserratMedium"
             >
               Assegna una o più collezioni{" "}
               <ScaledText
                 variant="sm"
-                className="text-gray font-montserratLight"
-                style={{ fontSize: s(11) }}
+                className="text-tat-chat font-montserratMedium"
               >
                 (almeno 1 deve essere selezionata)
               </ScaledText>
@@ -794,8 +769,7 @@ export default function EditPostModal({
             >
               <ScaledText
                 variant="sm"
-                className="text-white font-montserratSemibold"
-                style={{ fontSize: s(12) }}
+                className="text-white font-montserratMedium"
               >
                 {`${selectedCollections.length} collezione${selectedCollections.length !== 1 ? "i" : ""} selezionata${selectedCollections.length !== 1 ? "e" : ""}`}
               </ScaledText>
@@ -905,51 +879,41 @@ export default function EditPostModal({
               </View>
             )}
           </View>
-        </ScrollView>
 
-        {/* Save Button - Fixed at bottom of form area */}
-        <View
-          className="px-4"
-          style={{
-            backgroundColor: "#0F0202", // Match form background
-            paddingTop: s(12),
-            paddingBottom: s(20),
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-          }}
-        >
-          <TouchableOpacity
-            onPress={handleSave}
-            disabled={
-              saving ||
-              !hasChanges ||
-              selectedStyleIds.length === 0 ||
-              selectedCollectionIds.length === 0
-            }
-            className="items-center justify-center rounded-full bg-primary"
+          {/* Save Button - Fixed at bottom of form area */}
+          <View
             style={{
-              height: mvs(48),
-              opacity:
+              backgroundColor: "#0F0202", // Match form background
+              paddingTop: s(16),
+              paddingHorizontal: s(16),
+            }}
+          >
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={
                 saving ||
                 !hasChanges ||
                 selectedStyleIds.length === 0 ||
                 selectedCollectionIds.length === 0
-                  ? 0.5
-                  : 1,
-            }}
-          >
-            <ScaledText
-              variant="md"
-              className="text-white font-neueMedium"
-              style={{ fontSize: s(14) }}
+              }
+              className="items-center justify-center rounded-full bg-primary"
+              style={{
+                paddingVertical: mvs(10.5),
+                opacity:
+                  saving ||
+                  !hasChanges ||
+                  selectedStyleIds.length === 0 ||
+                  selectedCollectionIds.length === 0
+                    ? 0.5
+                    : 1,
+              }}
             >
-              {saving ? "Salvataggio..." : "Salva modifiche"}
-            </ScaledText>
-          </TouchableOpacity>
-        </View>
+              <ScaledText variant="md" className="text-white font-neueMedium">
+                {saving ? "Salvataggio..." : "Salva modifiche"}
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
 
       {/* Create Collection Modal */}
