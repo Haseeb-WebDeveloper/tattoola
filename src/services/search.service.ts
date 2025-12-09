@@ -121,67 +121,74 @@ export async function searchArtists({
       return { data: [], hasMore: false, error: error.message };
     }
 
-    // Transform the data
-    const artists: ArtistSearchResult[] = (data || []).map((artist: any) => {
-      const primaryLocation = artist.user?.locations?.find(
-        (loc: any) => loc.isPrimary
-      );
-      const activeSubscription = artist.user?.subscriptions?.find(
-        (sub: any) =>
-          sub.status === "ACTIVE" &&
-          (!sub.endDate || new Date(sub.endDate) >= new Date())
-      );
+    // Transform the data and filter to only include artists with active subscriptions
+    const artists: ArtistSearchResult[] = (data || [])
+      .map((artist: any) => {
+        const primaryLocation = artist.user?.locations?.find(
+          (loc: any) => loc.isPrimary
+        );
+        const activeSubscription = artist.user?.subscriptions?.find(
+          (sub: any) =>
+            sub.status === "ACTIVE" &&
+            (!sub.endDate || new Date(sub.endDate) >= new Date())
+        );
 
-      return {
-        id: artist.id,
-        userId: artist.userId,
-        user: {
-          username: artist.user?.username || "",
-          avatar: artist.user?.avatar || null,
-        },
-        businessName: artist.businessName,
-        yearsExperience: artist.yearsExperience,
-        isStudioOwner: artist.isStudioOwner,
-        location: primaryLocation
-          ? {
-              province: primaryLocation.province?.name || "",
-              municipality: primaryLocation.municipality?.name || "",
-              address: primaryLocation.address,
-            }
-          : null,
-        styles:
-          artist.styles
-            ?.sort((a: any, b: any) => {
-              // Sort by isFavorite first (favorites first), then by order
-              if (a.isFavorite && !b.isFavorite) return -1;
-              if (!a.isFavorite && b.isFavorite) return 1;
-              return a.order - b.order;
-            })
-            .slice(0, 2)
-            .map((fs: any) => ({
-              id: fs.style?.id || "",
-              name: fs.style?.name || "",
-            })) || [],
-        bannerMedia:
-          artist.bannerMedia
-            ?.sort((a: any, b: any) => a.order - b.order)
-            .slice(0, 4)
-            .map((bm: any) => ({
-              mediaUrl: bm.mediaUrl,
-              mediaType: bm.mediaType,
-              order: bm.order,
-            })) || [],
-        subscription: activeSubscription
-          ? {
-              plan: {
-                name: activeSubscription.plan?.name || "",
-                type: activeSubscription.plan?.type || "",
-              },
-            }
-          : null,
-        isVerified: artist.user?.isVerified || false,
-      };
-    });
+        // Only include artists with active subscriptions
+        if (!activeSubscription) {
+          return null;
+        }
+
+        return {
+          id: artist.id,
+          userId: artist.userId,
+          user: {
+            username: artist.user?.username || "",
+            avatar: artist.user?.avatar || null,
+          },
+          businessName: artist.businessName,
+          yearsExperience: artist.yearsExperience,
+          isStudioOwner: artist.isStudioOwner,
+          location: primaryLocation
+            ? {
+                province: primaryLocation.province?.name || "",
+                municipality: primaryLocation.municipality?.name || "",
+                address: primaryLocation.address,
+              }
+            : null,
+          styles:
+            artist.styles
+              ?.sort((a: any, b: any) => {
+                // Sort by isFavorite first (favorites first), then by order
+                if (a.isFavorite && !b.isFavorite) return -1;
+                if (!a.isFavorite && b.isFavorite) return 1;
+                return a.order - b.order;
+              })
+              .slice(0, 2)
+              .map((fs: any) => ({
+                id: fs.style?.id || "",
+                name: fs.style?.name || "",
+              })) || [],
+          bannerMedia:
+            artist.bannerMedia
+              ?.sort((a: any, b: any) => a.order - b.order)
+              .slice(0, 4)
+              .map((bm: any) => ({
+                mediaUrl: bm.mediaUrl,
+                mediaType: bm.mediaType,
+                order: bm.order,
+              })) || [],
+          subscription: activeSubscription
+            ? {
+                plan: {
+                  name: activeSubscription.plan?.name || "",
+                  type: activeSubscription.plan?.type || "",
+                },
+              }
+            : null,
+          isVerified: artist.user?.isVerified || false,
+        };
+      })
+      .filter((artist): artist is ArtistSearchResult => artist !== null);
 
     return {
       data: artists,

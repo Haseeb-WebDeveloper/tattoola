@@ -441,34 +441,17 @@ export default function PostDetailScreen() {
 
   const handleSaveEdit = async (data: {
     caption: string;
-    styleId?: string;
-    styleIds?: string[];
+    styleId?: string[];
     collectionIds: string[];
   }) => {
     if (!post || !user) return;
 
     try {
-      // Log for debugging
-      console.log(
-        "handleSaveEdit - styleIds received:",
-        data.styleIds,
-        "styleId (backward compat):",
-        data.styleId
-      );
-
-      // Use styleIds array if provided, otherwise fall back to styleId
-      const styleIdsToSave =
-        data.styleIds && data.styleIds.length > 0
-          ? data.styleIds
-          : data.styleId
-            ? [data.styleId]
-            : [];
-
-      console.log("handleSaveEdit - styleIdsToSave:", styleIdsToSave);
+      console.log("handleSaveEdit - styleId received:", data.styleId);
 
       await updatePost(post.id, user.id, {
         caption: data.caption,
-        styleIds: styleIdsToSave, // Pass array of style IDs (1-3 styles)
+        styleId: data.styleId || [], // Pass styleId array (1-3 styles)
         collectionIds: data.collectionIds,
       });
 
@@ -1087,7 +1070,7 @@ export default function PostDetailScreen() {
       {/* Edit Post Bottom Sheet */}
       {post && showEditModal && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Prevent closing on outside press */}
           <Animated.View
             style={{
               position: "absolute",
@@ -1099,86 +1082,31 @@ export default function PostDetailScreen() {
               opacity: overlayOpacity,
               zIndex: 100,
             }}
-            pointerEvents={showEditModal ? "auto" : "none"}
-          >
-            <TouchableOpacity
-              style={{ flex: 1 }}
-              activeOpacity={1}
-              onPress={handleCloseEdit}
-            />
-          </Animated.View>
+            pointerEvents="none"
+          />
 
-          {/* Header - Fixed at top */}
-          <Animated.View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-
-              paddingTop: s(20),
-              paddingBottom: s(16),
-              paddingHorizontal: s(16),
-              zIndex: 102,
-              opacity: overlayOpacity,
-            }}
-          >
-            <View className="flex-row items-center justify-between">
-              <TouchableOpacity onPress={handleCloseEdit}>
-                <View
-                  className="rounded-full bg-white/10"
-                  style={{
-                    width: s(35),
-                    height: s(35),
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <SVGIcons.Close width={s(14)} height={s(14)} />
-                </View>
-              </TouchableOpacity>
-              <ScaledText
-                variant="lg"
-                className="text-white font-neueMedium"
-                style={{ fontSize: s(16) }}
-              >
-                Edit tattoo details
-              </ScaledText>
-              <View style={{ width: s(35) }} />
-            </View>
-          </Animated.View>
-
-          {/* Bottom Sheet - Form */}
+          {/* Bottom Sheet - Full screen with header, image, and form */}
           <Animated.View
             style={{
               position: "absolute",
               bottom: 0,
               left: 0,
               right: 0,
-              top: screenHeight * 0.3,
+              top: 0,
               transform: [{ translateY: bottomSheetTranslateY }],
               zIndex: 101,
               overflow: "hidden",
             }}
           >
-            <LinearGradient
-              colors={["#0F0202", "#000000"]}
-              locations={[0, 1]}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            />
-            <View style={{ paddingTop: s(20), flex: 1 }}>
+            {/* Background gradient - only below the image area */}
+            <View style={{ flex: 1 }}>
               {memoizedPostForEdit && (
                 <EditPostModal
                   key={post.id}
                   visible={showEditModal}
                   post={memoizedPostForEdit}
                   onClose={handleCloseEdit}
+                  currentMediaIndex={currentMediaIndex}
                   onSave={async (data) => {
                     // Set saving flag FIRST to prevent unsaved changes modal from appearing
                     isSavingRef.current = true;

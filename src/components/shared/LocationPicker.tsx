@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   TouchableOpacity,
@@ -172,6 +173,7 @@ export default function LocationPicker({
       transparent
       animationType="slide"
       onRequestClose={handleClose}
+      presentationStyle={Platform.OS === "ios" ? "overFullScreen" : undefined}
     >
       <View className="flex-1 bg-black/50">
         <View

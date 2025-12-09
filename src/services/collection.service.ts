@@ -104,7 +104,6 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
         createdAt,
         authorId,
         styleId,
-        tattoo_styles(id,name,imageUrl),
         users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
         post_media(id,mediaType,mediaUrl,order)
       )
@@ -137,8 +136,38 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
     });
   });
 
+  // Collect all style IDs and fetch styles separately
+  const allStyleIds = new Set<string>();
+  (collectionPosts || []).forEach((cp: any) => {
+    const styleIds = cp.posts?.styleId || [];
+    if (Array.isArray(styleIds)) {
+      styleIds.forEach((id: string) => allStyleIds.add(id));
+    }
+  });
+
+  // Fetch all styles in one query
+  let stylesMap: Record<string, { id: string; name: string; imageUrl?: string }> = {};
+  if (allStyleIds.size > 0) {
+    const { data: stylesData } = await supabase
+      .from("tattoo_styles")
+      .select("id, name, imageUrl")
+      .in("id", Array.from(allStyleIds));
+    
+    if (stylesData) {
+      stylesData.forEach((style: any) => {
+        stylesMap[style.id] = { id: style.id, name: style.name, imageUrl: style.imageUrl };
+      });
+    }
+  }
+
   const posts: CollectionPost[] = (collectionPosts || []).map((cp: any) => {
     const authorLocation = locationMap.get(cp.posts.authorId) || {};
+    
+    // Get first style from array (for backward compatibility)
+    const styleIds = cp.posts?.styleId || [];
+    const firstStyleId = Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
+    const firstStyle = firstStyleId ? stylesMap[firstStyleId] : undefined;
+
     return {
       id: cp.postId,
       postId: cp.postId,
@@ -148,11 +177,7 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
       commentsCount: cp.posts.commentsCount,
       createdAt: cp.posts.createdAt,
       media: (cp.posts.post_media || []).sort((a: any, b: any) => a.order - b.order),
-      style: cp.posts.tattoo_styles ? {
-        id: cp.posts.tattoo_styles.id,
-        name: cp.posts.tattoo_styles.name,
-        imageUrl: cp.posts.tattoo_styles.imageUrl,
-      } : undefined,
+      style: firstStyle,
       author: {
         id: cp.posts.users.id,
         username: cp.posts.users.username,

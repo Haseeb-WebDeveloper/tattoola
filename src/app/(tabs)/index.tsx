@@ -53,6 +53,8 @@ export default function HomeScreen() {
 
   // Track currently visible post ID for overlay
   const [currentPostId, setCurrentPostId] = useState<string | null>(null);
+  // Track if current visible item is a banner (to hide overlay)
+  const [isCurrentBanner, setIsCurrentBanner] = useState(false);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -64,22 +66,35 @@ export default function HomeScreen() {
         const entry = viewableItems[0].item as FeedEntry;
         if (entry.kind === "post") {
           setCurrentPostId(entry.post.id);
+          setIsCurrentBanner(false);
         } else {
           setCurrentPostId(null);
+          setIsCurrentBanner(true);
         }
       }
     }
   ).current;
 
-  // Set initial post ID when posts load
+  // Set initial post ID when feed first loads or refreshes
+  const lastFirstEntryId = useRef<string | null>(null);
   useEffect(() => {
-    if (feedEntries.length > 0 && !currentPostId) {
-      const firstPostEntry = feedEntries.find((e) => e.kind === "post");
-      if (firstPostEntry && firstPostEntry.kind === "post") {
-        setCurrentPostId(firstPostEntry.post.id);
+    if (feedEntries.length > 0) {
+      const firstEntry = feedEntries[0];
+      const firstEntryId = firstEntry.kind === "post" ? firstEntry.post.id : `banner-${firstEntry.banner.id}`;
+      
+      // Only initialize if this is a new feed (first entry changed or not initialized)
+      if (lastFirstEntryId.current !== firstEntryId) {
+        if (firstEntry.kind === "post") {
+          setCurrentPostId(firstEntry.post.id);
+          setIsCurrentBanner(false);
+        } else {
+          setCurrentPostId(null);
+          setIsCurrentBanner(true);
+        }
+        lastFirstEntryId.current = firstEntryId;
       }
     }
-  }, [feedEntries, currentPostId]);
+  }, [feedEntries]);
 
   // Pause all videos when screen loses focus (navigating away)
   useFocusEffect(
@@ -89,6 +104,7 @@ export default function HomeScreen() {
         // Screen is blurred - pause all videos by setting currentPostId to null
         // This makes all FeedPostCards have isVisible=false, pausing their videos
         setCurrentPostId(null);
+        setIsCurrentBanner(false);
       };
     }, [])
   );
@@ -153,8 +169,10 @@ export default function HomeScreen() {
       <View style={{ flex: 1 }}>
         <FlatList
           data={feedEntries}
-          keyExtractor={(item) =>
-            item.kind === "post" ? `post-${item.post.id}` : `banner-${item.banner.id}`
+          keyExtractor={(item, index) =>
+            item.kind === "post" 
+              ? `post-${item.post.id}-${item.position}` 
+              : `banner-${item.banner.id}-${item.position}-${index}`
           }
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.5}
@@ -255,8 +273,8 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Bottom content overlay - above gradients, at screen level */}
-      {currentPost && (
+      {/* Bottom content overlay - above gradients, at screen level. Only show for posts, not banners */}
+      {currentPost && !isCurrentBanner && (
         <FeedPostOverlay
           post={currentPost}
           onAuthorPress={() => router.push(`/user/${currentPost.author.id}` as any)}

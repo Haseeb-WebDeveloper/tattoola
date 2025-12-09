@@ -87,7 +87,6 @@ export async function fetchFeedPage(args: {
     .select(
       `
       id,caption,thumbnailUrl,likesCount,commentsCount,createdAt,authorId,styleId,
-      tattoo_styles(id,name),
       users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
       post_media(id,mediaType,mediaUrl,order)
     `
@@ -121,6 +120,30 @@ export async function fetchFeedPage(args: {
     itemsRows = rows.slice(0, limit);
   }
 
+  // Collect all style IDs and fetch styles separately
+  const allStyleIds = new Set<string>();
+  itemsRows.forEach((r) => {
+    const styleIds = r.styleId || [];
+    if (Array.isArray(styleIds)) {
+      styleIds.forEach((id: string) => allStyleIds.add(id));
+    }
+  });
+
+  // Fetch all styles in one query
+  let stylesMap: Record<string, { id: string; name: string }> = {};
+  if (allStyleIds.size > 0) {
+    const { data: stylesData } = await supabase
+      .from("tattoo_styles")
+      .select("id, name")
+      .in("id", Array.from(allStyleIds));
+
+    if (stylesData) {
+      stylesData.forEach((style: any) => {
+        stylesMap[style.id] = { id: style.id, name: style.name };
+      });
+    }
+  }
+
   // Get likes for current user for these posts in one query
   const postIds = itemsRows.map((r) => r.id);
   let likedMap: Record<string, boolean> = {};
@@ -135,27 +158,33 @@ export async function fetchFeedPage(args: {
     });
   }
 
-  const items: FeedPost[] = itemsRows.map((r: any) => ({
-    id: r.id,
-    caption: r.caption,
-    createdAt: r.createdAt,
-    likesCount: r.likesCount,
-    commentsCount: r.commentsCount,
-    isLiked: !!likedMap[r.id],
-    style: r.tattoo_styles
-      ? { id: r.tattoo_styles.id, name: r.tattoo_styles.name }
-      : undefined,
-    author: {
-      id: r.users.id,
-      username: r.users.username,
-      firstName: r.users.firstName,
-      lastName: r.users.lastName,
-      avatar: r.users.avatar,
-    },
-    media: (r.post_media || []).sort(
-      (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
-    ),
-  }));
+  const items: FeedPost[] = itemsRows.map((r: any) => {
+    // Get first style from array (for backward compatibility with FeedPost type)
+    const styleIds = r.styleId || [];
+    const firstStyleId =
+      Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
+    const firstStyle = firstStyleId ? stylesMap[firstStyleId] : undefined;
+
+    return {
+      id: r.id,
+      caption: r.caption,
+      createdAt: r.createdAt,
+      likesCount: r.likesCount,
+      commentsCount: r.commentsCount,
+      isLiked: !!likedMap[r.id],
+      style: firstStyle,
+      author: {
+        id: r.users.id,
+        username: r.users.username,
+        firstName: r.users.firstName,
+        lastName: r.users.lastName,
+        avatar: r.users.avatar,
+      },
+      media: (r.post_media || []).sort(
+        (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
+      ),
+    };
+  });
 
   return { items, nextCursor };
 }
@@ -180,7 +209,6 @@ export async function fetchPostDetails(
       createdAt,
       authorId,
       styleId,
-      tattoo_styles(id,name,imageUrl),
       users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
       post_media(id,mediaType,mediaUrl,order)
     `
@@ -192,43 +220,42 @@ export async function fetchPostDetails(
 
   const authorId = (post as any).users.id;
 
-  // Fetch post styles from post_styles junction table
+  // Fetch styles from styleId array in posts table
   let styles = [];
-  try {
-    const { data: postStylesData, error: postStylesError } = await supabase
-      .from("post_styles")
-      .select("styleId, order, tattoo_styles(id, name, imageUrl)")
-      .eq("postId", postId)
-      .order("order", { ascending: true });
+  const styleIdValue = (post as any).styleId;
 
-    // If post_styles table exists and has data, use it
-    if (!postStylesError && postStylesData && postStylesData.length > 0) {
-      styles = postStylesData.map((ps: any) => ({
-        id: ps.tattoo_styles?.id || ps.styleId,
-        name: ps.tattoo_styles?.name || "",
-        imageUrl: ps.tattoo_styles?.imageUrl,
-      }));
-    } else if ((post as any).tattoo_styles) {
-      // Fallback to single style from posts table for backward compatibility
-      styles = [
-        {
-          id: (post as any).tattoo_styles.id,
-          name: (post as any).tattoo_styles.name,
-          imageUrl: (post as any).tattoo_styles.imageUrl,
-        },
-      ];
+  // Handle both array and string (for backward compatibility during migration)
+  let styleIds: string[] = [];
+  if (styleIdValue) {
+    if (Array.isArray(styleIdValue)) {
+      styleIds = styleIdValue;
+    } else if (typeof styleIdValue === "string" && styleIdValue.trim() !== "") {
+      // Old format: single string, convert to array
+      styleIds = [styleIdValue];
     }
-  } catch (err) {
-    // If table doesn't exist, fall back to single style from posts table
-    console.warn("post_styles table may not exist, using single style:", err);
-    if ((post as any).tattoo_styles) {
-      styles = [
-        {
-          id: (post as any).tattoo_styles.id,
-          name: (post as any).tattoo_styles.name,
-          imageUrl: (post as any).tattoo_styles.imageUrl,
-        },
-      ];
+  }
+
+  if (styleIds.length > 0) {
+    // Fetch style details for all style IDs
+    const { data: styleData, error: styleError } = await supabase
+      .from("tattoo_styles")
+      .select("id, name, imageUrl")
+      .in("id", styleIds);
+
+    if (!styleError && styleData) {
+      // Maintain order from styleId array
+      styles = styleIds
+        .map((styleId: string) => {
+          const style = styleData.find((s: any) => s.id === styleId);
+          return style
+            ? {
+                id: style.id,
+                name: style.name,
+                imageUrl: style.imageUrl,
+              }
+            : null;
+        })
+        .filter(Boolean);
     }
   }
 
@@ -385,19 +412,23 @@ export async function togglePostLike(
 
 export async function createPost(args: {
   caption?: string;
-  styleId?: string;
+  styleId?: string[]; // Array of style IDs (1-3 styles)
   authorId: string;
   thumbnailUrl?: string;
 }): Promise<{ id: string }> {
   const newId = uuidv4();
   const nowIso = new Date().toISOString();
+
+  // Use styleId array directly
+  const styleIdsToSave = args.styleId || [];
+
   const { error } = await supabase
     .from("posts")
     .insert({
       id: newId,
       authorId: args.authorId,
       caption: args.caption,
-      styleId: args.styleId,
+      styleId: styleIdsToSave,
       thumbnailUrl: args.thumbnailUrl,
       updatedAt: nowIso,
     })
@@ -442,7 +473,7 @@ export async function addPostToCollection(
 
 export async function createPostWithMediaAndCollection(args: {
   caption?: string;
-  styleId?: string;
+  styleId?: string[]; // Array of style IDs (1-3 styles)
   media: Array<{
     mediaUrl: string;
     mediaType: "IMAGE" | "VIDEO";
@@ -474,10 +505,11 @@ export async function createPostWithMediaAndCollection(args: {
 
     const { id: postId } = await createPost({
       caption: args.caption,
-      styleId: args.styleId,
+      styleId: args.styleId || [],
       authorId,
       thumbnailUrl,
     });
+
     await addPostMedia(postId, args.media);
     if (args.collectionId) {
       await addPostToCollection(postId, args.collectionId);
@@ -598,8 +630,7 @@ export async function updatePost(
   authorId: string,
   updates: {
     caption?: string;
-    styleId?: string; // Keep for backward compatibility
-    styleIds?: string[]; // New: support multiple styles
+    styleId?: string[]; // Array of style IDs (1-3 styles)
     collectionIds?: string[];
   }
 ): Promise<void> {
@@ -623,160 +654,10 @@ export async function updatePost(
     updateData.caption = updates.caption;
   }
 
-  // Handle styles - support both single styleId (backward compat) and multiple styleIds
-  if (updates.styleIds !== undefined) {
-    // Update multiple styles using post_styles junction table
-    // Wrap in try-catch to prevent errors from breaking the save operation
-    let postStylesTableExists = true;
-
-    try {
-      // Remove post from all styles
-      const { error: deleteError } = await supabase
-        .from("post_styles")
-        .delete()
-        .eq("postId", postId);
-
-      // Check if table exists by examining the error
-      if (deleteError) {
-        const errorMessage = deleteError.message || "";
-        const errorCode = deleteError.code || "";
-        // Check for common "table doesn't exist" error patterns
-        if (
-          errorCode === "PGRST205" || // PostgREST: Could not find the table
-          errorMessage.includes("Could not find the table") ||
-          errorMessage.includes("does not exist") ||
-          errorMessage.includes("relation") ||
-          errorCode === "42P01" || // PostgreSQL: relation does not exist
-          errorCode === "PGRST116" // PostgREST: relation not found
-        ) {
-          postStylesTableExists = false;
-          console.warn(
-            "post_styles table does not exist. Only the first style will be saved in posts.styleId field."
-          );
-        } else {
-          // Other error - log it but continue
-          console.warn("Error deleting post_styles:", deleteError);
-        }
-      }
-
-      // Add post to selected styles (only if table exists)
-      if (postStylesTableExists && updates.styleIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from("post_styles")
-          .insert(
-            updates.styleIds.map((styleId, index) => ({
-              id: uuidv4(),
-              styleId,
-              postId,
-              order: index,
-              addedAt: new Date().toISOString(),
-            }))
-          );
-
-        if (insertError) {
-          const errorCode = insertError.code || "";
-          const errorMessage = insertError.message || "";
-
-          // Check if it's a "table doesn't exist" error
-          if (
-            errorCode === "PGRST205" ||
-            errorMessage.includes("Could not find the table") ||
-            errorMessage.includes("does not exist") ||
-            errorMessage.includes("relation") ||
-            errorCode === "42P01" ||
-            errorCode === "PGRST116"
-          ) {
-            postStylesTableExists = false;
-            console.warn(
-              "post_styles table does not exist. Only the first style will be saved in posts.styleId field."
-            );
-          } else {
-            // Other error - log it
-            console.warn("Error inserting post_styles:", insertError);
-          }
-        } else {
-          console.log(
-            `Successfully saved ${updates.styleIds.length} style(s) to post_styles table`
-          );
-        }
-      }
-    } catch (err) {
-      // If any error occurs with post_styles table, just continue with single styleId
-      console.warn(
-        "Error with post_styles table, continuing with single styleId:",
-        err
-      );
-      postStylesTableExists = false;
-    }
-
-    // Always update the primary styleId field for backward compatibility (use first style)
-    // This ensures the post can still be saved even if post_styles table doesn't exist
-    if (updates.styleIds.length > 0) {
-      updateData.styleId = updates.styleIds[0];
-    } else {
-      updateData.styleId = null;
-    }
-  } else if (updates.styleId !== undefined) {
-    // Backward compatibility: single styleId
-    updateData.styleId = updates.styleId || null;
-
-    // Also try to update post_styles table (if it exists)
-    try {
-      const { error: deleteError } = await supabase
-        .from("post_styles")
-        .delete()
-        .eq("postId", postId);
-
-      if (deleteError) {
-        const errorCode = deleteError.code || "";
-        const errorMessage = deleteError.message || "";
-
-        // Only log if it's not a "table doesn't exist" error
-        if (
-          errorCode !== "PGRST205" &&
-          !errorMessage.includes("Could not find the table") &&
-          !errorMessage.includes("does not exist") &&
-          !errorMessage.includes("relation") &&
-          errorCode !== "42P01"
-        ) {
-          console.warn("Error deleting post_styles:", deleteError);
-        }
-      }
-
-      if (updates.styleId) {
-        const { error: insertError } = await supabase
-          .from("post_styles")
-          .insert({
-            id: uuidv4(),
-            styleId: updates.styleId,
-            postId,
-            order: 0,
-            addedAt: new Date().toISOString(),
-          });
-
-        if (insertError) {
-          const errorCode = insertError.code || "";
-          const errorMessage = insertError.message || "";
-
-          // Only log if it's not a "table doesn't exist" error
-          if (
-            errorCode !== "PGRST205" &&
-            !errorMessage.includes("Could not find the table") &&
-            !errorMessage.includes("does not exist") &&
-            !errorMessage.includes("relation") &&
-            errorCode !== "42P01"
-          ) {
-            console.warn("Error inserting post_styles:", insertError);
-          }
-        }
-      }
-    } catch (err) {
-      // Silently ignore - table doesn't exist, but we can still save single styleId
-      console.warn(
-        "post_styles table may not exist, continuing with single styleId:",
-        err
-      );
-    }
+  // Handle styles - save styleId array directly
+  if (updates.styleId !== undefined) {
+    // Ensure it's always an array (empty array if no styles)
+    updateData.styleId = Array.isArray(updates.styleId) ? updates.styleId : [];
   }
 
   const { error: updateError } = await supabase
@@ -788,20 +669,35 @@ export async function updatePost(
 
   // Update collections if provided
   if (updates.collectionIds !== undefined) {
-    // Remove post from all collections
+    console.log(
+      `Updating collections for post ${postId}:`,
+      updates.collectionIds
+    );
+
+    // Remove post from all collections first
     const { error: deleteError } = await supabase
       .from("collection_posts")
       .delete()
       .eq("postId", postId);
 
-    if (deleteError) throw new Error(deleteError.message);
+    if (deleteError) {
+      console.error("Error deleting collection_posts:", deleteError);
+      throw new Error(deleteError.message);
+    }
+
+    console.log(
+      `Removed post from all collections. Now adding to ${updates.collectionIds.length} collection(s)`
+    );
 
     // Add post to selected collections
     if (updates.collectionIds.length > 0) {
+      // Remove duplicates just in case
+      const uniqueCollectionIds = Array.from(new Set(updates.collectionIds));
+
       const { error: insertError } = await supabase
         .from("collection_posts")
         .insert(
-          updates.collectionIds.map((collectionId) => ({
+          uniqueCollectionIds.map((collectionId) => ({
             id: uuidv4(),
             collectionId,
             postId,
@@ -809,7 +705,17 @@ export async function updatePost(
           }))
         );
 
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) {
+        console.error("Error inserting collection_posts:", insertError);
+        throw new Error(insertError.message);
+      }
+
+      console.log(
+        `Successfully added post to ${uniqueCollectionIds.length} collection(s):`,
+        uniqueCollectionIds
+      );
+    } else {
+      console.log("No collections selected, post removed from all collections");
     }
   }
 }

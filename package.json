@@ -61,6 +61,7 @@
     "expo-video": "^3.0.14",
     "expo-web-browser": "~15.0.8",
     "nativewind": "^4.2.1",
+    "pg": "^8.16.3",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "react": "19.1.0",
     "react-dom": "19.1.0",
