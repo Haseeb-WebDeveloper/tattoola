@@ -1,6 +1,7 @@
+import { StudioPhotoViewer } from "./StudioPhotoViewer";
 import ScaledText from "@/components/ui/ScaledText";
 import { mvs, s } from "@/utils/scale";
-import React from "react";
+import React, { useState } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 
 interface StudioPhoto {
@@ -14,6 +15,9 @@ interface StudioPhotosProps {
 }
 
 export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
   if (!photos || photos.length === 0) {
     return null;
   }
@@ -22,6 +26,54 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
   const thumbnails = photos.slice(1, 4);
   const remainingCount = Math.max(0, photos.length - 4);
 
+  const handlePhotoPress = (index: number) => {
+    setSelectedIndex(index);
+    setViewerVisible(true);
+  };
+
+  const handleCloseViewer = () => {
+    setViewerVisible(false);
+  };
+
+  // If only one photo, show simple layout
+  if (photos.length === 1) {
+    return (
+      <View style={{ marginTop: mvs(24), paddingHorizontal: s(16) }}>
+        <ScaledText
+          allowScaling={false}
+          variant="md"
+          className="text-foreground font-montserratSemibold"
+          style={{ marginBottom: mvs(12) }}
+        >
+          Foto dello studio
+        </ScaledText>
+        
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => handlePhotoPress(0)}
+        >
+          <Image
+            source={{ uri: mainPhoto.imageUrl }}
+            style={{
+              width: "100%",
+              height: mvs(173),
+              borderRadius: s(6),
+            }}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
+
+        <StudioPhotoViewer
+          visible={viewerVisible}
+          photos={photos}
+          initialIndex={selectedIndex}
+          onClose={handleCloseViewer}
+        />
+      </View>
+    );
+  }
+
+  // Multiple photos - show carousel with thumbnails
   return (
     <View style={{ marginTop: mvs(24), paddingHorizontal: s(16) }}>
       <ScaledText
@@ -34,8 +86,12 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
       </ScaledText>
       
       <View style={{ flexDirection: "row" }}>
-        {/* Large main photo */}
-        <TouchableOpacity activeOpacity={0.8} style={{ flex: 1, marginRight: s(6) }}>
+        {/* Large main photo - clickable */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={{ flex: 1, marginRight: s(6) }}
+          onPress={() => handlePhotoPress(0)}
+        >
           <Image
             source={{ uri: mainPhoto.imageUrl }}
             style={{
@@ -51,12 +107,14 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
         <View style={{ width: s(62) }}>
           {thumbnails.map((photo, index) => {
             const isLast = index === 2 && remainingCount > 0;
+            const photoIndex = index + 1; // +1 because main photo is at index 0
             
             return (
-              <TouchableOpacity 
-                key={photo.id} 
+              <TouchableOpacity
+                key={photo.id}
                 activeOpacity={0.8}
                 style={{ marginBottom: index < thumbnails.length - 1 ? mvs(6) : 0 }}
+                onPress={() => handlePhotoPress(photoIndex)}
               >
                 <View>
                   <Image
@@ -91,6 +149,13 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
           })}
         </View>
       </View>
+
+      <StudioPhotoViewer
+        visible={viewerVisible}
+        photos={photos}
+        initialIndex={selectedIndex}
+        onClose={handleCloseViewer}
+      />
     </View>
   );
 };
