@@ -96,6 +96,7 @@ export default function CollectionPostCard({
             variant="sm"
             className="text-foreground font-neueMedium"
             numberOfLines={1}
+            style={{ opacity: 1 }}
           >
             {caption || "Descrizione del tatuaggio"}
           </ScaledText>
