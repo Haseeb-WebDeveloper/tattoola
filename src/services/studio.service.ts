@@ -1054,6 +1054,7 @@ export async function fetchStudioPublicProfile(studioId: string) {
       ...studio,
       city: (studioLocation?.municipality as any)?.name || '',
       province: (studioLocation?.province as any)?.name || '',
+      address: studioLocation?.address || null,
       country: 'Italy',
       owner: owner,
       banner: bannerMedia?.map((m: any) => ({

@@ -1,3 +1,20 @@
+import ScaledText from "@/components/ui/ScaledText";
+import { SVGIcons } from "@/constants/svg";
+import { toggleFollow } from "@/services/profile.service";
+import { ArtistSelfProfileInterface } from "@/types/artist";
+import { WorkArrangement } from "@/types/auth";
+import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Linking,
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Banner } from "./Banner";
 import { BodyPartsSection } from "./BodyPartsSection";
 import { CollectionsSection } from "./CollectionsSection";
@@ -5,23 +22,6 @@ import { ProfileHeader } from "./ProfileHeader";
 import { ServicesSection } from "./ServicesSection";
 import { SocialMediaIcons } from "./SocialMediaIcons";
 import { StylesSection } from "./StylesSection";
-import { toggleFollow } from "@/services/profile.service";
-import { ArtistSelfProfileInterface } from "@/types/artist";
-import { WorkArrangement } from "@/types/auth";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  Linking,
-  Modal,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import ScaledText from "@/components/ui/ScaledText";
-import { SVGIcons } from "@/constants/svg";
-import { supabase } from "@/utils/supabase";
-import { mvs, s } from "@/utils/scale";
 
 interface ArtistProfileViewProps {
   data: ArtistSelfProfileInterface & { isFollowing?: boolean };
@@ -33,11 +33,11 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   currentUserId,
 }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isFollowing, setIsFollowing] = useState(data.isFollowing || false);
   const [isTogglingFollow, setIsTogglingFollow] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionMessage, setRejectionMessage] = useState<string>("");
-
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -116,7 +116,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
       {/* Follow button - positioned top-right */}
       {/* {currentUserId && (
         <View
-          className="absolute top-2 right-0 z-10"
+          className="absolute right-0 z-10 top-2"
           style={{ paddingHorizontal: s(16) }}
         >
           <TouchableOpacity
@@ -149,15 +149,15 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         {/* Back icon */}
         <TouchableOpacity
           onPress={() => router.back()}
-          className=" z-10"
+          className="z-10 "
           style={{
             paddingHorizontal: s(12),
             paddingVertical: mvs(12),
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backgroundColor: "rgba(255, 255, 255, 0.15)",
             borderRadius: s(100),
             position: "absolute",
-            top: mvs(6),
-            left: s(6),
+            top: Math.max(insets.top, mvs(6)),
+            left: s(16),
             zIndex: 10,
           }}
         >
@@ -221,7 +221,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
         {/* Bottom actions - only show if not viewing own profile */}
         {currentUserId && currentUserId !== data.user.id && (
-          <View className="bg-background px-4 py-3">
+          <View className="px-4 py-3 bg-background">
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={handleFollowToggle}
@@ -242,7 +242,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSendRequest}
-                className="flex-1 flex-row gap-2 rounded-full bg-primary items-center justify-center"
+                className="flex-row items-center justify-center flex-1 gap-2 rounded-full bg-primary"
                 style={{ gap: s(8), paddingVertical: mvs(8) }}
               >
                 <SVGIcons.Send2 width={s(14)} height={s(14)} />
@@ -267,7 +267,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         onRequestClose={() => setShowRejectionModal(false)}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -287,7 +287,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
               Richiesta non disponibile
@@ -297,7 +297,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
               {rejectionMessage}
@@ -306,7 +306,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             {/* OK Button */}
             <TouchableOpacity
               onPress={() => setShowRejectionModal(false)}
-              className="rounded-full w-fit bg-primary items-center justify-center"
+              className="items-center justify-center rounded-full w-fit bg-primary"
               style={{
                 paddingVertical: mvs(10.5),
                 paddingHorizontal: s(30),

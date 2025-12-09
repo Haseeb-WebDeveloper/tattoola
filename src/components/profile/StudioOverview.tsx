@@ -12,6 +12,7 @@ type StudioOverviewProps = {
   ownerLastName?: string | null;
   municipality?: string | null;
   province?: string | null;
+  address?: string | null;
   instagram?: string | null;
   tiktok?: string | null;
   website?: string | null;
@@ -24,6 +25,7 @@ export default function StudioOverview({
   ownerLastName,
   municipality,
   province,
+  address,
   instagram,
   tiktok,
   website,
@@ -39,19 +41,22 @@ export default function StudioOverview({
 
   const openMaps = () => {
     if (!municipality || !province) return;
-    const url = buildGoogleMapsUrl(municipality, province);
+    const url = buildGoogleMapsUrl(municipality, province, address);
     openUrl(url);
   };
 
   // Try to build a static map preview (uses Google Static Maps if key provided)
   const staticMapUrl = (() => {
     if (!municipality || !province) return undefined;
-    const address = encodeURIComponent(`${municipality}, ${province}`);
+    // Use full address if available, otherwise fallback to municipality, province
+    const mapQuery = address
+      ? encodeURIComponent(`${address}, ${municipality}, ${province}`)
+      : encodeURIComponent(`${municipality}, ${province}`);
     const size = `${Math.round(s(150))}x${Math.round(mvs(100))}`;
     const key = (process as any).env?.EXPO_PUBLIC_GOOGLE_MAPS_STATIC_KEY;
     // If key exists, build Google Static Maps URL; otherwise return undefined to fallback UI
     return key
-      ? `https://maps.googleapis.com/maps/api/staticmap?center=${address}&zoom=13&size=${size}&scale=2&maptype=roadmap&markers=color:red%7C${address}&key=${key}`
+      ? `https://maps.googleapis.com/maps/api/staticmap?center=${mapQuery}&zoom=13&size=${size}&scale=2&maptype=roadmap&markers=color:red%7C${mapQuery}&key=${key}`
       : undefined;
   })();
 
