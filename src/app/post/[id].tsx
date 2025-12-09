@@ -128,6 +128,7 @@ export default function PostDetailScreen() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const isSavingRef = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
 
   // Animation values for edit modal
   const bottomSheetTranslateY = useRef(
@@ -504,7 +505,7 @@ export default function PostDetailScreen() {
             onPress={handleBack}
             className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
+            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
           </TouchableOpacity>
         </View>
 
@@ -659,7 +660,7 @@ export default function PostDetailScreen() {
             onPress={handleBack}
             className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
+            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
           </TouchableOpacity>
         </View>
       )}
@@ -683,11 +684,17 @@ export default function PostDetailScreen() {
             style={{ height: (screenWidth * 16) / 9 }}
           >
             <FlatList
+              ref={flatListRef}
               data={post.media}
               horizontal
               pagingEnabled
               scrollEnabled={post.media.length > 1}
               showsHorizontalScrollIndicator={false}
+              getItemLayout={(_, index) => ({
+                length: screenWidth,
+                offset: screenWidth * index,
+                index,
+              })}
               onMomentumScrollEnd={(e) => {
                 const index = Math.round(
                   e.nativeEvent.contentOffset.x / screenWidth
@@ -726,6 +733,81 @@ export default function PostDetailScreen() {
                 );
               }}
             />
+            {/* Navigation chevrons - only show if more than 1 media */}
+            {post.media.length > 1 && (
+              <>
+                {/* Left chevron - hide on first item */}
+                {currentMediaIndex > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      const newIndex = currentMediaIndex - 1;
+                      setCurrentMediaIndex(newIndex);
+                      // Scroll to previous item
+                      try {
+                        flatListRef.current?.scrollToIndex({
+                          index: newIndex,
+                          animated: true,
+                        });
+                      } catch (error) {
+                        // Fallback to scrollToOffset if scrollToIndex fails
+                        flatListRef.current?.scrollToOffset({
+                          offset: newIndex * screenWidth,
+                          animated: true,
+                        });
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: s(16),
+                      top: "50%",
+                      transform: [{ translateY: -s(20) }],
+                      zIndex: 3,
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      borderRadius: s(20),
+                      padding: s(6),
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
+                  </TouchableOpacity>
+                )}
+                {/* Right chevron - hide on last item */}
+                {currentMediaIndex < post.media.length - 1 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      const newIndex = currentMediaIndex + 1;
+                      setCurrentMediaIndex(newIndex);
+                      // Scroll to next item
+                      try {
+                        flatListRef.current?.scrollToIndex({
+                          index: newIndex,
+                          animated: true,
+                        });
+                      } catch (error) {
+                        // Fallback to scrollToOffset if scrollToIndex fails
+                        flatListRef.current?.scrollToOffset({
+                          offset: newIndex * screenWidth,
+                          animated: true,
+                        });
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: s(16),
+                      top: "50%",
+                      transform: [{ translateY: -s(20) }],
+                      zIndex: 3,
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      borderRadius: s(20),
+                      padding: s(6),
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <SVGIcons.ChevronRight width={s(14)} height={s(14)} className="text-white" />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
             {/* Top fade gradient for header/back contrast */}
             <LinearGradient
               colors={["rgba(0,0,0,0.6)", "transparent"]}
@@ -794,7 +876,7 @@ export default function PostDetailScreen() {
                 </ScaledText>
 
                 {/* Style tag */}
-                {/* {post.style && (
+                {post.style && (
                   <View className="inline-flex self-start px-3 py-1 border rounded-full border-gray max-w-fit">
                     <ScaledText
                       variant="sm"
@@ -803,7 +885,7 @@ export default function PostDetailScreen() {
                       {post.style.name}
                     </ScaledText>
                   </View>
-                )} */}
+                )}
               </View>
 
               <TouchableOpacity
@@ -957,6 +1039,7 @@ export default function PostDetailScreen() {
                     style={{
                       top: mvs(120),
                       right: 0,
+                      left: 0,
                       zIndex: 10,
                     }}
                     pointerEvents="box-none"
