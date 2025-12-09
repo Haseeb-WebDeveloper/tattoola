@@ -239,6 +239,7 @@ export interface Database {
           id: string;
           name: string;
           description: string | null;
+          imageUrl: string | null;
           category: string;
           styleId: string | null;
           isActive: boolean;
@@ -249,6 +250,7 @@ export interface Database {
           id?: string;
           name: string;
           description?: string | null;
+          imageUrl?: string | null;
           category: string;
           styleId?: string | null;
           isActive?: boolean;

@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { ScaledText } from "./ScaledText";
 import { addEmojiWithStyle } from "@/utils/content/add-emoji-with-style";
 import { mvs, s } from "@/utils/scale";
@@ -6,8 +6,10 @@ import { SVGIcons } from "@/constants/svg";
 
 export const StylePills = ({
   styles,
+  onStylePress,
 }: {
-  styles: { id: string; name: string; isFavorite?: boolean }[];
+  styles: { id: string; name: string; isFavorite?: boolean; imageUrl?: string | null; description?: string | null }[];
+  onStylePress?: (style: { id: string; name: string; imageUrl?: string | null; description?: string | null }) => void;
 }) => {
   // Filter out invalid styles (where id or name is missing)
   const validStyles = styles.filter(
@@ -20,37 +22,52 @@ export const StylePills = ({
 
   return (
     <View className="flex-row flex-wrap gap-2" style={{ marginTop: mvs(8) }}>
-      {validStyles.map((style) => (
-        <View
-          key={style.id}
-          className=" rounded-full relative"
-          style={{
-            paddingHorizontal: s(12),
-            paddingVertical: mvs(4),
-            justifyContent: "center",
-            borderWidth: s(1),
-            borderColor: "#fff",
-            // borderColor: style.isFavorite ? "#AE0E0E" : "#fff",
-          }}
-        >
-          <ScaledText
-            allowScaling={false}
-            variant="11"
-            className="text-white font-neueBold"
+      {validStyles.map((style) => {
+        const PillContent = (
+          <View
+            className=" rounded-full relative"
+            style={{
+              paddingHorizontal: s(12),
+              paddingVertical: mvs(4),
+              justifyContent: "center",
+              borderWidth: s(1),
+              borderColor: "#fff",
+              // borderColor: style.isFavorite ? "#AE0E0E" : "#fff",
+            }}
           >
-            {addEmojiWithStyle(style.name)}
-          </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-white font-neueBold"
+            >
+              {addEmojiWithStyle(style.name)}
+            </ScaledText>
 
-          {/* For fav we show icon */}
-          {style.isFavorite && (
-            <SVGIcons.King
-              width={s(14)}
-              height={s(14)}
-              style={{ position: "absolute", right: s(1), top: s(-9) }}
-            />
-          )}
-        </View>
-      ))}
+            {/* For fav we show icon */}
+            {style.isFavorite && (
+              <SVGIcons.King
+                width={s(14)}
+                height={s(14)}
+                style={{ position: "absolute", right: s(1), top: s(-9) }}
+              />
+            )}
+          </View>
+        );
+
+        if (onStylePress) {
+          return (
+            <TouchableOpacity
+              key={style.id}
+              onPress={() => onStylePress(style)}
+              activeOpacity={0.7}
+            >
+              {PillContent}
+            </TouchableOpacity>
+          );
+        }
+
+        return <View key={style.id}>{PillContent}</View>;
+      })}
     </View>
   );
 };

@@ -214,7 +214,7 @@ export async function fetchArtistSelfProfile(
       .order("order", { ascending: true }),
     supabase
       .from("artist_services")
-      .select("serviceId,price,duration, services(id,name,description)")
+      .select("serviceId,price,duration, services(id,name,description,imageUrl)")
       .eq("artistId", artistId),
     supabase
       .from("collections")

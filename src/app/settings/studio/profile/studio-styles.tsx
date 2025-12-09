@@ -1,4 +1,5 @@
 import ScaledText from "@/components/ui/ScaledText";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -64,6 +65,7 @@ export default function StudioStylesScreen() {
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -165,29 +167,41 @@ export default function StudioStylesScreen() {
     const isSelected = selectedStyles.includes(item.id);
 
     return (
-      <TouchableOpacity
-        onPress={() => toggleStyle(item.id)}
+      <View
         className="flex-row items-center border-b border-gray/20"
         style={{ paddingHorizontal: s(16) }}
       >
         {/* Checkbox */}
-        <View style={{ marginRight: s(16) }}>
+        <TouchableOpacity
+          onPress={() => toggleStyle(item.id)}
+          style={{ marginRight: s(16) }}
+        >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox width={s(20)} height={s(20)} />
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Style Image */}
-        <Image
-          source={{ uri: item.imageUrl }}
-          style={{ width: s(120), height: s(96) }}
-          resizeMode="cover"
-        />
+        <TouchableOpacity
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{ width: s(120), height: s(96) }}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
 
         {/* Style Name */}
-        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
+        <TouchableOpacity
+          className="flex-1"
+          style={{ paddingHorizontal: s(16) }}
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
           <ScaledText
             allowScaling={false}
             variant="md"
@@ -195,8 +209,8 @@ export default function StudioStylesScreen() {
           >
             {item.name}
           </ScaledText>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -417,6 +431,13 @@ export default function StudioStylesScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
     </View>
   );
 }

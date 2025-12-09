@@ -1,5 +1,5 @@
-import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { BannerCard } from "@/components/BannerCard";
+import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { FeedEntry } from "@/services/feed.service";
@@ -9,13 +9,12 @@ import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Text, TouchableOpacity } from "react-native";
 import {
   FlatList,
   RefreshControl,
   useWindowDimensions,
   View,
-  ViewToken
+  ViewToken,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -80,8 +79,11 @@ export default function HomeScreen() {
   useEffect(() => {
     if (feedEntries.length > 0) {
       const firstEntry = feedEntries[0];
-      const firstEntryId = firstEntry.kind === "post" ? firstEntry.post.id : `banner-${firstEntry.banner.id}`;
-      
+      const firstEntryId =
+        firstEntry.kind === "post"
+          ? firstEntry.post.id
+          : `banner-${firstEntry.banner.id}`;
+
       // Only initialize if this is a new feed (first entry changed or not initialized)
       if (lastFirstEntryId.current !== firstEntryId) {
         if (firstEntry.kind === "post") {
@@ -129,38 +131,38 @@ export default function HomeScreen() {
         onPress={() =>
           router.push("/user/23377731-a5cf-4d99-8de7-61f952c177a7")
         }
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Artist</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={() => logout()}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Logout</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/user-registration/step-3")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>User registration</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/artist-registration/step-3")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Artist registration</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/artist-registration/step-13")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Plan subscription</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => router.push("/(studio-invitation)/accept?token=021f4d87-75cb-4ebb-bd87-0c61fb7f0e25")}
-        className="bg-foreground text-background p-4 rounded-full"
+        className="p-4 rounded-full bg-foreground text-background"
       >
         <Text>Studio invitation accept</Text>
       </TouchableOpacity> */}
@@ -170,8 +172,8 @@ export default function HomeScreen() {
         <FlatList
           data={feedEntries}
           keyExtractor={(item, index) =>
-            item.kind === "post" 
-              ? `post-${item.post.id}-${item.position}` 
+            item.kind === "post"
+              ? `post-${item.post.id}-${item.position}-${index}`
               : `banner-${item.banner.id}-${item.position}-${index}`
           }
           showsVerticalScrollIndicator={false}
@@ -213,7 +215,10 @@ export default function HomeScreen() {
                   <BannerCard
                     banner={entry.banner}
                     onPress={() => {
-                      const cleaned = entry.banner.redirectUrl.replace(/^\/?/, "");
+                      const cleaned = entry.banner.redirectUrl.replace(
+                        /^\/?/,
+                        ""
+                      );
                       const path = `/${cleaned}`;
                       router.push(path as any);
                     }}
@@ -277,7 +282,9 @@ export default function HomeScreen() {
       {currentPost && !isCurrentBanner && (
         <FeedPostOverlay
           post={currentPost}
-          onAuthorPress={() => router.push(`/user/${currentPost.author.id}` as any)}
+          onAuthorPress={() =>
+            router.push(`/user/${currentPost.author.id}` as any)
+          }
           onLikePress={() => {
             console.log("onLikePress", currentPost.id, user?.id);
             if (user?.id) {
@@ -298,7 +305,7 @@ export default function HomeScreen() {
         }}
       >
         <View
-          className="rounded-full items-center justify-center"
+          className="items-center justify-center rounded-full"
           style={{ width: s(20), height: s(20) }}
         >
           {/* <SVGIcons.Flash  /> */}

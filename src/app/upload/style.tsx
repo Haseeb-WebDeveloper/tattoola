@@ -1,5 +1,6 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import { ScaledText } from "@/components/ui/ScaledText";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
@@ -26,6 +27,7 @@ export default function UploadStyleStep() {
   const caption = usePostUploadStore((s) => s.caption);
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
   const canProceed =
     (styleIds?.length || 0) >= 1 && (styleIds?.length || 0) <= 3;
   useEffect(() => {
@@ -76,15 +78,15 @@ export default function UploadStyleStep() {
     const isSelected = styleIds?.includes(item.id) || false;
     const isDisabled = !isSelected && (styleIds?.length || 0) >= 3;
     return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => toggleStyleId(item.id)}
-        disabled={isDisabled}
+      <View
         className="flex-row items-center w-full"
         style={{ opacity: isDisabled ? 0.5 : 1 }}
       >
         {/* Left select box */}
-        <View
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => toggleStyleId(item.id)}
+          disabled={isDisabled}
           style={{
             alignItems: "center",
             justifyContent: "center",
@@ -97,25 +99,37 @@ export default function UploadStyleStep() {
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Image */}
-        {item.imageUrl ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            className="border-b border-gray/20"
-            style={{ width: s(120), height: mvs(72) }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            className="bg-gray/30"
-            style={{ width: s(155), height: mvs(72) }}
-          />
-        )}
+        <TouchableOpacity
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+          disabled={isDisabled}
+        >
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              className="border-b border-gray/20"
+              style={{ width: s(120), height: mvs(72) }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              className="bg-gray/30"
+              style={{ width: s(155), height: mvs(72) }}
+            />
+          )}
+        </TouchableOpacity>
 
         {/* Name */}
-        <View className="flex-1" style={{ paddingLeft: s(16) }}>
+        <TouchableOpacity
+          className="flex-1"
+          style={{ paddingLeft: s(16) }}
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+          disabled={isDisabled}
+        >
           <ScaledText
             allowScaling={false}
             variant="sm"
@@ -123,8 +137,8 @@ export default function UploadStyleStep() {
           >
             {item.name}
           </ScaledText>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -385,6 +399,13 @@ export default function UploadStyleStep() {
         nextDisabled={!canProceed}
         nextLabel="Avanti"
         backLabel="Indietro"
+      />
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
       />
     </View>
   );

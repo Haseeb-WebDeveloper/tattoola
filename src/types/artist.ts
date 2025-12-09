@@ -37,7 +37,7 @@ export type ArtistSelfProfileInterface = {
     imageUrl?: string | null;
     isFavorite?: boolean;
   }[];
-  services: { id: string; name: string; description?: string | null }[];
+  services: { id: string; name: string; description?: string | null; imageUrl?: string | null }[];
   collections: Array<{
     id: string;
     name: string;

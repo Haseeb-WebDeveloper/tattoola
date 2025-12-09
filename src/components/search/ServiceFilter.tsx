@@ -15,6 +15,7 @@ type Service = {
   id: string;
   name: string;
   category: string;
+  imageUrl?: string | null;
 };
 
 type ServiceFilterProps = {
@@ -36,7 +37,7 @@ export default function ServiceFilter({
   const loadServices = async () => {
     const { data, error } = await supabase
       .from("services")
-      .select("id, name, category")
+      .select("id, name, category, imageUrl")
       .eq("isActive", true)
       .order("name");
 

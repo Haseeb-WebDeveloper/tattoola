@@ -1,4 +1,5 @@
 import ScaledText from "@/components/ui/ScaledText";
+import ServiceInfoModal from "@/components/shared/ServiceInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -58,6 +59,7 @@ export default function ServicesSettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [artistId, setArtistId] = useState<string | null>(null);
+  const [selectedServiceForInfo, setSelectedServiceForInfo] = useState<ServiceItem | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -191,7 +193,11 @@ export default function ServicesSettingsScreen() {
             />
           )}
         </Pressable>
-        <View className="flex-1">
+        <TouchableOpacity
+          className="flex-1"
+          onPress={() => setSelectedServiceForInfo(item)}
+          activeOpacity={0.7}
+        >
           <ScaledText
             allowScaling={false}
             variant="md"
@@ -199,7 +205,7 @@ export default function ServicesSettingsScreen() {
           >
             {item.name}
           </ScaledText>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -427,6 +433,13 @@ export default function ServicesSettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Service Info Modal */}
+      <ServiceInfoModal
+        visible={selectedServiceForInfo !== null}
+        service={selectedServiceForInfo}
+        onClose={() => setSelectedServiceForInfo(null)}
+      />
     </KeyboardAvoidingView>
   );
 }

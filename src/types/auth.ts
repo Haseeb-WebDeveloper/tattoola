@@ -87,6 +87,7 @@ export interface Service {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string | null;
   category: string;
   styleId?: string;
 }

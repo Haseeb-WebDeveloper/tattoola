@@ -1,4 +1,5 @@
 import { ScaledText } from "@/components/ui/ScaledText";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { createCollection } from "@/services/collection.service";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
@@ -122,6 +123,7 @@ export default function EditPostModal({
     useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [creatingCollection, setCreatingCollection] = useState(false);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
   // Track newly created collections that should be deleted if user doesn't save
   // Track pending collections (created in frontend but not yet saved to database)
   const pendingCollectionsRef = useRef<{ tempId: string; name: string }[]>([]);
@@ -687,16 +689,19 @@ export default function EditPostModal({
                     const isDisabled =
                       !isSelected && selectedStyleIds.length >= 3;
                     return (
-                      <TouchableOpacity
+                      <View
                         key={style.id}
-                        onPress={() => toggleStyle(style.id)}
-                        disabled={isDisabled}
                         className="flex-row items-center justify-between px-4 py-3"
                         style={{
                           opacity: isDisabled ? 0.5 : 1,
                         }}
                       >
-                        <View className="flex-row items-center flex-1">
+                        <TouchableOpacity
+                          className="flex-row items-center flex-1"
+                          onPress={() => setSelectedStyleForInfo(style)}
+                          activeOpacity={0.7}
+                          disabled={isDisabled}
+                        >
                           {style.imageUrl && (
                             <Image
                               source={{ uri: style.imageUrl }}
@@ -713,19 +718,24 @@ export default function EditPostModal({
                           >
                             {style.name}
                           </ScaledText>
-                        </View>
-                        {isSelected ? (
-                          <SVGIcons.CheckedCheckbox
-                            width={s(20)}
-                            height={s(20)}
-                          />
-                        ) : (
-                          <SVGIcons.UncheckedCheckbox
-                            width={s(20)}
-                            height={s(20)}
-                          />
-                        )}
-                      </TouchableOpacity>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => toggleStyle(style.id)}
+                          disabled={isDisabled}
+                        >
+                          {isSelected ? (
+                            <SVGIcons.CheckedCheckbox
+                              width={s(20)}
+                              height={s(20)}
+                            />
+                          ) : (
+                            <SVGIcons.UncheckedCheckbox
+                              width={s(20)}
+                              height={s(20)}
+                            />
+                          )}
+                        </TouchableOpacity>
+                      </View>
                     );
                   })}
                 </ScrollView>
@@ -974,27 +984,45 @@ export default function EditPostModal({
   );
 
   if (isBottomSheet) {
-    return content;
+    return (
+      <>
+        {content}
+        {/* Style Info Modal */}
+        <StyleInfoModal
+          visible={selectedStyleForInfo !== null}
+          style={selectedStyleForInfo}
+          onClose={() => setSelectedStyleForInfo(null)}
+        />
+      </>
+    );
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <Pressable
-        style={{ flex: 1 }}
-        onPress={(e) => {
-          // Prevent closing on outside press - only allow close button or back button
-          e.stopPropagation();
-        }}
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={onClose}
       >
-        <View style={{ flex: 1 }} pointerEvents="box-none">
-          {content}
-        </View>
-      </Pressable>
-    </Modal>
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={(e) => {
+            // Prevent closing on outside press - only allow close button or back button
+            e.stopPropagation();
+          }}
+        >
+          <View style={{ flex: 1 }} pointerEvents="box-none">
+            {content}
+          </View>
+        </Pressable>
+      </Modal>
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
+    </>
   );
 }

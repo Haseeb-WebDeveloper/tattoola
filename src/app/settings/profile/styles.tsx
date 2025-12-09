@@ -1,4 +1,5 @@
 import ScaledText from "@/components/ui/ScaledText";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { AR_MAX_FAVORITE_STYLES, AR_MAX_STYLES, TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
@@ -77,6 +78,7 @@ export default function StylesSettingsScreen() {
   // For tattoo lovers: maxStyles = favorite styles (same concept)
   const [maxStyles, setMaxStyles] = useState<number>(TL_MAX_FAVORITE_STYLES);
   const [maxFavoriteStyles, setMaxFavoriteStyles] = useState<number>(AR_MAX_FAVORITE_STYLES);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
 
   const isArtist = user?.role === "ARTIST";
   const minStyles = isArtist ? 2 : 1;
@@ -335,21 +337,31 @@ export default function StylesSettingsScreen() {
         </View>
 
         {/* Image */}
-        {img ? (
-          <Image
-            source={{ uri: img }}
-            style={{ width: s(120), height: s(72) }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            className="bg-gray/30"
-            style={{ width: s(120), height: s(72) }}
-          />
-        )}
+        <TouchableOpacity
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
+          {img ? (
+            <Image
+              source={{ uri: img }}
+              style={{ width: s(120), height: s(72) }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              className="bg-gray/30"
+              style={{ width: s(120), height: s(72) }}
+            />
+          )}
+        </TouchableOpacity>
 
         {/* Name */}
-        <View className="flex-1" style={{ paddingHorizontal: s(16) }}>
+        <TouchableOpacity
+          className="flex-1"
+          style={{ paddingHorizontal: s(16) }}
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
           <ScaledText
             allowScaling={false}
             variant="sm"
@@ -357,7 +369,7 @@ export default function StylesSettingsScreen() {
           >
             {item.name}
           </ScaledText>
-        </View>
+        </TouchableOpacity>
 
         {/* Favorite star - only for artists */}
         {isArtist && (
@@ -607,6 +619,13 @@ export default function StylesSettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
