@@ -2,16 +2,13 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
 import { mvs, s } from "@/utils/scale";
-import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Modal,
-  PanResponder,
-  ScrollView,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LocationPicker from "../shared/LocationPicker";
 import ServiceFilter from "./ServiceFilter";
@@ -25,6 +22,7 @@ type FilterModalProps = {
 export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const insets = useSafeAreaInsets();
   const { filters, updateFilters, search } = useSearchStore();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const [tempFilters, setTempFilters] = useState(filters);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
@@ -32,11 +30,14 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     province: string;
     municipality: string;
   } | null>(null);
-  const [internalVisible, setInternalVisible] = useState(visible);
+  const isShowingLocationPickerRef = useRef(false);
 
+  // Snap points for the bottom sheet (90% of screen height)
+  const snapPoints = useMemo(() => ["90%"], []);
+
+  // Open/close bottom sheet based on visible prop
   useEffect(() => {
     if (visible) {
-      setInternalVisible(true);
       setTempFilters(filters);
       // Get location names from store if they exist
       const { locationDisplay } = useSearchStore.getState();
@@ -45,89 +46,47 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       } else {
         setLocationNames(null);
       }
+      // Open bottom sheet modal
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+    } else {
+      // Close bottom sheet modal
+      bottomSheetRef.current?.dismiss();
+      // Reset state when parent closes modal
+      setShowLocationPicker(false);
+      isShowingLocationPickerRef.current = false;
     }
   }, [visible, filters]);
 
-  // --- Animated sliding mechanics ---
-  const translateY = useRef(new Animated.Value(0)).current;
-  const backdropOpacity = useRef(new Animated.Value(1)).current;
-  const dragOffset = useRef(0);
-  const isClosingRef = useRef(false);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: (_evt, gestureState) => {
-        // Only vertical gestures
-        return true;
-      },
-      onMoveShouldSetPanResponder: (_evt, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderGrant: () => {
-        dragOffset.current = 0;
-      },
-      onPanResponderMove: (_evt, gestureState) => {
-        if (gestureState.dy > 0) {
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_evt, gestureState) => {
-        dragOffset.current = 0;
-        if (gestureState.dy > 85) {
-          // If dragged sufficiently downward, close the modal
-          isClosingRef.current = true;
-          Animated.parallel([
-            Animated.timing(translateY, {
-              toValue: 600,
-              duration: 140,
-              useNativeDriver: true,
-            }),
-            Animated.timing(backdropOpacity, {
-              toValue: 0,
-              duration: 140,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            // Set internal visible to false first to hide the modal
-            setInternalVisible(false);
-            // Use setTimeout to ensure animation is fully complete before closing
-            setTimeout(() => {
-              isClosingRef.current = false;
-              onClose();
-            }, 50);
-          });
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-      onPanResponderTerminate: () => {
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      },
-    })
-  ).current;
-
-  useEffect(() => {
-    if (internalVisible) {
-      // Only reset when opening, not when closing
-      if (!isClosingRef.current) {
-        translateY.setValue(0);
-        backdropOpacity.setValue(1);
-      }
-    } else {
-      // Reset when modal is closed (for next open)
-      isClosingRef.current = false;
-      translateY.setValue(0);
-      backdropOpacity.setValue(1);
+  // Handle bottom sheet dismiss (called when modal is fully dismissed)
+  const handleSheetDismiss = useCallback(() => {
+    // Don't call onClose if we're showing location picker
+    // The location picker will handle reopening the sheet
+    if (!isShowingLocationPickerRef.current) {
+      onClose();
     }
-  }, [internalVisible, translateY, backdropOpacity]);
+  }, [onClose]);
 
-  // --- End animated sliding mechanics ---
+  // Handle sheet changes
+  const handleSheetChange = useCallback((index: number) => {
+    // This is called during animation, not when fully dismissed
+    // We don't need to do anything here for dismissal
+  }, []);
+
+  // Render backdrop
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        pressBehavior="close"
+      />
+    ),
+    []
+  );
 
   const handleStyleChange = (styleIds: string[]) => {
     setTempFilters((prev) => ({ ...prev, styleIds }));
@@ -181,6 +140,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   };
 
   const handleApply = () => {
+    // Update filters and location display
     updateFilters(tempFilters);
 
     // Update location display in search store (without triggering search)
@@ -192,8 +152,12 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       useSearchStore.setState({ locationDisplay: null });
     }
 
+    // Trigger search
     search();
-    onClose();
+    
+    // Close bottom sheet modal
+    // handleSheetDismiss will call onClose() to sync parent state
+    bottomSheetRef.current?.dismiss();
   };
 
   const hasActiveFilters =
@@ -202,88 +166,38 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     tempFilters.provinceId !== null ||
     tempFilters.municipalityId !== null;
 
-  // Close on tap-outside
-  const handleBackdropPress = () => {
-    if (isClosingRef.current) return;
-    isClosingRef.current = true;
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: 600,
-        duration: 140,
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 140,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setInternalVisible(false);
-      setTimeout(() => {
-        isClosingRef.current = false;
-        onClose();
-      }, 50);
-    });
-  };
-
   return (
     <>
-      <Modal
-        visible={internalVisible}
-        transparent
-        animationType="none"
-        onRequestClose={handleBackdropPress}
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        onDismiss={handleSheetDismiss}
+        onChange={handleSheetChange}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{
+          backgroundColor: "#100C0C",
+          borderTopWidth: s(1),
+          borderLeftWidth: s(1),
+          borderRightWidth: s(1),
+          borderColor: "#908D8F",
+          borderTopLeftRadius: s(24),
+          borderTopRightRadius: s(24),
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#908D8F",
+          width: s(30),
+          height: mvs(4),
+        }}
       >
-        <Animated.View
-          className="flex-1"
-          style={{
-            backgroundColor: "rgba(24,18,18,0.5)",
-            opacity: backdropOpacity,
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingHorizontal: s(20),
+            paddingBottom: Math.max(insets.bottom, mvs(20)) + mvs(24),
+            paddingTop: mvs(10),
           }}
+          keyboardShouldPersistTaps="handled"
         >
-          {/* Backdrop */}
-          <TouchableWithoutFeedback onPress={handleBackdropPress}>
-            <View
-              style={{
-                flex: 1,
-              }}
-            />
-          </TouchableWithoutFeedback>
-
-          <Animated.View
-            className="bg-background"
-            {...panResponder.panHandlers}
-            style={{
-              marginTop: "auto",
-              transform: [{ translateY }],
-              paddingBottom: Math.max(insets.bottom, mvs(20)),
-              borderTopWidth: s(1),
-              borderLeftWidth: s(1),
-              borderRightWidth: s(1),
-              borderColor: "#908D8F",
-              borderRadius: s(24),
-            }}
-          >
-            {/* Handle */}
-            <View
-              className="items-center"
-              style={{ paddingTop: mvs(12), paddingBottom: mvs(8) }}
-            >
-              <View
-                className="rounded-lg bg-gray"
-                style={{ width: s(30), height: mvs(4) }}
-              />
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingHorizontal: s(20),
-                paddingBottom: mvs(24),
-                paddingTop: mvs(10),
-              }}
-              keyboardShouldPersistTaps="handled"
-            >
               {/* Style Filter Section */}
               <View style={{ marginBottom: mvs(18) }}>
                 <View
@@ -393,7 +307,16 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                 </View>
                 <TouchableOpacity
                   activeOpacity={1}
-                  onPress={() => setShowLocationPicker(true)}
+                  onPress={() => {
+                    // Set flag before dismissing to prevent onClose from being called
+                    isShowingLocationPickerRef.current = true;
+                    // Dismiss bottom sheet first to avoid modal conflicts
+                    bottomSheetRef.current?.dismiss();
+                    // Show location picker after a short delay
+                    setTimeout(() => {
+                      setShowLocationPicker(true);
+                    }, 300);
+                  }}
                   className="flex-row items-center justify-between bg-tat-foreground border-gray"
                   style={{
                     paddingVertical: mvs(10),
@@ -448,13 +371,21 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   </ScaledText>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
+        </BottomSheetScrollView>
+      </BottomSheetModal>
       <LocationPicker
         visible={showLocationPicker}
-        onClose={() => setShowLocationPicker(false)}
+        onClose={() => {
+          setShowLocationPicker(false);
+          // Reset flag
+          isShowingLocationPickerRef.current = false;
+          // Reopen filter modal if it should still be visible
+          if (visible) {
+            setTimeout(() => {
+              bottomSheetRef.current?.present();
+            }, 100);
+          }
+        }}
         onSelect={handleLocationSelect}
         initialProvinceId={tempFilters.provinceId}
         initialMunicipalityId={tempFilters.municipalityId}

@@ -3,6 +3,7 @@ import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
@@ -59,6 +60,7 @@ export default function ArtistStep12V2() {
   const [allStyles, setAllStyles] = useState<TattooStyleItem[]>([]);
   const [loadingStyles, setLoadingStyles] = useState(false);
   const [descriptionFocused, setDescriptionFocused] = useState(false);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -1009,29 +1011,29 @@ export default function ArtistStep12V2() {
                       const img = resolveImageUrl(style.imageUrl);
 
                       return (
-                        <TouchableOpacity
+                        <View
                           key={style.id}
-                          activeOpacity={0.85}
-                          onPress={() => {
-                            setDraft((d) => {
-                              if (selected) {
-                                return {
-                                  ...d,
-                                  styles: d.styles.filter(
-                                    (id) => id !== style.id
-                                  ),
-                                };
-                              }
-                              if (isDisabled) return d;
-                              return { ...d, styles: [...d.styles, style.id] };
-                            });
-                          }}
-                          disabled={isDisabled}
                           className="flex-row items-center"
                           style={{ opacity: isDisabled ? 0.5 : 1 }}
                         >
                           {/* Left select box */}
-                          <View
+                          <TouchableOpacity
+                            activeOpacity={0.85}
+                            onPress={() => {
+                              setDraft((d) => {
+                                if (selected) {
+                                  return {
+                                    ...d,
+                                    styles: d.styles.filter(
+                                      (id) => id !== style.id
+                                    ),
+                                  };
+                                }
+                                if (isDisabled) return d;
+                                return { ...d, styles: [...d.styles, style.id] };
+                              });
+                            }}
+                            disabled={isDisabled}
                             style={{
                               alignItems: "center",
                               justifyContent: "center",
@@ -1050,27 +1052,36 @@ export default function ArtistStep12V2() {
                                 height={s(20)}
                               />
                             )}
-                          </View>
+                          </TouchableOpacity>
 
                           {/* Image */}
-                          {img ? (
-                            <Image
-                              source={{ uri: img }}
-                              className="border-b border-gray/20"
-                              style={{ width: s(120), height: mvs(72) }}
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <View
-                              className="bg-gray/30"
-                              style={{ width: s(155), height: mvs(72) }}
-                            />
-                          )}
+                          <TouchableOpacity
+                            onPress={() => setSelectedStyleForInfo(style)}
+                            activeOpacity={0.7}
+                            disabled={isDisabled}
+                          >
+                            {img ? (
+                              <Image
+                                source={{ uri: img }}
+                                className="border-b border-gray/20"
+                                style={{ width: s(120), height: mvs(72) }}
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <View
+                                className="bg-gray/30"
+                                style={{ width: s(155), height: mvs(72) }}
+                              />
+                            )}
+                          </TouchableOpacity>
 
                           {/* Name */}
-                          <View
+                          <TouchableOpacity
                             className="flex-1"
                             style={{ paddingLeft: s(16) }}
+                            onPress={() => setSelectedStyleForInfo(style)}
+                            activeOpacity={0.7}
+                            disabled={isDisabled}
                           >
                             <ScaledText
                               allowScaling={false}
@@ -1079,8 +1090,8 @@ export default function ArtistStep12V2() {
                             >
                               {style.name}
                             </ScaledText>
-                          </View>
-                        </TouchableOpacity>
+                          </TouchableOpacity>
+                        </View>
                       );
                     })}
                   </View>
@@ -1226,6 +1237,13 @@ export default function ArtistStep12V2() {
           </View>
         </View>
       </Modal>
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
     </View>
   );
 }

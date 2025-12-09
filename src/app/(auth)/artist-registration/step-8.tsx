@@ -2,6 +2,7 @@ import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { AR_MAX_FAVORITE_STYLES, AR_MAX_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
@@ -77,6 +78,7 @@ export default function ArtistStep8V2() {
     AR_MAX_FAVORITE_STYLES
   );
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
 
   useEffect(() => {
     setCurrentStepDisplay(8);
@@ -217,22 +219,32 @@ export default function ArtistStep8V2() {
         </View>
 
         {/* Image */}
-        {img ? (
-          <Image
-            source={{ uri: img }}
-            className="border-b border-gray/20"
-            style={{ width: s(120), height: mvs(72) }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            className="bg-gray/30"
-            style={{ width: s(155), height: mvs(72) }}
-          />
-        )}
+        <TouchableOpacity
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
+          {img ? (
+            <Image
+              source={{ uri: img }}
+              className="border-b border-gray/20"
+              style={{ width: s(120), height: mvs(72) }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              className="bg-gray/30"
+              style={{ width: s(155), height: mvs(72) }}
+            />
+          )}
+        </TouchableOpacity>
 
         {/* Name */}
-        <View className="flex-1" style={{ paddingLeft: s(16) }}>
+        <TouchableOpacity
+          className="flex-1"
+          style={{ paddingLeft: s(16) }}
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
           <ScaledText
             allowScaling={false}
             style={{ fontSize: 12.445 }}
@@ -240,7 +252,7 @@ export default function ArtistStep8V2() {
           >
             {item.name}
           </ScaledText>
-        </View>
+        </TouchableOpacity>
 
         {/* Primary star */}
         <TouchableOpacity
@@ -489,6 +501,13 @@ export default function ArtistStep8V2() {
           </View>
         </View>
       </Modal>
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
     </View>
   );
 }

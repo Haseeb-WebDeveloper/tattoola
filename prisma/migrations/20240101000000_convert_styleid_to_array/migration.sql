@@ -27,3 +27,10 @@ ALTER COLUMN "styleId" TYPE TEXT[] USING
 ALTER TABLE posts 
 ALTER COLUMN "styleId" SET DEFAULT ARRAY[]::TEXT[];
 
+-- Note: The `posts Post[]` relation field was removed from the TattooStyle model
+-- This is a schema-only change (no database migration needed) because:
+-- 1. Prisma relation fields don't create database columns or constraints
+-- 2. The relation cannot exist since Post.styleId is an array (String[])
+-- 3. Prisma doesn't support foreign key relations with array columns
+-- Query posts by style using the styleId array directly instead of relations
+

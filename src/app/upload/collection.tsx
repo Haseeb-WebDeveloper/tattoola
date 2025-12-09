@@ -12,6 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Dimensions,
   Image,
   Modal,
@@ -173,26 +174,40 @@ export default function UploadCollectionStep() {
   const handleCreate = async () => {
     const trimmed = newName.trim();
     if (!trimmed) return;
-    const { data: session } = await supabase.auth.getUser();
-    const userId = session.user?.id;
-    if (!userId) return;
-    const created = await createCollection(userId, trimmed);
-    setCollections((prev) => [
-      {
-        id: created.id,
-        name: trimmed,
-        thumbnails: [],
-        isPortfolioCollection: false,
-      },
-      ...prev,
-    ]);
-    setCollectionId(created.id);
-    // If no redirect collection ID is set, use the newly created one
-    if (!redirectToCollectionId) {
-      setRedirectToCollectionId(created.id);
+    
+    try {
+      const { data: session } = await supabase.auth.getUser();
+      const userId = session.user?.id;
+      if (!userId) {
+        Alert.alert("Errore", "Utente non autenticato");
+        return;
+      }
+      
+      const created = await createCollection(userId, trimmed);
+      
+      setCollections((prev) => [
+        {
+          id: created.id,
+          name: trimmed,
+          thumbnails: [],
+          isPortfolioCollection: false,
+        },
+        ...prev,
+      ]);
+      setCollectionId(created.id);
+      // If no redirect collection ID is set, use the newly created one
+      if (!redirectToCollectionId) {
+        setRedirectToCollectionId(created.id);
+      }
+      setNewName("");
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error("Error creating collection:", error);
+      Alert.alert(
+        "Errore",
+        error instanceof Error ? error.message : "Impossibile creare la collection. Riprova."
+      );
     }
-    setNewName("");
-    setShowCreateModal(false);
   };
 
   // Grid card like profile collections
