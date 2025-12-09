@@ -163,6 +163,7 @@ export function initializeDeepLinking() {
 
       // Case 3: Studio invitation link
       if (url.includes("studio-invitation")) {
+        console.log("Deep link: studio invitation link detected");
         const token = urlObj.searchParams.get("token");
 
         if (!token) {

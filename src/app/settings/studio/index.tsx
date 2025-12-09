@@ -362,6 +362,7 @@ export default function StudioSettingsScreen() {
   const [studio, setStudio] = useState<StudioInfo | null>(null);
   const [userPlanType, setUserPlanType] = useState<"PREMIUM" | "STUDIO" | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showNotOwnerModal, setShowNotOwnerModal] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -409,42 +410,68 @@ export default function StudioSettingsScreen() {
   };
 
   const handleStudioPagePress = () => {
-    if (userPlanType === "PREMIUM") {
-      setShowUpgradeModal(true);
+    // Check if user is OWNER
+    if (studio?.userRole !== "OWNER") {
+      if (userPlanType === "PREMIUM") {
+        setShowUpgradeModal(true);
+      } else {
+        setShowNotOwnerModal(true);
+      }
       return;
     }
     router.push("/settings/studio/profile" as any);
   };
 
   const handleArtistsPress = () => {
-    if (userPlanType === "PREMIUM") {
-      setShowUpgradeModal(true);
+    // Check if user is OWNER
+    if (studio?.userRole !== "OWNER") {
+      if (userPlanType === "PREMIUM") {
+        setShowUpgradeModal(true);
+      } else {
+        setShowNotOwnerModal(true);
+      }
       return;
     }
     router.push("/settings/studio/artists" as any);
   };
 
   const handlePhotosPress = () => {
-    if (userPlanType === "PREMIUM") {
-      setShowUpgradeModal(true);
+    // Check if user is OWNER
+    if (studio?.userRole !== "OWNER") {
+      if (userPlanType === "PREMIUM") {
+        setShowUpgradeModal(true);
+      } else {
+        setShowNotOwnerModal(true);
+      }
       return;
     }
     router.push("/settings/studio/photos" as any);
   };
 
   const handleSetupPress = () => {
-    if (userPlanType === "PREMIUM") {
-      setShowUpgradeModal(true);
+    // Check if user is OWNER
+    if (studio?.userRole !== "OWNER") {
+      if (userPlanType === "PREMIUM") {
+        setShowUpgradeModal(true);
+      } else {
+        setShowNotOwnerModal(true);
+      }
       return;
     }
     router.push("/settings/studio/step-0" as any);
   };
+  
   const handleStudioPageViewPress = (id: string | undefined) => {
-    if (userPlanType === "PREMIUM") {
-      setShowUpgradeModal(true);
-      return;
-    }
+    // Viewing studio page is allowed for everyone, but editing requires OWNER
     if (!id) {
+      if (studio?.userRole !== "OWNER") {
+        if (userPlanType === "PREMIUM") {
+          setShowUpgradeModal(true);
+        } else {
+          setShowNotOwnerModal(true);
+        }
+        return;
+      }
       router.push("/settings/studio/profile" as any);
       return;
     }
@@ -460,8 +487,7 @@ export default function StudioSettingsScreen() {
     !loading &&
     userPlanType === "STUDIO" &&
     (!studio ||
-      (!studio.isCompleted &&
-        (studio.userRole === "OWNER" || studio.userRole === "MANAGER")));
+      (!studio.isCompleted && studio.userRole === "OWNER"));
 
   const showStudioItems = !loading && studio;
   
@@ -523,21 +549,15 @@ export default function StudioSettingsScreen() {
               title="Pagina studio"
               onPress={handleStudioPagePress}
             />
-            {/* Show "Artisti Collegati" and "Foto dello studio" only for OWNER or MANAGER */}
-            {studio &&
-              (studio.userRole === "OWNER" ||
-                studio.userRole === "MANAGER") && (
-                <>
-                  <StudioSettingsItem
-                    title="Artisti Collegati"
-                    onPress={handleArtistsPress}
-                  />
-                  <StudioSettingsItem
-                    title="Foto dello studio"
-                    onPress={handlePhotosPress}
-                  />
-                </>
-              )}
+            {/* Show all items to everyone, but only OWNER can edit */}
+            <StudioSettingsItem
+              title="Artisti Collegati"
+              onPress={handleArtistsPress}
+            />
+            <StudioSettingsItem
+              title="Foto dello studio"
+              onPress={handlePhotosPress}
+            />
           </View>
           {/* Setup Card - Show when no studio OR incomplete studio for OWNER/MANAGER */}
           {showSetupCard ? (
@@ -681,6 +701,69 @@ export default function StudioSettingsScreen() {
                 </ScaledText>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Not Owner Modal */}
+      <Modal
+        visible={showNotOwnerModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNotOwnerModal(false)}
+      >
+        <View
+          className="items-center justify-center flex-1"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <View
+            className="bg-[#fff] rounded-xl"
+            style={{
+              width: s(342),
+              paddingHorizontal: s(24),
+              paddingVertical: mvs(32),
+            }}
+          >
+            <View className="items-center" style={{ marginBottom: mvs(16) }}>
+              <SVGIcons.WarningYellow width={s(28)} height={s(28)} />
+            </View>
+
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-center text-background font-neueBold"
+              style={{ marginBottom: mvs(4) }}
+            >
+              Accesso negato
+            </ScaledText>
+
+            <ScaledText
+              allowScaling={false}
+              variant="md"
+              className="text-center text-background font-montserratMedium"
+              style={{ marginBottom: mvs(32) }}
+            >
+              Solo il proprietario dello Studio può modificare queste impostazioni.
+            </ScaledText>
+
+            <TouchableOpacity
+              onPress={() => setShowNotOwnerModal(false)}
+              className="items-center justify-center rounded-full"
+              style={{
+                backgroundColor: "#AE0E0E",
+                paddingVertical: mvs(10.5),
+                paddingHorizontal: s(20),
+                width: "100%",
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="font-montserratMedium text-foreground"
+              >
+                Chiudi
+              </ScaledText>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

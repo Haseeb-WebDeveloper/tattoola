@@ -292,11 +292,13 @@ export default function StudioInvitationAcceptScreen() {
             paddingHorizontal: s(24),
             paddingTop: mvs(60),
             paddingBottom: mvs(40),
+            alignItems: "center",
+            justifyContent: "center",
           }}
           showsVerticalScrollIndicator={false}
         >
           {/* Studio Logo */}
-          <View className="items-center mb-6">
+          <View className="items-center">
             {studioLogoUrl ? (
               <Image
                 source={{ uri: studioLogoUrl }}
@@ -321,32 +323,28 @@ export default function StudioInvitationAcceptScreen() {
           </View>
 
           {/* Title */}
-          <ScaledText
-            allowScaling={false}
-            variant="2xl"
-            className="mb-4 text-center text-white font-neueSemibold"
+          <View
+            className="items-center flex-row justify-center"
+            style={{ marginTop: mvs(8), gap: s(4) }}
           >
-            Invito allo studio
-          </ScaledText>
-
-          {/* Message */}
-          <ScaledText
-            allowScaling={false}
-            variant="lg"
-            className="mb-2 text-center text-foreground font-montserratRegular"
-          >
-            Sei stato invitato a unirti a
-          </ScaledText>
-          <ScaledText
-            allowScaling={false}
-            variant="xl"
-            className="mb-6 text-center text-primary font-neueSemibold"
-          >
-            {invitationData.studioName}
-          </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="xl"
+              className="text-center text-gray font-neueSemibold"
+            >
+              Invito allo
+            </ScaledText>
+            <ScaledText
+              allowScaling={false}
+              variant="xl"
+              className="text-center text-white font-neueSemibold"
+            >
+              {invitationData.studioName}
+            </ScaledText>
+          </View>
 
           {/* Sender Info */}
-          <View className="items-center mb-8">
+          <View className="items-center" style={{ marginTop: mvs(16) }}>
             <ScaledText
               allowScaling={false}
               variant="md"
@@ -364,16 +362,13 @@ export default function StudioInvitationAcceptScreen() {
           </View>
 
           {/* Buttons */}
-          <View
-            className="justify-end flex-1"
-            style={{ gap: s(12), marginTop: mvs(40) }}
-          >
+          <View className="flex-row" style={{ gap: s(12), marginTop: mvs(40) }}>
             <TouchableOpacity
               onPress={handleAccept}
               disabled={processing}
-              className="items-center justify-center rounded-full bg-primary"
+              className="flex-1 items-center justify-center rounded-full bg-primary"
               style={{
-                paddingVertical: mvs(14),
+                paddingVertical: mvs(10.5),
               }}
             >
               {processing ? (
@@ -392,9 +387,9 @@ export default function StudioInvitationAcceptScreen() {
             <TouchableOpacity
               onPress={handleDecline}
               disabled={processing}
-              className="items-center justify-center border rounded-full bg-foreground/10 border-gray"
+              className="flex-1 items-center justify-center border rounded-full bg-background border-gray"
               style={{
-                paddingVertical: mvs(14),
+                paddingVertical: mvs(10.5),
               }}
             >
               <ScaledText
