@@ -21,8 +21,17 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
   }
 
   return (
-    <View style={{ paddingHorizontal: s(16), marginTop: mvs(32), marginBottom: mvs(48) }}>
-      <View className="flex-row items-center" style={{ marginBottom: mvs(12), gap: s(8) }}>
+    <View
+      style={{
+        paddingHorizontal: s(16),
+        marginTop: mvs(32),
+        marginBottom: mvs(48),
+      }}
+    >
+      <View
+        className="flex-row items-center"
+        style={{ marginBottom: mvs(12), gap: s(8) }}
+      >
         <SVGIcons.Stop style={{ width: s(16), height: s(16) }} />
         <ScaledText
           allowScaling={false}
@@ -32,19 +41,19 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
           Parti del corpo su cui non lavoro
         </ScaledText>
       </View>
-      <View className="flex-row flex-wrap" style={{ gap: s(5) }}>
+      <View className="flex-row flex-wrap" style={{ gap: s(8) }}>
         {bodyParts.map((bodyPart) => (
           <View
             key={bodyPart.id}
-            className="rounded-xl bg-black/40 border border-error"
+            className="border rounded-xl bg-black/40 border-error"
             style={{
-              paddingHorizontal: s(8.53),
-              paddingVertical: mvs(5.118),
+              paddingHorizontal: s(10),
+              paddingVertical: mvs(6),
             }}
           >
             <ScaledText
               allowScaling={false}
-              variant="9"
+              variant="11"
               className="text-foreground font-neueBold"
             >
               {bodyPart.name}

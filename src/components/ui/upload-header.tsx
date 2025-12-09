@@ -55,21 +55,8 @@ export default function UploadHeader() {
   const progressPixelWidth = getProgressPixelWidth();
 
   const handleClosePress = () => {
-    // Step index 0 => /upload/media. Show confirmation popup here.
-    if (currentIndex === 0) {
-      setShowDiscardModal(true);
-      return;
-    }
-
-    // For steps 2–5 go explicitly to the previous step in the wizard.
-    const prevIndex = currentIndex - 1;
-    if (prevIndex >= 0 && prevIndex < steps.length) {
-      const prevSlug = steps[prevIndex];
-      router.replace(`/upload/${prevSlug}` as any);
-    } else {
-      // Fallback: regular back navigation.
-      router.back();
-    }
+    // Always show confirmation modal when clicking X, regardless of step
+    setShowDiscardModal(true);
   };
 
   const handleConfirmDiscard = () => {
