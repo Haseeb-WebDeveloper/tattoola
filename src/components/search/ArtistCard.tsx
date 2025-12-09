@@ -123,8 +123,8 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
           </View>
         )}
 
-        {/* Business Name (Studio Owner) */}
-        {artist.isStudioOwner && artist.businessName && (
+        {/* Business Name (Studio Owner, Employee, or Freelancer) */}
+        {artist.workArrangement && (
           <View
             className="flex-row items-center"
             style={{ marginBottom: mvs(4) }}
@@ -136,20 +136,49 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
               className="text-white font-neueLight"
               style={{ marginLeft: s(4) }}
             >
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-white font-neueLight"
-              >
-                Titolare di{" "}
-              </ScaledText>
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-white font-neueBold"
-              >
-                {artist.businessName}
-              </ScaledText>
+              {artist.workArrangement === "STUDIO_OWNER" && artist.businessName ? (
+                <>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-white font-neueLight"
+                  >
+                    Titolare di{" "}
+                  </ScaledText>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-white font-neueBold"
+                  >
+                    {artist.businessName}
+                  </ScaledText>
+                </>
+              ) : artist.workArrangement === "STUDIO_EMPLOYEE" && artist.businessName ? (
+                <>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-white font-neueLight"
+                  >
+                    Tattoo Artist residente in{" "}
+                  </ScaledText>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-white font-neueBold"
+                  >
+                    {artist.businessName}
+                  </ScaledText>
+                </>
+              ) : artist.workArrangement === "FREELANCE" ? (
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-white font-neueLight"
+                >
+                  Freelance
+                </ScaledText>
+              ) : null}
             </ScaledText>
           </View>
         )}
@@ -165,9 +194,19 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
               style={{ marginLeft: s(4) }}
               numberOfLines={1}
             >
-              {artist.location.province
-                ? `${artist.location.municipality} (${artist.location.province})`
-                : `${artist.location.municipality}, ${artist.location.province}`}
+              {(() => {
+                const parts: string[] = [];
+                if (artist.location.address) {
+                  parts.push(artist.location.address);
+                }
+                if (artist.location.municipality) {
+                  parts.push(artist.location.municipality);
+                }
+                if (artist.location.province) {
+                  parts.push(`(${artist.location.province})`);
+                }
+                return parts.length > 0 ? parts.join(", ") : "";
+              })()}
             </ScaledText>
           </View>
         )}

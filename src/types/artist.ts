@@ -15,6 +15,7 @@ export type ArtistSelfProfileInterface = {
     businessName?: string;
     bio?: string;
     workArrangement?: "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE";
+    yearsExperience?: number;
     banner: { mediaType: "IMAGE" | "VIDEO"; mediaUrl: string; order: number }[];
   };
   location?: {

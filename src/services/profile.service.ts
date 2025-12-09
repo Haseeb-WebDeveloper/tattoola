@@ -104,11 +104,15 @@ export async function fetchArtistSelfProfile(
   if (!forceRefresh) {
     const cached = await getProfileFromCache(userId);
     if (cached) {
-      const cachedWorkArrangement = (cached as ArtistSelfProfileInterface)?.artistProfile?.workArrangement;
+      const cachedProfile = cached as ArtistSelfProfileInterface;
+      const cachedWorkArrangement = cachedProfile?.artistProfile?.workArrangement;
+      const cachedAddress = cachedProfile?.location?.address;
 
-      // If cached profile is missing workArrangement, force refresh to get it
-      if (cachedWorkArrangement === undefined) {
-        // Force refresh to get workArrangement from database
+      // If cached profile is missing workArrangement or address, force refresh to get it
+      // Address might be missing if cache was created before the new address priority logic
+      if (cachedWorkArrangement === undefined || !cachedAddress) {
+        // Force refresh to get workArrangement and address from database
+        console.log(`🔄 Cache missing workArrangement or address, forcing refresh for user: ${userId}`);
         return await fetchArtistSelfProfile(userId, true);
       }
 
@@ -138,7 +142,7 @@ export async function fetchArtistSelfProfile(
     .from("users")
     .select(
       `id,email,username,firstName,lastName,avatar,bio,instagram,tiktok,
-       artist_profiles(id,businessName,instagram,website,phone,bannerType,workArrangement)`
+       artist_profiles(id,businessName,instagram,website,phone,bannerType,workArrangement,yearsExperience,studioAddress)`
     )
     .eq("id", userId)
     .single();
@@ -177,6 +181,7 @@ export async function fetchArtistSelfProfile(
         businessName: undefined,
         bio: undefined,
         workArrangement: undefined,
+        yearsExperience: undefined,
         banner: [],
       } as ArtistSelfProfileInterface["artistProfile"],
       location: undefined,
@@ -336,24 +341,198 @@ export async function fetchArtistSelfProfile(
           : 1
     );
 
-  // Process location data
+  // Process location data - PRIORITIZE studioAddress from artist profile first, then fallback to primary location, then studio address
   const locationData = locationQ?.data as any;
-  const location = locationData
-    ? {
+  const studioAddress = artistProfile.studioAddress;
+  
+  // Query studio membership to get studio address as fallback
+  let studioAddressFromStudio: string | null = null;
+  const { data: studioMembership } = await supabase
+    .from("studio_members")
+    .select(
+      `
+      studio:studios(
+        locations:studio_locations(
+          address,
+          isPrimary
+        )
+      )
+    `
+    )
+    .eq("userId", userId)
+    .eq("status", "ACCEPTED")
+    .eq("isActive", true)
+    .maybeSingle();
+
+  if (studioMembership?.studio?.locations) {
+    const primaryStudioLocation = studioMembership.studio.locations.find(
+      (loc: any) => loc.isPrimary
+    );
+    if (primaryStudioLocation?.address) {
+      studioAddressFromStudio = primaryStudioLocation.address;
+    }
+  }
+  
+  // Create location object - Priority: studioAddress (profile) > primaryLocation.address > studioAddress (from studio)
+  let location = undefined;
+  if (studioAddress) {
+    // PRIORITY 1: Use studioAddress from artist profile as primary source
+    // Get province/municipality from primaryLocation if available, otherwise from any location
+    if (locationData) {
+      location = {
         id: locationData.id,
-        address: locationData.address,
+        address: studioAddress, // Always use studioAddress from profile when available
         province: {
           id: locationData.provinces?.id,
-          name: locationData.provinces?.name,
+          name: locationData.provinces?.name || "",
           code: locationData.provinces?.code,
         },
         municipality: {
           id: locationData.municipalities?.id,
-          name: locationData.municipalities?.name,
+          name: locationData.municipalities?.name || "",
         },
         isPrimary: locationData.isPrimary,
+      };
+    } else {
+      // If no primary location but we have studioAddress, try to get province/municipality from any location
+      const { data: anyLocation } = await supabase
+        .from("user_locations")
+        .select(`
+          id,
+          provinces(id,name,code),
+          municipalities(id,name)
+        `)
+        .eq("userId", userId)
+        .limit(1)
+        .maybeSingle();
+      
+      if (anyLocation) {
+        location = {
+          id: anyLocation.id,
+          address: studioAddress, // Always use studioAddress from profile when available
+          province: {
+            id: anyLocation.provinces?.id,
+            name: anyLocation.provinces?.name || "",
+            code: anyLocation.provinces?.code,
+          },
+          municipality: {
+            id: anyLocation.municipalities?.id,
+            name: anyLocation.municipalities?.name || "",
+          },
+          isPrimary: false,
+        };
+      } else {
+        // Create location with just address if no location data available
+        location = {
+          id: "",
+          address: studioAddress, // Always use studioAddress from profile when available
+          province: {
+            id: "",
+            name: "",
+          },
+          municipality: {
+            id: "",
+            name: "",
+          },
+          isPrimary: false,
+        };
       }
-    : undefined;
+    }
+  } else if (locationData?.address) {
+    // PRIORITY 2: Use primaryLocation address if studioAddress from profile is not available
+    location = {
+      id: locationData.id,
+      address: locationData.address,
+      province: {
+        id: locationData.provinces?.id,
+        name: locationData.provinces?.name,
+        code: locationData.provinces?.code,
+      },
+      municipality: {
+        id: locationData.municipalities?.id,
+        name: locationData.municipalities?.name,
+      },
+      isPrimary: locationData.isPrimary,
+    };
+  } else if (studioAddressFromStudio) {
+    // PRIORITY 3: Use studio address from linked studio as fallback
+    if (locationData) {
+      location = {
+        id: locationData.id,
+        address: studioAddressFromStudio,
+        province: {
+          id: locationData.provinces?.id,
+          name: locationData.provinces?.name || "",
+          code: locationData.provinces?.code,
+        },
+        municipality: {
+          id: locationData.municipalities?.id,
+          name: locationData.municipalities?.name || "",
+        },
+        isPrimary: locationData.isPrimary,
+      };
+    } else {
+      // If no primary location but we have studioAddress from studio, try to get province/municipality from any location
+      const { data: anyLocation } = await supabase
+        .from("user_locations")
+        .select(`
+          id,
+          provinces(id,name,code),
+          municipalities(id,name)
+        `)
+        .eq("userId", userId)
+        .limit(1)
+        .maybeSingle();
+      
+      if (anyLocation) {
+        location = {
+          id: anyLocation.id,
+          address: studioAddressFromStudio,
+          province: {
+            id: anyLocation.provinces?.id,
+            name: anyLocation.provinces?.name || "",
+            code: anyLocation.provinces?.code,
+          },
+          municipality: {
+            id: anyLocation.municipalities?.id,
+            name: anyLocation.municipalities?.name || "",
+          },
+          isPrimary: false,
+        };
+      } else {
+        // Create location with just address if no location data available
+        location = {
+          id: "",
+          address: studioAddressFromStudio,
+          province: {
+            id: "",
+            name: "",
+          },
+          municipality: {
+            id: "",
+            name: "",
+          },
+          isPrimary: false,
+        };
+      }
+    }
+  } else if (locationData) {
+    // Fallback: Use primaryLocation even without address (for province/municipality only)
+    location = {
+      id: locationData.id,
+      address: undefined,
+      province: {
+        id: locationData.provinces?.id,
+        name: locationData.provinces?.name,
+        code: locationData.provinces?.code,
+      },
+      municipality: {
+        id: locationData.municipalities?.id,
+        name: locationData.municipalities?.name,
+      },
+      isPrimary: locationData.isPrimary,
+    };
+  }
 
   const profile: ArtistSelfProfileInterface = {
     user: {
@@ -372,6 +551,7 @@ export async function fetchArtistSelfProfile(
       businessName: artistProfile.businessName,
       bio: userRow.bio,
       workArrangement: (artistProfile.workArrangement || undefined) as "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | undefined,
+      yearsExperience: artistProfile.yearsExperience || undefined,
       banner: (banner2?.data || []) as any[],
     } as ArtistSelfProfileInterface["artistProfile"],
     location,

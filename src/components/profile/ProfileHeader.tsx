@@ -12,8 +12,10 @@ interface ProfileHeaderProps {
   businessName?: string;
   municipality?: string;
   province?: string;
+  address?: string;
   username?: string;
   workArrangement?: WorkArrangement;
+  yearsExperience?: number;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -23,16 +25,27 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   businessName,
   municipality,
   province,
+  address,
   username,
   workArrangement,
+  yearsExperience,
 }) => {
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   const displayName =
     fullName.length > 18 ? `${fullName.slice(0, 18)}..` : fullName;
-  const location = `${municipality || ""}, ${province || ""}`.replace(
-    /^,\s*|,\s*$/g,
-    ""
-  );
+  
+  // Build location string with address, municipality, and province
+  const locationParts: string[] = [];
+  if (address) {
+    locationParts.push(address);
+  }
+  if (municipality) {
+    locationParts.push(municipality);
+  }
+  if (province) {
+    locationParts.push(`(${province})`);
+  }
+  const location = locationParts.join(", ");
 
   return (
     <View
@@ -81,7 +94,25 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               {username}
             </ScaledText>
           </View>
-          {businessName && workArrangement && (
+          {/* Years of Experience */}
+          {yearsExperience && (
+            <View
+              className="flex-row items-center"
+              style={{ marginTop: mvs(4) }}
+            >
+              <SVGIcons.StarRounded style={{ width: s(14), height: s(14) }} />
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-foreground font-neueLight"
+                style={{ marginLeft: s(4) }}
+              >
+                {yearsExperience} anni di esperienza
+              </ScaledText>
+            </View>
+          )}
+          {/* Business Name (Studio Owner, Employee, or Freelancer) */}
+          {workArrangement && (
             <View
               className="flex-row items-center"
               style={{ marginTop: mvs(2) }}
@@ -90,32 +121,63 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SVGIcons.Studio style={{ width: s(20), height: s(20) }} />
               </View>
               <View style={{ flex: 1, flexShrink: 1 }}>
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueLight"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {(() => {
-                    const arrangement = String(workArrangement).toUpperCase();
-                    if (arrangement === "STUDIO_OWNER") {
-                      return `Titolare di `;
-                    } else if (arrangement === "STUDIO_EMPLOYEE") {
-                      return `Ha lavorato a `;
-                    } else if (arrangement === "FREELANCE") {
-                      return `Freelancer presso `;
-                    }
-                    return "";
-                  })()}
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground font-neueSemibold"
-                  >
-                    {businessName}
-                  </ScaledText>
-                </ScaledText>
+                {(() => {
+                  const arrangement = String(workArrangement).toUpperCase();
+                  if (arrangement === "STUDIO_OWNER" && businessName) {
+                    return (
+                      <View className="flex-row" style={{ flexWrap: "wrap" }}>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueLight"
+                        >
+                          Titolare di{" "}
+                        </ScaledText>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueBold"
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {businessName}
+                        </ScaledText>
+                      </View>
+                    );
+                  } else if (arrangement === "STUDIO_EMPLOYEE" && businessName) {
+                    return (
+                      <View className="flex-row" style={{ flexWrap: "wrap" }}>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueLight"
+                        >
+                          Tattoo Artist residente in{" "}
+                        </ScaledText>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="md"
+                          className="text-foreground font-neueBold"
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {businessName}
+                        </ScaledText>
+                      </View>
+                    );
+                  } else if (arrangement === "FREELANCE") {
+                    return (
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-foreground font-neueLight"
+                      >
+                        Freelance
+                      </ScaledText>
+                    );
+                  }
+                  return null;
+                })()}
               </View>
             </View>
           )}
