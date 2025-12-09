@@ -1,3 +1,5 @@
+import { mvs, s } from "@/utils/scale";
+
 // Feed limits for pagination. This is the number of posts on home screen to fetch per page.
 export const FEED_POSTS_PER_PAGE = 12;
 
@@ -20,3 +22,8 @@ export const COLLECTION_NAME = {
   ARTIST_FAV_WORK: "Prefetti",
   ALL_POSTS: "Tutti",
 };
+
+
+
+export const BANNER_SMALL_CARD_HEIGHT = s(294);
+export const BANNER_LARGE_CARD_HEIGHT = s(300);

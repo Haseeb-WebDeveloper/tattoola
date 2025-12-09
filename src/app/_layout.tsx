@@ -20,6 +20,7 @@ import { Stack } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import "react-native-get-random-values"; // Import polyfill for crypto functions
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -105,9 +106,10 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardProvider>
-          <AuthProvider>
-            <SafeAreaView className="flex-1 text-foreground bg-background font-neue">
+        <BottomSheetModalProvider>
+          <KeyboardProvider>
+            <AuthProvider>
+              <SafeAreaView className="flex-1 text-foreground bg-background font-neue">
               <Stack
                 screenOptions={{
                   headerShown: false,
@@ -185,6 +187,7 @@ export default function RootLayout() {
         </SafeAreaView>
       </AuthProvider>
     </KeyboardProvider>
+    </BottomSheetModalProvider>
     </GestureHandlerRootView>
     </ErrorBoundary>
   );

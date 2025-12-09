@@ -926,7 +926,6 @@ model TattooStyle {
   updatedAt         DateTime                @updatedAt
   magazines         Magazine[]
   portfolioProjects PortfolioProjectStyle[]
-  posts             Post[]
   services          Service[]
   userFavorites     UserFavoriteStyle[]
   studioStyles      StudioStyle[]

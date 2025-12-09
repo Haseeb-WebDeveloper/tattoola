@@ -99,7 +99,9 @@ export default function ServiceFilter({
             style={{ marginTop: "auto", maxHeight: "80%" }}
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
-            <View
+            <TouchableOpacity
+              onPress={() => setIsExpanded(false)}
+              activeOpacity={1}
               className="flex-row items-center justify-between bg-background border-gray"
               style={{
                 marginTop: mvs(16),
@@ -118,16 +120,11 @@ export default function ServiceFilter({
                 {displayText}
               </ScaledText>
               {selectedIds.length === 0 ? (
-                <TouchableOpacity
-                  onPress={() => setIsExpanded(false)}
-                  style={{ transform: [{ rotate: "180deg" }] }}
-                  activeOpacity={1}
-                >
+                <View style={{ transform: [{ rotate: "180deg" }] }}>
                   <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
-                </TouchableOpacity>
+                </View>
               ) : (
-                <TouchableOpacity
-                  onPress={() => setIsExpanded(false)}
+                <View
                   style={{
                     backgroundColor: "#AE0E0E",
                     borderRadius: s(6),
@@ -135,7 +132,6 @@ export default function ServiceFilter({
                     paddingVertical: mvs(4),
                     marginLeft: s(6),
                   }}
-                  activeOpacity={0.86}
                 >
                   <ScaledText
                     allowScaling={false}
@@ -144,9 +140,9 @@ export default function ServiceFilter({
                   >
                     Fatto
                   </ScaledText>
-                </TouchableOpacity>
+                </View>
               )}
-            </View>
+            </TouchableOpacity>
 
             {/* Services List */}
             <ScrollView
