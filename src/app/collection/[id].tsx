@@ -1,5 +1,6 @@
 import AddPostsModal from "@/components/collection/AddPostsModal";
 import CollectionPostCard from "@/components/collection/CollectionPostCard";
+import DeleteCollectionModal from "@/components/collection/DeleteCollectionModal";
 import DeleteConfirmModal from "@/components/collection/DeleteConfirmModal";
 import EditCollectionNameModal from "@/components/collection/EditCollectionNameModal";
 import { CustomToast } from "@/components/ui/CustomToast";
@@ -8,6 +9,7 @@ import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   addPostsToCollection,
+  deleteCollection,
   fetchCollectionDetails,
   fetchUserPosts,
   removePostFromCollection,
@@ -15,7 +17,7 @@ import {
   updateCollectionName,
 } from "@/services/collection.service";
 import { clearProfileCache } from "@/utils/database";
-import { mvs } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -92,6 +94,8 @@ export default function CollectionDetailsScreen() {
   const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(
     new Set()
   );
+  const [deleteCollectionModalVisible, setDeleteCollectionModalVisible] = useState(false);
+  const [deletingCollection, setDeletingCollection] = useState(false);
 
   // Layout depends on edit mode: 1 column while editing for reliable DnD
   const NUM_COLUMNS = editMode ? 1 : 2;
@@ -175,6 +179,39 @@ export default function CollectionDetailsScreen() {
     setEditMode(!editMode);
   };
 
+  const handleDeleteCollection = () => {
+    if (!isOwner) return;
+    setDeleteCollectionModalVisible(true);
+  };
+
+  const confirmDeleteCollection = async () => {
+    if (!isOwner || !collection) return;
+    setDeletingCollection(true);
+    try {
+      await deleteCollection(collection.id);
+      
+      // Clear profile cache to refresh collections on profile screen
+      if (user?.id) {
+        await clearProfileCache(user.id);
+      }
+      
+      // Navigate back after successful deletion
+      router.back();
+    } catch (err: any) {
+      const toastId = toast.custom(
+        <CustomToast
+          message={err.message || "Impossibile eliminare la collezione"}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+    } finally {
+      setDeletingCollection(false);
+      setDeleteCollectionModalVisible(false);
+    }
+  };
+
   const handleDeletePost = (postId: string, caption: string) => {
     if (!isOwner) return;
     setPostToDelete({ id: postId, caption });
@@ -211,15 +248,81 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleDragEnd = async (data: CollectionPost[]) => {
-    if (!isOwner) return;
+    if (!isOwner || !collection) return;
+    
+    // Filter out any non-post items and ensure we only have valid posts
+    const validPosts = data.filter((item: any) => 
+      item && 
+      !item.isAddButton && 
+      item.postId && 
+      typeof item.postId === 'string' &&
+      item.postId !== "add-button"
+    ) as CollectionPost[];
+    
+    // Extract postIds and remove duplicates
+    const postIds = validPosts.map(p => p.postId);
+    const uniquePostIds = Array.from(new Set(postIds));
+    
+    // Check for duplicates
+    if (postIds.length !== uniquePostIds.length) {
+      console.error("Duplicate posts detected in reorder, removing duplicates");
+      // Remove duplicates by keeping first occurrence
+      const seen = new Set<string>();
+      const deduplicatedPosts = validPosts.filter((post) => {
+        if (seen.has(post.postId)) {
+          return false;
+        }
+        seen.add(post.postId);
+        return true;
+      });
+      
+      if (deduplicatedPosts.length !== posts.length) {
+        console.error("Deduplication resulted in different count, reverting");
+        if (previousPostsRef.current) {
+          setPosts(previousPostsRef.current);
+        }
+        return;
+      }
+      
+      // Use deduplicated posts
+      previousPostsRef.current = posts;
+      setPosts(deduplicatedPosts);
+      
+      try {
+        await reorderCollectionPosts(
+          collection.id,
+          deduplicatedPosts.map((p) => p.postId)
+        );
+        if (user?.id) {
+          await clearProfileCache(user.id);
+        }
+      } catch (err: any) {
+        console.error("Failed to reorder posts:", err);
+        if (previousPostsRef.current) {
+          setPosts(previousPostsRef.current);
+        } else {
+          loadCollection();
+        }
+      }
+      return;
+    }
+    
+    if (validPosts.length === 0 || validPosts.length !== posts.length) {
+      console.warn("Invalid reorder data, reverting");
+      if (previousPostsRef.current) {
+        setPosts(previousPostsRef.current);
+      }
+      return;
+    }
+    
     // Optimistic reorder
     previousPostsRef.current = posts;
-    setPosts(data);
+    setPosts(validPosts);
 
     try {
       await reorderCollectionPosts(
         collection.id,
-        data.map((p) => p.postId)
+        uniquePostIds
       );
 
       // Clear profile cache to refresh collections on profile screen
@@ -348,7 +451,7 @@ export default function CollectionDetailsScreen() {
     const marginTop = row === 0 ? 0 : GAP;
 
     return (
-      <ScaleDecorator>
+      <ScaleDecorator key={item.postId}>
         <CollectionPostCard
           thumbnailUrl={item.thumbnailUrl}
           mediaUrl={item.media[0]?.mediaUrl}
@@ -436,11 +539,11 @@ export default function CollectionDetailsScreen() {
           </TouchableOpacity>
 
           <View className="items-center flex-1">
-            <View className="flex-row items-center">
+            <View className="flex-row items-center justify-center">
               <ScaledText
                 allowScaling={false}
                 variant="2xl"
-                className="mr-2 text-foreground font-neueSemibold"
+                className="text-foreground font-neueSemibold"
                 style={{
                   lineHeight: mvs(20),
                   borderBottomWidth: editMode ? mvs(0.5) : 0,
@@ -449,9 +552,12 @@ export default function CollectionDetailsScreen() {
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
-              {isOwner && (
-                <TouchableOpacity onPress={handleEditName}>
-                  {editMode && <SVGIcons.Edit width={16} height={16} />}
+              {isOwner && editMode && (
+                <TouchableOpacity 
+                  onPress={handleEditName}
+                  style={{ marginLeft: s(8) }}
+                >
+                  <SVGIcons.Edit width={16} height={16} />
                 </TouchableOpacity>
               )}
             </View>
@@ -480,19 +586,16 @@ export default function CollectionDetailsScreen() {
 
           {isOwner && (
             <TouchableOpacity
-              onPress={() =>
-                editMode ? openAddModal() : handleToggleEditMode()
-              }
+              onPress={editMode ? handleDeleteCollection : handleToggleEditMode}
               style={{
                 width: 32,
                 height: 32,
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              className={`${editMode ? "bg-primary rounded-full" : ""}`}
             >
               {editMode ? (
-                <SVGIcons.Add width={16} height={16} />
+                <SVGIcons.Trash width={20} height={20} />
               ) : (
                 <SVGIcons.Edit width={20} height={20} />
               )}
@@ -508,6 +611,38 @@ export default function CollectionDetailsScreen() {
           keyExtractor={(item) => item.postId}
           renderItem={renderPostItem}
           numColumns={NUM_COLUMNS}
+          ListHeaderComponent={
+            editMode ? (
+              <View
+                style={{
+                  paddingHorizontal: H_PADDING / 2,
+                  marginTop: GAP,
+                  marginBottom: GAP,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={openAddModal}
+                  activeOpacity={0.8}
+                  className="rounded-xl border-2 border-dashed border-primary bg-primary/10 items-center justify-center"
+                  style={{
+                    width: POST_WIDTH,
+                    height: mvs(253),
+                    marginLeft: 0,
+                    marginRight: 0,
+                  }}
+                >
+                  <SVGIcons.AddRed width={s(32)} height={s(32)} />
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueMedium mt-3"
+                  >
+                    Aggiungi nuovo tatuaggio
+                  </ScaledText>
+                </TouchableOpacity>
+              </View>
+            ) : null
+          }
           containerStyle={{
             flex: 1,
           }}
@@ -540,7 +675,7 @@ export default function CollectionDetailsScreen() {
           collectionId={id}
         />
 
-        {/* Delete Confirm Modal */}
+        {/* Delete Post Confirm Modal */}
         <DeleteConfirmModal
           visible={deleteModalVisible}
           caption={postToDelete?.caption}
@@ -551,6 +686,19 @@ export default function CollectionDetailsScreen() {
             }
           }}
           onConfirm={confirmDeletePost}
+        />
+
+        {/* Delete Collection Confirm Modal */}
+        <DeleteCollectionModal
+          visible={deleteCollectionModalVisible}
+          collectionName={collection?.name}
+          onCancel={() => {
+            if (!deletingCollection) {
+              setDeleteCollectionModalVisible(false);
+            }
+          }}
+          onConfirm={confirmDeleteCollection}
+          deleting={deletingCollection}
         />
       </View>
     </GestureHandlerRootView>

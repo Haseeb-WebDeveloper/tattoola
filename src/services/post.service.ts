@@ -1,6 +1,7 @@
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { findOrGetTuttiCollection, isPreferitiCollection } from "@/utils/collection.utils";
 
 export type PostDetail = {
   id: string;
@@ -511,13 +512,34 @@ export async function createPostWithMediaAndCollection(args: {
     });
 
     await addPostMedia(postId, args.media);
+    
+    // Check if the collection is "preferiti"
+    let isInPreferiti = false;
     if (args.collectionId) {
+      isInPreferiti = await isPreferitiCollection(args.collectionId);
       await addPostToCollection(postId, args.collectionId);
       console.log(
         "[createPostWithMediaAndCollection] addedToCollection",
         args.collectionId
       );
     }
+
+    // Add to "tutti" collection if NOT in "preferiti" (or if no collection specified)
+    if (!isInPreferiti) {
+      try {
+        const tuttiCollectionId = await findOrGetTuttiCollection(authorId);
+        if (tuttiCollectionId) {
+          await addPostToCollection(postId, tuttiCollectionId);
+          console.log("[createPostWithMediaAndCollection] added to tutti collection");
+        } else {
+          console.warn("[createPostWithMediaAndCollection] tutti collection not found for user");
+        }
+      } catch (e) {
+        // Don't fail post creation if tutti collection logic fails
+        console.error("[createPostWithMediaAndCollection] error adding to tutti:", e);
+      }
+    }
+    
     return { postId };
   } catch (e) {
     console.error("[createPostWithMediaAndCollection] error", e);
