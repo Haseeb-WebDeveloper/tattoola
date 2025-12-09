@@ -940,6 +940,7 @@ model Service {
   id          String          @id @default(uuid())
   name        String          @unique
   description String?
+  imageUrl    String?
   category    String
   styleId     String?
   isActive    Boolean         @default(true)

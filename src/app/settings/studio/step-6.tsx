@@ -1,6 +1,7 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import StudioStepHeader from "@/components/ui/StudioStepHeader";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { useStudioSetupStore } from "@/stores/studioSetupStore";
@@ -63,6 +64,7 @@ export default function StudioStep6() {
     step6.styleIds || []
   );
   const [loading, setLoading] = useState(true);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
 
   useEffect(() => {
     setCurrentStep(6);
@@ -127,13 +129,11 @@ export default function StudioStep6() {
     const isSelected = selectedStyles.includes(item.id);
     const img = resolveImageUrl(item.imageUrl);
     return (
-      <TouchableOpacity
-        className="flex-row items-center"
-        activeOpacity={0.8}
-        onPress={() => toggleStyle(item.id)}
-      >
+      <View className="flex-row items-center">
         {/* Left select box */}
-        <View
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => toggleStyle(item.id)}
           style={{
             alignItems: "center",
             justifyContent: "center",
@@ -146,25 +146,35 @@ export default function StudioStep6() {
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Image */}
-        {img ? (
-          <Image
-            source={{ uri: img }}
-            className=" border-b border-gray/20"
-            style={{ width: s(120), height: mvs(72) }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            className="bg-gray/30"
-            style={{ width: s(155), height: mvs(72) }}
-          />
-        )}
+        <TouchableOpacity
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
+          {img ? (
+            <Image
+              source={{ uri: img }}
+              className=" border-b border-gray/20"
+              style={{ width: s(120), height: mvs(72) }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              className="bg-gray/30"
+              style={{ width: s(155), height: mvs(72) }}
+            />
+          )}
+        </TouchableOpacity>
 
         {/* Name */}
-        <View className="flex-1" style={{ paddingLeft: s(16) }}>
+        <TouchableOpacity
+          className="flex-1"
+          style={{ paddingLeft: s(16) }}
+          onPress={() => setSelectedStyleForInfo(item)}
+          activeOpacity={0.7}
+        >
           <ScaledText
             allowScaling={false}
             style={{ fontSize: 12.445 }}
@@ -172,8 +182,8 @@ export default function StudioStep6() {
           >
             {item.name}
           </ScaledText>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -241,6 +251,13 @@ export default function StudioStep6() {
           onBack={handleBack}
         />
       </View>
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
     </View>
   );
 }

@@ -4,7 +4,7 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { createPostWithMediaAndCollection } from "@/services/post.service";
-import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
+import { TattooStyleItem, fetchTattooStyles } from "@/services/style.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
@@ -405,7 +405,7 @@ export default function UploadPreviewStep() {
                   {selectedStyles.slice(0, 1).map((style) => (
                     <View
                       key={style.id}
-                      className="inline-flex self-start  rounded-full border-gray max-w-fit"
+                      className="inline-flex self-start rounded-full border-gray max-w-fit"
                       style={{
                         paddingHorizontal: s(2),
                         paddingVertical: s(1),
@@ -450,7 +450,7 @@ export default function UploadPreviewStep() {
                   />
                 ) : (
                   <View
-                    className="rounded-full bg-background/80 border border-gray"
+                    className="border rounded-full bg-background/80 border-gray"
                     style={{
                       width: s(20),
                       height: s(20),
@@ -481,7 +481,7 @@ export default function UploadPreviewStep() {
 
               {/* Follow button - scaled down for preview */}
               <View
-                className="rounded-full flex-row items-center"
+                className="flex-row items-center rounded-full"
                 style={{
                   borderColor: "#A49A99",
                   paddingHorizontal: s(6),

@@ -2,8 +2,10 @@ import AbsoluteNextBackFooter from "@/components/ui/AbsoluteNextBackFooter";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
+import { TattooStyleItem } from "@/services/style.service";
 import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import type { FormErrors, UserV2Step6 } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
@@ -64,9 +66,10 @@ export default function UserRegistrationStep6() {
     favoriteStyles: [],
   });
   const [errors, setLocalErrors] = useState<FormErrors>({});
-  const [tattooStyles, setTattooStyles] = useState<any[]>([]);
+  const [tattooStyles, setTattooStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
 
   // Load existing data if available
   useEffect(() => {
@@ -176,15 +179,13 @@ export default function UserRegistrationStep6() {
     router.back();
   };
 
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = ({ item }: { item: TattooStyleItem }) => {
     const isSelected = formData.favoriteStyles.includes(item.id);
     return (
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => handleStyleToggle(item.id)}
-        className="flex-row items-center"
-      >
-        <View
+      <View className="flex-row items-center">
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => handleStyleToggle(item.id)}
           style={{
             alignItems: "center",
             justifyContent: "center",
@@ -197,25 +198,35 @@ export default function UserRegistrationStep6() {
           ) : (
             <SVGIcons.UncheckedCheckbox width={s(20)} height={s(20)} />
           )}
-        </View>
+        </TouchableOpacity>
         <View className="border-b border-gray/20 flex-row items-center justify-center">
-          {item.imageUrl ? (
-            <Image
-              source={{ uri: item.imageUrl }}
-              style={{ width: s(120), height: mvs(72) }}
-              resizeMode="cover"
-              className=" border-b border-gray/20"
-            />
-          ) : (
-            <View
-              style={{
-                width: s(155),
-                height: mvs(72),
-                backgroundColor: "#A49A9950",
-              }}
-            />
-          )}
-          <View className="flex-1" style={{ paddingLeft: s(16) }}>
+          <TouchableOpacity
+            onPress={() => setSelectedStyleForInfo(item)}
+            activeOpacity={0.7}
+          >
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={{ width: s(120), height: mvs(72) }}
+                resizeMode="cover"
+                className=" border-b border-gray/20"
+              />
+            ) : (
+              <View
+                style={{
+                  width: s(155),
+                  height: mvs(72),
+                  backgroundColor: "#A49A9950",
+                }}
+              />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="flex-1"
+            style={{ paddingLeft: s(16) }}
+            onPress={() => setSelectedStyleForInfo(item)}
+            activeOpacity={0.7}
+          >
             <ScaledText
               allowScaling={false}
               style={{ fontSize: 12.445 }}
@@ -223,9 +234,9 @@ export default function UserRegistrationStep6() {
             >
               {item.name}
             </ScaledText>
-          </View>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -346,9 +357,16 @@ export default function UserRegistrationStep6() {
                 </ScaledText>
               </TouchableOpacity>
             </View>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={selectedStyleForInfo !== null}
+        style={selectedStyleForInfo}
+        onClose={() => setSelectedStyleForInfo(null)}
+      />
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import StudioStepHeader from "@/components/ui/StudioStepHeader";
+import ServiceInfoModal from "@/components/shared/ServiceInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { fetchServices, ServiceItem } from "@/services/services.service";
 import { useStudioSetupStore } from "@/stores/studioSetupStore";
@@ -38,6 +39,7 @@ export default function StudioStep7() {
     step7.serviceIds || []
   );
   const [loading, setLoading] = useState(true);
+  const [selectedServiceForInfo, setSelectedServiceForInfo] = useState<ServiceItem | null>(null);
 
   useEffect(() => {
     setCurrentStep(7);
@@ -101,10 +103,6 @@ export default function StudioStep7() {
     const isSelected = selectedServices.includes(item.id);
 
     return (
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => toggleService(item.id)}
-      >
       <View
         className="flex-row items-center border-b border-gray/20"
         style={{
@@ -116,6 +114,7 @@ export default function StudioStep7() {
         <Pressable
           className="items-center"
           style={{ width: s(40) }}
+          onPress={() => toggleService(item.id)}
         >
           {isSelected ? (
             <SVGIcons.CheckedCheckbox style={{ width: s(20), height: s(20) }} />
@@ -125,7 +124,11 @@ export default function StudioStep7() {
             />
           )}
         </Pressable>
-        <View className="flex-1">
+        <TouchableOpacity
+          className="flex-1"
+          onPress={() => setSelectedServiceForInfo(item)}
+          activeOpacity={0.7}
+        >
           <ScaledText
             allowScaling={false}
             variant="md"
@@ -133,9 +136,8 @@ export default function StudioStep7() {
           >
             {item.name}
           </ScaledText>
-        </View>
+        </TouchableOpacity>
       </View>
-      </TouchableOpacity>
     );
   };
 
@@ -204,6 +206,13 @@ export default function StudioStep7() {
           onBack={handleBack}
         />
       </View>
+
+      {/* Service Info Modal */}
+      <ServiceInfoModal
+        visible={selectedServiceForInfo !== null}
+        service={selectedServiceForInfo}
+        onClose={() => setSelectedServiceForInfo(null)}
+      />
     </View>
   );
 }
