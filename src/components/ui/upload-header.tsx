@@ -8,6 +8,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 export default function UploadHeader() {
   const pathname = usePathname();
   const resetPostUpload = usePostUploadStore((s) => s.reset);
+  const media = usePostUploadStore((s) => s.media);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const steps = [
     "media",
@@ -55,20 +56,13 @@ export default function UploadHeader() {
   const progressPixelWidth = getProgressPixelWidth();
 
   const handleClosePress = () => {
-    // Step index 0 => /upload/media. Show confirmation popup here.
-    if (currentIndex === 0) {
+    // Only show discard modal if there are changes (media uploaded)
+    if (media.length > 0) {
       setShowDiscardModal(true);
-      return;
-    }
-
-    // For steps 2–5 go explicitly to the previous step in the wizard.
-    const prevIndex = currentIndex - 1;
-    if (prevIndex >= 0 && prevIndex < steps.length) {
-      const prevSlug = steps[prevIndex];
-      router.replace(`/upload/${prevSlug}` as any);
     } else {
-      // Fallback: regular back navigation.
-      router.back();
+      // No changes, navigate back directly
+      resetPostUpload();
+      router.replace("/(tabs)");
     }
   };
 

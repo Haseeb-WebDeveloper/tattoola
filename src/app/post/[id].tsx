@@ -887,91 +887,126 @@ export default function PostDetailScreen() {
             )}
 
             {/* Divider */}
-            <View className="h-[0.5px] w-full bg-[#A49A99] mb-6" />
+            <View
+              className="h-[0.5px] w-full bg-[#A49A99]"
+              style={{ marginBottom: mvs(18) }}
+            />
 
             {/* Likes info */}
-            <View className="mb-6">
+            <View className="relative">
               <ScaledText
                 variant="sm"
-                className="mb-3 text-foreground font-montserratSemibold"
+                className="text-foreground font-montserratSemibold mb-3"
               >
                 {`Piace a ${String(post.likesCount || 0)} persone`}
               </ScaledText>
 
-              {/* Recent likers */}
-              {post.likes && post.likes.length > 0 && (
-                <View className="flex-col items-start justify-start gap-3">
-                  {post.likes.slice(0, 6).map((like) => (
-                    <View key={like.id} className="flex-row items-center">
-                      <Image
-                        source={{
-                          uri:
-                            like?.avatar ||
-                            `https://api.dicebear.com/7.x/initials/png?seed=${like?.username?.[0] || "u"}`,
-                        }}
-                        className="w-10 h-10 mr-2 border-2 rounded-full border-primary"
-                      />
-                      {like.username && (
-                        <ScaledText
-                          variant="md"
-                          className="text-foreground font-montserratSemibold"
-                        >
-                          {`@${like.username}`}
-                        </ScaledText>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
+              {/* Scrollable likes list container */}
+              <View className="relative">
+                {/* Scrollable likes list */}
+                <ScrollView
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  style={{ height: mvs(160), flex: 1 }}
+                  contentContainerStyle={{ paddingRight: s(16) }}
+                  scrollEnabled={true}
+                  // className="bg-red-500"
+                >
+                  <View
+                    className="flex-col items-start justify-star"
+                    style={{ gap: mvs(6) }}
+                  >
+                    {post.likes && post.likes.length > 0
+                      ? post.likes.map((like) => (
+                          <View
+                            key={like.id}
+                            className="flex-row items-center mb-2"
+                          >
+                            <Image
+                              source={{
+                                uri:
+                                  like?.avatar ||
+                                  `https://api.dicebear.com/7.x/initials/png?seed=${like?.username?.[0] || "u"}`,
+                              }}
+                              className="rounded-full border-primary"
+                              style={{
+                                width: s(40),
+                                height: s(40),
+                                marginRight: s(8),
+                                borderWidth: s(1),
+                              }}
+                            />
+                            {like.username && (
+                              <ScaledText
+                                variant="md"
+                                className="text-foreground font-montserratSemibold"
+                              >
+                                {`@${like.username}`}
+                              </ScaledText>
+                            )}
+                          </View>
+                        ))
+                      : null}
+                  </View>
+                </ScrollView>
 
-            {/* Edit and Delete buttons - only show for own posts */}
-            {isOwnPost && (
-              <View className="flex-row items-center justify-between px-4 pb-6">
-                <TouchableOpacity
-                  onPress={handleEdit}
-                  className="flex-row items-center justify-center border rounded-full"
-                  style={{
-                    borderColor: "#D9D9D9",
-                    paddingVertical: mvs(5.919),
-                    paddingHorizontal: s(18),
-                    gap: s(5),
-                  }}
-                >
-                  <SVGIcons.Edit width={s(14)} height={s(14)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="text-white font-montserratSemibold"
-                    style={{ fontSize: s(12) }}
-                  >
-                    Edit
-                  </ScaledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowDeleteModal(true)}
-                  className="flex-row items-center justify-center rounded-full"
-                  style={{
-                    paddingVertical: mvs(5.919),
-                    paddingHorizontal: s(18),
-                    gap: s(5),
-                  }}
-                >
-                  <SVGIcons.Trash width={s(14)} height={s(14)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="font-montserratSemibold"
+                {/* Fixed Edit/Delete buttons positioned 120px from top of likes section */}
+                {isOwnPost && (
+                  <View
+                    className="absolute flex-row items-center justify-between gap-2"
                     style={{
-                      fontSize: s(12),
-                      color: "#AE0E0E",
+                      top: mvs(120),
+                      right: 0,
+                      zIndex: 10,
                     }}
+                    pointerEvents="box-none"
                   >
-                    Delete
-                  </ScaledText>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleEdit}
+                      className="flex-row items-center justify-center border rounded-full bg-background"
+                      style={{
+                        borderColor: "#D9D9D9",
+                        paddingVertical: mvs(5.919),
+                        paddingHorizontal: s(18),
+                        gap: s(5),
+                      }}
+                    >
+                      <SVGIcons.Edit width={s(14)} height={s(14)} />
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-white font-montserratSemibold"
+                        style={{ fontSize: s(12) }}
+                      >
+                        Edit
+                      </ScaledText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setShowDeleteModal(true)}
+                      className="flex-row items-center justify-center rounded-full"
+                      style={{
+                        paddingVertical: mvs(5.919),
+                        paddingHorizontal: s(18),
+                        gap: s(5),
+                      }}
+                    >
+                      <SVGIcons.Trash width={s(14)} height={s(14)} />
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="font-montserratSemibold"
+                        style={{
+                          fontSize: s(12),
+                          color: "#AE0E0E",
+                        }}
+                      >
+                        Delete
+                      </ScaledText>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
-            )}
+            </View>
           </View>
         </LinearGradient>
       </ScrollView>
