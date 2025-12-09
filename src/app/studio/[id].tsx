@@ -128,6 +128,7 @@ export default function StudioScreen() {
             ownerLastName={data?.owner?.lastName}
             municipality={data?.city}
             province={data?.province}
+            address={data?.address}
             instagram={data?.instagram}
             tiktok={data?.tiktok}
             website={data?.website}
