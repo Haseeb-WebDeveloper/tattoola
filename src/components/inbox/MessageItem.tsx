@@ -28,12 +28,6 @@ export default function MessageItem({
   const [showMenu, setShowMenu] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
 
-  // Debug: Log receiptStatus for sent messages
-  useEffect(() => {
-    if (isMine) {
-      console.log(`💬 [MessageItem] Message ${item.id} receiptStatus: ${item.receiptStatus || 'undefined'}`);
-    }
-  }, [item.receiptStatus, item.id, isMine]);
 
   // Helper to get file name from URL
   const getFileName = (url: string): string => {

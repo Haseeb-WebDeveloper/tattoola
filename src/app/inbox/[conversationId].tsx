@@ -17,7 +17,7 @@ import { TrimText } from "@/utils/text-trim";
 import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -91,9 +91,11 @@ export default function ChatThreadScreen() {
       try {
         await loadLatest(conversationId, user.id);
         subscribe(conversationId, user.id);
-        // Refresh receipts immediately after loading to ensure they're up to date
+        // Refresh receipts after subscriptions are active to ensure we have latest status
         // This fixes the issue where inbox shows green tick but thread shows grey tick
-        await refreshReceipts(conversationId, user.id);
+        setTimeout(async () => {
+          await refreshReceipts(conversationId, user.id);
+        }, 1000);
       } catch (e) {
         console.error("Error loading conversation:", e);
       }
@@ -141,13 +143,15 @@ export default function ChatThreadScreen() {
     return () => clearTimeout(timer);
   }, [conversationId, user?.id, messages.length]);
 
-  // Periodic receipt refresh to catch any missed updates
+  // Safety net: Only refresh receipts if realtime subscription might have missed updates
+  // This is a fallback for network issues or reconnection scenarios (very infrequent)
   useEffect(() => {
     if (!conversationId || !user?.id) return;
 
+    // Only refresh every 30 seconds as a safety net - realtime should handle most updates
     const interval = setInterval(() => {
       refreshReceipts(conversationId, user.id).catch(console.error);
-    }, 10000); // Refresh every 10 seconds
+    }, 30000); // 30 seconds - just a safety net
 
     return () => clearInterval(interval);
   }, [conversationId, user?.id, refreshReceipts]);
@@ -320,14 +324,17 @@ export default function ChatThreadScreen() {
     setShowMessageRestrictionModal(false);
   }, []);
 
-  const renderItem = ({ item, index }: any) => (
-    <MessageItem
-      item={item}
-      index={index}
-      messages={messages}
-      currentUserId={user?.id}
-      peerAvatar={peer?.avatar}
-    />
+  const renderItem = useCallback(
+    ({ item, index }: any) => (
+      <MessageItem
+        item={item}
+        index={index}
+        messages={messages}
+        currentUserId={user?.id}
+        peerAvatar={peer?.avatar}
+      />
+    ),
+    [messages, user?.id, peer?.avatar]
   );
 
   return (
@@ -479,6 +486,11 @@ export default function ChatThreadScreen() {
             contentContainerStyle={{
               paddingVertical: mvs(1),
             }}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            updateCellsBatchingPeriod={50}
+            windowSize={10}
+            initialNumToRender={15}
             ListFooterComponent={() =>
               conv?.status === "REQUESTED" && user?.id === conv?.artistId ? (
                 <View

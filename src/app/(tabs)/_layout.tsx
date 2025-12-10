@@ -15,6 +15,7 @@ export default function TabLayout() {
           <Tabs
             tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
+              lazy: false,
               headerShown: false,
               tabBarHideOnKeyboard: true,
               tabBarStyle: {

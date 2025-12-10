@@ -8,8 +8,8 @@ import { formatMessageTime } from "@/utils/formatMessageTime";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {  useRouter } from "expo-router";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 
 // Normalize search query: trim whitespace and convert to lowercase
@@ -59,19 +59,18 @@ export default function InboxScreen() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    loadFirstPage(user.id);
-  }, [user?.id]);
+useEffect(() => {
+  if (!user?.id) return;
+  loadFirstPage(user.id);
+}, [user?.id]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!user?.id) return () => {};
-      loadFirstPage(user.id);
-      startRealtime(user.id);
-      return () => stopRealtime();
-    }, [user?.id])
-  );
+useEffect(() => {
+  if (!user?.id) return;
+  startRealtime(user.id);
+  return () => stopRealtime();
+}, [user?.id]);
+
+
 
   // Memoized filtered data - only recalculates when dependencies change
   const filteredData = useMemo(() => {
@@ -88,40 +87,42 @@ export default function InboxScreen() {
     );
   }, [order, conversationsById, debouncedQuery]);
 
-  // Memoized render item for better FlatList performance
-  const renderConversationItem = useCallback(
-    ({ item }: any) => (
-      <TouchableOpacity
-        onPress={() => router.push(`/inbox/${item.id}` as any)}
-        className=" border-gray"
-        style={{
-          paddingHorizontal: s(16),
-          paddingVertical: mvs(16),
-          borderBottomWidth: mvs(0.5),
-        }}
-      >
-        <View className="flex-row items-center">
-          {/* Avatar */}
-          <View
-            className="relative"
-            style={{
-              marginRight: s(12),
+  // Memoized conversation item component for better performance
+  const ConversationItem = memo(({ item, onlineUserIds, router }: any) => {
+    const isOnline = onlineUserIds?.[item.peerId];
+    
+    return (
+    <TouchableOpacity
+      onPress={() => router.push(`/inbox/${item.id}` as any)}
+      className=" border-gray"
+      style={{
+        paddingHorizontal: s(16),
+        paddingVertical: mvs(16),
+        borderBottomWidth: mvs(0.5),
+      }}
+    >
+      <View className="flex-row items-center">
+        {/* Avatar */}
+        <View
+          className="relative"
+          style={{
+            marginRight: s(12),
+          }}
+        >
+          <Image
+            source={{
+              uri:
+                item.peerAvatar ||
+                `https://api.dicebear.com/7.x/initials/png?seed=${item.peerName?.split(" ")[0]}`,
             }}
-          >
-            <Image
-              source={{
-                uri:
-                  item.peerAvatar ||
-                  `https://api.dicebear.com/7.x/initials/png?seed=${item.peerName?.split(" ")[0]}`,
-              }}
-              className="rounded-full"
-              style={{
-                width: s(40),
-                height: s(40),
-              }}
-            />
+            className="rounded-full"
+            style={{
+              width: s(40),
+              height: s(40),
+            }}
+          />
             <View
-              className={`rounded-full absolute right-0 top-0 ${onlineUserIds?.[item.peerId] ? "bg-success" : "bg-error"}`}
+              className={`rounded-full absolute right-0 top-0 ${isOnline ? "bg-success" : "bg-error"}`}
               style={{
                 width: s(10),
                 height: s(10),
@@ -129,98 +130,119 @@ export default function InboxScreen() {
                 borderColor: "#0F0202",
               }}
             />
-            {/* Lock icon overlay for blocked conversations */}
-            {item.status === "BLOCKED" && (
-              <View
-                className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
-                style={{
-                  width: s(40),
-                  height: s(40),
-                }}
-              >
-                <SVGIcons.Locked width={s(16)} height={s(16)} />
-              </View>
-            )}
-          </View>
-          <View className="flex-1">
-            {/* name and unread badge */}
+          {/* Lock icon overlay for blocked conversations */}
+          {item.status === "BLOCKED" && (
             <View
-              className="flex-row items-center justify-between"
+              className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
               style={{
-                marginBottom: mvs(1),
+                width: s(40),
+                height: s(40),
               }}
             >
-              <ScaledText
-                variant="md"
-                className="text-foreground font-montserratMedium"
-              >
-                {TrimText(item.peerName || "Sconosciuto", 23)}
-              </ScaledText>
-              <View className="flex-row items-center">
-                {item.unreadCount > 0 && (
-                  <View
-                    className="rounded-full bg-[#590707] items-center justify-center"
-                    style={{
-                      width: s(24),
-                      height: s(24),
-                    }}
-                  >
-                    <ScaledText
-                      variant="11"
-                      className="text-[#fff] font-neueMedium"
-                    >
-                      {item.unreadCount}
-                    </ScaledText>
-                  </View>
-                )}
-              </View>
+              <SVGIcons.Locked width={s(16)} height={s(16)} />
             </View>
-            {/* last message text and time */}
-            <View className="flex-row justify-between items-center">
-              <ScaledText
-                variant="md"
-                numberOfLines={1}
-                className="text-gray flex-1 font-neueMedium"
-                style={{
-                  marginRight: s(8),
-                }}
-              >
-                {TrimText(item.lastMessageText || "Nuova conversazione", 50)}
-              </ScaledText>
-              {item.lastMessageTime && (
+          )}
+        </View>
+        <View className="flex-1">
+          {/* name and unread badge */}
+          <View
+            className="flex-row items-center justify-between"
+            style={{
+              marginBottom: mvs(1),
+            }}
+          >
+            <ScaledText
+              variant="md"
+              className="text-foreground font-montserratMedium"
+            >
+              {TrimText(item.peerName || "Sconosciuto", 23)}
+            </ScaledText>
+            <View className="flex-row items-center">
+              {item.unreadCount > 0 && (
                 <View
-                  className="flex-row items-center"
+                  className="rounded-full bg-[#590707] items-center justify-center"
                   style={{
-                    gap: s(4),
+                    width: s(24),
+                    height: s(24),
                   }}
                 >
-                  <View
-                    style={{
-                      width: s(16),
-                      height: s(16),
-                    }}
-                  >
-                    {item.lastMessageIsRead ? (
-                      <SVGIcons.Seen width={s(16)} height={s(16)} />
-                    ) : (
-                      <SVGIcons.Unseen width={s(16)} height={s(16)} />
-                    )}
-                  </View>
                   <ScaledText
-                    numberOfLines={1}
-                    variant="sm"
-                    className="text-gray"
+                    variant="11"
+                    className="text-[#fff] font-neueMedium"
                   >
-                    {formatMessageTime(item.lastMessageTime)}
+                    {item.unreadCount}
                   </ScaledText>
                 </View>
               )}
             </View>
           </View>
+          {/* last message text and time */}
+          <View className="flex-row justify-between items-center">
+            <ScaledText
+              variant="md"
+              numberOfLines={1}
+              className="text-gray flex-1 font-neueMedium"
+              style={{
+                marginRight: s(8),
+              }}
+            >
+              {TrimText(item.lastMessageText || "Nuova conversazione", 50)}
+            </ScaledText>
+            {item.lastMessageTime && (
+              <View
+                className="flex-row items-center"
+                style={{
+                  gap: s(4),
+                }}
+              >
+                <View
+                  style={{
+                    width: s(16),
+                    height: s(16),
+                  }}
+                >
+                  {item.lastMessageIsRead ? (
+                    <SVGIcons.Seen width={s(16)} height={s(16)} />
+                  ) : (
+                    <SVGIcons.Unseen width={s(16)} height={s(16)} />
+                  )}
+                </View>
+                <ScaledText
+                  numberOfLines={1}
+                  variant="sm"
+                  className="text-gray"
+                >
+                  {formatMessageTime(item.lastMessageTime)}
+                </ScaledText>
+              </View>
+            )}
+          </View>
         </View>
-      </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+    );
+  }, (prevProps, nextProps) => {
+    // Custom comparison: only re-render if relevant props changed
+    return (
+      prevProps.item.id === nextProps.item.id &&
+      prevProps.item.peerName === nextProps.item.peerName &&
+      prevProps.item.peerAvatar === nextProps.item.peerAvatar &&
+      prevProps.item.lastMessageText === nextProps.item.lastMessageText &&
+      prevProps.item.lastMessageTime === nextProps.item.lastMessageTime &&
+      prevProps.item.lastMessageIsRead === nextProps.item.lastMessageIsRead &&
+      prevProps.item.unreadCount === nextProps.item.unreadCount &&
+      prevProps.item.status === nextProps.item.status &&
+      prevProps.onlineUserIds?.[prevProps.item.peerId] === nextProps.onlineUserIds?.[nextProps.item.peerId]
+    );
+  });
+  
+  ConversationItem.displayName = 'ConversationItem';
+
+  const renderConversationItem = useCallback(
+    ({ item }: any) => (
+      <ConversationItem item={item} onlineUserIds={onlineUserIds} router={router} />
     ),
-    [router, onlineUserIds]
+    [onlineUserIds, router]
   );
 
   // Memoized empty component
@@ -348,6 +370,7 @@ export default function InboxScreen() {
         maxToRenderPerBatch={10}
         updateCellsBatchingPeriod={50}
         windowSize={10}
+        initialNumToRender={15}
       />
     </LinearGradient>
   );
