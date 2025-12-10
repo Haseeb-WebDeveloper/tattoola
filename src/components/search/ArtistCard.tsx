@@ -12,7 +12,7 @@ type ArtistCardProps = {
   artist: ArtistSearchResult;
 };
 
-export default function ArtistCard({ artist }: ArtistCardProps) {
+function ArtistCard({ artist }: ArtistCardProps) {
   const router = useRouter();
 
   const handlePress = () => {
@@ -283,3 +283,5 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
     </TouchableOpacity>
   );
 }
+
+export default React.memo(ArtistCard);
