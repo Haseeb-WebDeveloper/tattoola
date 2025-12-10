@@ -1,4 +1,5 @@
 import { ArtistSelfProfileInterface } from "@/types/artist";
+import { StudioSearchResult } from "@/types/search";
 import {
     getProfileFromCache,
     saveProfileToCache,
@@ -1473,4 +1474,121 @@ export async function fetchArtistProfile(
     ...profile,
     isFollowing: isFollowingArtist,
   };
+}
+
+/**
+ * Fetch studio data for an artist profile if they own a studio
+ * Returns studio in StudioSearchResult format for use in StudioCard component
+ */
+export async function fetchStudioForArtistProfile(
+  artistProfileId: string
+): Promise<StudioSearchResult | null> {
+  try {
+    // Query studio by ownerId
+    const { data: studio, error: studioError } = await supabase
+      .from("studios")
+      .select(
+        `
+        id,
+        name,
+        slug,
+        logo,
+        description,
+        isActive,
+        isCompleted,
+        locations:studio_locations(
+          provinceId,
+          municipalityId,
+          address,
+          isPrimary,
+          province:provinces(name),
+          municipality:municipalities(name)
+        ),
+        styles:studio_styles(
+          order,
+          style:tattoo_styles(id, name)
+        ),
+        services:studio_services(
+          isActive,
+          serviceId
+        ),
+        bannerMedia:studio_banner_media(
+          mediaUrl,
+          mediaType,
+          order
+        ),
+        owner:artist_profiles(
+          user:users(
+            username,
+            subscriptions:user_subscriptions!user_subscriptions_userId_fkey(
+              status,
+              endDate,
+              plan:subscription_plans(name, type)
+            )
+          )
+        )
+      `
+      )
+      .eq("ownerId", artistProfileId)
+      .eq("isCompleted", true)
+      .eq("isActive", true)
+      .maybeSingle();
+
+    if (studioError || !studio) {
+      // Artist doesn't own a studio or studio is not completed/active
+      return null;
+    }
+
+    // Transform data to match StudioSearchResult format
+    const activeSubscription = studio.owner?.user?.subscriptions?.find(
+      (sub: any) =>
+        sub.status === "ACTIVE" &&
+        (!sub.endDate || new Date(sub.endDate) >= new Date())
+    );
+
+    const studioResult: StudioSearchResult = {
+      id: studio.id,
+      name: studio.name,
+      slug: studio.slug,
+      logo: studio.logo,
+      description: studio.description,
+      ownerName: studio.owner?.user?.username || "",
+      locations:
+        studio.locations?.map((loc: any) => ({
+          province: loc.province?.name || "",
+          municipality: loc.municipality?.name || "",
+          address: loc.address,
+        })) || [],
+      styles:
+        studio.styles
+          ?.sort((a: any, b: any) => a.order - b.order)
+          .slice(0, 2)
+          .map((ss: any) => ({
+            id: ss.style?.id || "",
+            name: ss.style?.name || "",
+          })) || [],
+      bannerMedia:
+        studio.bannerMedia
+          ?.sort((a: any, b: any) => a.order - b.order)
+          .slice(0, 4)
+          .map((bm: any) => ({
+            mediaUrl: bm.mediaUrl,
+            mediaType: bm.mediaType,
+            order: bm.order,
+          })) || [],
+      subscription: activeSubscription
+        ? {
+            plan: {
+              name: activeSubscription.plan?.name || "",
+              type: activeSubscription.plan?.type || "",
+            },
+          }
+        : null,
+    };
+
+    return studioResult;
+  } catch (error: any) {
+    console.error("Error fetching studio for artist profile:", error);
+    return null;
+  }
 }

@@ -106,10 +106,10 @@ export default function StudioScreen() {
             style={{
               paddingHorizontal: s(12),
               paddingVertical: mvs(12),
-              backgroundColor: "rgba(255, 255, 255, 0.15)",
+              backgroundColor: "rgba(255, 255, 255, 0.50)",
               borderRadius: s(100),
               position: "absolute",
-              top: Math.max(insets.top, mvs(6)),
+              top: mvs(8),
               left: s(16),
               zIndex: 10,
             }}

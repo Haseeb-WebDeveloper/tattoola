@@ -448,13 +448,11 @@ export default function PostDetailScreen() {
     if (!post || !user) return;
 
     try {
-
       await updatePost(post.id, user.id, {
         caption: data.caption,
         styleId: data.styleId || [], // Pass styleId array (1-3 styles)
         collectionIds: data.collectionIds,
       });
-
 
       // Show success toast
       const toastId = toast.custom(
@@ -503,7 +501,11 @@ export default function PostDetailScreen() {
             onPress={handleBack}
             className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
+            <SVGIcons.ChevronLeft
+              width={s(14)}
+              height={s(14)}
+              className="text-white"
+            />
           </TouchableOpacity>
         </View>
 
@@ -658,7 +660,11 @@ export default function PostDetailScreen() {
             onPress={handleBack}
             className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
+            <SVGIcons.ChevronLeft
+              width={s(14)}
+              height={s(14)}
+              className="text-white"
+            />
           </TouchableOpacity>
         </View>
       )}
@@ -766,7 +772,11 @@ export default function PostDetailScreen() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
+                    <SVGIcons.ChevronLeft
+                      width={s(14)}
+                      height={s(14)}
+                      className="text-white"
+                    />
                   </TouchableOpacity>
                 )}
                 {/* Right chevron - hide on last item */}
@@ -801,7 +811,11 @@ export default function PostDetailScreen() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <SVGIcons.ChevronRight width={s(14)} height={s(14)} className="text-white" />
+                    <SVGIcons.ChevronRight
+                      width={s(14)}
+                      height={s(14)}
+                      className="text-white"
+                    />
                   </TouchableOpacity>
                 )}
               </>
@@ -987,7 +1001,11 @@ export default function PostDetailScreen() {
                 <ScrollView
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
-                  style={{ height: mvs(160), flex: 1 }}
+                  style={{
+                    maxHeight: mvs(160),
+                    height: isOwnPost ? mvs(160) : undefined,
+                    flex: 1,
+                  }}
                   contentContainerStyle={{ paddingRight: s(16) }}
                   scrollEnabled={true}
                   // className="bg-red-500"
@@ -998,10 +1016,7 @@ export default function PostDetailScreen() {
                   >
                     {post.likes && post.likes.length > 0
                       ? post.likes.map((like) => (
-                          <View
-                            key={like.id}
-                            className="flex-row items-center mb-2"
-                          >
+                          <View key={like.id} className="flex-row items-center">
                             <Image
                               source={{
                                 uri:

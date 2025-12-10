@@ -171,14 +171,19 @@ export async function searchArtists({
 
           studioMembershipData = studioMembership;
 
-          if (studioMembership?.studio) {
-            const studio = studioMembership.studio as any;
+          // Handle studio as array (Supabase type inference) or single object
+          const studio = Array.isArray(studioMembership?.studio) 
+            ? studioMembership.studio[0] 
+            : studioMembership?.studio;
+          
+          if (studio) {
             // Only use studio data if artist profile doesn't have it
             if (!businessName && studio.name) {
               businessName = studio.name;
             }
             if (!studioAddress && studio.locations) {
-              const primaryStudioLocation = studio.locations.find(
+              const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+              const primaryStudioLocation = locations.find(
                 (loc: any) => loc.isPrimary
               );
               if (primaryStudioLocation?.address) {
@@ -187,7 +192,8 @@ export async function searchArtists({
             }
             // Always extract studio address for location fallback (even if studioAddress from profile exists)
             if (studio.locations) {
-              const primaryStudioLocation = studio.locations.find(
+              const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+              const primaryStudioLocation = locations.find(
                 (loc: any) => loc.isPrimary
               );
               if (primaryStudioLocation?.address) {
@@ -214,8 +220,14 @@ export async function searchArtists({
             .eq("isActive", true)
             .maybeSingle();
 
-          if (studioMembership?.studio?.locations) {
-            const primaryStudioLocation = studioMembership.studio.locations.find(
+          // Handle studio as array (Supabase type inference) or single object
+          const studio = Array.isArray(studioMembership?.studio) 
+            ? studioMembership.studio[0] 
+            : studioMembership?.studio;
+          
+          if (studio?.locations) {
+            const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+            const primaryStudioLocation = locations.find(
               (loc: any) => loc.isPrimary
             );
             if (primaryStudioLocation?.address) {
