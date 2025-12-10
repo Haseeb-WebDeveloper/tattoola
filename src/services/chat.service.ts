@@ -658,11 +658,12 @@ export async function fetchConversationsPage(
     (data || []).map(async (conv: any) => {
       // Only check receipt if the last message was sent by current user
       if (conv.lastMessage && conv.lastMessage.senderId === userId) {
+        // Receipt belongs to the receiver, so query by receiverId (handles self-messages)
         const { data: receipt } = await supabase
           .from("message_receipts")
           .select("status")
           .eq("messageId", conv.lastMessageId)
-          .neq("userId", userId) // Get the other user's receipt
+          .eq("userId", conv.lastMessage.receiverId) // Receipt belongs to the receiver
           .maybeSingle();
 
         return { ...conv, lastMessageReceipt: receipt };
@@ -808,6 +809,7 @@ export async function markReadUpTo(
   userId: string,
   newestMessageId: string
 ) {
+  console.log("🔵 [markReadUpTo] Called", { conversationId, userId, newestMessageId });
   const now = new Date().toISOString();
 
   // Reset unreadCount, set lastReadAt "now".
@@ -816,34 +818,64 @@ export async function markReadUpTo(
     .update({ unreadCount: 0, lastReadAt: now })
     .eq("conversationId", conversationId)
     .eq("userId", userId);
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("❌ [markReadUpTo] Error updating conversation_users:", error);
+    throw new Error(error.message);
+  }
+  console.log("✅ [markReadUpTo] Updated conversation_users");
 
-  // Update messages.isRead for all messages in this conversation that the user received
-  await supabase
-    .from("messages")
-    .update({ isRead: true })
-    .eq("conversationId", conversationId)
-    .eq("receiverId", userId)
-    .eq("isRead", false);
-
-  // Update receipts to READ status
+  // FIRST: Get message IDs that need to be updated (before updating isRead)
   // Note: message_receipts doesn't have conversationId, so we need to get message IDs first
-  const { data: messages } = await supabase
+  const { data: messages, error: messagesError } = await supabase
     .from("messages")
     .select("id")
     .eq("conversationId", conversationId)
     .eq("receiverId", userId)
     .eq("isRead", false);
   
-  if (messages && messages.length > 0) {
-    const messageIds = messages.map(m => m.id);
-    await supabase
+  if (messagesError) {
+    console.error("❌ [markReadUpTo] Error fetching unread messages:", messagesError);
+  }
+  
+  const messageIds = messages?.map(m => m.id) || [];
+  console.log(`📨 [markReadUpTo] Found ${messageIds.length} unread messages:`, messageIds);
+
+  // SECOND: Update messages.isRead for all messages in this conversation that the user received
+  if (messageIds.length > 0) {
+    const { error: updateError } = await supabase
+      .from("messages")
+      .update({ isRead: true })
+      .in("id", messageIds);
+    
+    if (updateError) {
+      console.error("❌ [markReadUpTo] Error updating messages.isRead:", updateError);
+    } else {
+      console.log(`✅ [markReadUpTo] Updated ${messageIds.length} messages to isRead=true`);
+    }
+  } else {
+    console.log("⚠️ [markReadUpTo] No unread messages to update");
+  }
+
+  // THIRD: Update receipts to READ status using the message IDs we collected
+  if (messageIds.length > 0) {
+    const { data: receiptUpdateData, error: receiptError } = await supabase
       .from("message_receipts")
       .update({ status: "READ", readAt: now })
       .eq("userId", userId)
       .in("messageId", messageIds)
-      .eq("status", "DELIVERED");
+      .eq("status", "DELIVERED")
+      .select();
+    
+    if (receiptError) {
+      console.error("❌ [markReadUpTo] Error updating receipts:", receiptError);
+    } else {
+      console.log(`✅ [markReadUpTo] Updated ${receiptUpdateData?.length || 0} receipts to READ:`, receiptUpdateData);
+    }
+  } else {
+    console.log("⚠️ [markReadUpTo] No message IDs to update receipts for");
   }
+  
+  console.log("🔵 [markReadUpTo] Completed");
 }
 
 // Subscriptions
@@ -1061,12 +1093,13 @@ async function enrichConversationRow(row: any, userId: string) {
         lastMessage = msg;
 
         // Fetch receipt if message was sent by current user
+        // Receipt belongs to the receiver, so query by receiverId (handles self-messages)
         if (msg && msg.senderId === userId) {
           const { data: receipt } = await supabase
             .from("message_receipts")
             .select("status")
             .eq("messageId", row.lastMessageId)
-            .neq("userId", userId)
+            .eq("userId", msg.receiverId) // Receipt belongs to the receiver
             .maybeSingle();
           lastMessageReceipt = receipt;
         }

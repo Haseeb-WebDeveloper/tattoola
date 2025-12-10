@@ -4,7 +4,7 @@ import { SVGIcons } from "@/constants/svg";
 import { formatMessageTimestamp } from "@/utils/formatMessageTimestamp";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Clipboard, Image, Linking, Modal, TouchableOpacity, View } from "react-native";
 import { isIntakeMessage } from "../../utils/utils";
 import { toast } from "sonner-native";
@@ -27,6 +27,13 @@ export default function MessageItem({
   const isMine = item.senderId === currentUserId;
   const [showMenu, setShowMenu] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
+
+  // Debug: Log receiptStatus for sent messages
+  useEffect(() => {
+    if (isMine) {
+      console.log(`💬 [MessageItem] Message ${item.id} receiptStatus: ${item.receiptStatus || 'undefined'}`);
+    }
+  }, [item.receiptStatus, item.id, isMine]);
 
   // Helper to get file name from URL
   const getFileName = (url: string): string => {

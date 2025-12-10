@@ -12,7 +12,7 @@ type StudioCardProps = {
   studio: StudioSearchResult;
 };
 
-export default function StudioCard({ studio }: StudioCardProps) {
+function StudioCard({ studio }: StudioCardProps) {
   const router = useRouter();
 
   const handlePress = () => {
@@ -225,3 +225,5 @@ export default function StudioCard({ studio }: StudioCardProps) {
     </TouchableOpacity>
   );
 }
+
+export default React.memo(StudioCard);
