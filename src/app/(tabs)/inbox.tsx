@@ -8,7 +8,7 @@ import { formatMessageTime } from "@/utils/formatMessageTime";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect, useRouter } from "expo-router";
+import {  useRouter } from "expo-router";
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 
@@ -59,19 +59,18 @@ export default function InboxScreen() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    loadFirstPage(user.id);
-  }, [user?.id]);
+useEffect(() => {
+  if (!user?.id) return;
+  loadFirstPage(user.id);
+}, [user?.id]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!user?.id) return () => {};
-      loadFirstPage(user.id);
-      startRealtime(user.id);
-      return () => stopRealtime();
-    }, [user?.id])
-  );
+useEffect(() => {
+  if (!user?.id) return;
+  startRealtime(user.id);
+  return () => stopRealtime();
+}, [user?.id]);
+
+
 
   // Memoized filtered data - only recalculates when dependencies change
   const filteredData = useMemo(() => {

@@ -150,7 +150,7 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
           filter: `userId=eq.${userId}`,
         },
         async (payload) => {
-          console.log("📊 conversation_users UPDATE", payload.new);
+         // console.log("📊 conversation_users UPDATE", payload.new);
 
           const { conversationId, unreadCount } = payload.new as any;
           const conv = get().conversationsById[conversationId];
@@ -188,9 +188,58 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
       )
       .subscribe();
 
+      // RECEIPT UPDATES - Subscribe to message_receipts to update lastMessageIsRead in real-time
+  const receiptChannel = supabase
+    .channel(`inbox-receipts-${userId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "message_receipts",
+      },
+      async (payload) => {
+        const { messageId, status, userId: receiptUserId } = payload.new as any;
+        
+        console.log("📗 [INBOX] Receipt updated - messageId:", messageId, "status:", status, "receiptUserId:", receiptUserId, "currentUserId:", userId);
+
+        // Find which conversation this message belongs to
+        const conversations = get().conversationsById;
+        
+        for (const [convId, conv] of Object.entries(conversations)) {
+          // Check if this receipt is for the last message in this conversation
+          if (conv.lastMessage?.id === messageId) {
+            // console.log("📗 [INBOX] Found matching conversation:", convId);
+            // console.log("📗 [INBOX] lastMessageSentByMe:", conv.lastMessageSentByMe);
+            // console.log("📗 [INBOX] lastMessage.senderId:", conv.lastMessage?.senderId);
+            // console.log("📗 [INBOX] lastMessage.receiverId:", conv.lastMessage?.receiverId);
+            
+            // Only update if:
+            // 1. The current user sent this message (lastMessageSentByMe is true)
+            // 2. The receipt belongs to the receiver (receiptUserId should match message.receiverId)
+            if (conv.lastMessageSentByMe && conv.lastMessage?.senderId === userId && conv.lastMessage?.receiverId === receiptUserId) {
+              console.log("📗 [INBOX] ✅ Updating conversation lastMessageIsRead:", convId, "to:", status === "READ");
+              
+              get().upsertConversation({
+                ...conv,
+                lastMessageIsRead: status === "READ",
+              });
+              break;
+            } else {
+              console.log("📗 [INBOX] ❌ Skipping update - conditions not met");
+            }
+          }
+        }
+      }
+    )
+    .subscribe((status) => {
+      console.log("📗 [INBOX] Receipt channel status:", status);
+    });
+
     const combinedUnsub = () => {
       unsub();
       supabase.removeChannel(cuChannel);
+      supabase.removeChannel(receiptChannel);
     };
 
     set({
@@ -199,7 +248,7 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
       currentRealtimeUserId: userId,
     });
 
-    console.log("📬 [INBOX REALTIME] Realtime setup complete for userId:", userId);
+    //console.log("📬 [INBOX REALTIME] Realtime setup complete for userId:", userId);
   },
 
   stopRealtime() {

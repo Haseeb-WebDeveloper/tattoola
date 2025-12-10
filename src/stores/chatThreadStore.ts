@@ -38,9 +38,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   seenMessageIds: {},
   currentUserId: undefined,
 
-  // ---------------------------------------
+  
   // LOAD LATEST
-  // ---------------------------------------
+  
   async loadLatest(conversationId, userId) {
     set((s) => ({ loadingByConv: { ...s.loadingByConv, [conversationId]: true }, currentUserId: userId }));
 
@@ -104,9 +104,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     }
   },
 
-  // ---------------------------------------
+  
   // LOAD OLDER
-  // ---------------------------------------
+  
   async loadOlder(conversationId, userId) {
     const cursor = get().cursors[conversationId];
     if (!cursor) return;
@@ -175,9 +175,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     saveJSON(KEY, { messagesByConv: get().messagesByConv });
   },
 
-  // ---------------------------------------
+  
   // OPTIMISTIC SEND
-  // ---------------------------------------
+  
   async optimisticSend({ conversationId, senderId, type, text, mediaUrl }) {
     const clientId = uuidv4();
     const temp: any = {
@@ -213,9 +213,7 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     return { tempId: clientId };
   },
 
-  // ---------------------------------------
   // CONFIRM SEND
-  // ---------------------------------------
   confirmSend(conversationId, tempId, serverRow) {
     set((s) => ({
       messagesByConv: {
@@ -229,9 +227,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     saveJSON(KEY, { messagesByConv: get().messagesByConv });
   },
 
-  // ---------------------------------------
+  
   // SUBSCRIBE
-  // ---------------------------------------
+  
   subscribe(conversationId, userId) {
     if (get().activeSubs[conversationId]) return;
 
@@ -284,19 +282,27 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     });
 
     // RECEIPT UPDATES
+    // RECEIPT UPDATES - Subscribe globally but filter locally
     const receiptChannel = supabase
-      .channel(`receipts-${conversationId}`)
+      .channel(`receipts-${conversationId}-${Date.now()}`) // Add timestamp to avoid conflicts
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "message_receipts" },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "message_receipts",
+        },
         async (payload) => {
-          const { messageId, status } = payload.new;
+          const { messageId, status, userId: receiptUserId } = payload.new;
           const currentUserId = get().currentUserId || userId;
-
+    
           const messages = get().messagesByConv[conversationId] || [];
           const message = messages.find((m) => m.id === messageId);
-
-          if (message && message.senderId === currentUserId) {
+    
+          // Check if this receipt belongs to a message in this conversation
+          if (message && message.conversationId === conversationId && message.senderId === currentUserId) {
+            console.log("📗 Receipt updated in real-time:", messageId, status);
+            
             set((s) => ({
               messagesByConv: {
                 ...s.messagesByConv,
@@ -305,11 +311,12 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
                 ),
               },
             }));
-
+    
             saveJSON(KEY, { messagesByConv: get().messagesByConv });
             return;
           }
-
+    
+          // If message not found in memory, verify it belongs to this conversation
           if (!message) {
             const { data: msgData } = await supabase
               .from("messages")
@@ -317,14 +324,17 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
               .eq("id", messageId)
               .eq("conversationId", conversationId)
               .maybeSingle();
-
+    
             if (msgData && msgData.senderId === currentUserId) {
+              console.log("📗 Receipt updated for message not in memory, refreshing...");
               get().refreshReceipts(conversationId, currentUserId);
             }
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Receipt channel status:", status);
+      });
 
     // MESSAGE UPDATES (isRead changes)
     const messagesChannel = supabase
@@ -395,9 +405,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     }));
   },
 
-  // ---------------------------------------
+  
   // UNSUBSCRIBE
-  // ---------------------------------------
+  
   unsubscribe(conversationId) {
     const u = get().unsubByConv[conversationId];
     if (u) {
@@ -412,9 +422,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     }));
   },
 
-  // ---------------------------------------
+  
   // MARK READ
-  // ---------------------------------------
+  
   async markRead(conversationId, userId) {
     const list = get().messagesByConv[conversationId] || [];
     const newest = list[list.length - 1];
@@ -427,9 +437,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     }
   },
 
-  // ---------------------------------------
+  
   // TYPING
-  // ---------------------------------------
+  
   setTyping(conversationId, isTyping) {
     const channel = getTypingChannel(conversationId);
     channel.subscribe(async (status) => {
@@ -440,9 +450,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     });
   },
 
-  // ---------------------------------------
+  
   // REFRESH RECEIPTS
-  // ---------------------------------------
+  
   async refreshReceipts(conversationId, userId) {
     const messages = get().messagesByConv[conversationId] || [];
 
@@ -477,9 +487,9 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   },
 }));
 
-// ---------------------------------------
+
 // STRICT MODE DOUBLE-SUB FIX
-// ---------------------------------------
+
 const activeConversationChannels = new Set<string>();
 
 const originalSubscribe = useChatThreadStore.getState().subscribe;

@@ -810,13 +810,14 @@ export async function markReadUpTo(
   newestMessageId: string
 ) {
   const now = new Date().toISOString();
-
+  //console.log("🔵 [markReadUpTo] Called for userId:", userId, "conversationId:", conversationId);
   // Reset unreadCount, set lastReadAt "now".
   const { error } = await supabase
     .from("conversation_users")
     .update({ unreadCount: 0, lastReadAt: now })
     .eq("conversationId", conversationId)
     .eq("userId", userId);
+   // console.log("🔵 [markReadUpTo] Updated conversation_users, error:", error);
   if (error) {
     console.error("[markReadUpTo] Error:", error);
     throw new Error(error.message);
@@ -830,6 +831,8 @@ export async function markReadUpTo(
     .eq("receiverId", userId)
     .eq("isRead", false);
   
+    // console.log("🔵 [markReadUpTo] Found", messages?.length || 0, "unread messages for userId:", userId);
+  
   if (messagesError) {
     console.error("[markReadUpTo] Error fetching messages:", messagesError);
   }
@@ -842,7 +845,6 @@ export async function markReadUpTo(
       .from("messages")
       .update({ isRead: true })
       .in("id", messageIds);
-    
     if (updateError) {
       console.error("[markReadUpTo] Error updating isRead:", updateError);
     }
@@ -856,7 +858,6 @@ export async function markReadUpTo(
       .eq("userId", userId)
       .in("messageId", messageIds)
       .eq("status", "DELIVERED");
-    
     if (receiptError) {
       console.error("[markReadUpTo] Error updating receipts:", receiptError);
     }
