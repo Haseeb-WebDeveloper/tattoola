@@ -827,12 +827,23 @@ export async function markReadUpTo(
     .eq("isRead", false);
 
   // Update receipts to READ status
-  await supabase
-    .from("message_receipts")
-    .update({ status: "READ", readAt: now })
-    .eq("userId", userId)
-    .eq("conversationId", conversationId as any)
-    .eq("status", "DELIVERED");
+  // Note: message_receipts doesn't have conversationId, so we need to get message IDs first
+  const { data: messages } = await supabase
+    .from("messages")
+    .select("id")
+    .eq("conversationId", conversationId)
+    .eq("receiverId", userId)
+    .eq("isRead", false);
+  
+  if (messages && messages.length > 0) {
+    const messageIds = messages.map(m => m.id);
+    await supabase
+      .from("message_receipts")
+      .update({ status: "READ", readAt: now })
+      .eq("userId", userId)
+      .in("messageId", messageIds)
+      .eq("status", "DELIVERED");
+  }
 }
 
 // Subscriptions
