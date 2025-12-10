@@ -23,7 +23,6 @@ export default function WelcomeScreen() {
       keyboardVerticalOffset={0}
     >
       <View style={{ flex: 1, position: "relative" }}>
-        {/* Video background - full screen */}
         <VideoView
           player={videoPlayer}
           style={{
@@ -39,7 +38,6 @@ export default function WelcomeScreen() {
           nativeControls={false}
         />
 
-        {/* Top gradient overlay for logo and tagline readability */}
         <LinearGradient
           colors={["rgba(0, 0, 0, 0.4)", "rgba(0, 0, 0, 0.2)", "transparent"]}
           locations={[0, 0.3, 1]}
@@ -71,7 +69,6 @@ export default function WelcomeScreen() {
           pointerEvents="none"
         />
 
-        {/* Content overlay - all positioned absolutely over video */}
         <View
           style={{
             flex: 1,
