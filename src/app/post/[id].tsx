@@ -448,7 +448,6 @@ export default function PostDetailScreen() {
     if (!post || !user) return;
 
     try {
-      console.log("handleSaveEdit - styleId received:", data.styleId);
 
       await updatePost(post.id, user.id, {
         caption: data.caption,
@@ -456,7 +455,6 @@ export default function PostDetailScreen() {
         collectionIds: data.collectionIds,
       });
 
-      console.log("handleSaveEdit - updatePost completed");
 
       // Show success toast
       const toastId = toast.custom(

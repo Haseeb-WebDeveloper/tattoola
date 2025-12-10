@@ -411,7 +411,6 @@ export default function ArtistStep12V2() {
         },
       };
 
-      console.log("registrationData", registrationData);
 
       await completeArtistRegistration(registrationData);
       router.replace("/(auth)/artist-registration/step-13");
