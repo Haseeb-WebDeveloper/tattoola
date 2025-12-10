@@ -1,3 +1,4 @@
+import DeleteImageConfirmModal from "@/components/ui/DeleteImageConfirmModal";
 import DiscardPostConfirmModal from "@/components/ui/DiscardPostConfirmModal";
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
@@ -40,6 +41,10 @@ export default function UploadMediaStep() {
   const setCollectionId = usePostUploadStore((s) => s.setCollectionId);
   const resetPostUpload = usePostUploadStore((s) => s.reset);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [showDeleteImageModal, setShowDeleteImageModal] = useState(false);
+  const [imageToDeleteIndex, setImageToDeleteIndex] = useState<number | null>(
+    null
+  );
 
   // Set collection ID from route params if provided
   useEffect(() => {
@@ -156,6 +161,24 @@ export default function UploadMediaStep() {
 
   const onDragEnd = ({ data }: { data: typeof media }) => setMedia(data);
 
+  const handleDeleteImage = (index: number) => {
+    setImageToDeleteIndex(index);
+    setShowDeleteImageModal(true);
+  };
+
+  const confirmDeleteImage = () => {
+    if (imageToDeleteIndex !== null) {
+      removeMediaAt(imageToDeleteIndex);
+      setShowDeleteImageModal(false);
+      setImageToDeleteIndex(null);
+    }
+  };
+
+  const cancelDeleteImage = () => {
+    setShowDeleteImageModal(false);
+    setImageToDeleteIndex(null);
+  };
+
   const renderMediaItem = ({
     item,
     drag,
@@ -166,12 +189,13 @@ export default function UploadMediaStep() {
     cloud?: string;
   }>) => {
     const index = media.findIndex((m) => m.uri === item.uri);
-    
+
     // Generate thumbnail URL for videos
-    const thumbnailUrl = item.type === "video" && item.cloud
-      ? cloudinaryService.getVideoThumbnailFromUrl(item.cloud, 1, 200, 200)
-      : null;
-    
+    const thumbnailUrl =
+      item.type === "video" && item.cloud
+        ? cloudinaryService.getVideoThumbnailFromUrl(item.cloud, 1, 200, 200)
+        : null;
+
     // precise to screenshot: show box with border, dark background, round corners, trash at top right, drag handle at left.
     return (
       <View
@@ -264,7 +288,7 @@ export default function UploadMediaStep() {
           </View>
           {/* Trash/Delete */}
           <TouchableOpacity
-            onPress={() => removeMediaAt(index)}
+            onPress={() => handleDeleteImage(index)}
             style={{
               alignItems: "center",
               justifyContent: "center",
@@ -290,6 +314,11 @@ export default function UploadMediaStep() {
         visible={showDiscardModal}
         onCancel={handleCancelDiscard}
         onConfirm={handleConfirmDiscard}
+      />
+      <DeleteImageConfirmModal
+        visible={showDeleteImageModal}
+        onCancel={cancelDeleteImage}
+        onConfirm={confirmDeleteImage}
       />
       <LinearGradient
         colors={["#000000", "#0F0202"]}
