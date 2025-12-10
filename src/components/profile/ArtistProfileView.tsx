@@ -176,9 +176,11 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           businessName={data?.artistProfile?.businessName}
           municipality={data?.location?.municipality?.name}
           province={data?.location?.province?.name}
+          address={data?.location?.address}
           workArrangement={
             data?.artistProfile?.workArrangement as WorkArrangement
           }
+          yearsExperience={data?.artistProfile?.yearsExperience}
         />
 
         {/* Social Media Icons */}

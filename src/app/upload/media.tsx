@@ -87,8 +87,15 @@ export default function UploadMediaStep() {
   );
 
   const openDiscardModal = useCallback(() => {
-    setShowDiscardModal(true);
-  }, []);
+    // Only show discard modal if there are changes (media uploaded)
+    if (media.length > 0) {
+      setShowDiscardModal(true);
+    } else {
+      // No changes, navigate back directly
+      resetPostUpload();
+      router.replace("/(tabs)");
+    }
+  }, [media.length, resetPostUpload]);
 
   const handleConfirmDiscard = useCallback(() => {
     resetPostUpload();

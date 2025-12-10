@@ -74,7 +74,7 @@ export default function CollectionPostCard({
         }}
       >
         <Image
-          source={{ uri: imageUrl }}
+          source={{ uri: imageUrl || undefined }}
           className={
             editMode
               ? "w-full h-full rounded-lg"

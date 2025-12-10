@@ -8,6 +8,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 export default function UploadHeader() {
   const pathname = usePathname();
   const resetPostUpload = usePostUploadStore((s) => s.reset);
+  const media = usePostUploadStore((s) => s.media);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const steps = [
     "media",
@@ -55,8 +56,14 @@ export default function UploadHeader() {
   const progressPixelWidth = getProgressPixelWidth();
 
   const handleClosePress = () => {
-    // Always show confirmation modal when clicking X, regardless of step
-    setShowDiscardModal(true);
+    // Only show discard modal if there are changes (media uploaded)
+    if (media.length > 0) {
+      setShowDiscardModal(true);
+    } else {
+      // No changes, navigate back directly
+      resetPostUpload();
+      router.replace("/(tabs)");
+    }
   };
 
   const handleConfirmDiscard = () => {

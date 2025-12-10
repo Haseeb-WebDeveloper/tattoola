@@ -128,6 +128,7 @@ export default function PostDetailScreen() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const isSavingRef = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
 
   // Animation values for edit modal
   const bottomSheetTranslateY = useRef(
@@ -504,7 +505,7 @@ export default function PostDetailScreen() {
             onPress={handleBack}
             className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
+            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
           </TouchableOpacity>
         </View>
 
@@ -659,7 +660,7 @@ export default function PostDetailScreen() {
             onPress={handleBack}
             className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft className="w-5 h-5 text-white" />
+            <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
           </TouchableOpacity>
         </View>
       )}
@@ -683,11 +684,17 @@ export default function PostDetailScreen() {
             style={{ height: (screenWidth * 16) / 9 }}
           >
             <FlatList
+              ref={flatListRef}
               data={post.media}
               horizontal
               pagingEnabled
               scrollEnabled={post.media.length > 1}
               showsHorizontalScrollIndicator={false}
+              getItemLayout={(_, index) => ({
+                length: screenWidth,
+                offset: screenWidth * index,
+                index,
+              })}
               onMomentumScrollEnd={(e) => {
                 const index = Math.round(
                   e.nativeEvent.contentOffset.x / screenWidth
@@ -726,6 +733,81 @@ export default function PostDetailScreen() {
                 );
               }}
             />
+            {/* Navigation chevrons - only show if more than 1 media */}
+            {post.media.length > 1 && (
+              <>
+                {/* Left chevron - hide on first item */}
+                {currentMediaIndex > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      const newIndex = currentMediaIndex - 1;
+                      setCurrentMediaIndex(newIndex);
+                      // Scroll to previous item
+                      try {
+                        flatListRef.current?.scrollToIndex({
+                          index: newIndex,
+                          animated: true,
+                        });
+                      } catch (error) {
+                        // Fallback to scrollToOffset if scrollToIndex fails
+                        flatListRef.current?.scrollToOffset({
+                          offset: newIndex * screenWidth,
+                          animated: true,
+                        });
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: s(16),
+                      top: "50%",
+                      transform: [{ translateY: -s(20) }],
+                      zIndex: 3,
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      borderRadius: s(20),
+                      padding: s(6),
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <SVGIcons.ChevronLeft width={s(14)} height={s(14)} className="text-white" />
+                  </TouchableOpacity>
+                )}
+                {/* Right chevron - hide on last item */}
+                {currentMediaIndex < post.media.length - 1 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      const newIndex = currentMediaIndex + 1;
+                      setCurrentMediaIndex(newIndex);
+                      // Scroll to next item
+                      try {
+                        flatListRef.current?.scrollToIndex({
+                          index: newIndex,
+                          animated: true,
+                        });
+                      } catch (error) {
+                        // Fallback to scrollToOffset if scrollToIndex fails
+                        flatListRef.current?.scrollToOffset({
+                          offset: newIndex * screenWidth,
+                          animated: true,
+                        });
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: s(16),
+                      top: "50%",
+                      transform: [{ translateY: -s(20) }],
+                      zIndex: 3,
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      borderRadius: s(20),
+                      padding: s(6),
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <SVGIcons.ChevronRight width={s(14)} height={s(14)} className="text-white" />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
             {/* Top fade gradient for header/back contrast */}
             <LinearGradient
               colors={["rgba(0,0,0,0.6)", "transparent"]}
@@ -794,7 +876,7 @@ export default function PostDetailScreen() {
                 </ScaledText>
 
                 {/* Style tag */}
-                {/* {post.style && (
+                {post.style && (
                   <View className="inline-flex self-start px-3 py-1 border rounded-full border-gray max-w-fit">
                     <ScaledText
                       variant="sm"
@@ -803,7 +885,7 @@ export default function PostDetailScreen() {
                       {post.style.name}
                     </ScaledText>
                   </View>
-                )} */}
+                )}
               </View>
 
               <TouchableOpacity
@@ -887,91 +969,127 @@ export default function PostDetailScreen() {
             )}
 
             {/* Divider */}
-            <View className="h-[0.5px] w-full bg-[#A49A99] mb-6" />
+            <View
+              className="h-[0.5px] w-full bg-[#A49A99]"
+              style={{ marginBottom: mvs(18) }}
+            />
 
             {/* Likes info */}
-            <View className="mb-6">
+            <View className="relative">
               <ScaledText
                 variant="sm"
-                className="mb-3 text-foreground font-montserratSemibold"
+                className="text-foreground font-montserratSemibold mb-3"
               >
                 {`Piace a ${String(post.likesCount || 0)} persone`}
               </ScaledText>
 
-              {/* Recent likers */}
-              {post.likes && post.likes.length > 0 && (
-                <View className="flex-col items-start justify-start gap-3">
-                  {post.likes.slice(0, 6).map((like) => (
-                    <View key={like.id} className="flex-row items-center">
-                      <Image
-                        source={{
-                          uri:
-                            like?.avatar ||
-                            `https://api.dicebear.com/7.x/initials/png?seed=${like?.username?.[0] || "u"}`,
-                        }}
-                        className="w-10 h-10 mr-2 border-2 rounded-full border-primary"
-                      />
-                      {like.username && (
-                        <ScaledText
-                          variant="md"
-                          className="text-foreground font-montserratSemibold"
-                        >
-                          {`@${like.username}`}
-                        </ScaledText>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
+              {/* Scrollable likes list container */}
+              <View className="relative">
+                {/* Scrollable likes list */}
+                <ScrollView
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  style={{ height: mvs(160), flex: 1 }}
+                  contentContainerStyle={{ paddingRight: s(16) }}
+                  scrollEnabled={true}
+                  // className="bg-red-500"
+                >
+                  <View
+                    className="flex-col items-start justify-star"
+                    style={{ gap: mvs(6) }}
+                  >
+                    {post.likes && post.likes.length > 0
+                      ? post.likes.map((like) => (
+                          <View
+                            key={like.id}
+                            className="flex-row items-center mb-2"
+                          >
+                            <Image
+                              source={{
+                                uri:
+                                  like?.avatar ||
+                                  `https://api.dicebear.com/7.x/initials/png?seed=${like?.username?.[0] || "u"}`,
+                              }}
+                              className="rounded-full border-primary"
+                              style={{
+                                width: s(40),
+                                height: s(40),
+                                marginRight: s(8),
+                                borderWidth: s(1),
+                              }}
+                            />
+                            {like.username && (
+                              <ScaledText
+                                variant="md"
+                                className="text-foreground font-montserratSemibold"
+                              >
+                                {`@${like.username}`}
+                              </ScaledText>
+                            )}
+                          </View>
+                        ))
+                      : null}
+                  </View>
+                </ScrollView>
 
-            {/* Edit and Delete buttons - only show for own posts */}
-            {isOwnPost && (
-              <View className="flex-row items-center justify-between px-4 pb-6">
-                <TouchableOpacity
-                  onPress={handleEdit}
-                  className="flex-row items-center justify-center border rounded-full"
-                  style={{
-                    borderColor: "#D9D9D9",
-                    paddingVertical: mvs(5.919),
-                    paddingHorizontal: s(18),
-                    gap: s(5),
-                  }}
-                >
-                  <SVGIcons.Edit width={s(14)} height={s(14)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="text-white font-montserratSemibold"
-                    style={{ fontSize: s(12) }}
-                  >
-                    Edit
-                  </ScaledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowDeleteModal(true)}
-                  className="flex-row items-center justify-center rounded-full"
-                  style={{
-                    paddingVertical: mvs(5.919),
-                    paddingHorizontal: s(18),
-                    gap: s(5),
-                  }}
-                >
-                  <SVGIcons.Trash width={s(14)} height={s(14)} />
-                  <ScaledText
-                    allowScaling={false}
-                    variant="sm"
-                    className="font-montserratSemibold"
+                {/* Fixed Edit/Delete buttons positioned 120px from top of likes section */}
+                {isOwnPost && (
+                  <View
+                    className="absolute flex-row items-center justify-between gap-2"
                     style={{
-                      fontSize: s(12),
-                      color: "#AE0E0E",
+                      top: mvs(120),
+                      right: 0,
+                      left: 0,
+                      zIndex: 10,
                     }}
+                    pointerEvents="box-none"
                   >
-                    Delete
-                  </ScaledText>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleEdit}
+                      className="flex-row items-center justify-center border rounded-full bg-background"
+                      style={{
+                        borderColor: "#D9D9D9",
+                        paddingVertical: mvs(5.919),
+                        paddingHorizontal: s(18),
+                        gap: s(5),
+                      }}
+                    >
+                      <SVGIcons.Edit width={s(14)} height={s(14)} />
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-white font-montserratSemibold"
+                        style={{ fontSize: s(12) }}
+                      >
+                        Edit
+                      </ScaledText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setShowDeleteModal(true)}
+                      className="flex-row items-center justify-center rounded-full"
+                      style={{
+                        paddingVertical: mvs(5.919),
+                        paddingHorizontal: s(18),
+                        gap: s(5),
+                      }}
+                    >
+                      <SVGIcons.Trash width={s(14)} height={s(14)} />
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="font-montserratSemibold"
+                        style={{
+                          fontSize: s(12),
+                          color: "#AE0E0E",
+                        }}
+                      >
+                        Delete
+                      </ScaledText>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
-            )}
+            </View>
           </View>
         </LinearGradient>
       </ScrollView>
