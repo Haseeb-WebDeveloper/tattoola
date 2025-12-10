@@ -188,53 +188,55 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
       )
       .subscribe();
 
-      // RECEIPT UPDATES - Subscribe to message_receipts to update lastMessageIsRead in real-time
-  const receiptChannel = supabase
-    .channel(`inbox-receipts-${userId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "message_receipts",
-      },
-      async (payload) => {
-        const { messageId, status, userId: receiptUserId } = payload.new as any;
-        
-        console.log("📗 [INBOX] Receipt updated - messageId:", messageId, "status:", status, "receiptUserId:", receiptUserId, "currentUserId:", userId);
+// RECEIPT UPDATES - Subscribe to message_receipts to update lastMessageIsRead in real-time
+const receiptChannel = supabase
+  .channel(`inbox-receipts-${userId}`)
+  .on(
+    "postgres_changes",
+    {
+      event: "UPDATE",
+      schema: "public",
+      table: "message_receipts",
+    },
+    async (payload) => {
+      const { messageId, status, userId: receiptUserId } = payload.new as any;
+      
+      console.log("📗 [INBOX] Receipt updated - messageId:", messageId, "status:", status, "receiptUserId:", receiptUserId, "currentUserId:", userId);
 
-        // Find which conversation this message belongs to
-        const conversations = get().conversationsById;
-        
-        for (const [convId, conv] of Object.entries(conversations)) {
-          // Check if this receipt is for the last message in this conversation
-          if (conv.lastMessage?.id === messageId) {
-            // console.log("📗 [INBOX] Found matching conversation:", convId);
-            // console.log("📗 [INBOX] lastMessageSentByMe:", conv.lastMessageSentByMe);
-            // console.log("📗 [INBOX] lastMessage.senderId:", conv.lastMessage?.senderId);
-            // console.log("📗 [INBOX] lastMessage.receiverId:", conv.lastMessage?.receiverId);
-            
-            // Only update if:
-            // 1. The current user sent this message (lastMessageSentByMe is true)
-            // 2. The receipt belongs to the receiver (receiptUserId should match message.receiverId)
-            if (conv.lastMessageSentByMe && conv.lastMessage?.senderId === userId && conv.lastMessage?.receiverId === receiptUserId) {
-              console.log("📗 [INBOX] ✅ Updating conversation lastMessageIsRead:", convId, "to:", status === "READ");
-              
-              get().upsertConversation({
-                ...conv,
-                lastMessageIsRead: status === "READ",
-              });
-              break;
-            } else {
-              console.log("📗 [INBOX] ❌ Skipping update - conditions not met");
-            }
+      // Find which conversation this message belongs to
+      const conversations = get().conversationsById;
+      
+      for (const [convId, conv] of Object.entries(conversations)) {
+        // Check if this receipt is for the last message in this conversation
+        if (conv.lastMessage?.id === messageId) {
+          
+          // Case 1: Current user SENT the message → check if receiver read it
+          if (conv.lastMessageSentByMe && conv.lastMessage?.senderId === userId && conv.lastMessage?.receiverId === receiptUserId) {
+            console.log("📗 [INBOX] ✅ Sender view - Receiver read message");
+            get().upsertConversation({
+              ...conv,
+              lastMessageIsRead: status === "READ",
+            });
+            break;
+          }
+          
+          // Case 2: Current user RECEIVED the message → update if it's marked as read
+          // (This handles when the receiver themselves reads their own messages)
+          if (!conv.lastMessageSentByMe && conv.lastMessage?.receiverId === userId && status === "READ") {
+            console.log("📗 [INBOX] ✅ Receiver view - I read the message");
+            get().upsertConversation({
+              ...conv,
+              lastMessageIsRead: true,
+            });
+            break;
           }
         }
       }
-    )
-    .subscribe((status) => {
-      console.log("📗 [INBOX] Receipt channel status:", status);
-    });
+    }
+  )
+  .subscribe((status) => {
+    console.log("📗 [INBOX] Receipt channel status:", status);
+  });
 
     const combinedUnsub = () => {
       unsub();
