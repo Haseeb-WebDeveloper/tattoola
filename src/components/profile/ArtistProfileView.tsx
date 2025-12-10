@@ -157,7 +157,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           style={{
             paddingHorizontal: s(12),
             paddingVertical: mvs(12),
-            backgroundColor: "rgba(255, 255, 255, 0.15)",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
             borderRadius: s(100),
             position: "absolute",
             top: mvs(8),

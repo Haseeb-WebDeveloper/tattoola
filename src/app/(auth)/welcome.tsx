@@ -1,212 +1,257 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { mvs, s, scaledFont, scaledVSize } from "@/utils/scale";
+import { mvs, s, scaledFont } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-} from "react-native";
+import { VideoView, useVideoPlayer } from "expo-video";
+import React from "react";
+import { KeyboardAvoidingView, Platform, Pressable, View } from "react-native";
 
 export default function WelcomeScreen() {
-  const [contentHeight, setContentHeight] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(0);
-
-  // Only allow bouncing if content exceeds viewport
-  const shouldBounce = contentHeight > viewportHeight && Platform.OS === "ios";
+  // Video player setup - autoplay, muted, looping
+  const videoSource = require("@/assets/images/tattoo.mp4");
+  const videoPlayer = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={{ flex: 1, backgroundColor: "#000" }}
+      style={{ flex: 1 }}
       keyboardVerticalOffset={0}
     >
-      <View style={{ flex: 1 }}>
-        <ScrollView
-          className="flex-1 bg-transparent"
-          contentContainerStyle={{ flexGrow: 1 }}
-          style={{ zIndex: 1 }}
-          showsVerticalScrollIndicator={false}
-          bounces={shouldBounce}
-          onContentSizeChange={(width, height) => {
-            setContentHeight(height);
+      <View style={{ flex: 1, position: "relative" }}>
+        <VideoView
+          player={videoPlayer}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100%",
+            height: "100%",
           }}
-          onLayout={(event) => {
-            const { height } = event.nativeEvent.layout;
-            setViewportHeight(height);
+          contentFit="cover"
+          nativeControls={false}
+        />
+
+        <LinearGradient
+          colors={["rgba(0, 0, 0, 0.4)", "rgba(0, 0, 0, 0.2)", "transparent"]}
+          locations={[0, 0.3, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "30%",
+          }}
+          pointerEvents="none"
+        />
+
+        {/* Dark background overlay for bottom section (buttons area) */}
+        <LinearGradient
+          colors={["#0A020200", "#0A0101", "#0A0101"]}
+          locations={[0.1, 0.5, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "75%",
+          }}
+          pointerEvents="none"
+        />
+
+        <View
+          style={{
+            flex: 1,
+            position: "relative",
+            paddingHorizontal: s(24),
           }}
         >
-          {/* Hero image */}
-          <View className="relative">
-            {/* Top logo */}
+          {/* Top logo and tagline */}
+          <View
+            style={{
+              position: "absolute",
+              top: mvs(40),
+              left: 0,
+              right: 0,
+              alignItems: "center",
+              zIndex: 10,
+            }}
+          >
+            {/* Logo */}
             <View
-              className="flex items-center justify-center w-full h-fit"
-              style={{ height: mvs(100) }}
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: mvs(4),
+              }}
             >
-              {/* <SVGIcons.Logo /> */}
+              <SVGIcons.Logo height={s(50)} />
             </View>
-
-            <View className="relative w-full">
-              <Image
-                source={require("@/assets/auth/welcome-screen.jpg")}
-                className="w-full"
-                resizeMode="cover"
-                style={{ height: scaledVSize(200) }}
-              />
-              {/* Top-bottom fade gradient overlay */}
-              <LinearGradient
-                colors={["#000000", "transparent", "transparent", "#000000"]}
-                locations={[0, 0.25, 0.75, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                className="absolute top-0 bottom-0 left-0 right-0 z-10 w-full"
-                style={{
-                  height: scaledVSize(200),
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                }}
-                pointerEvents="none"
-              />
-              {/* Headline overlay */}
-              <View
-                className="absolute left-0 right-0 z-20 p-6"
-                style={{ top: mvs(-70) }}
-              >
-                {/* Top logo */}
-                <View
-                  className="flex items-center justify-center w-full h-fit"
-                  style={{ height: mvs(55) }}
-                >
-                  <SVGIcons.Logo height={s(50)} />
-                </View>
-                <ScaledText
-                  allowScaling={false}
-                  // variant="lg"
-                  className="text-center text-foreground font-montserratBold"
-                  style={{ fontSize: scaledFont(18) }}
-                >
-                  Dove i tatuaggi incontrano le loro storie.
-                </ScaledText>
-              </View>
-            </View>
+            {/* Tagline */}
+            <ScaledText
+              variant="lg"
+              allowScaling={false}
+              className="text-center text-white font-neueLight"
+            >
+              Dove i tatuaggi incontrano le loro storie.
+            </ScaledText>
           </View>
 
-          {/* CTA section text */}
-          <View className="flex-1 px-6 pt-3 bg-black">
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="mb-2 text-center font-montserratMediumItalic"
-              style={{ color: "#A49A99" }}
+          {/* Bottom CTA section - positioned at bottom */}
+          <View
+            style={{
+              position: "absolute",
+              bottom: mvs(16),
+              left: s(24),
+              right: s(24),
+              alignItems: "center",
+              zIndex: 10,
+
+              borderRadius: 0,
+              paddingVertical: mvs(20),
+              paddingHorizontal: s(16),
+            }}
+          >
+            {/* Artist Sign up button */}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/(auth)/artist-register")}
+              style={{
+                backgroundColor: "rgba(174, 14, 14, 0.2)",
+                borderWidth: 1,
+                borderColor: "#AE0E0E",
+                borderRadius: 62,
+                paddingVertical: mvs(15),
+                paddingHorizontal: s(33),
+                flexDirection: "row",
+                alignItems: "center",
+                // width: s(211),
+                justifyContent: "center",
+                marginBottom: mvs(20),
+              }}
             >
-              Crea un profilo per mostrare i tuoi lavori
-            </ScaledText>
-
-            {/* Artist Sign up */}
-            <View className="flex items-center justify-center mb-10">
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push("/(auth)/artist-register")}
-                className="flex-row items-center rounded-full bg-primary"
-                style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
-              >
-                <ScaledText
-                  variant="lg"
-                  allowScaling={false}
-                  className="text-foreground font-neueBold"
-                >
-                  Registrati come artista
-                </ScaledText>
-                <SVGIcons.Pen3
-                  className="w-6 h-6 ml-2"
-                  style={{ width: s(24), height: s(24), marginLeft: s(8) }}
-                />
-              </Pressable>
-            </View>
-
-            {/* OR */}
-            <View className="flex-row items-center justify-center">
-              <View className="flex-1 bg-gray/80 " style={{ height: s(0.5) }} />
               <ScaledText
                 allowScaling={false}
-                variant="sm"
-                className="mx-4 text-gray font-montserratMedium"
+                className="text-white font-neueMedium"
+                style={{ fontSize: scaledFont(16), lineHeight: 23 }}
+              >
+                Registrati come artista{" "}
+              </ScaledText>
+              <SVGIcons.Pen3
+                style={{ width: s(24), height: s(18.63), marginLeft: s(8) }}
+              />
+            </Pressable>
+
+            {/* OR separator */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                marginBottom: mvs(20),
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  height: s(0.5),
+                  backgroundColor: "#A49A99",
+                  marginRight: s(8),
+                }}
+              />
+              <ScaledText
+                allowScaling={false}
+                className="text-gray font-montserratRegular"
+                style={{
+                  fontSize: scaledFont(14),
+                  lineHeight: 23,
+                  color: "#A49A99",
+                  marginHorizontal: s(8),
+                }}
               >
                 OPPURE
               </ScaledText>
-              <View className="flex-1 bg-gray/80" style={{ height: s(0.5) }} />
-            </View>
-
-            {/* User Sign up text*/}
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="mt-6 text-center  font-montserratMediumItalic"
-              style={{ color: "#A49A99" }}
-            >
-              Scopri e connettiti con gli artisti
-            </ScaledText>
-
-            {/* User Sign up button */}
-            <View className="flex items-center justify-center mt-2">
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push("/(auth)/register")}
-                className="flex-row items-center rounded-full bg-primary"
-                style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
-              >
-                <ScaledText
-                  variant="lg"
-                  allowScaling={false}
-                  className="text-foreground font-neueBold"
-                >
-                  Registrati come utente
-                </ScaledText>
-                <SVGIcons.UserFilled
-                  className="ml-2"
-                  style={{ width: s(30), height: s(30), marginLeft: s(8) }}
-                />
-              </Pressable>
-            </View>
-
-            {/* Divider */}
-            <View className="items-center w-full mx-auto ">
               <View
                 style={{
+                  flex: 1,
                   height: s(0.5),
-                  width: "40%",
                   backgroundColor: "#A49A99",
-                  marginVertical: mvs(30),
+                  marginLeft: s(8),
                 }}
               />
             </View>
 
-            <View className="items-center mb-10">
+            {/* User Sign up button */}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/(auth)/register")}
+              style={{
+                backgroundColor: "rgba(174, 14, 14, 0.2)",
+                borderWidth: 1,
+                borderColor: "#AE0E0E",
+                borderRadius: 62,
+                paddingVertical: mvs(15),
+                paddingHorizontal: s(38),
+                flexDirection: "row",
+                alignItems: "center",
+                // width: s(211),
+                justifyContent: "center",
+                marginBottom: mvs(30),
+              }}
+            >
               <ScaledText
                 allowScaling={false}
-                variant="md"
-                className="text-gray font-montserratMedium"
+                className="text-white font-neueMedium"
+                style={{ fontSize: scaledFont(16), lineHeight: 23 }}
               >
-                Hai già un account?{" "}
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-montserratSemibold"
-                  onPress={() => router.push("/(auth)/login")}
-                >
-                  Accedi
-                </ScaledText>
+                Registrati come utente{" "}
               </ScaledText>
-            </View>
+              <SVGIcons.UserFilled
+                style={{
+                  width: s(17.89),
+                  height: s(8.41),
+                  marginLeft: s(8),
+                }}
+              />
+            </Pressable>
+
+            {/* Sign in link */}
+            <ScaledText
+              allowScaling={false}
+              className="text-gray font-montserratMedium"
+              style={{
+                fontSize: scaledFont(14),
+                lineHeight: 23,
+                color: "#A49A99",
+                textAlign: "center",
+              }}
+            >
+              Hai già un account?{" "}
+              <ScaledText
+                allowScaling={false}
+                className="text-white font-montserratBold"
+                style={{
+                  fontSize: scaledFont(14),
+                  lineHeight: 23,
+                }}
+                onPress={() => router.push("/(auth)/login")}
+              >
+                Accedi
+              </ScaledText>
+            </ScaledText>
           </View>
-        </ScrollView>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

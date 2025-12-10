@@ -31,6 +31,8 @@ export default function StudioOverview({
   website,
 }: StudioOverviewProps) {
   const ownerName = [ownerFirstName, ownerLastName].filter(Boolean).join(" ");
+  const studioName = name || "Studio";
+  const isLongName = studioName.length > 18;
 
   const openUrl = (url?: string | null) => {
     if (!url) return;
@@ -72,9 +74,15 @@ export default function StudioOverview({
       className="bg-background"
     >
       {/* Top: Logo + Name */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: s(12) }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: isLongName ? "flex-start" : "center",
+          gap: s(12),
+        }}
+      >
         <View
-          className="rounded-full border border-black overflow-hidden"
+          className="overflow-hidden border border-black rounded-full"
           style={{ width: s(92), height: s(92) }}
         >
           {logo ? (
@@ -88,13 +96,16 @@ export default function StudioOverview({
           )}
         </View>
 
-        <ScaledText
-          allowScaling={false}
-          variant="2xl"
-          className="text-foreground font-neueBold leading-tight"
-        >
-          {name || "Studio"}
-        </ScaledText>
+        <View style={{ flex: 1, flexShrink: 1 }}>
+          <ScaledText
+            allowScaling={false}
+            variant="2xl"
+            className="leading-tight text-foreground font-neueBold"
+            numberOfLines={isLongName ? 2 : 1}
+          >
+            {studioName}
+          </ScaledText>
+        </View>
       </View>
 
       {/* Bottom: two columns */}
