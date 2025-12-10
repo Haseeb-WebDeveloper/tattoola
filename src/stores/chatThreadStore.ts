@@ -56,21 +56,44 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       // Database returns newest first, reverse to get oldest first for display
       const list = (items || []).slice().reverse();
       
+      // Normalize message type field (database uses messageType, UI uses type)
+      list.forEach((m: any) => {
+        if (m.messageType && !m.type) {
+          m.type = m.messageType;
+        }
+      });
       
-      // Fetch receipts for messages in this conversation
+      
+      // Fetch receipts for messages sent by current user (to see if receiver read them)
       if (userId) {
-        const messageIds = list.map((m: any) => m.id).filter(Boolean);
-        if (messageIds.length > 0) {
+        // Only get message IDs for messages sent by current user
+        const sentMessageIds = list
+          .filter((m: any) => m.senderId === userId)
+          .map((m: any) => m.id)
+          .filter(Boolean);
+        
+        if (sentMessageIds.length > 0) {
           const { data: receipts } = await supabase
             .from("message_receipts")
             .select("messageId, status")
-            .in("messageId", messageIds)
-            .neq("userId", userId); // Get receipts from other users
+            .in("messageId", sentMessageIds)
+            .neq("userId", userId); // Get receipts from other users (the receiver)
           
           // Map receipts to messages
           const receiptMap = new Map(receipts?.map(r => [r.messageId, r.status]) || []);
           list.forEach((m: any) => {
-            m.receiptStatus = receiptMap.get(m.id) || 'DELIVERED';
+            // Only set receiptStatus for messages sent by current user
+            if (m.senderId === userId) {
+              m.receiptStatus = receiptMap.get(m.id) || 'DELIVERED';
+            } else {
+              // For received messages, receiptStatus is not used (we use isRead instead)
+              m.receiptStatus = 'DELIVERED';
+            }
+          });
+        } else {
+          // No sent messages, set default receiptStatus
+          list.forEach((m: any) => {
+            m.receiptStatus = 'DELIVERED';
           });
         }
       }
@@ -113,20 +136,43 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     const { items, nextCursor } = await fetchMessagesPage(conversationId, cursor, deletedAt);
     const older = (items || []).slice().reverse();
     
+    // Normalize message type field (database uses messageType, UI uses type)
+    older.forEach((m: any) => {
+      if (m.messageType && !m.type) {
+        m.type = m.messageType;
+      }
+    });
     
-    // Fetch receipts for older messages
+    
+    // Fetch receipts for older messages sent by current user
     if (userId) {
-      const messageIds = older.map((m: any) => m.id).filter(Boolean);
-      if (messageIds.length > 0) {
+      // Only get message IDs for messages sent by current user
+      const sentMessageIds = older
+        .filter((m: any) => m.senderId === userId)
+        .map((m: any) => m.id)
+        .filter(Boolean);
+      
+      if (sentMessageIds.length > 0) {
         const { data: receipts } = await supabase
           .from("message_receipts")
           .select("messageId, status")
-          .in("messageId", messageIds)
-          .neq("userId", userId);
+          .in("messageId", sentMessageIds)
+          .neq("userId", userId); // Get receipts from other users (the receiver)
         
         const receiptMap = new Map(receipts?.map(r => [r.messageId, r.status]) || []);
         older.forEach((m: any) => {
-          m.receiptStatus = receiptMap.get(m.id) || 'DELIVERED';
+          // Only set receiptStatus for messages sent by current user
+          if (m.senderId === userId) {
+            m.receiptStatus = receiptMap.get(m.id) || 'DELIVERED';
+          } else {
+            // For received messages, receiptStatus is not used (we use isRead instead)
+            m.receiptStatus = 'DELIVERED';
+          }
+        });
+      } else {
+        // No sent messages, set default receiptStatus
+        older.forEach((m: any) => {
+          m.receiptStatus = 'DELIVERED';
         });
       }
     }
@@ -159,8 +205,10 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
       id: clientId,
       conversationId,
       senderId,
-      content: text || mediaUrl || "",
-      messageType: type,
+      content: text || "", // Only put text in content, never put mediaUrl here
+      messageType: type, // Database field name
+      type: type, // UI field name (used by MessageItem component)
+      mediaUrl: mediaUrl || null, // Set mediaUrl separately so image renders correctly
       createdAt: new Date().toISOString(),
       _optimistic: true,
       receiptStatus: 'DELIVERED',
@@ -222,6 +270,11 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           return;
         }
         
+        // Normalize message type field (database uses messageType, UI uses type)
+        if (row.messageType && !row.type) {
+          row.type = row.messageType;
+        }
+        
         // Fetch receipt status for this message if current user is available
         const currentUserId = get().currentUserId || userId;
         if (currentUserId && row.senderId === currentUserId) {
@@ -273,6 +326,7 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
     });
     
     // Subscribe to receipt updates
+    // Note: message_receipts doesn't have conversationId, so we verify message belongs to this conversation
     const receiptChannel = supabase
       .channel(`receipts-${conversationId}`)
       .on(
@@ -282,19 +336,49 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           schema: "public",
           table: "message_receipts",
         },
-        (payload) => {
-          const { messageId, status } = payload.new as any;
-          // Update the receipt status for this message
-          set((s) => {
-            const messages = s.messagesByConv[conversationId] || [];
-            const updated = messages.map((m: any) =>
-              m.id === messageId ? { ...m, receiptStatus: status } : m
-            );
-            return {
-              messagesByConv: { ...s.messagesByConv, [conversationId]: updated },
-            };
-          });
-          saveJSON(KEY, { messagesByConv: get().messagesByConv });
+        async (payload) => {
+          const { messageId, status, userId: receiptUserId } = payload.new as any;
+          const currentUserId = get().currentUserId || userId;
+          
+          // Only process receipts from other users (not our own)
+          if (receiptUserId === currentUserId) return;
+          
+          // Verify this message belongs to this conversation and was sent by current user
+          // Only update receipt status for messages we sent (to see if peer read them)
+          const messages = get().messagesByConv[conversationId] || [];
+          const message = messages.find((m: any) => m.id === messageId);
+          
+          // If message is in local state and was sent by current user, update immediately
+          if (message && message.senderId === currentUserId) {
+            set((s) => {
+              const messages = s.messagesByConv[conversationId] || [];
+              const updated = messages.map((m: any) =>
+                m.id === messageId ? { ...m, receiptStatus: status } : m
+              );
+              return {
+                messagesByConv: { ...s.messagesByConv, [conversationId]: updated },
+              };
+            });
+            saveJSON(KEY, { messagesByConv: get().messagesByConv });
+            return;
+          }
+          
+          // If message not in local state, verify it belongs to this conversation via DB query
+          // This handles cases where receipt update arrives before message is loaded
+          if (!message) {
+            const { data: msgData } = await supabase
+              .from("messages")
+              .select("id, conversationId, senderId")
+              .eq("id", messageId)
+              .eq("conversationId", conversationId)
+              .maybeSingle();
+            
+            if (msgData && msgData.senderId === currentUserId) {
+              // Message belongs to this conversation and was sent by us
+              // Refresh receipts to update all messages, including this one when it loads
+              get().refreshReceipts(conversationId, currentUserId).catch(console.error);
+            }
+          }
         }
       )
       .subscribe();
@@ -310,22 +394,16 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
           table: "messages",
           filter: `conversationId=eq.${conversationId}`,
         },
-        (payload) => {
+        async (payload) => {
           const updatedMessage = payload.new as any;
           const currentUserId = get().currentUserId || userId;
           
           // Update the message with new data (including isRead)
-          // If message is now read AND it was sent BY current user, update receiptStatus too
           set((s) => {
             const messages = s.messagesByConv[conversationId] || [];
             const updated = messages.map((m: any) => {
               if (m.id === updatedMessage.id) {
-                const newData: any = { ...m, isRead: updatedMessage.isRead };
-                // If this message was SENT by me and it's now read, update receiptStatus
-                if (updatedMessage.isRead && m.senderId === currentUserId) {
-                  newData.receiptStatus = 'READ';
-                }
-                return newData;
+                return { ...m, isRead: updatedMessage.isRead };
               }
               return m;
             });
@@ -334,6 +412,37 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
             };
           });
           saveJSON(KEY, { messagesByConv: get().messagesByConv });
+          
+          // If message is now read AND it was sent BY current user, refresh receipt status
+          // This ensures receipt status is updated when peer reads the message
+          if (updatedMessage.isRead) {
+            const messages = get().messagesByConv[conversationId] || [];
+            const message = messages.find((m: any) => m.id === updatedMessage.id);
+            if (message && message.senderId === currentUserId) {
+              // Fetch the actual receipt status from message_receipts table
+              const { data: receipt } = await supabase
+                .from("message_receipts")
+                .select("status")
+                .eq("messageId", updatedMessage.id)
+                .neq("userId", currentUserId)
+                .maybeSingle();
+              
+              if (receipt) {
+                set((s) => {
+                  const messages = s.messagesByConv[conversationId] || [];
+                  const updated = messages.map((msg: any) =>
+                    msg.id === updatedMessage.id
+                      ? { ...msg, receiptStatus: receipt.status }
+                      : msg
+                  );
+                  return {
+                    messagesByConv: { ...s.messagesByConv, [conversationId]: updated },
+                  };
+                });
+                saveJSON(KEY, { messagesByConv: get().messagesByConv });
+              }
+            }
+          }
         }
       )
       .subscribe();
@@ -359,7 +468,14 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   async markRead(conversationId, userId) {
     const list = get().messagesByConv[conversationId] || [];
     const newest = list[list.length - 1];
-    if (newest?.id) await markReadUpTo(conversationId, userId, newest.id);
+    if (newest?.id) {
+      await markReadUpTo(conversationId, userId, newest.id);
+      // Refresh receipts after marking as read to catch any updates
+      // This ensures receipt status is updated even if subscription missed it
+      setTimeout(() => {
+        get().refreshReceipts(conversationId, userId).catch(console.error);
+      }, 500);
+    }
   },
   setTyping(conversationId, isTyping) {
     const channel = getTypingChannel(conversationId);
@@ -372,23 +488,35 @@ export const useChatThreadStore = create<ThreadState>((set, get) => ({
   },
   async refreshReceipts(conversationId, userId) {
     const messages = get().messagesByConv[conversationId] || [];
-    const messageIds = messages.map((m: any) => m.id).filter(Boolean);
+    // Only get message IDs for messages sent by current user (we only care about receipts for our sent messages)
+    const sentMessageIds = messages
+      .filter((m: any) => m.senderId === userId)
+      .map((m: any) => m.id)
+      .filter(Boolean);
     
-    if (messageIds.length === 0) return;
+    if (sentMessageIds.length === 0) return;
     
+    // Fetch receipts from the receiver (the other user) for messages we sent
     const { data: receipts } = await supabase
       .from("message_receipts")
       .select("messageId, status")
-      .in("messageId", messageIds)
-      .neq("userId", userId);
+      .in("messageId", sentMessageIds)
+      .neq("userId", userId); // Get receipts from other users (the receiver)
     
     const receiptMap = new Map(receipts?.map(r => [r.messageId, r.status]) || []);
     
     set((s) => {
-      const updated = messages.map((m: any) => ({
-        ...m,
-        receiptStatus: receiptMap.get(m.id) || m.receiptStatus || 'DELIVERED',
-      }));
+      const updated = messages.map((m: any) => {
+        // Only update receiptStatus for messages sent by current user
+        if (m.senderId === userId) {
+          return {
+            ...m,
+            receiptStatus: receiptMap.get(m.id) || 'DELIVERED',
+          };
+        }
+        // For received messages, keep existing receiptStatus (not used, but preserve it)
+        return m;
+      });
       return {
         messagesByConv: { ...s.messagesByConv, [conversationId]: updated },
       };

@@ -202,4 +202,15 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
   },
 }));
 
+// Selector hook to get total unread count across all conversations
+export const useTotalUnreadCount = () => {
+  return useChatInboxStore((state) => {
+    const conversations = Object.values(state.conversationsById);
+    return conversations.reduce((total, conv) => {
+      const unreadCount = conv?.unreadCount || 0;
+      return total + (unreadCount > 0 ? unreadCount : 0);
+    }, 0);
+  });
+};
+
 

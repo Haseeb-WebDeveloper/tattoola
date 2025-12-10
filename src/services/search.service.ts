@@ -25,6 +25,14 @@ export async function searchArtists({
   error?: string;
 }> {
   try {
+    console.log("[searchArtists] Starting search with filters:", {
+      styleIds: filters.styleIds.length,
+      serviceIds: filters.serviceIds.length,
+      provinceId: filters.provinceId,
+      municipalityId: filters.municipalityId,
+      page,
+    });
+
     // Build the query
     let query = supabase
       .from("artist_profiles")
@@ -33,8 +41,10 @@ export async function searchArtists({
         id,
         userId,
         businessName,
+        studioAddress,
         yearsExperience,
         isStudioOwner,
+        workArrangement,
         portfolioComplete,
         user:users!inner(
           id,
@@ -117,13 +127,16 @@ export async function searchArtists({
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error searching artists:", error);
+      console.error("[searchArtists] Query error:", error);
       return { data: [], hasMore: false, error: error.message };
     }
 
+    console.log(`[searchArtists] Fetched ${data?.length || 0} artists from database`);
+
     // Transform the data and filter to only include artists with active subscriptions
-    const artists: ArtistSearchResult[] = (data || [])
-      .map((artist: any) => {
+    // For artists missing businessName or studioAddress, fetch from studio membership as fallback
+    const artistsWithFallback = await Promise.all(
+      (data || []).map(async (artist: any) => {
         const primaryLocation = artist.user?.locations?.find(
           (loc: any) => loc.isPrimary
         );
@@ -138,6 +151,153 @@ export async function searchArtists({
           return null;
         }
 
+        // Use businessName and studioAddress from artist profile (already fetched)
+        let businessName = artist.businessName;
+        let studioAddress = artist.studioAddress;
+
+        // Log if studioAddress exists
+        if (studioAddress) {
+          console.log(`[searchArtists] Artist ${artist.userId} has studioAddress from profile: ${studioAddress.substring(0, 50)}...`);
+        }
+
+        // Fallback: If businessName, studioAddress, or workArrangement is missing, query studio membership
+        let studioMembershipData: any = null;
+        let studioAddressFromStudio: string | null = null; // Store studio address separately for location fallback
+        const needsFallback = (!businessName || !studioAddress || !artist.workArrangement);
+        if (needsFallback && artist.userId) {
+          console.log(`[searchArtists] Fetching studio fallback for artist ${artist.userId} (missing: businessName=${!businessName}, studioAddress=${!studioAddress}, workArrangement=${!artist.workArrangement})`);
+          const { data: studioMembership } = await supabase
+            .from("studio_members")
+            .select(
+              `
+              studio:studios(
+                id,
+                name,
+                locations:studio_locations(
+                  address,
+                  isPrimary
+                )
+              )
+            `
+            )
+            .eq("userId", artist.userId)
+            .eq("status", "ACCEPTED")
+            .eq("isActive", true)
+            .maybeSingle();
+
+          studioMembershipData = studioMembership;
+
+          if (studioMembership?.studio) {
+            const studio = studioMembership.studio as any;
+            // Only use studio data if artist profile doesn't have it
+            if (!businessName && studio.name) {
+              businessName = studio.name;
+            }
+            if (!studioAddress && studio.locations) {
+              const primaryStudioLocation = studio.locations.find(
+                (loc: any) => loc.isPrimary
+              );
+              if (primaryStudioLocation?.address) {
+                studioAddress = primaryStudioLocation.address;
+              }
+            }
+            // Always extract studio address for location fallback (even if studioAddress from profile exists)
+            if (studio.locations) {
+              const primaryStudioLocation = studio.locations.find(
+                (loc: any) => loc.isPrimary
+              );
+              if (primaryStudioLocation?.address) {
+                studioAddressFromStudio = primaryStudioLocation.address;
+              }
+            }
+          }
+        } else if (artist.userId) {
+          // Even if we don't need fallback for businessName/workArrangement, still check for studio address as location fallback
+          const { data: studioMembership } = await supabase
+            .from("studio_members")
+            .select(
+              `
+              studio:studios(
+                locations:studio_locations(
+                  address,
+                  isPrimary
+                )
+              )
+            `
+            )
+            .eq("userId", artist.userId)
+            .eq("status", "ACCEPTED")
+            .eq("isActive", true)
+            .maybeSingle();
+
+          if (studioMembership?.studio?.locations) {
+            const primaryStudioLocation = studioMembership.studio.locations.find(
+              (loc: any) => loc.isPrimary
+            );
+            if (primaryStudioLocation?.address) {
+              studioAddressFromStudio = primaryStudioLocation.address;
+            }
+          }
+        }
+
+        // Get workArrangement from artist profile, fallback to studio membership if needed
+        let workArrangement = artist.workArrangement as "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | null;
+        
+        // Fallback: If workArrangement is missing, try to infer from studio membership
+        if (!workArrangement) {
+          // If isStudioOwner is true, set to STUDIO_OWNER
+          if (artist.isStudioOwner) {
+            workArrangement = "STUDIO_OWNER";
+          } else if (studioMembershipData || businessName) {
+            // If has studio membership or businessName, likely employee
+            workArrangement = "STUDIO_EMPLOYEE";
+          }
+        }
+
+        // Build location object - Priority: studioAddress (profile) > primaryLocation.address > studioAddress (from studio)
+        const locationAddress = studioAddress || primaryLocation?.address || studioAddressFromStudio || null;
+        
+        // Create location object with priority: studioAddress (profile) > primaryLocation > studioAddress (from studio)
+        let location = null;
+        if (studioAddress) {
+          // Priority 1: Use studioAddress from artist profile
+          const anyLocation = primaryLocation || artist.user?.locations?.[0];
+          location = {
+            province: anyLocation?.province?.name || "",
+            municipality: anyLocation?.municipality?.name || "",
+            address: studioAddress, // Always use studioAddress from profile when available
+          };
+        } else if (primaryLocation?.address) {
+          // Priority 2: Use primaryLocation address if studioAddress from profile is not available
+          location = {
+            province: primaryLocation.province?.name || "",
+            municipality: primaryLocation.municipality?.name || "",
+            address: primaryLocation.address,
+          };
+        } else if (studioAddressFromStudio) {
+          // Priority 3: Use studio address from linked studio as fallback
+          const anyLocation = primaryLocation || artist.user?.locations?.[0];
+          location = {
+            province: anyLocation?.province?.name || "",
+            municipality: anyLocation?.municipality?.name || "",
+            address: studioAddressFromStudio,
+          };
+        } else if (primaryLocation) {
+          // Fallback: Use primaryLocation even without address (for province/municipality)
+          location = {
+            province: primaryLocation.province?.name || "",
+            municipality: primaryLocation.municipality?.name || "",
+            address: null,
+          };
+        }
+
+        // Log address usage for debugging
+        if (studioAddress) {
+          const usedStudioAddress = !primaryLocation?.address && locationAddress === studioAddress;
+          const hasLocation = location !== null;
+          console.log(`[searchArtists] Artist ${artist.userId}: studioAddress=${studioAddress.substring(0, 30)}..., primaryLocation=${primaryLocation ? 'exists' : 'null'}, primaryLocation.address=${primaryLocation?.address || 'null'}, final location=${hasLocation ? 'created' : 'null'}, final address=${location?.address ? location.address.substring(0, 30) + '...' : 'null'}, usedStudioAddress=${usedStudioAddress}`);
+        }
+
         return {
           id: artist.id,
           userId: artist.userId,
@@ -145,16 +305,11 @@ export async function searchArtists({
             username: artist.user?.username || "",
             avatar: artist.user?.avatar || null,
           },
-          businessName: artist.businessName,
+          businessName: businessName,
           yearsExperience: artist.yearsExperience,
           isStudioOwner: artist.isStudioOwner,
-          location: primaryLocation
-            ? {
-                province: primaryLocation.province?.name || "",
-                municipality: primaryLocation.municipality?.name || "",
-                address: primaryLocation.address,
-              }
-            : null,
+          workArrangement: workArrangement,
+          location: location,
           styles:
             artist.styles
               ?.sort((a: any, b: any) => {
@@ -188,7 +343,15 @@ export async function searchArtists({
           isVerified: artist.user?.isVerified || false,
         };
       })
-      .filter((artist): artist is ArtistSearchResult => artist !== null);
+    );
+
+    const artists: ArtistSearchResult[] = artistsWithFallback.filter(
+      (artist): artist is ArtistSearchResult => artist !== null
+    );
+
+    const artistsWithAddress = artists.filter(a => a.location?.address);
+    const artistsWithStudioAddress = (data || []).filter((a: any) => a.studioAddress);
+    console.log(`[searchArtists] Returning ${artists.length} artists (${artists.filter(a => a.workArrangement).length} with workArrangement, ${artists.filter(a => a.businessName).length} with businessName, ${artistsWithAddress.length} with address in location, ${artistsWithStudioAddress.length} with studioAddress in profile)`);
 
     return {
       data: artists,

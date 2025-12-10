@@ -302,6 +302,7 @@ export default function ProfileScreen() {
               businessName={artistData?.artistProfile?.businessName}
               municipality={artistData?.location?.municipality?.name}
               province={artistData?.location?.province?.name}
+              address={artistData?.location?.address}
               workArrangement={
                 artistData?.artistProfile?.workArrangement as WorkArrangement
               }

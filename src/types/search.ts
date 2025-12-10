@@ -10,6 +10,7 @@ export type ArtistSearchResult = {
   businessName: string | null;
   yearsExperience: number | null;
   isStudioOwner: boolean;
+  workArrangement: "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | null;
   location: {
     province: string;
     municipality: string;

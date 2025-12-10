@@ -247,6 +247,13 @@ export async function reorderCollectionPosts(
   collectionId: string, 
   postIds: string[]
 ): Promise<void> {
+  // Remove duplicates from postIds array
+  const uniquePostIds = Array.from(new Set(postIds));
+  
+  if (uniquePostIds.length !== postIds.length) {
+    console.warn(`Removed ${postIds.length - uniquePostIds.length} duplicate postIds before reordering`);
+  }
+  
   // Since we don't have an order field in collection_posts, we'll delete and re-insert
   // This is not ideal for performance but works for now
   const { error: deleteError } = await supabase
@@ -256,11 +263,11 @@ export async function reorderCollectionPosts(
 
   if (deleteError) throw new Error(deleteError.message);
 
-  if (postIds.length > 0) {
+  if (uniquePostIds.length > 0) {
     const { error: insertError } = await supabase
       .from("collection_posts")
       .insert(
-        postIds.map((postId, index) => ({
+        uniquePostIds.map((postId, index) => ({
           id: uuidv4(), // Generate UUID for the id field
           collectionId,
           postId,
@@ -322,6 +329,18 @@ export async function addPostsToCollection(collectionId: string, postIds: string
         addedAt: new Date().toISOString(),
       }))
     );
+
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Delete a collection
+ */
+export async function deleteCollection(collectionId: string): Promise<void> {
+  const { error } = await supabase
+    .from("collections")
+    .delete()
+    .eq("id", collectionId);
 
   if (error) throw new Error(error.message);
 }

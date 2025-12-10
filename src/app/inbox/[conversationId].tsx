@@ -51,6 +51,7 @@ export default function ChatThreadScreen() {
     id?: string;
   } | null>(null);
   const [conv, setConv] = useState<any>(null);
+  const [loadingPeer, setLoadingPeer] = useState(true);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [menuModalVisible, setMenuModalVisible] = useState(false);
@@ -90,7 +91,12 @@ export default function ChatThreadScreen() {
       try {
         await loadLatest(conversationId, user.id);
         subscribe(conversationId, user.id);
-      } catch (e) {}
+        // Refresh receipts immediately after loading to ensure they're up to date
+        // This fixes the issue where inbox shows green tick but thread shows grey tick
+        await refreshReceipts(conversationId, user.id);
+      } catch (e) {
+        console.error("Error loading conversation:", e);
+      }
     })();
 
     return () => {
@@ -103,6 +109,7 @@ export default function ChatThreadScreen() {
   useEffect(() => {
     (async () => {
       if (!conversationId || !user?.id) return;
+      setLoadingPeer(true);
       try {
         const c = await fetchConversationByIdWithPeer(user.id, conversationId);
         if (c) {
@@ -117,6 +124,9 @@ export default function ChatThreadScreen() {
           setConv(c);
         }
       } catch {}
+      finally {
+        setLoadingPeer(false);
+      }
     })();
   }, [conversationId, user?.id]);
 
@@ -130,6 +140,17 @@ export default function ChatThreadScreen() {
 
     return () => clearTimeout(timer);
   }, [conversationId, user?.id, messages.length]);
+
+  // Periodic receipt refresh to catch any missed updates
+  useEffect(() => {
+    if (!conversationId || !user?.id) return;
+
+    const interval = setInterval(() => {
+      refreshReceipts(conversationId, user.id).catch(console.error);
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [conversationId, user?.id, refreshReceipts]);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
@@ -335,47 +356,73 @@ export default function ChatThreadScreen() {
           >
             <SVGIcons.CircleChevronRIght width={s(34)} height={s(34)} />
           </TouchableOpacity>
-          <View
-            className="flex-row items-center"
-            style={{
-              gap: s(12),
-            }}
-          >
-            <View className="relative">
-              <Image
-                source={{
-                  uri:
-                    peer?.avatar ||
-                    `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0]}`,
-                }}
-                className="rounded-full"
+          {loadingPeer ? (
+            <View
+              className="flex-row items-center"
+              style={{
+                gap: s(12),
+              }}
+            >
+              {/* Avatar Skeleton */}
+              <View
+                className="rounded-full bg-gray/20"
                 style={{
                   width: s(36),
                   height: s(36),
                 }}
               />
-              {conv?.status === "BLOCKED" && (
-                <View
-                  className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
+              {/* Name Skeleton */}
+              <View
+                className="bg-gray/20 rounded"
+                style={{
+                  width: s(120),
+                  height: mvs(16),
+                }}
+              />
+            </View>
+          ) : (
+            <View
+              className="flex-row items-center"
+              style={{
+                gap: s(12),
+              }}
+            >
+              <View className="relative">
+                <Image
+                  source={{
+                    uri:
+                      peer?.avatar ||
+                      `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0] || "User"}`,
+                  }}
+                  className="rounded-full"
                   style={{
                     width: s(36),
                     height: s(36),
-                    top: 0,
-                    left: 0,
                   }}
-                >
-                  <SVGIcons.Locked width={s(16)} height={s(16)} />
-                </View>
-              )}
-            </View>
+                />
+                {conv?.status === "BLOCKED" && (
+                  <View
+                    className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
+                    style={{
+                      width: s(36),
+                      height: s(36),
+                      top: 0,
+                      left: 0,
+                    }}
+                  >
+                    <SVGIcons.Locked width={s(16)} height={s(16)} />
+                  </View>
+                )}
+              </View>
 
-            <ScaledText
-              variant="md"
-              className="text-foreground font-montserratMedium"
-            >
-              {TrimText(peer?.name || "", 18)}
-            </ScaledText>
-          </View>
+              <ScaledText
+                variant="md"
+                className="text-foreground font-montserratMedium"
+              >
+                {TrimText(peer?.name || "Utente", 18)}
+              </ScaledText>
+            </View>
+          )}
           <TouchableOpacity
             onPress={() => setMenuModalVisible(true)}
             className="rounded-full  items-end justify-center"
@@ -651,17 +698,24 @@ export default function ChatThreadScreen() {
                 className="items-center justify-center rounded-full"
                 style={{
                   paddingBottom: mvs(4),
+                  width: s(32),
+                  height: s(32),
                 }}
               >
                 {uploading ? (
-                  <SVGIcons.Loading
-                    width={s(20)}
-                    height={s(20)}
-                    color="animate-spin"
+                  <View
+                    className="items-center justify-center"
                     style={{
-                      paddingBottom: mvs(4),
+                      width: s(20),
+                      height: s(20),
                     }}
-                  />
+                  >
+                    <SVGIcons.Loading
+                      width={s(20)}
+                      height={s(20)}
+                      color="animate-spin"
+                    />
+                  </View>
                 ) : (
                   <SVGIcons.Send width={s(32)} height={s(32)} />
                 )}

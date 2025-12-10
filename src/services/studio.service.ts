@@ -970,6 +970,8 @@ export async function fetchStudioPublicProfile(studioId: string) {
           userId,
           bio,
           experienceYears,
+          businessName,
+          studioAddress,
           user:users!artist_profiles_userId_fkey(
             id,
             firstName,
@@ -988,7 +990,7 @@ export async function fetchStudioPublicProfile(studioId: string) {
         const userId = member.artist.user?.id;
         if (!userId) return null;
 
-        // Get artist location
+        // Get artist location (for province/municipality)
         const { data: location } = await supabase
           .from('artist_locations')
           .select(`
@@ -1012,12 +1014,62 @@ export async function fetchStudioPublicProfile(studioId: string) {
           .eq('artistId', member.artist.id)
           .limit(2);
 
-        // Check if artist owns a studio
-        const { data: ownedStudio } = await supabase
-          .from('studios')
-          .select('id, name')
-          .eq('ownerId', member.artist.id)
-          .maybeSingle();
+        // Use businessName and studioAddress from artist profile first
+        let businessName = member.artist.businessName;
+        let studioAddress = member.artist.studioAddress;
+        let ownedStudio = null;
+        
+        // Only query studio if businessName is missing
+        if (!businessName) {
+          const { data: ownedStudioData } = await supabase
+            .from('studios')
+            .select('id, name')
+            .eq('ownerId', member.artist.id)
+            .maybeSingle();
+          ownedStudio = ownedStudioData;
+          if (ownedStudio?.name) {
+            businessName = ownedStudio.name;
+          }
+        } else {
+          // Still check if artist owns a studio for ownedStudio field
+          const { data: ownedStudioData } = await supabase
+            .from('studios')
+            .select('id, name')
+            .eq('ownerId', member.artist.id)
+            .maybeSingle();
+          ownedStudio = ownedStudioData;
+        }
+
+        // Fallback: If studioAddress is missing, query studio membership for address
+        if (!studioAddress && userId) {
+          const { data: studioMembership } = await supabase
+            .from('studio_members')
+            .select(`
+              studio:studios(
+                id,
+                locations:studio_locations(
+                  address,
+                  isPrimary
+                )
+              )
+            `)
+            .eq('userId', userId)
+            .eq('status', 'ACCEPTED')
+            .eq('isActive', true)
+            .maybeSingle();
+
+          if (studioMembership?.studio) {
+            const studio = studioMembership.studio as any;
+            if (studio.locations) {
+              const primaryStudioLocation = studio.locations.find(
+                (loc: any) => loc.isPrimary
+              );
+              if (primaryStudioLocation?.address) {
+                studioAddress = primaryStudioLocation.address;
+              }
+            }
+          }
+        }
 
         // Get artist banner
         const { data: artistBanner } = await supabase
@@ -1027,6 +1079,15 @@ export async function fetchStudioPublicProfile(studioId: string) {
           .order('order')
           .limit(2);
 
+        // Build location object with studioAddress from artist profile or studio fallback
+        const locationData = location?.location;
+        const locationWithAddress = locationData
+          ? {
+              ...locationData,
+              address: studioAddress || null, // Use studioAddress from artist profile or studio fallback
+            }
+          : null;
+
         return {
           id: member.artist.id,
           userId: userId,
@@ -1034,7 +1095,8 @@ export async function fetchStudioPublicProfile(studioId: string) {
           lastName: member.artist.user?.lastName,
           avatar: member.artist.user?.avatar,
           experienceYears: member.artist.experienceYears,
-          location: location?.location || null,
+          businessName: businessName,
+          location: locationWithAddress,
           styles: artistStyles?.map((s: any) => s.style) || [],
           ownedStudio: ownedStudio,
           banner: artistBanner || [],
@@ -1092,6 +1154,8 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           id,
           userId,
           yearsExperience,
+          businessName,
+          studioAddress,
           user:users!artist_profiles_userId_fkey(
             id,
             username,
@@ -1171,12 +1235,62 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           `)
           .eq('artistId', artistId);
 
-        // Check if artist owns a studio
-        const { data: ownedStudio } = await supabase
-          .from('studios')
-          .select('id, name')
-          .eq('ownerId', artistId)
-          .maybeSingle();
+        // Use businessName and studioAddress from artist profile first
+        let businessName = member.artist.businessName;
+        let studioAddress = member.artist.studioAddress;
+
+        // Fallback: If businessName is missing, check if artist owns a studio
+        let ownedStudio = null;
+        if (!businessName) {
+          const { data: ownedStudioData } = await supabase
+            .from('studios')
+            .select('id, name')
+            .eq('ownerId', artistId)
+            .maybeSingle();
+          ownedStudio = ownedStudioData;
+          if (ownedStudio?.name) {
+            businessName = ownedStudio.name;
+          }
+        } else {
+          // Still check if artist owns a studio for isStudioOwner flag
+          const { data: ownedStudioData } = await supabase
+            .from('studios')
+            .select('id, name')
+            .eq('ownerId', artistId)
+            .maybeSingle();
+          ownedStudio = ownedStudioData;
+        }
+
+        // Fallback: If studioAddress is missing, query studio membership for address
+        if (!studioAddress && userId) {
+          const { data: studioMembership } = await supabase
+            .from('studio_members')
+            .select(`
+              studio:studios(
+                id,
+                locations:studio_locations(
+                  address,
+                  isPrimary
+                )
+              )
+            `)
+            .eq('userId', userId)
+            .eq('status', 'ACCEPTED')
+            .eq('isActive', true)
+            .maybeSingle();
+
+          if (studioMembership?.studio) {
+            const studio = studioMembership.studio as any;
+            if (studio.locations) {
+              const primaryStudioLocation = studio.locations.find(
+                (loc: any) => loc.isPrimary
+              );
+              if (primaryStudioLocation?.address) {
+                studioAddress = primaryStudioLocation.address;
+              }
+            }
+          }
+        }
 
         // Transform to ArtistSearchResult format
         const province = userLocation?.province as any;
@@ -1192,14 +1306,14 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
             firstName: member.artist.user.firstName || null,
             lastName: member.artist.user.lastName || null,
           },
-          businessName: ownedStudio?.name || null,
+          businessName: businessName,
           yearsExperience: member.artist.yearsExperience || null,
           isStudioOwner: !!ownedStudio,
           location: userLocation
             ? {
                 province: province?.code || '',
                 municipality: municipality?.name || '',
-                address: userLocation.address || null,
+                address: userLocation.address || studioAddress || null,
               }
             : null,
           styles: artistStyles?.map((s: any) => ({

@@ -83,11 +83,12 @@ export async function searchArtistsForInvite(
         avatar,
         firstName,
         lastName,
-        artistProfile:artist_profiles(id, businessName),
+        artistProfile:artist_profiles(id, businessName, studioAddress),
         locations:user_locations(
           isPrimary,
           municipality:municipalities(name),
-          province:provinces(code)
+          province:provinces(code),
+          address
         ),
         subscriptions:user_subscriptions!user_subscriptions_userId_fkey(
           status,
@@ -116,35 +117,64 @@ export async function searchArtistsForInvite(
       !excludedUserIds.includes(user.id)
     ) || [];
 
-    const results: SearchArtistResult[] = filteredUsers.map((user: any) => {
-      // Get primary location
-      const primaryLocation = user.locations?.find((loc: any) => loc.isPrimary);
-      const location = primaryLocation
-        ? {
-            municipality: primaryLocation.municipality?.name || "",
-            province: primaryLocation.province?.code || "",
+    // Process results with fallback logic for businessName
+    const results: SearchArtistResult[] = await Promise.all(
+      filteredUsers.map(async (user: any) => {
+        // Get primary location
+        const primaryLocation = user.locations?.find((loc: any) => loc.isPrimary);
+        const location = primaryLocation
+          ? {
+              municipality: primaryLocation.municipality?.name || "",
+              province: primaryLocation.province?.code || "",
+            }
+          : null;
+
+        // Get active subscription plan type
+        const activeSubscription = user.subscriptions?.find(
+          (sub: any) => sub.status === "ACTIVE" && (!sub.endDate || new Date(sub.endDate) > new Date())
+        );
+        const planType = activeSubscription?.plan?.type || null;
+
+        // Use businessName from artist profile first
+        let businessName = user.artistProfile?.businessName;
+
+        // Fallback: If businessName is missing, query studio membership
+        if (!businessName && user.artistProfile?.id) {
+          const { data: studioMembership } = await supabase
+            .from("studio_members")
+            .select(
+              `
+              studio:studios(
+                id,
+                name
+              )
+            `
+            )
+            .eq("artistId", user.artistProfile.id)
+            .eq("status", "ACCEPTED")
+            .eq("isActive", true)
+            .maybeSingle();
+
+          if (studioMembership?.studio) {
+            const studio = studioMembership.studio as any;
+            businessName = studio.name;
           }
-        : null;
+        }
 
-      // Get active subscription plan type
-      const activeSubscription = user.subscriptions?.find(
-        (sub: any) => sub.status === "ACTIVE" && (!sub.endDate || new Date(sub.endDate) > new Date())
-      );
-      const planType = activeSubscription?.plan?.type || null;
-
-      return {
-        id: user.artistProfile?.id || "",
-        userId: user.id,
-        email: user.email,
-        username: user.username,
-        avatar: user.avatar,
-        businessName: user.artistProfile?.businessName || null,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        location,
-        planType,
-      };
-    });
+        return {
+          id: user.artistProfile?.id || "",
+          userId: user.id,
+          email: user.email,
+          username: user.username,
+          avatar: user.avatar,
+          businessName: businessName || null,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          location,
+          planType,
+        };
+      })
+    );
 
     return { data: results };
   } catch (error: any) {
@@ -635,7 +665,8 @@ export async function getStudioMembers(
           )
         ),
         artist:artist_profiles!studio_members_artistId_fkey(
-          businessName
+          businessName,
+          studioAddress
         ),
         inviter:users!studio_members_invitedBy_fkey(
           firstName,
