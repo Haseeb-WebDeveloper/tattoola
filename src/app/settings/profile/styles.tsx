@@ -114,7 +114,6 @@ export default function StylesSettingsScreen() {
             }
           } catch (e) {
             // No subscription - use default artist limits
-            console.log("No active subscription, using default artist limits");
             if (mounted) {
               setMaxStyles(AR_MAX_STYLES);
               setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);

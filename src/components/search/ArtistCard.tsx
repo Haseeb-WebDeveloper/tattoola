@@ -1,10 +1,11 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import type { ArtistSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 import { StylePills } from "../ui/stylePills";
 
@@ -24,14 +25,46 @@ function ArtistCard({ artist }: ArtistCardProps) {
     artist.user.username;
 
   const videoMedia = artist.bannerMedia.find((b) => b.mediaType === "VIDEO");
+  
+  // Transform video URL to MP4/H.264/AAC for iOS compatibility
+  const videoUrl = useMemo(() => {
+    if (videoMedia?.mediaUrl) {
+      return cloudinaryService.getIOSCompatibleVideoUrl(videoMedia.mediaUrl);
+    }
+    return "";
+  }, [videoMedia?.mediaUrl]);
+
   // Always call hook at top level
-  const videoPlayer = useVideoPlayer(videoMedia?.mediaUrl || "", (player) => {
-    if (videoMedia) {
+  const videoPlayer = useVideoPlayer(videoUrl, (player) => {
+    if (videoUrl) {
       player.loop = true;
       player.muted = true;
-      player.play();
+      // Small delay for iOS to ensure player is ready
+      setTimeout(() => {
+        player.play();
+      }, 100);
     }
   });
+
+  // Update player source when URL changes
+  useEffect(() => {
+    const updatePlayer = async () => {
+      if (videoUrl && videoPlayer) {
+        try {
+          await videoPlayer.replaceAsync(videoUrl);
+          videoPlayer.loop = true;
+          videoPlayer.muted = true;
+          // Small delay for iOS to ensure player is ready
+          setTimeout(() => {
+            videoPlayer.play();
+          }, 100);
+        } catch (error) {
+          console.error("Error loading video player:", error);
+        }
+      }
+    };
+    updatePlayer();
+  }, [videoUrl, videoPlayer]);
 
   // artist.isStudioOwner
 
@@ -238,7 +271,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
         );
 
         // Video banner - autoplay, looping, no controls
-        if (videoMedia && videoPlayer) {
+        if (videoUrl && videoPlayer) {
           return (
             <VideoView
               player={videoPlayer}
