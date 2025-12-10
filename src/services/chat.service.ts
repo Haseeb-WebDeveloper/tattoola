@@ -809,7 +809,6 @@ export async function markReadUpTo(
   userId: string,
   newestMessageId: string
 ) {
-  console.log("🔵 [markReadUpTo] Called", { conversationId, userId, newestMessageId });
   const now = new Date().toISOString();
 
   // Reset unreadCount, set lastReadAt "now".
@@ -819,13 +818,11 @@ export async function markReadUpTo(
     .eq("conversationId", conversationId)
     .eq("userId", userId);
   if (error) {
-    console.error("❌ [markReadUpTo] Error updating conversation_users:", error);
+    console.error("[markReadUpTo] Error:", error);
     throw new Error(error.message);
   }
-  console.log("✅ [markReadUpTo] Updated conversation_users");
 
   // FIRST: Get message IDs that need to be updated (before updating isRead)
-  // Note: message_receipts doesn't have conversationId, so we need to get message IDs first
   const { data: messages, error: messagesError } = await supabase
     .from("messages")
     .select("id")
@@ -834,11 +831,10 @@ export async function markReadUpTo(
     .eq("isRead", false);
   
   if (messagesError) {
-    console.error("❌ [markReadUpTo] Error fetching unread messages:", messagesError);
+    console.error("[markReadUpTo] Error fetching messages:", messagesError);
   }
   
   const messageIds = messages?.map(m => m.id) || [];
-  console.log(`📨 [markReadUpTo] Found ${messageIds.length} unread messages:`, messageIds);
 
   // SECOND: Update messages.isRead for all messages in this conversation that the user received
   if (messageIds.length > 0) {
@@ -848,34 +844,23 @@ export async function markReadUpTo(
       .in("id", messageIds);
     
     if (updateError) {
-      console.error("❌ [markReadUpTo] Error updating messages.isRead:", updateError);
-    } else {
-      console.log(`✅ [markReadUpTo] Updated ${messageIds.length} messages to isRead=true`);
+      console.error("[markReadUpTo] Error updating isRead:", updateError);
     }
-  } else {
-    console.log("⚠️ [markReadUpTo] No unread messages to update");
   }
 
   // THIRD: Update receipts to READ status using the message IDs we collected
   if (messageIds.length > 0) {
-    const { data: receiptUpdateData, error: receiptError } = await supabase
+    const { error: receiptError } = await supabase
       .from("message_receipts")
       .update({ status: "READ", readAt: now })
       .eq("userId", userId)
       .in("messageId", messageIds)
-      .eq("status", "DELIVERED")
-      .select();
+      .eq("status", "DELIVERED");
     
     if (receiptError) {
-      console.error("❌ [markReadUpTo] Error updating receipts:", receiptError);
-    } else {
-      console.log(`✅ [markReadUpTo] Updated ${receiptUpdateData?.length || 0} receipts to READ:`, receiptUpdateData);
+      console.error("[markReadUpTo] Error updating receipts:", receiptError);
     }
-  } else {
-    console.log("⚠️ [markReadUpTo] No message IDs to update receipts for");
   }
-  
-  console.log("🔵 [markReadUpTo] Completed");
 }
 
 // Subscriptions
