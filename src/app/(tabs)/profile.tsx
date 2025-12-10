@@ -270,8 +270,8 @@ export default function ProfileScreen() {
 
         {/* settings button */}
         <View
-          className="absolute right-0 z-10 top-2"
-          style={{ paddingHorizontal: s(16) }}
+          className="absolute right-0 z-10"
+          style={{ paddingHorizontal: s(16), top: mvs(8) }}
         >
           <TouchableOpacity
             accessibilityRole="button"
