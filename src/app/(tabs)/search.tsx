@@ -10,7 +10,7 @@ import { useSearchStore } from "@/stores/searchStore";
 import type { SearchTab } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
 
 export default function SearchScreen() {
@@ -74,20 +74,29 @@ export default function SearchScreen() {
   };
 
   // Combine results based on active tab
-  const combinedResults =
-    activeTab === "all"
-      ? [...results.artists, ...results.studios]
-      : activeTab === "artists"
-        ? results.artists
-        : results.studios;
+  const combinedResults = useMemo(
+    () =>
+      activeTab === "all"
+        ? [...results.artists, ...results.studios]
+        : activeTab === "artists"
+          ? results.artists
+          : results.studios,
+    [activeTab, results.artists, results.studios]
+  );
 
-  const renderItem = ({ item }: any) => {
+  const renderItem = useCallback(({ item }: any) => {
     if ("businessName" in item) {
       return <ArtistCard artist={item} />;
     } else {
       return <StudioCard studio={item} />;
     }
-  };
+  }, []);
+
+  const keyExtractor = useCallback((item: any) => {
+    // Add type prefix to ensure unique keys when combining artists and studios
+    const type = "businessName" in item ? "artist" : "studio";
+    return `${type}-${item.id}`;
+  }, []);
 
   // Helper: check if filters are applied (not default/empty)
   const areFiltersActive = () => {
@@ -375,11 +384,7 @@ export default function SearchScreen() {
               <FlatList
                 data={combinedResults}
                 renderItem={renderItem}
-                keyExtractor={(item: any) => {
-                  // Add type prefix to ensure unique keys when combining artists and studios
-                  const type = "businessName" in item ? "artist" : "studio";
-                  return `${type}-${item.id}`;
-                }}
+                keyExtractor={keyExtractor}
                 contentContainerStyle={{
                   // Add more space at the end, e.g. s(80) instead of s(40)
                   marginBottom: s(80),
@@ -396,6 +401,11 @@ export default function SearchScreen() {
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
                 ListEmptyComponent={renderEmpty}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                windowSize={10}
+                initialNumToRender={10}
               />
             </>
           )}

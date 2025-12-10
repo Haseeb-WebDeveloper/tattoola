@@ -364,8 +364,14 @@ export async function fetchArtistSelfProfile(
     .eq("isActive", true)
     .maybeSingle();
 
-  if (studioMembership?.studio?.locations) {
-    const primaryStudioLocation = studioMembership.studio.locations.find(
+  // Handle studio as array (Supabase type inference) or single object
+  const studio = Array.isArray(studioMembership?.studio) 
+    ? studioMembership.studio[0] 
+    : studioMembership?.studio;
+  
+  if (studio?.locations) {
+    const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+    const primaryStudioLocation = locations.find(
       (loc: any) => loc.isPrimary
     );
     if (primaryStudioLocation?.address) {
@@ -407,17 +413,25 @@ export async function fetchArtistSelfProfile(
         .maybeSingle();
       
       if (anyLocation) {
+        // Handle provinces and municipalities as array (Supabase type inference) or single object
+        const province = Array.isArray(anyLocation.provinces) 
+          ? anyLocation.provinces[0] 
+          : anyLocation.provinces;
+        const municipality = Array.isArray(anyLocation.municipalities) 
+          ? anyLocation.municipalities[0] 
+          : anyLocation.municipalities;
+        
         location = {
           id: anyLocation.id,
           address: studioAddress, // Always use studioAddress from profile when available
           province: {
-            id: anyLocation.provinces?.id,
-            name: anyLocation.provinces?.name || "",
-            code: anyLocation.provinces?.code,
+            id: province?.id,
+            name: province?.name || "",
+            code: province?.code,
           },
           municipality: {
-            id: anyLocation.municipalities?.id,
-            name: anyLocation.municipalities?.name || "",
+            id: municipality?.id,
+            name: municipality?.name || "",
           },
           isPrimary: false,
         };
@@ -457,17 +471,25 @@ export async function fetchArtistSelfProfile(
   } else if (studioAddressFromStudio) {
     // PRIORITY 3: Use studio address from linked studio as fallback
     if (locationData) {
+      // Handle provinces and municipalities as array (Supabase type inference) or single object
+      const province = Array.isArray(locationData.provinces) 
+        ? locationData.provinces[0] 
+        : locationData.provinces;
+      const municipality = Array.isArray(locationData.municipalities) 
+        ? locationData.municipalities[0] 
+        : locationData.municipalities;
+      
       location = {
         id: locationData.id,
         address: studioAddressFromStudio,
         province: {
-          id: locationData.provinces?.id,
-          name: locationData.provinces?.name || "",
-          code: locationData.provinces?.code,
+          id: province?.id,
+          name: province?.name || "",
+          code: province?.code,
         },
         municipality: {
-          id: locationData.municipalities?.id,
-          name: locationData.municipalities?.name || "",
+          id: municipality?.id,
+          name: municipality?.name || "",
         },
         isPrimary: locationData.isPrimary,
       };
@@ -485,17 +507,25 @@ export async function fetchArtistSelfProfile(
         .maybeSingle();
       
       if (anyLocation) {
+        // Handle provinces and municipalities as array (Supabase type inference) or single object
+        const province = Array.isArray(anyLocation.provinces) 
+          ? anyLocation.provinces[0] 
+          : anyLocation.provinces;
+        const municipality = Array.isArray(anyLocation.municipalities) 
+          ? anyLocation.municipalities[0] 
+          : anyLocation.municipalities;
+        
         location = {
           id: anyLocation.id,
           address: studioAddressFromStudio,
           province: {
-            id: anyLocation.provinces?.id,
-            name: anyLocation.provinces?.name || "",
-            code: anyLocation.provinces?.code,
+            id: province?.id,
+            name: province?.name || "",
+            code: province?.code,
           },
           municipality: {
-            id: anyLocation.municipalities?.id,
-            name: anyLocation.municipalities?.name || "",
+            id: municipality?.id,
+            name: municipality?.name || "",
           },
           isPrimary: false,
         };

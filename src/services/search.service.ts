@@ -25,14 +25,6 @@ export async function searchArtists({
   error?: string;
 }> {
   try {
-    console.log("[searchArtists] Starting search with filters:", {
-      styleIds: filters.styleIds.length,
-      serviceIds: filters.serviceIds.length,
-      provinceId: filters.provinceId,
-      municipalityId: filters.municipalityId,
-      page,
-    });
-
     // Build the query
     let query = supabase
       .from("artist_profiles")
@@ -131,8 +123,6 @@ export async function searchArtists({
       return { data: [], hasMore: false, error: error.message };
     }
 
-    console.log(`[searchArtists] Fetched ${data?.length || 0} artists from database`);
-
     // Transform the data and filter to only include artists with active subscriptions
     // For artists missing businessName or studioAddress, fetch from studio membership as fallback
     const artistsWithFallback = await Promise.all(
@@ -155,17 +145,11 @@ export async function searchArtists({
         let businessName = artist.businessName;
         let studioAddress = artist.studioAddress;
 
-        // Log if studioAddress exists
-        if (studioAddress) {
-          console.log(`[searchArtists] Artist ${artist.userId} has studioAddress from profile: ${studioAddress.substring(0, 50)}...`);
-        }
-
         // Fallback: If businessName, studioAddress, or workArrangement is missing, query studio membership
         let studioMembershipData: any = null;
         let studioAddressFromStudio: string | null = null; // Store studio address separately for location fallback
         const needsFallback = (!businessName || !studioAddress || !artist.workArrangement);
         if (needsFallback && artist.userId) {
-          console.log(`[searchArtists] Fetching studio fallback for artist ${artist.userId} (missing: businessName=${!businessName}, studioAddress=${!studioAddress}, workArrangement=${!artist.workArrangement})`);
           const { data: studioMembership } = await supabase
             .from("studio_members")
             .select(
@@ -187,14 +171,19 @@ export async function searchArtists({
 
           studioMembershipData = studioMembership;
 
-          if (studioMembership?.studio) {
-            const studio = studioMembership.studio as any;
+          // Handle studio as array (Supabase type inference) or single object
+          const studio = Array.isArray(studioMembership?.studio) 
+            ? studioMembership.studio[0] 
+            : studioMembership?.studio;
+          
+          if (studio) {
             // Only use studio data if artist profile doesn't have it
             if (!businessName && studio.name) {
               businessName = studio.name;
             }
             if (!studioAddress && studio.locations) {
-              const primaryStudioLocation = studio.locations.find(
+              const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+              const primaryStudioLocation = locations.find(
                 (loc: any) => loc.isPrimary
               );
               if (primaryStudioLocation?.address) {
@@ -203,7 +192,8 @@ export async function searchArtists({
             }
             // Always extract studio address for location fallback (even if studioAddress from profile exists)
             if (studio.locations) {
-              const primaryStudioLocation = studio.locations.find(
+              const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+              const primaryStudioLocation = locations.find(
                 (loc: any) => loc.isPrimary
               );
               if (primaryStudioLocation?.address) {
@@ -230,8 +220,14 @@ export async function searchArtists({
             .eq("isActive", true)
             .maybeSingle();
 
-          if (studioMembership?.studio?.locations) {
-            const primaryStudioLocation = studioMembership.studio.locations.find(
+          // Handle studio as array (Supabase type inference) or single object
+          const studio = Array.isArray(studioMembership?.studio) 
+            ? studioMembership.studio[0] 
+            : studioMembership?.studio;
+          
+          if (studio?.locations) {
+            const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
+            const primaryStudioLocation = locations.find(
               (loc: any) => loc.isPrimary
             );
             if (primaryStudioLocation?.address) {
@@ -291,13 +287,6 @@ export async function searchArtists({
           };
         }
 
-        // Log address usage for debugging
-        if (studioAddress) {
-          const usedStudioAddress = !primaryLocation?.address && locationAddress === studioAddress;
-          const hasLocation = location !== null;
-          console.log(`[searchArtists] Artist ${artist.userId}: studioAddress=${studioAddress.substring(0, 30)}..., primaryLocation=${primaryLocation ? 'exists' : 'null'}, primaryLocation.address=${primaryLocation?.address || 'null'}, final location=${hasLocation ? 'created' : 'null'}, final address=${location?.address ? location.address.substring(0, 30) + '...' : 'null'}, usedStudioAddress=${usedStudioAddress}`);
-        }
-
         return {
           id: artist.id,
           userId: artist.userId,
@@ -348,10 +337,6 @@ export async function searchArtists({
     const artists: ArtistSearchResult[] = artistsWithFallback.filter(
       (artist): artist is ArtistSearchResult => artist !== null
     );
-
-    const artistsWithAddress = artists.filter(a => a.location?.address);
-    const artistsWithStudioAddress = (data || []).filter((a: any) => a.studioAddress);
-    console.log(`[searchArtists] Returning ${artists.length} artists (${artists.filter(a => a.workArrangement).length} with workArrangement, ${artists.filter(a => a.businessName).length} with businessName, ${artistsWithAddress.length} with address in location, ${artistsWithStudioAddress.length} with studioAddress in profile)`);
 
     return {
       data: artists,
