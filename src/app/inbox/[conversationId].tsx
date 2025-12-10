@@ -51,6 +51,7 @@ export default function ChatThreadScreen() {
     id?: string;
   } | null>(null);
   const [conv, setConv] = useState<any>(null);
+  const [loadingPeer, setLoadingPeer] = useState(true);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [menuModalVisible, setMenuModalVisible] = useState(false);
@@ -103,6 +104,7 @@ export default function ChatThreadScreen() {
   useEffect(() => {
     (async () => {
       if (!conversationId || !user?.id) return;
+      setLoadingPeer(true);
       try {
         const c = await fetchConversationByIdWithPeer(user.id, conversationId);
         if (c) {
@@ -117,6 +119,9 @@ export default function ChatThreadScreen() {
           setConv(c);
         }
       } catch {}
+      finally {
+        setLoadingPeer(false);
+      }
     })();
   }, [conversationId, user?.id]);
 
@@ -335,47 +340,73 @@ export default function ChatThreadScreen() {
           >
             <SVGIcons.CircleChevronRIght width={s(34)} height={s(34)} />
           </TouchableOpacity>
-          <View
-            className="flex-row items-center"
-            style={{
-              gap: s(12),
-            }}
-          >
-            <View className="relative">
-              <Image
-                source={{
-                  uri:
-                    peer?.avatar ||
-                    `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0]}`,
-                }}
-                className="rounded-full"
+          {loadingPeer ? (
+            <View
+              className="flex-row items-center"
+              style={{
+                gap: s(12),
+              }}
+            >
+              {/* Avatar Skeleton */}
+              <View
+                className="rounded-full bg-gray/20"
                 style={{
                   width: s(36),
                   height: s(36),
                 }}
               />
-              {conv?.status === "BLOCKED" && (
-                <View
-                  className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
+              {/* Name Skeleton */}
+              <View
+                className="bg-gray/20 rounded"
+                style={{
+                  width: s(120),
+                  height: mvs(16),
+                }}
+              />
+            </View>
+          ) : (
+            <View
+              className="flex-row items-center"
+              style={{
+                gap: s(12),
+              }}
+            >
+              <View className="relative">
+                <Image
+                  source={{
+                    uri:
+                      peer?.avatar ||
+                      `https://api.dicebear.com/7.x/initials/png?seed=${peer?.name?.split(" ")[0] || "User"}`,
+                  }}
+                  className="rounded-full"
                   style={{
                     width: s(36),
                     height: s(36),
-                    top: 0,
-                    left: 0,
                   }}
-                >
-                  <SVGIcons.Locked width={s(16)} height={s(16)} />
-                </View>
-              )}
-            </View>
+                />
+                {conv?.status === "BLOCKED" && (
+                  <View
+                    className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
+                    style={{
+                      width: s(36),
+                      height: s(36),
+                      top: 0,
+                      left: 0,
+                    }}
+                  >
+                    <SVGIcons.Locked width={s(16)} height={s(16)} />
+                  </View>
+                )}
+              </View>
 
-            <ScaledText
-              variant="md"
-              className="text-foreground font-montserratMedium"
-            >
-              {TrimText(peer?.name || "", 18)}
-            </ScaledText>
-          </View>
+              <ScaledText
+                variant="md"
+                className="text-foreground font-montserratMedium"
+              >
+                {TrimText(peer?.name || "Utente", 18)}
+              </ScaledText>
+            </View>
+          )}
           <TouchableOpacity
             onPress={() => setMenuModalVisible(true)}
             className="rounded-full  items-end justify-center"
