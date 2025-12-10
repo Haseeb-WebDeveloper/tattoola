@@ -1,6 +1,8 @@
+import { Badge } from "@/components/ui/Badge";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useUser } from "@/providers/AuthProvider";
+import { useTotalUnreadCount } from "@/stores/chatInboxStore";
 import { useTabBarStore } from "@/stores/tabBarStore";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
@@ -71,6 +73,7 @@ export default function CustomTabBar({
 }: TabBarProps) {
   const user = useUser();
   const setTabBarHeight = useTabBarStore((state) => state.setTabBarHeight);
+  const totalUnreadCount = useTotalUnreadCount();
 
   const getIcon = (routeName: string, isFocused: boolean) => {
     // Special handling for profile tab to show user avatar
@@ -81,7 +84,8 @@ export default function CustomTabBar({
     const iconName = routeIconMap[routeName];
     const IconComponent = iconName ? SVGIcons[iconName] : null;
     if (!IconComponent) return null;
-    return (
+    
+    const icon = (
       <IconComponent
         width={s(24)}
         height={s(24)}
@@ -91,6 +95,27 @@ export default function CustomTabBar({
         }}
       />
     );
+
+    // Add badge to inbox icon if there are unread messages
+    if (routeName === "inbox" && totalUnreadCount > 0) {
+      return (
+        <View style={{ position: "relative" }}>
+          {icon}
+          <View
+            style={{
+              position: "absolute",
+              top: -s(4),
+              right: -s(4),
+              zIndex: 10,
+            }}
+          >
+            <Badge count={totalUnreadCount} />
+          </View>
+        </View>
+      );
+    }
+
+    return icon;
   };
 
   // Find the upload route for the floating button
