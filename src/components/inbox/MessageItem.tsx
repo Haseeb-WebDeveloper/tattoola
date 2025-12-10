@@ -1,3 +1,4 @@
+import { ChatImageViewer } from "@/components/inbox/ChatImageViewer";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { formatMessageTimestamp } from "@/utils/formatMessageTimestamp";
@@ -25,6 +26,7 @@ export default function MessageItem({
 }: Props) {
   const isMine = item.senderId === currentUserId;
   const [showMenu, setShowMenu] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
 
   // Helper to get file name from URL
   const getFileName = (url: string): string => {
@@ -115,14 +117,19 @@ export default function MessageItem({
     // Render Image
     if (isImage) {
       return (
-        <Image
-          source={{ uri: item.mediaUrl }}
-          resizeMode="cover"
-          style={{
-            width: s(280),
-            height: s(280),
-          }}
-        />
+        <TouchableOpacity
+          onPress={() => setShowImageViewer(true)}
+          activeOpacity={0.9}
+        >
+          <Image
+            source={{ uri: item.mediaUrl }}
+            resizeMode="cover"
+            style={{
+              width: s(280),
+              height: s(280),
+            }}
+          />
+        </TouchableOpacity>
       );
     }
 
@@ -623,6 +630,15 @@ export default function MessageItem({
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Image Viewer Modal */}
+      {item.mediaUrl && (item.type === "IMAGE" || item.messageType === "IMAGE") && (
+        <ChatImageViewer
+          visible={showImageViewer}
+          imageUrl={item.mediaUrl}
+          onClose={() => setShowImageViewer(false)}
+        />
+      )}
     </View>
   );
 }

@@ -91,7 +91,12 @@ export default function ChatThreadScreen() {
       try {
         await loadLatest(conversationId, user.id);
         subscribe(conversationId, user.id);
-      } catch (e) {}
+        // Refresh receipts immediately after loading to ensure they're up to date
+        // This fixes the issue where inbox shows green tick but thread shows grey tick
+        await refreshReceipts(conversationId, user.id);
+      } catch (e) {
+        console.error("Error loading conversation:", e);
+      }
     })();
 
     return () => {
@@ -135,6 +140,17 @@ export default function ChatThreadScreen() {
 
     return () => clearTimeout(timer);
   }, [conversationId, user?.id, messages.length]);
+
+  // Periodic receipt refresh to catch any missed updates
+  useEffect(() => {
+    if (!conversationId || !user?.id) return;
+
+    const interval = setInterval(() => {
+      refreshReceipts(conversationId, user.id).catch(console.error);
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [conversationId, user?.id, refreshReceipts]);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
@@ -682,17 +698,24 @@ export default function ChatThreadScreen() {
                 className="items-center justify-center rounded-full"
                 style={{
                   paddingBottom: mvs(4),
+                  width: s(32),
+                  height: s(32),
                 }}
               >
                 {uploading ? (
-                  <SVGIcons.Loading
-                    width={s(20)}
-                    height={s(20)}
-                    color="animate-spin"
+                  <View
+                    className="items-center justify-center"
                     style={{
-                      paddingBottom: mvs(4),
+                      width: s(20),
+                      height: s(20),
                     }}
-                  />
+                  >
+                    <SVGIcons.Loading
+                      width={s(20)}
+                      height={s(20)}
+                      color="animate-spin"
+                    />
+                  </View>
                 ) : (
                   <SVGIcons.Send width={s(32)} height={s(32)} />
                 )}
