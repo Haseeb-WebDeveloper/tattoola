@@ -108,9 +108,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         logger.log('GLOBAL PRESENCE: User joined:', newPresences);
+        // Add newly joined users to the presence store
+        const presenceStore = usePresenceStore.getState();
+        // newPresences is an array of presence objects
+        if (Array.isArray(newPresences)) {
+          newPresences.forEach((presence: any) => {
+            if (presence?.userId) {
+              presenceStore.addOnlineUser(presence.userId);
+              logger.log('GLOBAL PRESENCE: Added user to online list:', presence.userId);
+            }
+          });
+        } else if (newPresences?.userId) {
+          // Handle single presence object
+          presenceStore.addOnlineUser(newPresences.userId);
+          logger.log('GLOBAL PRESENCE: Added user to online list:', newPresences.userId);
+        }
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
         logger.log('GLOBAL PRESENCE: User left:', leftPresences);
+        // Remove users who left from the presence store
+        const presenceStore = usePresenceStore.getState();
+        // leftPresences is an array of presence objects
+        if (Array.isArray(leftPresences)) {
+          leftPresences.forEach((presence: any) => {
+            if (presence?.userId) {
+              presenceStore.removeOnlineUser(presence.userId);
+              logger.log('GLOBAL PRESENCE: Removed user from online list:', presence.userId);
+            }
+          });
+        } else if (leftPresences?.userId) {
+          // Handle single presence object
+          presenceStore.removeOnlineUser(leftPresences.userId);
+          logger.log('GLOBAL PRESENCE: Removed user from online list:', leftPresences.userId);
+        }
       })
       .subscribe(async (status: any) => {
         logger.log('GLOBAL PRESENCE: Channel status:', status);
