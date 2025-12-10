@@ -108,7 +108,6 @@ export default function ArtistStep8V2() {
           }
         } catch (e) {
           // No subscription yet (normal during registration) - use default
-          console.log("No active subscription, using default limits");
           if (mounted) {
             setMaxStyles(AR_MAX_STYLES);
             setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);

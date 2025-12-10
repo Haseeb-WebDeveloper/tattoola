@@ -7,10 +7,12 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 import {
   fetchArtistProfile,
+  fetchStudioForArtistProfile,
   fetchTattooLoverProfile,
   TattooLoverProfile,
 } from "@/services/profile.service";
 import { ArtistSelfProfileInterface } from "@/types/artist";
+import { StudioSearchResult } from "@/types/search";
 import { supabase } from "@/utils/supabase";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -30,6 +32,9 @@ export default function UserProfileScreen() {
     null
   );
   const [refreshing, setRefreshing] = useState(false);
+  const [studioData, setStudioData] = useState<StudioSearchResult | null>(
+    null
+  );
 
   const loadProfile = async () => {
     try {
@@ -50,9 +55,29 @@ export default function UserProfileScreen() {
 
       let profile;
       if (role === "ARTIST") {
-        profile = await fetchArtistProfile(String(id), currentUser?.id);
+        // Get artist profile ID first to check for studio ownership
+        const { data: artistProfileData } = await supabase
+          .from("artist_profiles")
+          .select("id, workArrangement, isStudioOwner")
+          .eq("userId", String(id))
+          .maybeSingle();
+
+        // Fetch artist profile and studio data in parallel
+        const [artistProfile, studio] = await Promise.all([
+          fetchArtistProfile(String(id), currentUser?.id),
+          // Only fetch studio if artist is a studio owner
+          artistProfileData &&
+          (artistProfileData.workArrangement === "STUDIO_OWNER" ||
+            artistProfileData.isStudioOwner === true)
+            ? fetchStudioForArtistProfile(artistProfileData.id)
+            : Promise.resolve(null),
+        ]);
+
+        profile = artistProfile;
+        setStudioData(studio);
       } else {
         profile = await fetchTattooLoverProfile(String(id), currentUser?.id);
+        setStudioData(null);
       }
 
       setData(profile);
@@ -97,6 +122,7 @@ export default function UserProfileScreen() {
       <ArtistProfileView
         data={data as ArtistSelfProfileInterface & { isFollowing?: boolean }}
         currentUserId={currentUser?.id}
+        studio={studioData}
       />
     );
   } else {

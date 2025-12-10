@@ -2,6 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { toggleFollow } from "@/services/profile.service";
 import { ArtistSelfProfileInterface } from "@/types/artist";
+import { StudioSearchResult } from "@/types/search";
 import { WorkArrangement } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
@@ -15,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import StudioCard from "@/components/search/StudioCard";
 import { Banner } from "./Banner";
 import { BodyPartsSection } from "./BodyPartsSection";
 import { CollectionsSection } from "./CollectionsSection";
@@ -26,11 +28,13 @@ import { StylesSection } from "./StylesSection";
 interface ArtistProfileViewProps {
   data: ArtistSelfProfileInterface & { isFollowing?: boolean };
   currentUserId?: string;
+  studio?: StudioSearchResult | null;
 }
 
 export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   data,
   currentUserId,
+  studio,
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -220,6 +224,13 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
         {/* Body Parts Section */}
         <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
+
+        {/* Studio Card - show at bottom if artist owns a studio */}
+        {studio && (
+          <View style={{ marginTop: mvs(24), marginBottom: mvs(16) }}>
+            <StudioCard studio={studio} />
+          </View>
+        )}
 
         {/* Bottom actions - only show if not viewing own profile */}
         {currentUserId && currentUserId !== data.user.id && (

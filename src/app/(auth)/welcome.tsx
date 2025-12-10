@@ -92,16 +92,16 @@ export default function WelcomeScreen() {
               style={{
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: mvs(8),
+                marginBottom: mvs(4),
               }}
             >
               <SVGIcons.Logo height={s(50)} />
             </View>
             {/* Tagline */}
             <ScaledText
+              variant="lg"
               allowScaling={false}
-              className="text-center text-white font-neueRoman"
-              style={{ fontSize: scaledFont(16), lineHeight: 23 }}
+              className="text-center text-white font-neueLight"
             >
               Dove i tatuaggi incontrano le loro storie.
             </ScaledText>
