@@ -217,7 +217,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
         )}
 
         {/* Location */}
-        {artist.location && (
+        {artist.location && (artist.location.address || artist.location.municipality || artist.location.province)  && (
           <View className="flex-row items-center">
             <SVGIcons.Location width={s(14)} height={s(14)} />
             <ScaledText
