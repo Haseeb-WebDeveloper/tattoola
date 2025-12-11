@@ -33,6 +33,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import StudioCard from "@/components/search/StudioCard";
+import { StudioSearchResult } from "@/types/search";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -45,6 +47,7 @@ export default function ProfileScreen() {
     ArtistSelfProfileInterface | TattooLoverSelfProfile | null
   >(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [studioData, setStudioData] = useState<StudioSearchResult | null>(null);
 
   // Load profile with cache-first approach - role aware
   const loadProfile = useCallback(
@@ -56,12 +59,34 @@ export default function ProfileScreen() {
         if (user.role === "ARTIST") {
           const profile = await fetchArtistSelfProfile(user.id, forceRefresh);
           setData(profile);
+          try {
+            const isStudioOwner =
+              profile?.artistProfile?.workArrangement === "STUDIO_OWNER" ||
+              (profile?.artistProfile as any)?.isStudioOwner === true;
+
+            if (isStudioOwner && profile?.artistProfile?.id) {
+              const { fetchStudioForArtistProfile } = await import(
+                "@/services/profile.service"
+              );
+              const studio = await fetchStudioForArtistProfile(
+                profile.artistProfile.id
+              );
+              setStudioData(studio);
+              console.log("📊 Studio fetched for own profile:", studio?.id);
+            } else {
+              setStudioData(null);
+            }
+          } catch (studioError) {
+            console.error("Failed to fetch studio:", studioError);
+            setStudioData(null);
+          }
         } else if (user.role === "TATTOO_LOVER") {
           const profile = await fetchTattooLoverSelfProfile(
             user.id,
             forceRefresh
           );
           setData(profile);
+          setStudioData(null);
         }
 
         setError(null);
@@ -355,6 +380,32 @@ export default function ProfileScreen() {
             (data as ArtistSelfProfileInterface)?.bodyPartsNotWorkedOn || []
           }
         />
+        {data && user?.role === "ARTIST" && studioData && (
+          <View style={{ marginTop: mvs(24), marginBottom: mvs(16) }}>
+            <StudioCard studio={studioData} />
+            <TouchableOpacity
+              onPress={() => router.push("/settings/studio" as any)}
+              style={{
+                marginHorizontal: s(16),
+                marginTop: mvs(12),
+                paddingVertical: mvs(12),
+                paddingHorizontal: s(16),
+                borderRadius: s(12),
+                borderWidth: s(1),
+                borderColor: "#FF4C4C",
+                alignItems: "center",
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-white font-montserratMedium"
+              >
+                Modifica Studio
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={{ height: mvs(90) }} />
       </ScrollView>
     </View>
