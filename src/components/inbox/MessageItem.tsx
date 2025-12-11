@@ -4,30 +4,30 @@ import { SVGIcons } from "@/constants/svg";
 import { formatMessageTimestamp } from "@/utils/formatMessageTimestamp";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import React, { useEffect, useState } from "react";
-import { Clipboard, Image, Linking, Modal, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Clipboard,
+  Image,
+  Linking,
+  Modal,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { isIntakeMessage } from "../../utils/utils";
 import { toast } from "sonner-native";
 
 type Props = {
   item: any;
   index: number;
-  messages: any[];
+  // messages: any[];
   currentUserId?: string;
   peerAvatar?: string;
 };
 
-export default function MessageItem({
-  item,
-  index,
-  messages,
-  currentUserId,
-  peerAvatar,
-}: Props) {
+function MessageItem({ item, index, currentUserId, peerAvatar }: Props) {
   const isMine = item.senderId === currentUserId;
   const [showMenu, setShowMenu] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
-
 
   // Helper to get file name from URL
   const getFileName = (url: string): string => {
@@ -71,7 +71,7 @@ export default function MessageItem({
 
       // Open the file URL - the browser/OS will handle the download
       const canOpen = await Linking.canOpenURL(item.mediaUrl);
-      
+
       if (canOpen) {
         await Linking.openURL(item.mediaUrl);
       } else {
@@ -85,6 +85,9 @@ export default function MessageItem({
     }
   };
 
+  const formattedTimestamp = useMemo(() => {
+    return formatMessageTimestamp(item.createdAt);
+  }, [item.createdAt]);
   const renderMediaContent = () => {
     if (!item.mediaUrl) return null;
 
@@ -526,7 +529,7 @@ export default function MessageItem({
                     fontSize: ms(12),
                   }}
                 >
-                  {formatMessageTimestamp(item.createdAt)}
+                  {formattedTimestamp}
                 </ScaledText>
 
                 {/* Read receipts for sent messages */}
@@ -633,13 +636,26 @@ export default function MessageItem({
       </Modal>
 
       {/* Image Viewer Modal */}
-      {item.mediaUrl && (item.type === "IMAGE" || item.messageType === "IMAGE") && (
-        <ChatImageViewer
-          visible={showImageViewer}
-          imageUrl={item.mediaUrl}
-          onClose={() => setShowImageViewer(false)}
-        />
-      )}
+      {item.mediaUrl &&
+        (item.type === "IMAGE" || item.messageType === "IMAGE") && (
+          <ChatImageViewer
+            visible={showImageViewer}
+            imageUrl={item.mediaUrl}
+            onClose={() => setShowImageViewer(false)}
+          />
+        )}
     </View>
   );
 }
+
+const MemoizedMessageItem = React.memo(MessageItem, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if these specific props change
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.receiptStatus === nextProps.item.receiptStatus &&
+    prevProps.currentUserId === nextProps.currentUserId &&
+    prevProps.peerAvatar === nextProps.peerAvatar
+  );
+});
+
+export default MemoizedMessageItem;
