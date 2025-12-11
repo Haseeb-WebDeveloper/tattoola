@@ -60,7 +60,6 @@ export default function StudioInvitationAcceptScreen() {
         setLoading(true);
         let token = params.token;
 
-        // If no token in params, check AsyncStorage (for unauthenticated users)
         if (!token) {
           const storedToken = await AsyncStorage.getItem(STORAGE_KEY);
           if (storedToken) {
@@ -324,7 +323,7 @@ export default function StudioInvitationAcceptScreen() {
 
           {/* Title */}
           <View
-            className="items-center flex-row justify-center"
+            className="flex-row items-center justify-center"
             style={{ marginTop: mvs(8), gap: s(4) }}
           >
             <ScaledText
@@ -366,7 +365,7 @@ export default function StudioInvitationAcceptScreen() {
             <TouchableOpacity
               onPress={handleAccept}
               disabled={processing}
-              className="flex-1 items-center justify-center rounded-full bg-primary"
+              className="items-center justify-center flex-1 rounded-full bg-primary"
               style={{
                 paddingVertical: mvs(10.5),
               }}
@@ -387,7 +386,7 @@ export default function StudioInvitationAcceptScreen() {
             <TouchableOpacity
               onPress={handleDecline}
               disabled={processing}
-              className="flex-1 items-center justify-center border rounded-full bg-background border-gray"
+              className="items-center justify-center flex-1 border rounded-full bg-background border-gray"
               style={{
                 paddingVertical: mvs(10.5),
               }}

@@ -1,23 +1,19 @@
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import AuthStepHeader from '@/components/ui/auth-step-header';
+import AuthStepHeader from "@/components/ui/auth-step-header";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useAuth } from '@/providers/AuthProvider';
-import type { FormErrors, ResetPasswordData } from '@/types/auth';
+import { useAuth } from "@/providers/AuthProvider";
+import type { FormErrors, ResetPasswordData } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
-import { ResetPasswordValidationSchema, ValidationUtils } from '@/utils/validation';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  ResetPasswordValidationSchema,
+  ValidationUtils,
+} from "@/utils/validation";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 export default function ResetPasswordScreen() {
@@ -25,9 +21,9 @@ export default function ResetPasswordScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
 
   const [formData, setFormData] = useState<ResetPasswordData>({
-    token: token || '',
-    password: '',
-    confirmPassword: '',
+    token: token || "",
+    password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [passwordReset, setPasswordReset] = useState(false);
@@ -52,11 +48,11 @@ export default function ResetPasswordScreen() {
   }, [session, token, checkingSession]);
 
   const handleInputChange = (field: keyof ResetPasswordData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear error for this field
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -84,14 +80,12 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    // Check if we have a session (from code exchange) or a token
-    // With PKCE flow, code exchange creates a session, so token is not needed
     if (!session && !token) {
       toast.error(
         "Questo link per il reset della password non è valido o è scaduto. Richiedine uno nuovo."
       );
       setTimeout(() => {
-        router.push('/(auth)/forgot-password');
+        router.push("/(auth)/forgot-password");
       }, 1000);
       return;
     }
@@ -99,7 +93,11 @@ export default function ResetPasswordScreen() {
     try {
       // If we have a session, we don't need the token in formData
       const resetData: ResetPasswordData = session
-        ? { token: '', password: formData.password, confirmPassword: formData.confirmPassword }
+        ? {
+            token: "",
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+          }
         : formData;
 
       await resetPassword(resetData);
@@ -114,16 +112,20 @@ export default function ResetPasswordScreen() {
   };
 
   const handleBackToLogin = () => {
-    router.push('/(auth)/login');
+    router.push("/(auth)/login");
   };
 
   // Show loading if we're checking for session or if auth is loading
   if (loading || checkingSession) {
     return (
       <SafeAreaView className="flex-1 bg-background">
-        <LoadingSpinner 
-          message={checkingSession ? "Caricamento..." : "Reimpostazione della password..."} 
-          overlay 
+        <LoadingSpinner
+          message={
+            checkingSession
+              ? "Caricamento..."
+              : "Reimpostazione della password..."
+          }
+          overlay
         />
       </SafeAreaView>
     );
@@ -133,37 +135,41 @@ export default function ResetPasswordScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: s(24), paddingVertical: mvs(32) }}
+          contentContainerStyle={{
+            paddingHorizontal: s(24),
+            paddingVertical: mvs(32),
+          }}
           showsVerticalScrollIndicator={false}
         >
           <View className="items-center">
             <View className="mb-4">
               <SVGIcons.VarifiedGreen width={s(40)} height={s(40)} />
             </View>
-            <ScaledText
-              variant="2xl"
-              className="text-foreground font-neueBold"
-            >
+            <ScaledText variant="2xl" className="text-foreground font-neueBold">
               Password reimpostata con successo
             </ScaledText>
-            <ScaledText variant="body2" className="text-gray text-center font-neueLight ">
+            <ScaledText
+              variant="body2"
+              className="text-center text-gray font-neueLight "
+            >
               La tua password è stata reimpostata correttamente. Ora puoi
               accedere con la nuova password.
             </ScaledText>
           </View>
 
-          <View className="items-center"
+          <View
+            className="items-center"
             style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
           >
             <TouchableOpacity
               accessibilityRole="button"
               onPress={handleBackToLogin}
-              className="bg-primary rounded-full"
+              className="rounded-full bg-primary"
               style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
             >
               <ScaledText
                 variant="body1"
-                className="text-foreground font-neueBold text-center"
+                className="text-center text-foreground font-neueBold"
               >
                 Vai al login
               </ScaledText>
@@ -183,34 +189,32 @@ export default function ResetPasswordScreen() {
     >
       <AuthStepHeader />
 
-      <View
-        className="items-center"
-        style={{ paddingHorizontal: s(24), }}
-      >
-        <ScaledText
-          variant="2xl"
-          className="text-foreground font-neueBold"
-        >
+      <View className="items-center" style={{ paddingHorizontal: s(24) }}>
+        <ScaledText variant="2xl" className="text-foreground font-neueBold">
           Reimposta la tua password
         </ScaledText>
-        <ScaledText variant="body2" className="text-gray text-center font-montserratLight">
+        <ScaledText
+          variant="body2"
+          className="text-center text-gray font-montserratLight"
+        >
           Inserisci qui sotto la tua nuova password
         </ScaledText>
       </View>
 
-      <View
-        style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
-      >
-        <ScaledText variant="sm" className="text-foreground mb-2 font-montserratMedium">
+      <View style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}>
+        <ScaledText
+          variant="sm"
+          className="mb-2 text-foreground font-montserratMedium"
+        >
           Nuova password
         </ScaledText>
         <ScaledTextInput
-          containerClassName={`flex-row items-center rounded-xl ${errors.password ? 'border-2 border-error' : 'border border-gray'}`}
+          containerClassName={`flex-row items-center rounded-xl ${errors.password ? "border-2 border-error" : "border border-gray"}`}
           className="flex-1 text-foreground rounded-xl"
           placeholder="Inserisci la tua nuova password"
           secureTextEntry={!showPassword}
           value={formData.password}
-          onChangeText={(value) => handleInputChange('password', value)}
+          onChangeText={(value) => handleInputChange("password", value)}
           rightAccessory={
             <TouchableOpacity
               accessibilityRole="button"
@@ -229,16 +233,19 @@ export default function ResetPasswordScreen() {
 
         <View style={{ height: mvs(12) }} />
 
-        <ScaledText variant="sm" className="text-foreground mb-2 font-montserratMedium">
+        <ScaledText
+          variant="sm"
+          className="mb-2 text-foreground font-montserratMedium"
+        >
           Conferma nuova password
         </ScaledText>
         <ScaledTextInput
-          containerClassName={`flex-row items-center rounded-xl ${errors.confirmPassword ? 'border-2 border-error' : 'border border-gray'}`}
+          containerClassName={`flex-row items-center rounded-xl ${errors.confirmPassword ? "border-2 border-error" : "border border-gray"}`}
           className="flex-1 text-foreground rounded-xl"
           placeholder="Conferma la tua nuova password"
           secureTextEntry={!showConfirmPassword}
           value={formData.confirmPassword}
-          onChangeText={(value) => handleInputChange('confirmPassword', value)}
+          onChangeText={(value) => handleInputChange("confirmPassword", value)}
           rightAccessory={
             <TouchableOpacity
               accessibilityRole="button"
@@ -259,31 +266,39 @@ export default function ResetPasswordScreen() {
           accessibilityRole="button"
           onPress={handleResetPassword}
           disabled={loading}
-          className="bg-primary rounded-full"
-          style={{ paddingVertical: mvs(10), paddingHorizontal: s(32), marginTop: mvs(24) }}
+          className="rounded-full bg-primary"
+          style={{
+            paddingVertical: mvs(10),
+            paddingHorizontal: s(32),
+            marginTop: mvs(24),
+          }}
         >
           <ScaledText
             variant="body1"
-            className="text-foreground font-neueBold text-center"
+            className="text-center text-foreground font-neueBold"
           >
             Reimposta password
           </ScaledText>
         </TouchableOpacity>
       </View>
 
-      <View className="items-center"
+      <View
+        className="items-center"
         style={{ paddingHorizontal: s(16), paddingTop: mvs(8) }}
       >
         <TouchableOpacity
           onPress={handleBackToLogin}
-          className="rounded-full items-center justify-center"
+          className="items-center justify-center rounded-full"
           style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
         >
-          <ScaledText variant="body2" className="text-gray text-center font-montserratMedium">
+          <ScaledText
+            variant="body2"
+            className="text-center text-gray font-montserratMedium"
+          >
             Ti sei ricordato la password?{" "}
             <ScaledText
               variant="body2"
-              className="text-foreground font-montserratSemibold text-center"
+              className="text-center text-foreground font-montserratSemibold"
             >
               Accedi
             </ScaledText>
