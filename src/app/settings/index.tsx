@@ -284,7 +284,7 @@ export default function SettingsScreen() {
           <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem
             title="Email"
-            value={user?.email || "johndoe@gmail.com"}
+            value={user?.email || ""}
             onPress={handleEmailPress}
           />
           <View className="bg-gray" style={{ height: s(0.5) }} />

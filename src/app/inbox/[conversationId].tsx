@@ -26,6 +26,7 @@ import {
   Platform,
   TouchableOpacity,
   View,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -58,7 +59,29 @@ export default function ChatThreadScreen() {
   const [showMessageRestrictionModal, setShowMessageRestrictionModal] =
     useState(false);
   const listRef = useRef<FlatList>(null);
-  const rawMessages = messagesByConv[conversationId || ""] || [];
+  const newestMessageIdRef = useRef<string | null>(null);
+  const isLoadingOlderRef = useRef<boolean>(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+
+  const rotationAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isLoadingOlder) {
+      rotationAnim.setValue(0);
+      Animated.loop(
+        Animated.timing(rotationAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    }
+  }, [isLoadingOlder, rotationAnim]);
+
+  const spin = rotationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   // Memoize peer username for modal
   const peerUsername = React.useMemo(() => {
@@ -68,6 +91,7 @@ export default function ChatThreadScreen() {
   // Deduplicate messages by ID (safety check)
   // Reverse array for inverted FlatList (newest at index 0 = bottom of screen)
   const messages = React.useMemo(() => {
+    const rawMessages = messagesByConv[conversationId || ""] || [];
     const seen = new Set();
     const unique = rawMessages.filter((m: any) => {
       if (seen.has(m.id)) {
@@ -78,10 +102,9 @@ export default function ChatThreadScreen() {
     });
     // Reverse for inverted list - newest first
     return unique.slice().reverse();
-  }, [rawMessages]);
+  }, [messagesByConv, conversationId]);
 
   const insets = useSafeAreaInsets();
-  const prevMessageCountRef = useRef<number>(0);
 
   useEffect(() => {
     if (!conversationId || !user?.id) return;
@@ -125,8 +148,8 @@ export default function ChatThreadScreen() {
           });
           setConv(c);
         }
-      } catch {}
-      finally {
+      } catch {
+      } finally {
         setLoadingPeer(false);
       }
     })();
@@ -160,11 +183,15 @@ export default function ChatThreadScreen() {
   useEffect(() => {
     if (messages.length === 0) return;
 
-    // Check if we have a new message (message count increased)
-    const hasNewMessage = messages.length > prevMessageCountRef.current;
+    // Don't auto-scroll if we're loading older messages
+    if (isLoadingOlderRef.current) return;
 
-    if (hasNewMessage && prevMessageCountRef.current > 0) {
-      // Auto-scroll to newest message (bottom of chat)
+    const newestMessageId = messages[0]?.id;
+    const isNewMessage =
+      newestMessageId && newestMessageId !== newestMessageIdRef.current;
+
+    if (isNewMessage && newestMessageIdRef.current !== null) {
+      // Only scroll if we were already viewing messages and a NEW one arrived
       requestAnimationFrame(() => {
         setTimeout(() => {
           try {
@@ -176,8 +203,8 @@ export default function ChatThreadScreen() {
       });
     }
 
-    // Update the ref with current message count
-    prevMessageCountRef.current = messages.length;
+    // Update ref with current newest message ID
+    newestMessageIdRef.current = newestMessageId || null;
   }, [messages.length]);
 
   const handleSend = async () => {
@@ -329,12 +356,11 @@ export default function ChatThreadScreen() {
       <MessageItem
         item={item}
         index={index}
-        messages={messages}
         currentUserId={user?.id}
         peerAvatar={peer?.avatar}
       />
     ),
-    [messages, user?.id, peer?.avatar]
+    [user?.id, peer?.avatar]
   );
 
   return (
@@ -453,6 +479,19 @@ export default function ChatThreadScreen() {
         }
       >
         <View style={{ flex: 1 }}>
+          {isLoadingOlder && (
+            <View
+              style={{
+                paddingVertical: mvs(12),
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                <SVGIcons.Loading width={s(20)} height={s(20)} />
+              </Animated.View>
+            </View>
+          )}
           {messages.length === 0 && (
             <View
               className="absolute inset-0 items-center justify-center z-10 w-full h-full"
@@ -465,8 +504,8 @@ export default function ChatThreadScreen() {
                 variant="md"
                 className="text-gray text-center font-montserratMedium"
               >
-                Cronologia della chat eliminata.{"\n"}I nuovi messaggi
-                verranno mostrati qui.
+                Cronologia della chat eliminata.{"\n"}I nuovi messaggi verranno
+                mostrati qui.
               </ScaledText>
             </View>
           )}
@@ -479,9 +518,16 @@ export default function ChatThreadScreen() {
             keyboardDismissMode={
               Platform.OS === "ios" ? "interactive" : "on-drag"
             }
-            onEndReached={() =>
-              conversationId && user?.id && loadOlder(conversationId, user.id)
-            }
+            onEndReached={() => {
+              if (conversationId && user?.id && !isLoadingOlder) {
+                setIsLoadingOlder(true);
+                isLoadingOlderRef.current = true;
+                loadOlder(conversationId, user.id).finally(() => {
+                  isLoadingOlderRef.current = false;
+                  setIsLoadingOlder(false);
+                });
+              }
+            }}
             onEndReachedThreshold={0.5}
             contentContainerStyle={{
               paddingVertical: mvs(1),
