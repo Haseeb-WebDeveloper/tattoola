@@ -8,7 +8,7 @@ import type { FormErrors, ResetPasswordData } from '@/types/auth';
 import { mvs, s } from "@/utils/scale";
 import { ResetPasswordValidationSchema, ValidationUtils } from '@/utils/validation';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -33,6 +33,23 @@ export default function ResetPasswordScreen() {
   const [passwordReset, setPasswordReset] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(false);
+
+  // Wait for session to be available after code exchange (for PKCE flow)
+  useEffect(() => {
+    // If we don't have a token and don't have a session, wait a bit for session to be available
+    if (!token && !session && !checkingSession) {
+      setCheckingSession(true);
+      // Give the auth provider time to set the session after code exchange
+      const timeout = setTimeout(() => {
+        setCheckingSession(false);
+      }, 2000); // Wait up to 2 seconds for session
+
+      return () => clearTimeout(timeout);
+    } else if (session || token) {
+      setCheckingSession(false);
+    }
+  }, [session, token, checkingSession]);
 
   const handleInputChange = (field: keyof ResetPasswordData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -100,10 +117,14 @@ export default function ResetPasswordScreen() {
     router.push('/(auth)/login');
   };
 
-  if (loading) {
+  // Show loading if we're checking for session or if auth is loading
+  if (loading || checkingSession) {
     return (
       <SafeAreaView className="flex-1 bg-background">
-        <LoadingSpinner message="Reimpostazione della password..." overlay />
+        <LoadingSpinner 
+          message={checkingSession ? "Caricamento..." : "Reimpostazione della password..."} 
+          overlay 
+        />
       </SafeAreaView>
     );
   }

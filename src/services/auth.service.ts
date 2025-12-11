@@ -223,7 +223,7 @@ export class AuthService {
    */
   static async forgotPassword(data: ForgotPasswordData): Promise<void> {
     const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: "tattoola://(auth)/reset-password",
+      redirectTo: "tattoola://reset-password",
     });
 
     if (error) {
