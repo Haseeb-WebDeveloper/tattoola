@@ -146,7 +146,7 @@ export default function StudioInvitationSuccessScreen() {
                 letterSpacing: s(-0.5),
               }}
             >
-              Congratulations!
+              Congratulazioni!
             </ScaledText>
 
             {/* Message Text */}
@@ -168,7 +168,7 @@ export default function StudioInvitationSuccessScreen() {
                     fontFamily: "Montserrat_400Regular",
                   }}
                 >
-                  You've accepted the invitation to join{" "}
+                  Hai accettato l'invito per unirti a{" "}
                   <Text
                     style={{
                       fontSize: s(12),
@@ -178,7 +178,7 @@ export default function StudioInvitationSuccessScreen() {
                   >
                     {studioName}
                   </Text>{" "}
-                  Studio by{" "}
+                  Studio di{" "}
                 </Text>
                 {senderAvatar ? (
                   <Image
@@ -250,7 +250,7 @@ export default function StudioInvitationSuccessScreen() {
                   lineHeight: s(23),
                 }}
               >
-                Done
+                Fatto
               </ScaledText>
             </TouchableOpacity>
           </View>
