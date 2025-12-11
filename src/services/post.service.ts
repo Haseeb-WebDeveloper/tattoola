@@ -1,7 +1,11 @@
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { cloudinaryService } from "@/services/cloudinary.service";
-import { findOrGetTuttiCollection, isPreferitiCollection } from "@/utils/collection.utils";
+import {
+  findOrGetTuttiCollection,
+  isPreferitiCollection,
+  isTuttiCollection,
+} from "@/utils/collection.utils";
 
 export type PostDetail = {
   id: string;
@@ -492,10 +496,12 @@ export async function createPostWithMediaAndCollection(args: {
     // Otherwise, use first IMAGE as thumbnail
     let thumbnailUrl: string | undefined;
     const firstMedia = args.media[0];
-    
+
     if (firstMedia?.mediaType === "VIDEO") {
       // Generate thumbnail URL from video using Cloudinary
-      thumbnailUrl = cloudinaryService.getVideoThumbnailFromUrl(firstMedia.mediaUrl);
+      thumbnailUrl = cloudinaryService.getVideoThumbnailFromUrl(
+        firstMedia.mediaUrl
+      );
     } else {
       // Fall back to finding first image media item
       const firstImage =
@@ -512,11 +518,16 @@ export async function createPostWithMediaAndCollection(args: {
     });
 
     await addPostMedia(postId, args.media);
-    
+
     // Check if the collection is "preferiti"
     let isInPreferiti = false;
+    let isTuttiCollectionCheck = false;
+    let isInSpecialCollection = false;
     if (args.collectionId) {
       isInPreferiti = await isPreferitiCollection(args.collectionId);
+      isTuttiCollectionCheck = await isTuttiCollection(args.collectionId);
+      isInSpecialCollection = isInPreferiti || isTuttiCollectionCheck;
+
       await addPostToCollection(postId, args.collectionId);
       console.log(
         "[createPostWithMediaAndCollection] addedToCollection",
@@ -525,21 +536,28 @@ export async function createPostWithMediaAndCollection(args: {
     }
 
     // Add to "tutti" collection if NOT in "preferiti" (or if no collection specified)
-    if (!isInPreferiti) {
+    if (!isInSpecialCollection) {
       try {
         const tuttiCollectionId = await findOrGetTuttiCollection(authorId);
         if (tuttiCollectionId) {
           await addPostToCollection(postId, tuttiCollectionId);
-          console.log("[createPostWithMediaAndCollection] added to tutti collection");
+          console.log(
+            "[createPostWithMediaAndCollection] added to tutti collection"
+          );
         } else {
-          console.warn("[createPostWithMediaAndCollection] tutti collection not found for user");
+          console.warn(
+            "[createPostWithMediaAndCollection] tutti collection not found for user"
+          );
         }
       } catch (e) {
         // Don't fail post creation if tutti collection logic fails
-        console.error("[createPostWithMediaAndCollection] error adding to tutti:", e);
+        console.error(
+          "[createPostWithMediaAndCollection] error adding to tutti:",
+          e
+        );
       }
     }
-    
+
     return { postId };
   } catch (e) {
     console.error("[createPostWithMediaAndCollection] error", e);
