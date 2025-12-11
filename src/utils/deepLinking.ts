@@ -9,16 +9,52 @@ export function initializeDeepLinking() {
   // Ensure we only handle the initial URL once (to avoid unwanted redirects
   // when the app returns to foreground, e.g. after picking media).
   let hasHandledInitialUrl = false;
+  
+  // Track processed URLs to prevent double processing
+  // Use code parameter as key since that's what matters for PKCE flow
+  const processedCodes = new Set<string>();
+  const processedUrls = new Set<string>();
+  
+  // Track navigation state to prevent multiple navigations
+  let isNavigatingToResetPassword = false;
 
   // Handle deep links when app is already running
   const handleDeepLink = async (url: string) => {
     try {
       const urlObj = new URL(url);
+      
+      // Normalize URL for tracking (remove hash, keep pathname and search)
+      const normalizedUrl = `${urlObj.origin}${urlObj.pathname}${urlObj.search}`;
+      
+      // Check if we've already processed this exact URL
+      if (processedUrls.has(normalizedUrl)) {
+        logger.log("Deep link: URL already processed, skipping duplicate:", normalizedUrl);
+        return;
+      }
 
       // Check for PKCE code first (most common case)
       const code = urlObj.searchParams.get("code");
       if (code) {
+        // Check if we've already processed this code
+        if (processedCodes.has(code)) {
+          logger.log("Deep link: Code already processed, skipping duplicate code exchange");
+          return;
+        }
+        
+        // Mark code as being processed
+        processedCodes.add(code);
+        processedUrls.add(normalizedUrl);
+        
         try {
+          // Check if this is a password reset flow by examining the URL
+          // Handle various URL formats: tattoola://reset-password, tattoola://(auth)/reset-password, etc.
+          const urlLower = url.toLowerCase();
+          const isPasswordReset = 
+            urlLower.includes("reset-password") || 
+            urlLower.includes("reset_password") ||
+            urlObj.pathname.toLowerCase().includes("reset-password") ||
+            urlObj.pathname.toLowerCase().includes("reset_password");
+
           // Exchange the code for a session
           const { data, error: exchangeError } =
             await supabase.auth.exchangeCodeForSession(code);
@@ -28,13 +64,54 @@ export function initializeDeepLinking() {
               "Deep link: code exchange failed:",
               exchangeError.message
             );
-            router.replace("/(auth)/welcome");
+            // If password reset, route to reset-password screen with error
+            // But only if we haven't already navigated
+            if (isPasswordReset && !isNavigatingToResetPassword) {
+              isNavigatingToResetPassword = true;
+              router.replace("/(auth)/reset-password");
+              setTimeout(() => {
+                isNavigatingToResetPassword = false;
+              }, 2000);
+            } else if (!isPasswordReset) {
+              router.replace("/(auth)/welcome");
+            }
             return;
           }
 
           if (!data || !data.user) {
             logger.error("Deep link: code exchange returned no user data");
-            router.replace("/(auth)/welcome");
+            // If password reset, route to reset-password screen with error
+            // But only if we haven't already navigated
+            if (isPasswordReset && !isNavigatingToResetPassword) {
+              isNavigatingToResetPassword = true;
+              router.replace("/(auth)/reset-password");
+              setTimeout(() => {
+                isNavigatingToResetPassword = false;
+              }, 2000);
+            } else if (!isPasswordReset) {
+              router.replace("/(auth)/welcome");
+            }
+            return;
+          }
+
+          // If this is a password reset flow, route directly to reset-password screen
+          if (isPasswordReset) {
+            // Prevent multiple navigations to reset-password screen
+            if (isNavigatingToResetPassword) {
+              logger.log("Deep link: Already navigating to reset-password, skipping duplicate navigation");
+              return;
+            }
+            
+            isNavigatingToResetPassword = true;
+            logger.log("Deep link: Password reset flow detected, routing to reset-password screen");
+            // Small delay to allow auth state to settle before navigation
+            setTimeout(() => {
+              router.replace("/(auth)/reset-password");
+              // Reset flag after navigation (with delay to prevent rapid re-navigation)
+              setTimeout(() => {
+                isNavigatingToResetPassword = false;
+              }, 2000);
+            }, 300);
             return;
           }
 
@@ -75,7 +152,23 @@ export function initializeDeepLinking() {
           }, 300);
         } catch (error) {
           logger.error("Deep link: exception during code exchange:", error);
-          router.replace("/(auth)/welcome");
+          // Check if this was a password reset flow
+          const urlLower = url.toLowerCase();
+          const isPasswordReset = 
+            urlLower.includes("reset-password") || 
+            urlLower.includes("reset_password") ||
+            urlObj.pathname.toLowerCase().includes("reset-password") ||
+            urlObj.pathname.toLowerCase().includes("reset_password");
+          // Only navigate if we haven't already navigated
+          if (isPasswordReset && !isNavigatingToResetPassword) {
+            isNavigatingToResetPassword = true;
+            router.replace("/(auth)/reset-password");
+            setTimeout(() => {
+              isNavigatingToResetPassword = false;
+            }, 2000);
+          } else if (!isPasswordReset) {
+            router.replace("/(auth)/welcome");
+          }
         }
 
         return;
@@ -299,9 +392,18 @@ export function initializeDeepLinking() {
       return;
     }
 
-    // Fire and forget; no need to block
-    handleDeepLink(url).catch((error) => {
-      logger.error("Error in handleDeepLink:", error);
+    // Check if this is the initial URL that was already handled
+    // This prevents the event listener from processing the same URL twice
+    Linking.getInitialURL().then((initialUrl) => {
+      if (initialUrl === url && hasHandledInitialUrl) {
+        logger.log("Deep link: URL event matches initial URL that was already handled, skipping");
+        return;
+      }
+      
+      // Process the URL
+      handleDeepLink(url).catch((error) => {
+        logger.error("Error in handleDeepLink:", error);
+      });
     });
   });
 
