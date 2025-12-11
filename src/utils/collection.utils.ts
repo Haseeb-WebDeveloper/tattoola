@@ -72,3 +72,19 @@ export async function isPreferitiCollection(collectionId: string): Promise<boole
   return collection.name.toLowerCase() === "preferiti";
 }
 
+/**
+ * Check if a collection is "tutti"
+ * @param collectionId - The collection ID to check
+ * @returns true if the collection is "tutti", false otherwise
+ */
+export async function isTuttiCollection(collectionId: string): Promise<boolean> {
+  const { data: collection, error } = await supabase
+    .from("collections")
+    .select("name")
+    .eq("id", collectionId)
+    .maybeSingle();
+  
+  if (error || !collection) return false;
+  
+  return collection.name.toLowerCase() === "tutti";
+}
