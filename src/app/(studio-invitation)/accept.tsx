@@ -45,6 +45,8 @@ export default function StudioInvitationAcceptScreen() {
     studioName: string;
     studioLogo?: string | null;
     senderName: string;
+    senderAvatar?: string | null;
+    artistAvatar?: string | null;
     token: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,6 @@ export default function StudioInvitationAcceptScreen() {
         setLoading(true);
         let token = params.token;
 
-        // If no token in params, check AsyncStorage (for unauthenticated users)
         if (!token) {
           const storedToken = await AsyncStorage.getItem(STORAGE_KEY);
           if (storedToken) {
@@ -105,7 +106,11 @@ export default function StudioInvitationAcceptScreen() {
             inviter:users!studio_members_invitedBy_fkey(
               firstName,
               lastName,
-              username
+              username,
+              avatar
+            ),
+            user:users!studio_members_userId_fkey(
+              avatar
             )
           `
           )
@@ -131,6 +136,7 @@ export default function StudioInvitationAcceptScreen() {
 
         const studio = invitation.studio as any;
         const inviter = invitation.inviter as any;
+        const currentUser = invitation.user as any;
 
         const senderName =
           inviter?.firstName && inviter?.lastName
@@ -141,6 +147,8 @@ export default function StudioInvitationAcceptScreen() {
           studioName: studio?.name || "Studio",
           studioLogo: studio?.logo,
           senderName: senderName,
+          senderAvatar: inviter?.avatar,
+          artistAvatar: currentUser?.avatar,
           token: token,
         };
 
@@ -167,10 +175,23 @@ export default function StudioInvitationAcceptScreen() {
       );
 
       if (result.success) {
-        toast.success(`Ti sei unito a ${result.studioName}!`);
-        setTimeout(() => {
-          router.replace("/settings/studio" as any);
-        }, 1000);
+        // Navigate to success screen with all data
+        const successParams = new URLSearchParams({
+          studioName: invitationData.studioName,
+          senderName: invitationData.senderName,
+          ...(invitationData.studioLogo && {
+            studioLogo: invitationData.studioLogo,
+          }),
+          ...(invitationData.senderAvatar && {
+            senderAvatar: invitationData.senderAvatar,
+          }),
+          ...(invitationData.artistAvatar && {
+            artistAvatar: invitationData.artistAvatar,
+          }),
+        });
+        router.replace(
+          `/(studio-invitation)/success?${successParams.toString()}` as any
+        );
       } else {
         toast.error(result.error || "Accettazione dell'invito non riuscita");
         setError(result.error || "Accettazione dell'invito non riuscita");
@@ -324,7 +345,7 @@ export default function StudioInvitationAcceptScreen() {
 
           {/* Title */}
           <View
-            className="items-center flex-row justify-center"
+            className="flex-row items-center justify-center"
             style={{ marginTop: mvs(8), gap: s(4) }}
           >
             <ScaledText
@@ -366,7 +387,7 @@ export default function StudioInvitationAcceptScreen() {
             <TouchableOpacity
               onPress={handleAccept}
               disabled={processing}
-              className="flex-1 items-center justify-center rounded-full bg-primary"
+              className="items-center justify-center flex-1 rounded-full bg-primary"
               style={{
                 paddingVertical: mvs(10.5),
               }}
@@ -387,7 +408,7 @@ export default function StudioInvitationAcceptScreen() {
             <TouchableOpacity
               onPress={handleDecline}
               disabled={processing}
-              className="flex-1 items-center justify-center border rounded-full bg-background border-gray"
+              className="items-center justify-center flex-1 border rounded-full bg-background border-gray"
               style={{
                 paddingVertical: mvs(10.5),
               }}
