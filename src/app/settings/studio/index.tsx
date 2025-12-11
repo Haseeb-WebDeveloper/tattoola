@@ -240,7 +240,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
         left: s(0),
         right: s(0),
         top: mvs(100),
-        paddingHorizontal: s(24),
+        paddingHorizontal: s(22),
         zIndex: 2,
       }}
     >
@@ -248,6 +248,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
         allowScaling={false}
         variant="xl"
         className="text-white font-neueSemibold"
+
       >
         La tua pagina Studio è online ✨
       </ScaledText>

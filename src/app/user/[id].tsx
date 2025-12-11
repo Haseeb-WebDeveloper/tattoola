@@ -61,6 +61,10 @@ export default function UserProfileScreen() {
           .select("id, workArrangement, isStudioOwner")
           .eq("userId", String(id))
           .maybeSingle();
+        
+              console.log("🎨 Artist Profile Data:", artistProfileData);
+      console.log("🎨 Is Studio Owner?", artistProfileData?.isStudioOwner);
+      console.log("🎨 Work Arrangement:", artistProfileData?.workArrangement);
 
         // Fetch artist profile and studio data in parallel
         const [artistProfile, studio] = await Promise.all([
@@ -72,7 +76,10 @@ export default function UserProfileScreen() {
             ? fetchStudioForArtistProfile(artistProfileData.id)
             : Promise.resolve(null),
         ]);
-
+      console.log("📊 Studio Data Fetched:", studio);
+      console.log("📊 Studio ID:", studio?.id);
+      console.log("📊 Studio Completed:", studio?.isCompleted);
+      console.log("📊 Studio Active:", studio?.isActive);
         profile = artistProfile;
         setStudioData(studio);
       } else {
