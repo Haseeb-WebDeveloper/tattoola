@@ -45,6 +45,8 @@ export default function StudioInvitationAcceptScreen() {
     studioName: string;
     studioLogo?: string | null;
     senderName: string;
+    senderAvatar?: string | null;
+    artistAvatar?: string | null;
     token: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +106,11 @@ export default function StudioInvitationAcceptScreen() {
             inviter:users!studio_members_invitedBy_fkey(
               firstName,
               lastName,
-              username
+              username,
+              avatar
+            ),
+            user:users!studio_members_userId_fkey(
+              avatar
             )
           `
           )
@@ -130,6 +136,7 @@ export default function StudioInvitationAcceptScreen() {
 
         const studio = invitation.studio as any;
         const inviter = invitation.inviter as any;
+        const currentUser = invitation.user as any;
 
         const senderName =
           inviter?.firstName && inviter?.lastName
@@ -140,6 +147,8 @@ export default function StudioInvitationAcceptScreen() {
           studioName: studio?.name || "Studio",
           studioLogo: studio?.logo,
           senderName: senderName,
+          senderAvatar: inviter?.avatar,
+          artistAvatar: currentUser?.avatar,
           token: token,
         };
 
@@ -166,10 +175,23 @@ export default function StudioInvitationAcceptScreen() {
       );
 
       if (result.success) {
-        toast.success(`Ti sei unito a ${result.studioName}!`);
-        setTimeout(() => {
-          router.replace("/settings/studio" as any);
-        }, 1000);
+        // Navigate to success screen with all data
+        const successParams = new URLSearchParams({
+          studioName: invitationData.studioName,
+          senderName: invitationData.senderName,
+          ...(invitationData.studioLogo && {
+            studioLogo: invitationData.studioLogo,
+          }),
+          ...(invitationData.senderAvatar && {
+            senderAvatar: invitationData.senderAvatar,
+          }),
+          ...(invitationData.artistAvatar && {
+            artistAvatar: invitationData.artistAvatar,
+          }),
+        });
+        router.replace(
+          `/(studio-invitation)/success?${successParams.toString()}` as any
+        );
       } else {
         toast.error(result.error || "Accettazione dell'invito non riuscita");
         setError(result.error || "Accettazione dell'invito non riuscita");

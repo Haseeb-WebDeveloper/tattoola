@@ -4,6 +4,7 @@ export default function StudioInvitationLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="accept" />
+      <Stack.Screen name="success" />
     </Stack>
   );
 }
