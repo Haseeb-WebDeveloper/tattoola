@@ -123,7 +123,7 @@ export const ArtistSearchResultCard: React.FC<ArtistSearchResultCardProps> = ({
           onPress={() => onInvite(item)}
           disabled={isInviting}
           activeOpacity={0.85}
-          className="bg-primary rounded-full"
+          className="rounded-full bg-primary"
           style={{
             alignSelf: "flex-start",
             paddingVertical: mvs(9),
@@ -136,7 +136,7 @@ export const ArtistSearchResultCard: React.FC<ArtistSearchResultCardProps> = ({
             <ActivityIndicator size="small" />
           ) : (
             <>
-              <SVGIcons.Link width={s(12)} height={s(12)}  />
+              <SVGIcons.Link width={s(12)} height={s(12)} />
               <ScaledText
                 allowScaling={false}
                 variant="11"

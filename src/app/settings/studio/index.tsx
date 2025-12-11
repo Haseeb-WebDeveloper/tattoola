@@ -137,7 +137,8 @@ const SetupCard: React.FC<SetupCardProps> = ({ onPress }) => (
           width: "100%",
         }}
       >
-        Aggiungi dettagli, foto e stile per costruire{"\n"}la presenza del tuo studio.
+        Aggiungi dettagli, foto e stile per costruire{"\n"}la presenza del tuo
+        studio.
       </ScaledText>
     </View>
     {/* Button absolute near the bottom */}
@@ -239,7 +240,7 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
         position: "absolute",
         left: s(0),
         right: s(0),
-        top: mvs(100),
+        top: mvs(70),
         paddingHorizontal: s(22),
         zIndex: 2,
       }}
@@ -248,7 +249,6 @@ const LiveCard: React.FC<SetupCardProps> = ({ onPress }) => (
         allowScaling={false}
         variant="xl"
         className="text-white font-neueSemibold"
-
       >
         La tua pagina Studio è online ✨
       </ScaledText>
@@ -361,7 +361,9 @@ export default function StudioSettingsScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [studio, setStudio] = useState<StudioInfo | null>(null);
-  const [userPlanType, setUserPlanType] = useState<"PREMIUM" | "STUDIO" | null>(null);
+  const [userPlanType, setUserPlanType] = useState<"PREMIUM" | "STUDIO" | null>(
+    null
+  );
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showNotOwnerModal, setShowNotOwnerModal] = useState(false);
 
@@ -386,9 +388,10 @@ export default function StudioSettingsScreen() {
   useEffect(() => {
     const fetchUserSubscription = async () => {
       if (!user?.id || user?.role !== "ARTIST") return;
-      
+
       try {
-        const subscription = await SubscriptionService.getActiveSubscriptionWithPlan();
+        const subscription =
+          await SubscriptionService.getActiveSubscriptionWithPlan();
         if (subscription?.subscription_plans?.type) {
           setUserPlanType(subscription.subscription_plans.type);
         }
@@ -461,7 +464,7 @@ export default function StudioSettingsScreen() {
     }
     router.push("/settings/studio/step-0" as any);
   };
-  
+
   const handleStudioPageViewPress = (id: string | undefined) => {
     // Viewing studio page is allowed for everyone, but editing requires OWNER
     if (!id) {
@@ -487,11 +490,10 @@ export default function StudioSettingsScreen() {
   const showSetupCard =
     !loading &&
     userPlanType === "STUDIO" &&
-    (!studio ||
-      (!studio.isCompleted && studio.userRole === "OWNER"));
+    (!studio || (!studio.isCompleted && studio.userRole === "OWNER"));
 
   const showStudioItems = !loading && studio;
-  
+
   const showPremiumMessage = !loading && !studio && userPlanType === "PREMIUM";
 
   return (
@@ -593,7 +595,8 @@ export default function StudioSettingsScreen() {
                 className="text-center text-gray font-neueMedium"
                 style={{ marginBottom: mvs(16) }}
               >
-                Non hai un piano STUDIO. Abbonati al piano Studio per avere accesso alle funzionalità Studio.
+                Non hai un piano STUDIO. Abbonati al piano Studio per avere
+                accesso alle funzionalità Studio.
               </ScaledText>
               <TouchableOpacity
                 onPress={handleUpgradePress}
@@ -661,7 +664,8 @@ export default function StudioSettingsScreen() {
               className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
-              Non hai un piano STUDIO. Abbonati al piano Studio per avere accesso alle funzionalità Studio.
+              Non hai un piano STUDIO. Abbonati al piano Studio per avere
+              accesso alle funzionalità Studio.
             </ScaledText>
 
             <View style={{ gap: mvs(4) }} className="flex-row justify-center">
@@ -744,7 +748,8 @@ export default function StudioSettingsScreen() {
               className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
-              Solo il proprietario dello Studio può modificare queste impostazioni.
+              Solo il proprietario dello Studio può modificare queste
+              impostazioni.
             </ScaledText>
 
             <TouchableOpacity
