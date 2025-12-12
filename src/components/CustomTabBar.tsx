@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useUser } from "@/providers/AuthProvider";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useTotalUnreadCount } from "@/stores/chatInboxStore";
 import { useTabBarStore } from "@/stores/tabBarStore";
 import { mvs, s } from "@/utils/scale";
@@ -76,8 +77,12 @@ export default function CustomTabBar({
   const totalUnreadCount = useTotalUnreadCount();
 
   const getIcon = (routeName: string, isFocused: boolean) => {
-    // Special handling for profile tab to show user avatar
+    // Special handling for profile tab to show user avatar or Accedi icon
     if (routeName === "profile") {
+      if (!user) {
+        // Show Accedi icon for anonymous users
+        return <SVGIcons.Accedi width={s(24)} height={s(24)} />;
+      }
       return <ProfileAvatar avatar={user?.avatar} isFocused={isFocused} />;
     }
 
@@ -123,6 +128,10 @@ export default function CustomTabBar({
   const uploadOptions = uploadRoute ? descriptors[uploadRoute.key].options : {};
 
   const handleUploadPress = () => {
+    if (!user) {
+      useAuthRequiredStore.getState().show("Sign in to share your tattoos");
+      return;
+    }
     router.push("/upload/media");
   };
 
@@ -209,6 +218,18 @@ export default function CustomTabBar({
                   return;
                 }
 
+                // For anonymous users, inbox shows auth modal
+                if (route.name === "inbox" && !user) {
+                  useAuthRequiredStore.getState().show("Sign in to access your messages");
+                  return;
+                }
+
+                // For anonymous users, profile tab goes to login
+                if (route.name === "profile" && !user) {
+                  router.push("/(auth)/login");
+                  return;
+                }
+
                 const event = navigation.emit({
                   type: "tabPress",
                   target: route.key,
@@ -240,6 +261,10 @@ export default function CustomTabBar({
                 );
               }
 
+              // Special handling for profile tab when user is anonymous
+              const isProfileTab = route.name === "profile";
+              const showAccediLabel = isProfileTab && !user;
+
               return (
                 <TouchableOpacity
                   key={route.key}
@@ -249,6 +274,7 @@ export default function CustomTabBar({
                   testID={options.tabBarTestID}
                   onPress={onPress}
                   onLongPress={onLongPress}
+                  className={showAccediLabel ? "bg-primary " : ""}
                   style={{
                     alignItems: "center",
                     justifyContent: "center",
@@ -259,11 +285,15 @@ export default function CustomTabBar({
                   <ScaledText
                     variant="11"
                     className={` bg-transparent font-neueBold ${
-                      isFocused ? "text-foreground" : "text-gray"
+                      showAccediLabel
+                        ? "text-foreground"
+                        : isFocused
+                          ? "text-foreground"
+                          : "text-gray"
                     }`}
                     style={{ marginTop: mvs(4) }}
                   >
-                    {label}
+                    {showAccediLabel ? "Accedi" : label}
                   </ScaledText>
                 </TouchableOpacity>
               );
