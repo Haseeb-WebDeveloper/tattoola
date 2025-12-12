@@ -392,6 +392,22 @@ export function initializeDeepLinking() {
       return;
     }
 
+    // Normalize URL immediately to check if already processed (before async operations)
+    let normalizedUrl: string | null = null;
+    try {
+      const urlObj = new URL(url);
+      normalizedUrl = `${urlObj.origin}${urlObj.pathname}${urlObj.search}`;
+      
+      // Check if already processed BEFORE calling handleDeepLink
+      if (processedUrls.has(normalizedUrl)) {
+        logger.log("Deep link: URL already processed in event listener, skipping:", normalizedUrl);
+        return;
+      }
+    } catch (e) {
+      // If URL parsing fails, continue anyway but log it
+      logger.warn("Deep link: Failed to parse URL for duplicate check:", e);
+    }
+
     // Check if this is the initial URL that was already handled
     // This prevents the event listener from processing the same URL twice
     Linking.getInitialURL().then((initialUrl) => {

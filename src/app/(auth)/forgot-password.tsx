@@ -1,4 +1,4 @@
-import AuthStepHeader from '@/components/ui/auth-step-header';
+import AuthStepHeader from "@/components/ui/auth-step-header";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -84,9 +84,7 @@ export default function ForgotPasswordScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        className="flex-1 bg-background"
-      >
+      <SafeAreaView className="flex-1 bg-background">
         <LoadingSpinner message="Invio dell'email di reset..." overlay />
       </SafeAreaView>
     );
@@ -123,21 +121,18 @@ export default function ForgotPasswordScreen() {
         <AuthStepHeader />
 
         {/* Title and subtitle */}
-        <View
-          className="items-center"
-          style={{ paddingHorizontal: s(24), }}
-        >
+        <View className="items-center" style={{ paddingHorizontal: s(24) }}>
           <ScaledText
             allowScaling={false}
             variant="2xl"
-            className="text-foreground text-center font-neueSemibold"
+            className="text-center text-foreground font-neueSemibold"
           >
             Password dimenticata?
           </ScaledText>
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-gray text-center font-montserratLight"
+            className="text-center text-gray font-montserratLight"
           >
             Inserisci il tuo indirizzo email e ti invieremo un link per
             reimpostare la password.
@@ -150,7 +145,7 @@ export default function ForgotPasswordScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className="text-foreground mb-2 font-montserratMedium"
+              className="mb-2 text-foreground font-montserratMedium"
             >
               Email
             </ScaledText>
@@ -168,7 +163,7 @@ export default function ForgotPasswordScreen() {
               onBlur={() => setFocusedField(null)}
             />
             {!!errors.email && (
-              <ScaledText variant="body4" className="text-error mt-1">
+              <ScaledText variant="body4" className="mt-1 text-error">
                 {errors.email}
               </ScaledText>
             )}
@@ -178,13 +173,13 @@ export default function ForgotPasswordScreen() {
                 accessibilityRole="button"
                 onPress={handleSendResetEmail}
                 disabled={loading}
-                className="bg-primary rounded-full items-center w-full"
+                className="items-center w-full rounded-full bg-primary"
                 style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
               >
                 <ScaledText
                   allowScaling={false}
                   variant="lg"
-                  className="text-foreground font-neueBold text-center"
+                  className="text-center text-foreground font-neueBold"
                 >
                   Invia link di reset
                 </ScaledText>
@@ -195,7 +190,8 @@ export default function ForgotPasswordScreen() {
 
         {/* Email Sent State */}
         {emailSent && (
-          <View className="items-center"
+          <View
+            className="items-center"
             style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
           >
             <View style={{ marginBottom: mvs(16) }}>
@@ -203,19 +199,19 @@ export default function ForgotPasswordScreen() {
             </View>
             <ScaledText
               variant="2xl"
-              className="text-foreground font-neueBold text-center"
+              className="text-center text-foreground font-neueBold"
             >
               Controlla la tua email
             </ScaledText>
             <ScaledText
               variant="body2"
-              className="text-gray text-center mt-2 font-neueLight"
+              className="mt-2 text-center text-gray font-neueLight"
             >
               Ti abbiamo inviato un link per reimpostare la password a
             </ScaledText>
             <ScaledText
               variant="body2"
-              className="text-foreground font-montserratSemibold mt-1"
+              className="mt-1 text-foreground font-montserratSemibold"
             >
               {formData.email}
             </ScaledText>
@@ -224,7 +220,7 @@ export default function ForgotPasswordScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 onPress={handleBackToLogin}
-                className="bg-primary rounded-full"
+                className="rounded-full bg-primary"
                 style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
               >
                 <ScaledText
@@ -236,12 +232,12 @@ export default function ForgotPasswordScreen() {
               </TouchableOpacity>
 
               {/* <TouchableOpacity onPress={handleResendEmail}
-                className="border-gray rounded-full"
+                className="rounded-full border-gray"
                 style={{ paddingVertical: mvs(8), paddingHorizontal: s(20), borderWidth: 1 }}
               >
                 <ScaledText
                   variant="sm"
-                  className="text-foreground font-montserratSemibold text-center"
+                  className="text-center text-foreground font-montserratSemibold"
                 >
                   inviare nuovamente
                 </ScaledText>
@@ -251,7 +247,8 @@ export default function ForgotPasswordScreen() {
         )}
 
         {/* Bottom link */}
-        <View className="items-center"
+        <View
+          className="items-center"
           style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}
         >
           <TouchableOpacity onPress={handleBackToLogin}>
