@@ -12,9 +12,10 @@ interface StudioPhoto {
 
 interface StudioPhotosProps {
   photos: StudioPhoto[];
+  studioName?: string;
 }
 
-export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
+export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos, studioName }) => {
   const [viewerVisible, setViewerVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -68,6 +69,7 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
           photos={photos}
           initialIndex={selectedIndex}
           onClose={handleCloseViewer}
+          studioName={studioName}
         />
       </View>
     );
@@ -155,6 +157,7 @@ export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos }) => {
         photos={photos}
         initialIndex={selectedIndex}
         onClose={handleCloseViewer}
+        studioName={studioName}
       />
     </View>
   );

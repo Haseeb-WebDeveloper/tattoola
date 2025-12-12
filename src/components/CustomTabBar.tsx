@@ -79,10 +79,7 @@ export default function CustomTabBar({
   const getIcon = (routeName: string, isFocused: boolean) => {
     // Special handling for profile tab to show user avatar or Accedi icon
     if (routeName === "profile") {
-      if (!user) {
-        // Show Accedi icon for anonymous users
-        return <SVGIcons.Accedi width={s(24)} height={s(24)} />;
-      }
+      
       return <ProfileAvatar avatar={user?.avatar} isFocused={isFocused} />;
     }
 
@@ -274,22 +271,38 @@ export default function CustomTabBar({
                   testID={options.tabBarTestID}
                   onPress={onPress}
                   onLongPress={onLongPress}
-                  className={showAccediLabel ? "bg-primary " : ""}
                   style={{
                     alignItems: "center",
                     justifyContent: "center",
                     flex: 1,
+                    ...(showAccediLabel
+                      ? {
+                          backgroundColor: "#AE0E0E",
+                          borderTopRightRadius: 9999,
+                          borderBottomRightRadius: 9999,
+                          marginVertical: mvs(-16), 
+                          marginRight: s(-16), 
+                          paddingVertical: mvs(16),
+                          paddingRight: s(16), 
+                        }
+                      : {}),
                   }}
                 >
-                  {getIcon(route.name, isFocused)}
+                  {showAccediLabel ? (
+                    <SVGIcons.Accedi 
+                      width={s(24)} 
+                      height={s(24)} 
+                      color={isFocused ? "#ffffff" : "#A49A99"}
+                    />
+                  ) : (
+                    getIcon(route.name, isFocused)
+                  )}
                   <ScaledText
                     variant="11"
                     className={` bg-transparent font-neueBold ${
-                      showAccediLabel
+                      isFocused
                         ? "text-foreground"
-                        : isFocused
-                          ? "text-foreground"
-                          : "text-gray"
+                        : "text-gray"
                     }`}
                     style={{ marginTop: mvs(4) }}
                   >

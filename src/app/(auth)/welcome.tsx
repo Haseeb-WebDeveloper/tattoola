@@ -10,7 +10,7 @@ import { KeyboardAvoidingView, Platform, Pressable, View } from "react-native";
 
 export default function WelcomeScreen() {
   // Video player setup - autoplay, muted, looping
-  const videoSource = require("@/assets/images/tattoo.mp4");
+  const videoSource = require("@/assets/video/intro.mp4");
   const videoPlayer = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.muted = true;
