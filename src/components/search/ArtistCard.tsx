@@ -34,36 +34,63 @@ function ArtistCard({ artist }: ArtistCardProps) {
     return "";
   }, [videoMedia?.mediaUrl]);
 
-  // Always call hook at top level
-  const videoPlayer = useVideoPlayer(videoUrl, (player) => {
-    if (videoUrl) {
-      player.loop = true;
-      player.muted = true;
-      // Small delay for iOS to ensure player is ready
-      setTimeout(() => {
-        player.play();
-      }, 100);
+  // Always call hook at top level, but only create player if we have a URL
+  const videoPlayer = useVideoPlayer(videoUrl || null, (player) => {
+    if (videoUrl && player) {
+      try {
+        player.loop = true;
+        player.muted = true;
+        // Small delay for iOS to ensure player is ready
+        setTimeout(() => {
+          try {
+            if (player) {
+              player.play();
+            }
+          } catch (e) {
+            // Silently ignore if player was released
+          }
+        }, 100);
+      } catch (error) {
+        console.error("Error initializing video player:", error);
+      }
     }
   });
 
   // Update player source when URL changes
   useEffect(() => {
+    if (!videoUrl || !videoPlayer) return;
+
+    let isMounted = true;
     const updatePlayer = async () => {
-      if (videoUrl && videoPlayer) {
-        try {
+      try {
+        if (isMounted && videoUrl && videoPlayer) {
           await videoPlayer.replaceAsync(videoUrl);
-          videoPlayer.loop = true;
-          videoPlayer.muted = true;
-          // Small delay for iOS to ensure player is ready
-          setTimeout(() => {
-            videoPlayer.play();
-          }, 100);
-        } catch (error) {
+          if (isMounted && videoPlayer) {
+            videoPlayer.loop = true;
+            videoPlayer.muted = true;
+            // Small delay for iOS to ensure player is ready
+            setTimeout(() => {
+              try {
+                if (isMounted && videoPlayer) {
+                  videoPlayer.play();
+                }
+              } catch (e) {
+                // Silently ignore if player was released
+              }
+            }, 100);
+          }
+        }
+      } catch (error) {
+        if (isMounted) {
           console.error("Error loading video player:", error);
         }
       }
     };
     updatePlayer();
+
+    return () => {
+      isMounted = false;
+    };
   }, [videoUrl, videoPlayer]);
 
   // artist.isStudioOwner

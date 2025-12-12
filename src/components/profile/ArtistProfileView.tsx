@@ -1,6 +1,7 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { toggleFollow } from "@/services/profile.service";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { StudioSearchResult } from "@/types/search";
 import { WorkArrangement } from "@/types/auth";
@@ -50,7 +51,13 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   };
 
   const handleFollowToggle = async () => {
-    if (isTogglingFollow || !currentUserId) return;
+    // Show auth modal for anonymous users
+    if (!currentUserId) {
+      useAuthRequiredStore.getState().show("Sign in to follow artists");
+      return;
+    }
+
+    if (isTogglingFollow) return;
 
     // Optimistic update
     const previousState = isFollowing;
@@ -70,7 +77,13 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   };
 
   const handleSendRequest = async () => {
-    if (!data?.user?.id || !currentUserId) return;
+    if (!data?.user?.id) return;
+
+    // Show auth modal for anonymous users
+    if (!currentUserId) {
+      useAuthRequiredStore.getState().show("Sign in to send tattoo requests");
+      return;
+    }
 
     // Check if this is a self-request
     const isSelfRequest = currentUserId === data.user.id;
@@ -233,7 +246,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         )}
 
         {/* Bottom actions - only show if not viewing own profile */}
-        {currentUserId && currentUserId !== data.user.id && (
+        {currentUserId !== data.user.id && (
           <View className="px-4 py-3 bg-background">
             <View className="flex-row gap-3">
               <TouchableOpacity

@@ -60,11 +60,12 @@ const FEED_ITEMS_PER_PAGE = 10;
  *   and expand them into multiple post entries that share the same position.
  */
 export async function fetchFeedItemsPage(args: {
-  userId: string;
+  userId?: string | null;
   offset?: number;
   limit?: number;
 }): Promise<FeedItemsPage> {
   const { userId, offset = 0, limit = FEED_ITEMS_PER_PAGE } = args;
+  const isAnonymous = !userId;
 
   // Fetch raw feed items ordered by position, including joined banner data.
   // Only show PUBLISHED items (exclude DRAFT and SCHEDULED)

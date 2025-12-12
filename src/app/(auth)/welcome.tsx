@@ -1,6 +1,7 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s, scaledFont } from "@/utils/scale";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -39,7 +40,7 @@ export default function WelcomeScreen() {
         />
 
         <LinearGradient
-          colors={["rgba(0, 0, 0, 0.4)", "rgba(0, 0, 0, 0.2)", "transparent"]}
+          colors={["rgba(0, 0, 0, 0.5)", "rgba(0, 0, 0, 0.3)", "transparent"]}
           locations={[0, 0.3, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -48,12 +49,12 @@ export default function WelcomeScreen() {
             top: 0,
             left: 0,
             right: 0,
-            height: "30%",
+            height: "100%",
           }}
           pointerEvents="none"
         />
 
-        {/* Dark background overlay for bottom section (buttons area) */}
+        {/* Dark background overlay for bottom section and cards area */}
         <LinearGradient
           colors={["#0A020200", "#0A0101", "#0A0101"]}
           locations={[0.1, 0.5, 1]}
@@ -64,7 +65,7 @@ export default function WelcomeScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            height: "75%",
+            height: "100%",
           }}
           pointerEvents="none"
         />
@@ -72,184 +73,200 @@ export default function WelcomeScreen() {
         <View
           style={{
             flex: 1,
-            position: "relative",
+            justifyContent: "flex-end",
             paddingHorizontal: s(24),
+            paddingBottom: mvs(40),
           }}
         >
-          {/* Top logo and tagline */}
-          <View
-            style={{
-              position: "absolute",
-              top: mvs(40),
-              left: 0,
-              right: 0,
-              alignItems: "center",
-              zIndex: 10,
-            }}
-          >
-            {/* Logo */}
-            <View
-              style={{
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: mvs(4),
-              }}
-            >
-              <SVGIcons.Logo height={s(50)} />
-            </View>
-            {/* Tagline */}
-            <ScaledText
-              variant="lg"
-              allowScaling={false}
-              className="text-center text-white font-neueLight"
-            >
-              Dove i tatuaggi incontrano le loro storie.
-            </ScaledText>
-          </View>
-
-          {/* Bottom CTA section - positioned at bottom */}
-          <View
-            style={{
-              position: "absolute",
-              bottom: mvs(16),
-              left: s(24),
-              right: s(24),
-              alignItems: "center",
-              zIndex: 10,
-
-              borderRadius: 0,
-              paddingVertical: mvs(20),
-              paddingHorizontal: s(16),
-            }}
-          >
-            {/* Artist Sign up button */}
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push("/(auth)/artist-register")}
-              style={{
-                backgroundColor: "rgba(174, 14, 14, 0.2)",
-                borderWidth: 1,
-                borderColor: "#AE0E0E",
-                borderRadius: 62,
-                paddingVertical: mvs(15),
-                paddingHorizontal: s(33),
-                flexDirection: "row",
-                alignItems: "center",
-                // width: s(211),
-                justifyContent: "center",
-                marginBottom: mvs(20),
-              }}
-            >
-              <ScaledText
-                allowScaling={false}
-                className="text-white font-neueMedium"
-                style={{ fontSize: scaledFont(16), lineHeight: 23 }}
+          {/* Bottom Section */}
+          <View>
+            {/* Logo and tagline */}
+            <View style={{ alignItems: "center", marginBottom: mvs(32) }}>
+              {/* Logo */}
+              <View
+                style={{
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: mvs(8),
+                }}
               >
-                Registrati come artista{" "}
+                <SVGIcons.Logo height={s(50)} />
+              </View>
+              {/* Tagline */}
+              <ScaledText
+                variant="lg"
+                allowScaling={false}
+                className="text-center text-white font-neueLight"
+              >
+                Dove i tatuaggi incontrano le loro storie.
               </ScaledText>
-              <SVGIcons.Pen3
-                style={{ width: s(24), height: s(18.63), marginLeft: s(8) }}
-              />
-            </Pressable>
+            </View>
 
-            {/* OR separator */}
+            {/* Two Cards in a Row */}
             <View
               style={{
                 flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                marginBottom: mvs(20),
+                gap: s(14),
+                marginBottom: mvs(24),
               }}
             >
-              <View
+              {/* Discover tattoos card */}
+              <Pressable
+                onPress={() => router.push("/(tabs)" as any)}
                 style={{
-                  flex: 1,
-                  height: s(0.5),
-                  backgroundColor: "#A49A99",
-                  marginRight: s(8),
-                }}
-              />
-              <ScaledText
-                allowScaling={false}
-                className="text-gray font-montserratRegular"
-                style={{
-                  fontSize: scaledFont(14),
-                  lineHeight: 23,
-                  color: "#A49A99",
-                  marginHorizontal: s(8),
+                  width: s(147),
+                  height: mvs(153),
+                  borderRadius: s(8),
+                  overflow: "hidden",
+                  borderWidth: 1,
+                  borderColor: "rgba(255, 255, 255, 0.1)",
                 }}
               >
-                OPPURE
-              </ScaledText>
-              <View
+                <BlurView
+                  intensity={10}
+                  tint="dark"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                  }}
+                />
+                <LinearGradient
+                  colors={["rgba(58, 0, 0, 0.50)", "rgba(25, 10, 10, 0.50)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.34, y: 1 }}
+                  style={{
+                    flex: 1,
+                    padding: mvs(8),
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                <View style={{ marginBottom: mvs(12) }}>
+                  <SVGIcons.DiscoverTattoo width={s(56)} height={s(38)} />
+                </View>
+                <ScaledText
+                  allowScaling={false}
+                  className="text-white font-neueSemibold"
+                  style={{
+                    fontSize: scaledFont(16),
+                    marginBottom: mvs(4),
+                    textAlign: "center",
+                  }}
+                >
+                  Discover tattoos
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  className="text-gray font-montserratRegular"
+                  style={{
+                    fontSize: scaledFont(12),
+                    color: "#A49A99",
+                    textAlign: "center",
+                  }}
+                >
+                  Discover styles that match your identity
+                </ScaledText>
+                </LinearGradient>
+              </Pressable>
+
+              {/* Explore artists card */}
+              <Pressable
+                onPress={() => router.push("/(tabs)/search" as any)}
                 style={{
-                  flex: 1,
-                  height: s(0.5),
-                  backgroundColor: "#A49A99",
-                  marginLeft: s(8),
+                  width: s(147),
+                  height: mvs(153),
+                  borderRadius: s(8),
+                  overflow: "hidden",
+                  borderWidth: 1,
+                  borderColor: "rgba(255, 255, 255, 0.1)",
                 }}
-              />
+              >
+                <BlurView
+                  intensity={10}
+                  tint="dark"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                  }}
+                />
+                <LinearGradient
+                  colors={["rgba(58, 0, 0, 0.50)", "rgba(25, 10, 10, 0.50)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.34, y: 1 }}
+                  style={{
+                    flex: 1,
+                    padding: mvs(8),
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                <View style={{ marginBottom: mvs(12) }}>
+                  <SVGIcons.ExploreArtist width={s(32)} height={s(32)} />
+                </View>
+                <ScaledText
+                  allowScaling={false}
+                  className="text-white font-neueSemibold"
+                  style={{
+                    fontSize: scaledFont(16),
+                    marginBottom: mvs(4),
+                    textAlign: "center",
+                  }}
+                >
+                  Explore artists
+                </ScaledText>
+                <ScaledText
+                  allowScaling={false}
+                  className="text-gray font-montserratRegular"
+                  style={{
+                    fontSize: scaledFont(12),
+                    color: "#A49A99",
+                    textAlign: "center",
+                  }}
+                >
+                  Meet talented tattoo artists near you
+                </ScaledText>
+                </LinearGradient>
+              </Pressable>
             </View>
 
-            {/* User Sign up button */}
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push("/(auth)/register")}
+            {/* Bottom text links in corners */}
+            <View
               style={{
-                backgroundColor: "rgba(174, 14, 14, 0.2)",
-                borderWidth: 1,
-                borderColor: "#AE0E0E",
-                borderRadius: 62,
-                paddingVertical: mvs(15),
-                paddingHorizontal: s(38),
                 flexDirection: "row",
+                justifyContent: "space-between",
                 alignItems: "center",
-                // width: s(211),
-                justifyContent: "center",
-                marginBottom: mvs(30),
               }}
             >
-              <ScaledText
-                allowScaling={false}
-                className="text-white font-neueMedium"
-                style={{ fontSize: scaledFont(16), lineHeight: 23 }}
-              >
-                Registrati come utente{" "}
-              </ScaledText>
-              <SVGIcons.UserFilled
-                style={{
-                  width: s(17.89),
-                  height: s(8.41),
-                  marginLeft: s(8),
-                }}
-              />
-            </Pressable>
+              <Pressable onPress={() => router.push("/(tabs)")}>
+                <ScaledText
+                  allowScaling={false}
+                  className="text-white font-montserratRegular"
+                  style={{
+                    fontSize: scaledFont(18),
+                  }}
+                >
+                  Salta
+                </ScaledText>
+              </Pressable>
 
-            {/* Sign in link */}
-            <ScaledText
-              allowScaling={false}
-              className="text-gray font-montserratMedium"
-              style={{
-                fontSize: scaledFont(14),
-                lineHeight: 23,
-                color: "#A49A99",
-                textAlign: "center",
-              }}
-            >
-              Hai già un account?{" "}
-              <ScaledText
-                allowScaling={false}
-                className="text-white font-montserratBold"
-                style={{
-                  fontSize: scaledFont(14),
-                  lineHeight: 23,
-                }}
-                onPress={() => router.push("/(auth)/login")}
-              >
-                Accedi
-              </ScaledText>
-            </ScaledText>
+              <Pressable onPress={() => router.push("/(auth)/login")}>
+                <ScaledText
+                  allowScaling={false}
+                  className="text-white font-montserratRegular"
+                  style={{
+                    fontSize: scaledFont(18),
+                  }}
+                >
+                  Accedi
+                </ScaledText>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>

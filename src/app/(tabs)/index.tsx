@@ -3,6 +3,7 @@ import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { FeedEntry } from "@/services/feed.service";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
 import { mvs, s } from "@/utils/scale";
@@ -35,19 +36,22 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (!user?.id) return;
-    loadInitial(user.id);
-    // also start presence tracking so others can see we're online
-    startRealtime(user.id);
-    return () => stopRealtime();
+    // Load feed for both anonymous and authenticated users
+    loadInitial(user?.id || null);
+    
+    // Only start realtime for authenticated users
+    if (user?.id) {
+      startRealtime(user.id);
+      return () => stopRealtime();
+    }
   }, [user?.id]);
 
   const handleEndReached = useCallback(() => {
-    if (user?.id && hasMore && !isLoading) loadMore(user.id);
+    if (hasMore && !isLoading) loadMore(user?.id || null);
   }, [user?.id, hasMore, isLoading]);
 
   const onRefresh = useCallback(() => {
-    if (user?.id) refresh(user.id);
+    refresh(user?.id || null);
   }, [user?.id]);
 
   // Track currently visible post ID for overlay
@@ -287,9 +291,11 @@ export default function HomeScreen() {
           }
           onLikePress={() => {
             console.log("onLikePress", currentPost.id, user?.id);
-            if (user?.id) {
-              toggleLikeOptimistic(currentPost.id, user.id);
+            if (!user?.id) {
+              useAuthRequiredStore.getState().show("Sign in to like tattoos");
+              return;
             }
+            toggleLikeOptimistic(currentPost.id, user.id);
           }}
         />
       )}

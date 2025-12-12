@@ -126,58 +126,79 @@ function LoginScreenContent() {
         contentContainerStyle={{ flexGrow: 1 }}
         style={{ zIndex: 1 }}
       >
-        {/* Hero Section with logo + image + gradient like welcome.tsx */}
-        <View className="relative">
-          <View
-            className="w-full flex justify-center items-center"
-            style={{ marginTop: mvs(20) }}
+        {/* Header with Logo and Help Icon */}
+        <View
+          className="w-full flex-row justify-between items-center px-6"
+          style={{ marginTop: mvs(20), marginBottom: mvs(40) }}
+        >
+          <View style={{ width: s(44) }} />
+          <SVGIcons.LogoLight style={{ height: s(50) }} />
+          <TouchableOpacity
+            className=" items-center justify-center"
           >
-            <SVGIcons.LogoLight className="h-12" />
-          </View>
+            <SVGIcons.Help width={s(24)} height={s(24)} />
+          </TouchableOpacity>
+        </View>
 
-          <View className="w-full relative">
-            <Image
-              source={require("@/assets/auth/login-2.png")}
-              className="w-full"
-              resizeMode="cover"
-              style={{ height: scaledVSize(230) }}
-            />
-            <LinearGradient
-              colors={["#000000", "transparent", "transparent", "#000000"]}
-              locations={[0, 0.25, 0.75, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              className="absolute w-full top-0 left-0 right-0 bottom-0 z-10"
-              style={{
-                height: scaledVSize(230),
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-              }}
-              pointerEvents="none"
-            />
+        {/* New Tattooler registration heading */}
+        <View className="px-6" style={{ marginBottom: mvs(24) }}>
+          <ScaledText
+            allowScaling={false}
+            variant="xl"
+            className="text-foreground text-center font-neueSemibold"
+          >
+            New Tattooler registration
+          </ScaledText>
+        </View>
 
-            {/* Headline */}
-            <View className="absolute bottom-6 left-0 right-0 px-6 z-20">
-              <ScaledText
-                allowScaling={false}
-                variant="2xl"
-                className="text-foreground text-center font-neueSemibold"
-              >
-                Bentornato!!
-              </ScaledText>
-            </View>
-          </View>
+        {/* New registration button */}
+        <View className="px-6" style={{ marginBottom: mvs(32) }}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={handleRegister}
+            className="bg-primary rounded-full items-center justify-center w-full flex-row"
+            style={{ paddingVertical: mvs(12), gap: s(8) }}
+          >
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-foreground font-neueSemibold"
+            >
+              New registration
+            </ScaledText>
+            <SVGIcons.UserFilled width={s(20)} height={s(20)} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Oppure divider */}
+        <View
+          className="flex-row items-center px-6"
+          style={{ marginBottom: mvs(32) }}
+        >
+          <View className="flex-1 h-px bg-gray/30" />
+          <ScaledText
+            allowScaling={false}
+            variant="md"
+            className="text-gray font-montserratLight"
+            style={{ 
+              marginHorizontal: s(16),
+              fontSize: s(14),
+              lineHeight: 23,
+              color: '#A49A99'
+            }}
+          >
+            Oppure
+          </ScaledText>
+          <View className="flex-1 h-px bg-gray/30" />
         </View>
 
         {/* Inputs */}
-        <View className="px-6 mt-10">
-          <View style={{ marginBottom: mvs(15) }}>
+        <View className="px-6">
+          <View style={{ marginBottom: mvs(16) }}>
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${focusedField === "email" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-foreground rounded-xl"
-              style={{ fontSize: s(12) }}
+              style={{ fontSize: s(14) }}
               placeholder="Email"
               placeholderTextColor="#A49A99"
               keyboardType="email-address"
@@ -197,7 +218,7 @@ function LoginScreenContent() {
             <ScaledTextInput
               containerClassName={`flex-row items-center rounded-xl ${focusedField === "password" ? "border-2 border-foreground" : "border border-gray"}`}
               className="flex-1 text-foreground rounded-xl"
-              style={{ fontSize: s(12) }}
+              style={{ fontSize: s(14) }}
               placeholder="Password"
               placeholderTextColor="#A49A99"
               secureTextEntry={!showPassword}
@@ -232,55 +253,66 @@ function LoginScreenContent() {
           </View>
 
           <TouchableOpacity
-            className="self-end mb-6"
+            className="self-end"
+            style={{ marginBottom: mvs(24) }}
             onPress={handleForgotPassword}
           >
             <ScaledText
               allowScaling={false}
-              variant="body4"
+              variant="sm"
               className="text-gray font-neueLight"
             >
-              Hai dimenticato la password?
+              Forgot password?
             </ScaledText>
           </TouchableOpacity>
-        </View>
 
-        {/* Sign in button */}
-        <View className="items-center px-6">
+          {/* Sign in button */}
           <TouchableOpacity
             accessibilityRole="button"
             onPress={handleLogin}
             disabled={loading}
             className="bg-primary rounded-full items-center w-full"
-            style={{ paddingVertical: mvs(10), paddingHorizontal: s(32) }}
+            style={{ paddingVertical: mvs(12), marginBottom: mvs(40) }}
           >
             <ScaledText
               allowScaling={false}
               variant="lg"
               className="text-foreground font-neueSemibold"
             >
-              Accedi
+              Sign in
             </ScaledText>
           </TouchableOpacity>
         </View>
 
-        {/* Bottom link */}
-        <View className="items-center mt-10 px-6 pb-8">
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-gray font-montserratMedium"
+        {/* Bottom image with artist text overlay */}
+        <View className="w-full relative" style={{ marginTop: 'auto', flex: 1, minHeight: scaledVSize(200) }}>
+          <Image
+            source={require("@/assets/auth/login-2.png")}
+            className="w-full h-full"
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={["transparent", "rgba(0, 0, 0, 0.7)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+          />
+          
+          {/* Artist text overlay */}
+          <TouchableOpacity
+            onPress={handleArtistLogin}
+            style={StyleSheet.absoluteFillObject}
+            className="items-center justify-center"
           >
-            Non hai ancora un account?{" "}
             <ScaledText
               allowScaling={false}
-              variant="md"
-              className="text-foreground font-montserratSemibold"
-              onPress={handleRegister}
+              variant="xl"
+              className="text-foreground text-center font-neueSemibold"
             >
-              Registrati
+              or are you an artist?
             </ScaledText>
-          </ScaledText>
+          </TouchableOpacity>
         </View>
       </KeyboardAwareScrollView>
     </View>
