@@ -10,6 +10,7 @@ import {
   TattooLoverProfileView,
   TattooLoverSkeleton,
 } from "@/components/profile";
+import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { DISPLAY_NAME_AR } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
@@ -21,6 +22,7 @@ import {
 } from "@/services/profile.service";
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { WorkArrangement } from "@/types/auth";
+import { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -33,8 +35,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import StudioCard from "@/components/search/StudioCard";
-import { StudioSearchResult } from "@/types/search";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -293,7 +293,7 @@ export default function ProfileScreen() {
           <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
         </TouchableOpacity>
 
-        {/* settings button */}
+        {/* Settings button */}
         <View
           className="absolute right-0 z-10"
           style={{ paddingHorizontal: s(16), top: mvs(8) }}

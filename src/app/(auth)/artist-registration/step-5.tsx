@@ -30,6 +30,7 @@ export default function ArtistStep5V2() {
   const insets = useSafeAreaInsets();
   const {
     step5,
+    step13,
     updateStep5,
     totalStepsDisplay,
     currentStepDisplay,
@@ -110,7 +111,11 @@ export default function ArtistStep5V2() {
       className="flex-1 bg-black"
     >
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          router.replace("/(auth)/welcome");
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress

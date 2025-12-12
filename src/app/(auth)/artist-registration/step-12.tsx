@@ -1,9 +1,9 @@
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
-import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
@@ -46,6 +46,7 @@ type ModalStep = "upload" | "description" | "styles";
 export default function ArtistStep12V2() {
   const {
     step12,
+    step13,
     setProjectAtIndex,
     totalStepsDisplay,
     setCurrentStepDisplay,
@@ -60,7 +61,8 @@ export default function ArtistStep12V2() {
   const [allStyles, setAllStyles] = useState<TattooStyleItem[]>([]);
   const [loadingStyles, setLoadingStyles] = useState(false);
   const [descriptionFocused, setDescriptionFocused] = useState(false);
-  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] =
+    useState<TattooStyleItem | null>(null);
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -211,7 +213,7 @@ export default function ArtistStep12V2() {
           </Pressable>
           {/* Thumb */}
           <View
-            className="overflow-hidden rounded-lg h-fit aspect-square relative"
+            className="relative overflow-hidden rounded-lg h-fit aspect-square"
             style={{ width: 65, marginRight: 16 }}
           >
             {item.type === "image" ? (
@@ -349,6 +351,7 @@ export default function ArtistStep12V2() {
         step10,
         step11,
         step12: step12State,
+        step13: step13State,
       } = useArtistRegistrationV2Store.getState();
 
       const registrationData: CompleteArtistRegistration = {
@@ -395,14 +398,29 @@ export default function ArtistStep12V2() {
           hourlyRate: step11.hourlyRate || 0,
         },
         step12: {
-          projects: (step12State.projects || []).map((project, index) => ({
-            title: project.title,
-            description: project.description,
-            photos: project.photos,
-            videos: project.videos,
-            associatedStyles: project.associatedStyles || [],
-            order: index + 1,
-          })),
+          projects: (step12State.projects || []).map((project, index) => {
+            // Ensure associatedStyles is always an array
+            let stylesArray: string[] = [];
+            if (project.associatedStyles) {
+              if (Array.isArray(project.associatedStyles)) {
+                stylesArray = project.associatedStyles.filter(
+                  (s) => s && typeof s === "string"
+                );
+              } else if (typeof project.associatedStyles === "string") {
+                // If it's a single string, convert to array
+                stylesArray = [project.associatedStyles];
+              }
+            }
+
+            return {
+              title: project.title,
+              description: project.description,
+              photos: project.photos || [],
+              videos: project.videos || [],
+              associatedStyles: stylesArray,
+              order: index + 1,
+            };
+          }),
         },
         // Minimal stub to satisfy type; not used by backend save
         step13: {
@@ -411,12 +429,52 @@ export default function ArtistStep12V2() {
         },
       };
 
-
       await completeArtistRegistration(registrationData);
-      router.replace("/(auth)/artist-registration/step-13");
+
+      // Success - redirect to checkout if plan selected, otherwise to pro screen
+      // Use step13State from getState() to ensure we have the latest data
+      if (step13State?.selectedPlanId) {
+        // Redirect to checkout with the selected plan
+        logger.log(
+          "Plan selected, redirecting to checkout:",
+          step13State.selectedPlanId
+        );
+        router.replace("/(auth)/artist-registration/checkout");
+      } else {
+        // If no plan selected, redirect to pro screen to select a plan
+        logger.log("No plan selected, redirecting to pro screen");
+        router.replace("/(auth)/artist-registration/tattoola-pro");
+      }
     } catch (error) {
       logger.error("Registration save error:", error);
       let errorMessage = "Failed to save registration. Please try again.";
+
+      // Check if profile was partially created (user exists in database)
+      // If profile exists, still redirect to checkout so user can complete payment
+      let profileCreated = false;
+      try {
+        const { supabase } = await import("@/utils/supabase");
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: userExists } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (userExists) {
+            profileCreated = true;
+            logger.log(
+              "Profile was created despite error, redirecting to checkout"
+            );
+          }
+        }
+      } catch (checkError) {
+        logger.error("Error checking if profile was created:", checkError);
+      }
+
       if (error instanceof Error) {
         if (
           error.message.includes("duplicate") ||
@@ -424,6 +482,7 @@ export default function ArtistStep12V2() {
         ) {
           errorMessage =
             "Some information already exists. Your profile has been updated.";
+          profileCreated = true; // Profile likely exists
         } else if (
           error.message.includes("foreign key") ||
           error.message.includes("violates")
@@ -453,6 +512,23 @@ export default function ArtistStep12V2() {
               : error.message;
         }
       }
+
+      // If profile was created (even partially), redirect to checkout if plan selected
+      // This ensures user can complete payment even if some data failed to save
+      // Use step13State from getState() to ensure we have the latest data
+      const currentStep13 = useArtistRegistrationV2Store.getState().step13;
+      if (profileCreated && currentStep13?.selectedPlanId) {
+        toast.error(
+          "Profile created but some data may be incomplete. Please check your profile."
+        );
+        logger.log(
+          "Profile created with plan, redirecting to checkout:",
+          currentStep13.selectedPlanId
+        );
+        router.replace("/(auth)/artist-registration/checkout");
+        return;
+      }
+
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -462,7 +538,11 @@ export default function ArtistStep12V2() {
   return (
     <View className="relative flex-1 pb-40 bg-black">
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          router.replace("/(auth)/welcome");
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress
@@ -488,7 +568,7 @@ export default function ArtistStep12V2() {
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="items-center justify-between w-full h-full relative">
+                <View className="relative items-center justify-between w-full h-full">
                   <View className="w-full ">
                     <Image
                       source={{
@@ -511,7 +591,7 @@ export default function ArtistStep12V2() {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-neueMedium absolute bottom-0 left-0 right-0 bg-tat-darkMaroon text-center"
+                    className="absolute bottom-0 left-0 right-0 text-center text-gray font-neueMedium bg-tat-darkMaroon"
                     style={{
                       paddingHorizontal: s(16),
                       paddingVertical: mvs(6),
@@ -544,8 +624,8 @@ export default function ArtistStep12V2() {
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="items-center justify-between w-full h-full relative">
-                  <View className="w-full relative">
+                <View className="relative items-center justify-between w-full h-full">
+                  <View className="relative w-full">
                     <Image
                       source={{
                         uri:
@@ -567,7 +647,7 @@ export default function ArtistStep12V2() {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-neueMedium absolute bottom-0 left-0 right-0 bg-tat-darkMaroon text-center"
+                    className="absolute bottom-0 left-0 right-0 text-center text-gray font-neueMedium bg-tat-darkMaroon"
                     style={{
                       paddingHorizontal: s(16),
                       paddingVertical: mvs(6),
@@ -882,7 +962,7 @@ export default function ArtistStep12V2() {
                         return (
                           <View
                             key={`${item.uri}-${index}`}
-                            className="w-20 h-32 overflow-hidden rounded-lg relative"
+                            className="relative w-20 h-32 overflow-hidden rounded-lg"
                           >
                             {thumbnailUrl ? (
                               <Image
@@ -1029,7 +1109,10 @@ export default function ArtistStep12V2() {
                                   };
                                 }
                                 if (isDisabled) return d;
-                                return { ...d, styles: [...d.styles, style.id] };
+                                return {
+                                  ...d,
+                                  styles: [...d.styles, style.id],
+                                };
                               });
                             }}
                             disabled={isDisabled}

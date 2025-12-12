@@ -3,7 +3,19 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import { TouchableOpacity, View } from "react-native";
 
-export default function AuthStepHeader() {
+interface AuthStepHeaderProps {
+  onClose?: () => void;
+}
+
+export default function AuthStepHeader({ onClose }: AuthStepHeaderProps = {}) {
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      router.replace("/(auth)/welcome");
+    }
+  };
+
   return (
     <View
       className="px-4"
@@ -14,7 +26,7 @@ export default function AuthStepHeader() {
         style={{ marginBottom: mvs(8) }}
       >
         <TouchableOpacity
-          onPress={() => router.replace("/(auth)/welcome")}
+          onPress={handleClose}
           className="rounded-full items-center justify-center"
           style={{ width: s(32), height: s(32), backgroundColor: "#FFFFFF1A" }}
         >

@@ -27,11 +27,17 @@ export default function ArtistCheckoutScreen() {
       try {
         const data = await SubscriptionService.fetchSubscriptionPlans();
         setPlans(data);
+        
+        // If no plan selected, redirect to pro screen
+        if (!step13.selectedPlanId) {
+          router.replace("/(auth)/artist-registration/tattoola-pro");
+          return;
+        }
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [step13.selectedPlanId]);
 
   const plan = useMemo(
     () => plans.find((p) => p.id === step13.selectedPlanId),
