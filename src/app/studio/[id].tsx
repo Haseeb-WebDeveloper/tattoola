@@ -154,7 +154,7 @@ export default function StudioScreen() {
           <ServicesSection services={data?.services || []} />
 
           {/* Studio Photos Section */}
-          <StudioPhotos photos={data?.photos || []} />
+          <StudioPhotos photos={data?.photos || []} studioName={data?.name} />
 
           {/* Studio Members Section */}
           {members.length > 0 && (
