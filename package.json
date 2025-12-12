@@ -5,6 +5,7 @@
   "scripts": {
     "start": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo start",
     "reset-project": "node ./scripts/reset-project.js",
+    "delete-user": "npx tsx scripts/delete-user.ts",
     "android": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo run:android",
     "ios": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo run:ios",
     "web": "cross-env EXPO_ROUTER_APP_ROOT=src/app expo start --web",
