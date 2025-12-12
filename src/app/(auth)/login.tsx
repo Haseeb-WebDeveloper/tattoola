@@ -88,7 +88,7 @@ function LoginScreenContent() {
   };
 
   const handleArtistLogin = () => {
-    router.push("/(auth)/artist-register");
+    router.push("/(auth)/artist-registration/tattoola-pro");
   };
 
   if (loading) {

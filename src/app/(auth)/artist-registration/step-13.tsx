@@ -31,35 +31,111 @@ function PlanLoadingSkeleton({ accent }: { accent: string }) {
         locations={[0.0095, 0.995]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ borderRadius: 8, paddingVertical: mvs(16), paddingHorizontal: s(16) }}
+        style={{
+          borderRadius: 8,
+          paddingVertical: mvs(16),
+          paddingHorizontal: s(16),
+        }}
       >
         <View className="mb-4">
           {/* Title row */}
           <View className="flex-row items-center">
-            <View style={{ width: s(45), height: mvs(24), borderRadius: 4, backgroundColor: "#E8E0E0" }} />
-            <View style={{ width: s(80), height: mvs(24), borderRadius: 4, marginLeft: s(6), backgroundColor: accent }} />
+            <View
+              style={{
+                width: s(45),
+                height: mvs(24),
+                borderRadius: 4,
+                backgroundColor: "#E8E0E0",
+              }}
+            />
+            <View
+              style={{
+                width: s(80),
+                height: mvs(24),
+                borderRadius: 4,
+                marginLeft: s(6),
+                backgroundColor: accent,
+              }}
+            />
           </View>
           {/* Price row */}
           <View className="flex-row items-end mt-2">
-            <View style={{ width: s(90), height: mvs(34), borderRadius: 6, backgroundColor: "#E8E0E0" }} />
-            <View style={{ width: s(40), height: mvs(18), borderRadius: 4, marginLeft: s(6), backgroundColor: "#E8E0E0" }} />
+            <View
+              style={{
+                width: s(90),
+                height: mvs(34),
+                borderRadius: 6,
+                backgroundColor: "#E8E0E0",
+              }}
+            />
+            <View
+              style={{
+                width: s(40),
+                height: mvs(18),
+                borderRadius: 4,
+                marginLeft: s(6),
+                backgroundColor: "#E8E0E0",
+              }}
+            />
           </View>
           {/* Description */}
-          <View style={{ width: s(180), height: mvs(16), borderRadius: 4, marginTop: mvs(6), backgroundColor: "#E8E0E0" }} />
+          <View
+            style={{
+              width: s(180),
+              height: mvs(16),
+              borderRadius: 4,
+              marginTop: mvs(6),
+              backgroundColor: "#E8E0E0",
+            }}
+          />
         </View>
 
         {/* Includes */}
         <View style={{ gap: mvs(8) }}>
-          <View style={{ width: s(60), height: mvs(14), borderRadius: 4, backgroundColor: "#E8E0E0" }} />
-          <View style={{ width: s(180), height: mvs(12), borderRadius: 4, backgroundColor: "#F0E8E8" }} />
-          <View style={{ width: s(160), height: mvs(12), borderRadius: 4, backgroundColor: "#E8E0E0", marginTop: mvs(6) }} />
-          <View style={{ width: s(140), height: mvs(12), borderRadius: 4, backgroundColor: "#F0E8E8", marginTop: mvs(6) }} />
+          <View
+            style={{
+              width: s(60),
+              height: mvs(14),
+              borderRadius: 4,
+              backgroundColor: "#E8E0E0",
+            }}
+          />
+          <View
+            style={{
+              width: s(180),
+              height: mvs(12),
+              borderRadius: 4,
+              backgroundColor: "#F0E8E8",
+            }}
+          />
+          <View
+            style={{
+              width: s(160),
+              height: mvs(12),
+              borderRadius: 4,
+              backgroundColor: "#E8E0E0",
+              marginTop: mvs(6),
+            }}
+          />
+          <View
+            style={{
+              width: s(140),
+              height: mvs(12),
+              borderRadius: 4,
+              backgroundColor: "#F0E8E8",
+              marginTop: mvs(6),
+            }}
+          />
         </View>
 
         {/* CTA area */}
         <View style={{ marginTop: mvs(16) }}>
           <View
-            style={{ backgroundColor: "#AE0E0E", paddingVertical: mvs(12), borderRadius: 38 }}
+            style={{
+              backgroundColor: "#AE0E0E",
+              paddingVertical: mvs(12),
+              borderRadius: 38,
+            }}
           />
           <View style={{ paddingVertical: mvs(10) }} />
         </View>
@@ -92,7 +168,7 @@ export default function ArtistStep13V2() {
   const fetchPlans = async () => {
     try {
       const fetchedPlans = await SubscriptionService.fetchSubscriptionPlans();
-      
+
       // Sort plans: default plan (with free trial) first
       const sortedPlans = [...fetchedPlans].sort((a, b) => {
         // If one is default and the other isn't, default comes first
@@ -101,7 +177,7 @@ export default function ArtistStep13V2() {
         // If both are default or both aren't, maintain original order
         return 0;
       });
-      
+
       setPlans(sortedPlans);
 
       // Auto-select Premium plan (default)
@@ -121,8 +197,10 @@ export default function ArtistStep13V2() {
     updateStep13({ selectedPlanId: planId });
   };
 
-
-  const handleSubscribe = async (planId: string, action: 'trial' | 'buy' | 'studio' = 'trial') => {
+  const handleSubscribe = async (
+    planId: string,
+    action: "trial" | "buy" | "studio" = "trial"
+  ) => {
     if (submitting) return;
     // Persist selected plan locally as well
     updateStep13({ selectedPlanId: planId });
@@ -134,8 +212,8 @@ export default function ArtistStep13V2() {
         throw new Error("Plan not found");
       }
 
-      const planName = (picked.name || '').toLowerCase();
-      const isStudio = planName.includes('studio');
+      const planName = (picked.name || "").toLowerCase();
+      const isStudio = planName.includes("studio");
 
       // Get current user ID
       const {
@@ -148,15 +226,16 @@ export default function ArtistStep13V2() {
       const userId = session.user.id;
 
       // Scenario C: Studio plan - navigate to checkout screen
-      if (isStudio || action === 'studio') {
-        router.push('/(auth)/artist-registration/checkout');
+      if (isStudio || action === "studio") {
+        router.push("/(auth)/artist-registration/checkout");
         return;
       }
 
       // Scenario A: Start free trial (Premium plan)
-      if (action === 'trial') {
+      if (action === "trial") {
         // Check if user already has active subscription
-        const hasActive = await SubscriptionService.hasActiveSubscription(userId);
+        const hasActive =
+          await SubscriptionService.hasActiveSubscription(userId);
         if (hasActive) {
           toast.success("You already have an active subscription");
           router.replace("/(tabs)");
@@ -171,19 +250,25 @@ export default function ArtistStep13V2() {
           true // isTrial: true
         );
 
-        toast.success("Free trial started! Enjoy Premium features for 30 days.");
+        toast.success(
+          "Free trial started! Enjoy Premium features for 30 days."
+        );
         router.replace("/(tabs)");
         return;
       }
 
       // Scenario B: Buy Premium (immediate payment)
-      if (action === 'buy') {
+      if (action === "buy") {
         // Get Stripe price ID based on billing cycle
-        const isYearly = step13.billingCycle === 'YEARLY';
-        const priceId = isYearly ? picked.stripeYearlyPriceId : picked.stripeMonthlyPriceId;
+        const isYearly = step13.billingCycle === "YEARLY";
+        const priceId = isYearly
+          ? picked.stripeYearlyPriceId
+          : picked.stripeMonthlyPriceId;
 
         if (!priceId) {
-          throw new Error("Stripe price ID not configured for this plan. Please contact support.");
+          throw new Error(
+            "Stripe price ID not configured for this plan. Please contact support."
+          );
         }
 
         // Determine plan type
@@ -269,7 +354,11 @@ export default function ArtistStep13V2() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          router.replace("/(auth)/welcome");
+        }}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -294,15 +383,17 @@ export default function ArtistStep13V2() {
           >
             <TouchableOpacity
               onPress={() => updateStep13({ billingCycle: "MONTHLY" })}
-              className="rounded-full items-center justify-center"
+              className="items-center justify-center rounded-full"
               style={{
                 paddingVertical: mvs(5),
                 paddingHorizontal: s(30),
                 minWidth: s(98),
                 borderWidth: 1,
-                borderColor: step13.billingCycle === "MONTHLY" ? "transparent" : "#a49a99",
-                backgroundColor: step13.billingCycle === "MONTHLY" ? "#AE0E0E" : "transparent",
-              }}  
+                borderColor:
+                  step13.billingCycle === "MONTHLY" ? "transparent" : "#a49a99",
+                backgroundColor:
+                  step13.billingCycle === "MONTHLY" ? "#AE0E0E" : "transparent",
+              }}
             >
               <ScaledText
                 allowScaling={false}
@@ -315,14 +406,16 @@ export default function ArtistStep13V2() {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => updateStep13({ billingCycle: "YEARLY" })}
-              className="rounded-full items-center justify-center"
+              className="items-center justify-center rounded-full"
               style={{
                 paddingVertical: mvs(5),
                 paddingHorizontal: s(30),
                 minWidth: s(98),
                 borderWidth: 1,
-                borderColor: step13.billingCycle === "YEARLY" ? "transparent" : "#a49a99",
-                backgroundColor: step13.billingCycle === "YEARLY" ? "#AE0E0E" : "transparent",
+                borderColor:
+                  step13.billingCycle === "YEARLY" ? "transparent" : "#a49a99",
+                backgroundColor:
+                  step13.billingCycle === "YEARLY" ? "#AE0E0E" : "transparent",
               }}
             >
               <ScaledText
@@ -350,8 +443,8 @@ export default function ArtistStep13V2() {
               const accentColor = planName.includes("premium")
                 ? "#f79410"
                 : planName.includes("studio")
-                ? "#AE0E0E"
-                : "#080101";
+                  ? "#AE0E0E"
+                  : "#080101";
               const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
               const unit = isYearly ? "year" : "month";
               const showTrialCta = planName.includes("premium");
@@ -380,99 +473,155 @@ export default function ArtistStep13V2() {
                       paddingHorizontal: s(16),
                     }}
                   >
-                  <View className="mb-4">
-                    <View className="flex-row items-center">
+                    <View className="mb-4">
+                      <View className="flex-row items-center">
+                        <ScaledText
+                          allowScaling={false}
+                          variant="20"
+                          className="font-neueMedium"
+                        >
+                          Piano
+                        </ScaledText>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="20"
+                          className="font-neueMedium"
+                          style={{ color: accentColor, marginLeft: s(6) }}
+                        >
+                          {plan.name}
+                        </ScaledText>
+                      </View>
+                      <View className="flex-row items-end mt-2">
+                        <ScaledText
+                          allowScaling={false}
+                          variant="6xl"
+                          className="font-neueBold "
+                          style={{
+                            color: "#080101",
+                            lineHeight: scaledFont(38),
+                          }}
+                        >
+                          €{price}/
+                        </ScaledText>
+                        <ScaledText
+                          allowScaling={false}
+                          variant="lg"
+                          className="font-neueMedium"
+                          style={{ color: "#080101", marginLeft: s(2) }}
+                        >
+                          {unit}
+                        </ScaledText>
+                      </View>
                       <ScaledText
                         allowScaling={false}
-                        variant="20"
-                        className="font-neueMedium"
+                        variant="11"
+                        className="font-neueLightItalic"
+                        style={{ color: "#080101", marginTop: mvs(6) }}
                       >
-                        Piano
-                      </ScaledText>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="20"
-                        className="font-neueMedium"
-                        style={{ color: accentColor, marginLeft: s(6) }}
-                      >
-                        {plan.name}
+                        {plan.description}
                       </ScaledText>
                     </View>
-                    <View className="flex-row items-end mt-2">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="6xl"
-                        className="font-neueBold "
-                        style={{ color: "#080101", lineHeight: scaledFont(38) }}
-                      >
-                        €{price}/
-                      </ScaledText>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="lg"
-                        className="font-neueMedium"
-                        style={{ color: "#080101", marginLeft: s(2) }}
-                      >
-                        {unit}
-                      </ScaledText>
-                    </View>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="11"
-                      className="font-neueLightItalic"
-                      style={{ color: "#080101", marginTop: mvs(6) }}
-                    >
-                      {plan.description}
-                    </ScaledText>
-                  </View>
 
-                  {/* Features */}
-                  <View style={{ gap: mvs(8) }}>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="11"
-                      className="font-neueSemibold"
-                      style={{ color: "#080101" }}
-                    >
-                      Include:
-                    </ScaledText>
-                    <View>
-                      {(() => {
-                        const features = isYearly ? plan.yearlyFeatures : plan.monthlyFeatures;
-                        return Array.isArray(features) && features.length > 0 ? (
-                          features.map((feature: any, idx: number) => (
-                            <View key={idx} className="flex-row items-center mb-1">
-                              <ScaledText
-                                allowScaling={false}
-                                variant="11"
-                                className="font-neueLight"
-                                style={{ color: "#080101" }}
+                    {/* Features */}
+                    <View style={{ gap: mvs(8) }}>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="11"
+                        className="font-neueSemibold"
+                        style={{ color: "#080101" }}
+                      >
+                        Include:
+                      </ScaledText>
+                      <View>
+                        {(() => {
+                          const features = isYearly
+                            ? plan.yearlyFeatures
+                            : plan.monthlyFeatures;
+                          return Array.isArray(features) &&
+                            features.length > 0 ? (
+                            features.map((feature: any, idx: number) => (
+                              <View
+                                key={idx}
+                                className="flex-row items-center mb-1"
                               >
-                                {feature.text}
-                              </ScaledText>
-                            </View>
-                          ))
-                        ) : (
-                          <ScaledText
-                            allowScaling={false}
-                            variant="11"
-                            style={{ color: "#080101" }}
-                          >
-                            Nessuna funzionalità elencata
-                          </ScaledText>
-                        );
-                      })()}
+                                <ScaledText
+                                  allowScaling={false}
+                                  variant="11"
+                                  className="font-neueLight"
+                                  style={{ color: "#080101" }}
+                                >
+                                  {feature.text}
+                                </ScaledText>
+                              </View>
+                            ))
+                          ) : (
+                            <ScaledText
+                              allowScaling={false}
+                              variant="11"
+                              style={{ color: "#080101" }}
+                            >
+                              Nessuna funzionalità elencata
+                            </ScaledText>
+                          );
+                        })()}
+                      </View>
                     </View>
-                  </View>
 
-                  {/* CTAs */}
-                  <View style={{ marginTop: mvs(16) }}>
-                    {showTrialCta ? (
-                      <>
-                        {/* Start free trial button */}
+                    {/* CTAs */}
+                    <View style={{ marginTop: mvs(16) }}>
+                      {showTrialCta ? (
+                        <>
+                          {/* Start free trial button */}
+                          <TouchableOpacity
+                            activeOpacity={0.9}
+                            onPress={() => handleSubscribe(plan.id, "trial")}
+                            disabled={submitting}
+                            style={{
+                              backgroundColor: "#AE0E0E",
+                              paddingVertical: mvs(12),
+                              borderRadius: 38,
+                              alignItems: "center",
+                            }}
+                          >
+                            <ScaledText
+                              allowScaling={false}
+                              variant="body2"
+                              style={{ color: "#FFFFFF" }}
+                              className="font-neueMedium"
+                            >
+                              {submitting
+                                ? "Salvataggio..."
+                                : "Inizia prova gratuita"}
+                            </ScaledText>
+                          </TouchableOpacity>
+
+                          {/* Buy Premium button */}
+                          <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => handleSubscribe(plan.id, "buy")}
+                            disabled={submitting}
+                            style={{
+                              paddingVertical: mvs(10),
+                              alignItems: "center",
+                            }}
+                          >
+                            <ScaledText
+                              allowScaling={false}
+                              variant="body2"
+                              style={{ color: "#AE0E0E" }}
+                              className="font-neueMedium"
+                            >
+                              {submitting
+                                ? "Elaborazione..."
+                                : "Acquista Premium"}
+                            </ScaledText>
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        /* Studio plan - Get started button */
                         <TouchableOpacity
                           activeOpacity={0.9}
-                          onPress={() => handleSubscribe(plan.id, 'trial')}
+                          onPress={() => handleSubscribe(plan.id, "studio")}
                           disabled={submitting}
                           style={{
                             backgroundColor: "#AE0E0E",
@@ -487,54 +636,11 @@ export default function ArtistStep13V2() {
                             style={{ color: "#FFFFFF" }}
                             className="font-neueMedium"
                           >
-                            {submitting ? "Salvataggio..." : "Inizia prova gratuita"}
+                            {submitting ? "Elaborazione..." : "Inizia"}
                           </ScaledText>
                         </TouchableOpacity>
-
-                        {/* Buy Premium button */}
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          onPress={() => handleSubscribe(plan.id, 'buy')}
-                          disabled={submitting}
-                          style={{
-                            paddingVertical: mvs(10),
-                            alignItems: "center",
-                          }}
-                        >
-                          <ScaledText
-                            allowScaling={false}
-                            variant="body2"
-                            style={{ color: "#AE0E0E" }}
-                            className="font-neueMedium"
-                          >
-                            {submitting ? "Elaborazione..." : "Acquista Premium"}
-                          </ScaledText>
-                        </TouchableOpacity>
-                      </>
-                    ) : (
-                      /* Studio plan - Get started button */
-                      <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={() => handleSubscribe(plan.id, 'studio')}
-                        disabled={submitting}
-                        style={{
-                          backgroundColor: "#AE0E0E",
-                          paddingVertical: mvs(12),
-                          borderRadius: 38,
-                          alignItems: "center",
-                        }}
-                      >
-                        <ScaledText
-                          allowScaling={false}
-                          variant="body2"
-                          style={{ color: "#FFFFFF" }}
-                          className="font-neueMedium"
-                        >
-                          {submitting ? "Elaborazione..." : "Inizia"}
-                        </ScaledText>
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                      )}
+                    </View>
                   </LinearGradient>
                 </TouchableOpacity>
               );
