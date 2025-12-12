@@ -30,6 +30,7 @@ export default function ArtistStep5V2() {
   const insets = useSafeAreaInsets();
   const {
     step5,
+    step13,
     updateStep5,
     totalStepsDisplay,
     currentStepDisplay,
@@ -110,7 +111,15 @@ export default function ArtistStep5V2() {
       className="flex-1 bg-black"
     >
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress

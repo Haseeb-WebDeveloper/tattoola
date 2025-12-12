@@ -1,9 +1,9 @@
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
-import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
@@ -46,6 +46,7 @@ type ModalStep = "upload" | "description" | "styles";
 export default function ArtistStep12V2() {
   const {
     step12,
+    step13,
     setProjectAtIndex,
     totalStepsDisplay,
     setCurrentStepDisplay,
@@ -60,7 +61,8 @@ export default function ArtistStep12V2() {
   const [allStyles, setAllStyles] = useState<TattooStyleItem[]>([]);
   const [loadingStyles, setLoadingStyles] = useState(false);
   const [descriptionFocused, setDescriptionFocused] = useState(false);
-  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] =
+    useState<TattooStyleItem | null>(null);
 
   useEffect(() => {
     setCurrentStepDisplay(12);
@@ -211,7 +213,7 @@ export default function ArtistStep12V2() {
           </Pressable>
           {/* Thumb */}
           <View
-            className="overflow-hidden rounded-lg h-fit aspect-square relative"
+            className="relative overflow-hidden rounded-lg h-fit aspect-square"
             style={{ width: 65, marginRight: 16 }}
           >
             {item.type === "image" ? (
@@ -411,9 +413,16 @@ export default function ArtistStep12V2() {
         },
       };
 
-
       await completeArtistRegistration(registrationData);
-      router.replace("/(auth)/artist-registration/step-13");
+
+      // Check if plan was selected from pro screen
+      if (step13.selectedPlanId) {
+        // Redirect to checkout with the selected plan
+        router.replace("/(auth)/artist-registration/checkout");
+      } else {
+        // If no plan selected, redirect to pro screen to select a plan
+        router.replace("/(auth)/artist-registration/tattoola-pro");
+      }
     } catch (error) {
       logger.error("Registration save error:", error);
       let errorMessage = "Failed to save registration. Please try again.";
@@ -462,7 +471,15 @@ export default function ArtistStep12V2() {
   return (
     <View className="relative flex-1 pb-40 bg-black">
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress
@@ -488,7 +505,7 @@ export default function ArtistStep12V2() {
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="items-center justify-between w-full h-full relative">
+                <View className="relative items-center justify-between w-full h-full">
                   <View className="w-full ">
                     <Image
                       source={{
@@ -511,7 +528,7 @@ export default function ArtistStep12V2() {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-neueMedium absolute bottom-0 left-0 right-0 bg-tat-darkMaroon text-center"
+                    className="absolute bottom-0 left-0 right-0 text-center text-gray font-neueMedium bg-tat-darkMaroon"
                     style={{
                       paddingHorizontal: s(16),
                       paddingVertical: mvs(6),
@@ -544,8 +561,8 @@ export default function ArtistStep12V2() {
               style={{ borderWidth: s(1) }}
             >
               {firstAsset(grid[i]) ? (
-                <View className="items-center justify-between w-full h-full relative">
-                  <View className="w-full relative">
+                <View className="relative items-center justify-between w-full h-full">
+                  <View className="relative w-full">
                     <Image
                       source={{
                         uri:
@@ -567,7 +584,7 @@ export default function ArtistStep12V2() {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-neueMedium absolute bottom-0 left-0 right-0 bg-tat-darkMaroon text-center"
+                    className="absolute bottom-0 left-0 right-0 text-center text-gray font-neueMedium bg-tat-darkMaroon"
                     style={{
                       paddingHorizontal: s(16),
                       paddingVertical: mvs(6),
@@ -882,7 +899,7 @@ export default function ArtistStep12V2() {
                         return (
                           <View
                             key={`${item.uri}-${index}`}
-                            className="w-20 h-32 overflow-hidden rounded-lg relative"
+                            className="relative w-20 h-32 overflow-hidden rounded-lg"
                           >
                             {thumbnailUrl ? (
                               <Image
@@ -1029,7 +1046,10 @@ export default function ArtistStep12V2() {
                                   };
                                 }
                                 if (isDisabled) return d;
-                                return { ...d, styles: [...d.styles, style.id] };
+                                return {
+                                  ...d,
+                                  styles: [...d.styles, style.id],
+                                };
                               });
                             }}
                             disabled={isDisabled}

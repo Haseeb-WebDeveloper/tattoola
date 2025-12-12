@@ -28,7 +28,7 @@ const OPTIONS: { key: WorkArrangement; label: string }[] = [
 ];
 
 export default function ArtistStep4V2() {
-  const { step4, setWorkArrangement, totalStepsDisplay } =
+  const { step4, step13, setWorkArrangement, totalStepsDisplay } =
     useArtistRegistrationV2Store();
   const activeStep = 4;
 
@@ -50,7 +50,15 @@ export default function ArtistStep4V2() {
       className="flex-1 bg-black"
     >
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress

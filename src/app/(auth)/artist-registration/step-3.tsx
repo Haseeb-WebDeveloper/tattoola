@@ -17,6 +17,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 export default function ArtistStep3V2() {
   const {
     step3,
+    step13,
     updateStep3,
     setAvatar,
     currentStepDisplay,
@@ -96,7 +97,15 @@ export default function ArtistStep3V2() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <AuthStepHeader />
+        <AuthStepHeader
+          onClose={() => {
+            if (step13?.selectedPlanId) {
+              router.replace("/(auth)/artist-registration/tattoola-pro");
+            } else {
+              router.replace("/(auth)/welcome");
+            }
+          }}
+        />
 
         {/* Progress */}
         <RegistrationProgress
@@ -141,13 +150,13 @@ export default function ArtistStep3V2() {
             {step3?.avatar ? (
               <Image
                 source={{ uri: step3.avatar }}
-                className="rounded-full border-2 border-dashed border-error/70 "
-                style={{ width: s(180), height: s(180), }}
+                className="border-2 border-dashed rounded-full border-error/70 "
+                style={{ width: s(180), height: s(180) }}
                 resizeMode="cover"
               />
             ) : (
               <View
-                className="items-center border-2 border-dashed border-error/70 rounded-full justify-center bg-primary/20"
+                className="items-center justify-center border-2 border-dashed rounded-full border-error/70 bg-primary/20"
                 style={{ width: s(180), height: s(180), gap: s(12) }}
               >
                 <SVGIcons.User
@@ -156,7 +165,7 @@ export default function ArtistStep3V2() {
                   height={s(40)}
                 />
                 <View
-                  className="bg-primary rounded-full"
+                  className="rounded-full bg-primary"
                   style={{ paddingVertical: mvs(8), paddingHorizontal: s(16) }}
                 >
                   <ScaledText

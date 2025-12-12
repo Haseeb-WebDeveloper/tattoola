@@ -14,6 +14,7 @@ import { View } from "react-native";
 export default function ArtistStep11V2() {
   const { step11, updateStep11, totalStepsDisplay, setCurrentStepDisplay } =
     useArtistRegistrationV2Store();
+  const { step13 } = useArtistRegistrationV2Store();
   const [focused, setFocused] = useState<string | null>(null);
   const [errors, setErrors] = useState<{
     minimumPrice?: string;
@@ -117,7 +118,15 @@ export default function ArtistStep11V2() {
   return (
     <View className="flex-1 bg-background pb-40 relative">
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress

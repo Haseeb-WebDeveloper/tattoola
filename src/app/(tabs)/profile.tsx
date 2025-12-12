@@ -293,11 +293,29 @@ export default function ProfileScreen() {
           <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
         </TouchableOpacity>
 
-        {/* settings button */}
+        {/* Test button for Tattoola Pro */}
         <View
           className="absolute right-0 z-10"
-          style={{ paddingHorizontal: s(16), top: mvs(8) }}
+          style={{ paddingHorizontal: s(16), top: mvs(8), flexDirection: "row", gap: s(8) }}
         >
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => router.push("/(auth)/artist-registration/tattoola-pro" as any)}
+            className="items-center justify-center rounded-full"
+            style={{
+              paddingHorizontal: s(12),
+              paddingVertical: mvs(8),
+              backgroundColor: "#EB001B",
+            }}
+          >
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-white font-neueMedium"
+            >
+              Test Pro
+            </ScaledText>
+          </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => router.push("/settings" as any)}

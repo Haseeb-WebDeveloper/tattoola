@@ -20,6 +20,7 @@ export default function ArtistStep6V2() {
     setCurrentStepDisplay,
     totalStepsDisplay,
     currentStepDisplay,
+    step13,
   } = useArtistRegistrationV2Store();
   const [uploading, setUploading] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{
@@ -120,7 +121,15 @@ export default function ArtistStep6V2() {
   return (
     <View className="flex-1 bg-black">
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
       <ScrollView className="flex-1">
         {/* Progress */}
         <RegistrationProgress

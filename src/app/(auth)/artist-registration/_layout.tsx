@@ -17,7 +17,7 @@ export default function ArtistRegistrationLayout() {
       <Stack.Screen name="step-10" />
       <Stack.Screen name="step-11" />
       <Stack.Screen name="step-12" />
-      <Stack.Screen name="step-13" />
+      {/* step-13 removed - no longer in flow */}
     </Stack>
   );
 }

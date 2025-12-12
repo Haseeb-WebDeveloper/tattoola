@@ -3,23 +3,31 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useEmailAvailability } from "@/hooks/useEmailAvailability";
+import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
+import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
 import { UserRole } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
 
 export default function ArtistRegisterScreen() {
   const { signUp, loading } = useAuth();
-  const { setInProgress, setSuccess, setError, reset, formData: storedFormData } = useSignupStore();
+  const {
+    setInProgress,
+    setSuccess,
+    setError,
+    reset,
+    formData: storedFormData,
+  } = useSignupStore();
+  const { step13 } = useArtistRegistrationV2Store();
   const [formData, setFormData] = useState<RegisterCredentials>(
     storedFormData || {
       username: "",
@@ -40,7 +48,7 @@ export default function ArtistRegisterScreen() {
   const usernameValidation = useUsernameValidation(formData.username);
   const emailAvailability = useEmailAvailability(formData.email);
 
-  const totalSteps = 13;
+  const totalSteps = 12;
   const currentStep = 1;
   const steps = useMemo(
     () => Array.from({ length: totalSteps }, (_, i) => i + 1),
@@ -121,25 +129,25 @@ export default function ArtistRegisterScreen() {
     } catch (error: any) {
       const code = error?.code;
 
-    if (code === "EMAIL_ALREADY_VERIFIED") {
+      if (code === "EMAIL_ALREADY_VERIFIED") {
+        const message =
+          "Questa email è già registrata e verificata. Accedi per continuare.";
+
+        setError(message);
+        toast.error(message);
+
+        router.replace("/(auth)/login");
+        return;
+      }
+
       const message =
-        "Questa email è già registrata e verificata. Accedi per continuare.";
+        error?.message || "Si è verificato un errore durante la registrazione";
 
       setError(message);
       toast.error(message);
 
-      router.replace("/(auth)/login");
-      return;
-    }
-
-    const message =
-      error?.message || "Si è verificato un errore durante la registrazione";
-
-    setError(message);
-    toast.error(message);
-
-    // Do NOT redirect back to register — stay in the flow
-    router.replace("/(auth)/email-confirmation");
+      // Do NOT redirect back to register — stay in the flow
+      router.replace("/(auth)/email-confirmation");
     }
   };
 
@@ -152,7 +160,13 @@ export default function ArtistRegisterScreen() {
   };
 
   const handleClose = () => {
-    router.replace("/(auth)/welcome");
+    // If user came from pro screen (has selected plan), redirect back to pro screen
+    if (step13?.selectedPlanId) {
+      router.replace("/(auth)/artist-registration/tattoola-pro");
+    } else {
+      // Otherwise, redirect to welcome screen
+      router.replace("/(auth)/welcome");
+    }
   };
 
   return (
@@ -165,7 +179,7 @@ export default function ArtistRegisterScreen() {
       className="flex-1 bg-background"
     >
       {/* Header: close + logo */}
-      <AuthStepHeader />
+      <AuthStepHeader onClose={handleClose} />
 
       {/* Steps indicator */}
       <RegistrationProgress

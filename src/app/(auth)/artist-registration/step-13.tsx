@@ -269,7 +269,15 @@ export default function ArtistStep13V2() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

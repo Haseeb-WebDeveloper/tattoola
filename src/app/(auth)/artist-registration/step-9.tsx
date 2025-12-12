@@ -51,6 +51,7 @@ export default function ArtistStep9V2() {
   const insets = useSafeAreaInsets();
   const { step9, toggleService, setCurrentStepDisplay, totalStepsDisplay } =
     useArtistRegistrationV2Store();
+  const { step13 } = useArtistRegistrationV2Store();
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedServiceForInfo, setSelectedServiceForInfo] = useState<ServiceItem | null>(null);
@@ -124,7 +125,15 @@ export default function ArtistStep9V2() {
     <View className="flex-1 bg-background">
       <View className="flex-1 bg-background">
         {/* Header */}
-        <AuthStepHeader />
+        <AuthStepHeader
+          onClose={() => {
+            if (step13?.selectedPlanId) {
+              router.replace("/(auth)/artist-registration/tattoola-pro");
+            } else {
+              router.replace("/(auth)/welcome");
+            }
+          }}
+        />
 
         {/* Progress */}
         <RegistrationProgress

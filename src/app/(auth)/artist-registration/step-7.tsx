@@ -18,6 +18,7 @@ export default function ArtistStep7V2() {
     totalStepsDisplay,
     currentStepDisplay,
     setCurrentStepDisplay,
+    step13,
   } = useArtistRegistrationV2Store();
   const [focused, setFocused] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ bio?: string }>({});
@@ -61,7 +62,15 @@ export default function ArtistStep7V2() {
       className="flex-1 bg-black"
     >
       {/* Header */}
-      <AuthStepHeader />
+      <AuthStepHeader
+        onClose={() => {
+          if (step13?.selectedPlanId) {
+            router.replace("/(auth)/artist-registration/tattoola-pro");
+          } else {
+            router.replace("/(auth)/welcome");
+          }
+        }}
+      />
 
       {/* Progress */}
       <RegistrationProgress

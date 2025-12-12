@@ -67,6 +67,7 @@ export default function ArtistStep8V2() {
     setCurrentStepDisplay,
     totalStepsDisplay,
     reset,
+    step13,
   } = useArtistRegistrationV2Store();
   const [styles, setStyles] = useState<TattooStyleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +275,15 @@ export default function ArtistStep8V2() {
     <View className="flex-1 bg-background">
       <View className="flex-1 bg-background">
         {/* Header */}
-        <AuthStepHeader />
+        <AuthStepHeader
+          onClose={() => {
+            if (step13?.selectedPlanId) {
+              router.replace("/(auth)/artist-registration/tattoola-pro");
+            } else {
+              router.replace("/(auth)/welcome");
+            }
+          }}
+        />
 
         {/* Progress */}
         <RegistrationProgress
