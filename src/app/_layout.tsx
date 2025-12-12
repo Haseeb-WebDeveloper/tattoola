@@ -30,6 +30,7 @@ import { AuthProvider } from "../providers/AuthProvider";
 import { initDatabase } from "../utils/database";
 import { initializeDeepLinking } from "../utils/deepLinking";
 import { logger } from "../utils/logger";
+import { AuthRequiredModal } from "../components/modals/AuthRequiredModal";
 
 
 export default function RootLayout() {
@@ -184,6 +185,7 @@ export default function RootLayout() {
               loading: <SVGIcons.Loading width={s(18)} height={s(18)} />,
             }}
           />
+          <AuthRequiredModal />
         </SafeAreaView>
       </AuthProvider>
     </KeyboardProvider>

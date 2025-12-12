@@ -246,6 +246,15 @@ import Pending from "@/assets/icons/pending.svg";
 import AutoPlay from "@/assets/icons/auto-play.svg";
 // @ts-ignore
 import Locked from "@/assets/icons/locked.svg";
+// @ts-ignore
+import DiscoverTattoo from "@/assets/icons/discover-tattoo.svg";
+// @ts-ignore
+import ExploreArtist from "@/assets/icons/explore-artist.svg";
+// @ts-ignore
+import Help from "@/assets/icons/help.svg"
+// @ts-ignore
+import Accedi from "@/assets/icons/accedi.svg"
+
 
 
 export const SVGIcons = {
@@ -373,6 +382,10 @@ export const SVGIcons = {
   AutoPlay,
   Download,
   Locked,
+  DiscoverTattoo,
+  ExploreArtist,
+  Help,
+  Accedi,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

@@ -348,11 +348,13 @@ export async function fetchArtistSelfProfile(
   
   // Query studio membership to get studio address as fallback
   let studioAddressFromStudio: string | null = null;
+  let businessNameFromStudio: string | null = null;
   const { data: studioMembership } = await supabase
     .from("studio_members")
     .select(
       `
       studio:studios(
+        name,
         locations:studio_locations(
           address,
           isPrimary
@@ -370,6 +372,14 @@ export async function fetchArtistSelfProfile(
     ? studioMembership.studio[0] 
     : studioMembership?.studio;
   
+  console.log("🔍 Studio Membership Debug:", {
+    hasMembership: !!studioMembership,
+    rawStudio: studioMembership?.studio,
+    isArray: Array.isArray(studioMembership?.studio),
+    processedStudio: studio,
+    studioName: studio?.name,
+  });
+  
   if (studio?.locations) {
     const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
     const primaryStudioLocation = locations.find(
@@ -379,6 +389,30 @@ export async function fetchArtistSelfProfile(
       studioAddressFromStudio = primaryStudioLocation.address;
     }
   }
+  
+  // Also get businessName from studio if artist profile doesn't have it
+  if (studio?.name) {
+    businessNameFromStudio = studio.name;
+    console.log("✅ BusinessName set from studio:", businessNameFromStudio);
+  } else {
+    console.log("⚠️ No studio name found. Studio object:", studio);
+  }
+
+  // Infer workArrangement from studio membership if not explicitly set
+  let inferredWorkArrangement: "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | undefined = artistProfile.workArrangement as any;
+  
+  if (!inferredWorkArrangement && studioMembership) {
+    // If there's an active studio membership but no workArrangement, assume STUDIO_EMPLOYEE
+    // Note: STUDIO_OWNER should be explicitly set in the database
+    inferredWorkArrangement = "STUDIO_EMPLOYEE";
+    console.log("🔧 Inferred workArrangement as STUDIO_EMPLOYEE from studio membership");
+  }
+  
+  console.log("📋 Work Arrangement Decision:", {
+    fromDatabase: artistProfile.workArrangement,
+    inferred: inferredWorkArrangement,
+    hasStudioMembership: !!studioMembership,
+  });
   
   // Create location object - Priority: studioAddress (profile) > primaryLocation.address > studioAddress (from studio)
   let location = undefined;
@@ -579,9 +613,18 @@ export async function fetchArtistSelfProfile(
     },
     artistProfile: {
       id: artistId,
-      businessName: artistProfile.businessName,
+      businessName: (() => {
+        const finalBusinessName = artistProfile.businessName || businessNameFromStudio || undefined;
+        console.log("🏢 Final BusinessName Decision:", {
+          fromArtistProfile: artistProfile.businessName,
+          fromStudio: businessNameFromStudio,
+          final: finalBusinessName,
+          workArrangement: artistProfile.workArrangement,
+        });
+        return finalBusinessName;
+      })(),
       bio: userRow.bio,
-      workArrangement: (artistProfile.workArrangement || undefined) as "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | undefined,
+      workArrangement: inferredWorkArrangement,
       yearsExperience: artistProfile.yearsExperience || undefined,
       banner: (banner2?.data || []) as any[],
     } as ArtistSelfProfileInterface["artistProfile"],
