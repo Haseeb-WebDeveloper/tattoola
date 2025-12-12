@@ -6,8 +6,8 @@ import { SVGIcons } from "@/constants/svg";
 import { useEmailAvailability } from "@/hooks/useEmailAvailability";
 import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useAuth } from "@/providers/AuthProvider";
-import { useSignupStore } from "@/stores/signupStore";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
+import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
 import { UserRole } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
@@ -160,13 +160,8 @@ export default function ArtistRegisterScreen() {
   };
 
   const handleClose = () => {
-    // If user came from pro screen (has selected plan), redirect back to pro screen
-    if (step13?.selectedPlanId) {
-      router.replace("/(auth)/artist-registration/tattoola-pro");
-    } else {
-      // Otherwise, redirect to welcome screen
-      router.replace("/(auth)/welcome");
-    }
+    // Always redirect to welcome screen
+    router.replace("/(auth)/welcome");
   };
 
   return (

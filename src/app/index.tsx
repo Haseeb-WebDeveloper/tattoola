@@ -8,7 +8,7 @@ import { useSignupStore } from "../stores/signupStore";
 
 export default function IndexScreen() {
   const { user, initialized, loading } = useAuth();
-  const { pendingVerificationEmail } = useSignupStore();
+  const { pendingVerificationEmail, reset } = useSignupStore();
 
   useEffect(() => {
     // console.log('IndexScreen useEffect - user:', user, 'initialized:', initialized, 'loading:', loading);
@@ -16,6 +16,13 @@ export default function IndexScreen() {
     if (!initialized || loading) {
       // console.log("Still initializing or loading, not redirecting yet");
       return; // Still initializing
+    }
+
+    // If user is logged out but pendingVerificationEmail is still set, clear it
+    // This handles cases where the app was closed during signup and then restarted after logout
+    if (!user && pendingVerificationEmail) {
+      reset();
+      return; // Will trigger redirect on next render
     }
 
     // Don't redirect if we're waiting for email verification
@@ -33,7 +40,7 @@ export default function IndexScreen() {
       // User is not authenticated, redirect to welcome
       router.replace("/(auth)/welcome");
     }
-  }, [user, initialized, loading, pendingVerificationEmail]);
+  }, [user, initialized, loading, pendingVerificationEmail, reset]);
 
   return (
     <View

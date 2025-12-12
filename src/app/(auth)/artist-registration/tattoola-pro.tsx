@@ -13,7 +13,10 @@ import {
 } from "react-native";
 // @ts-ignore
 import ProScreenBackIcon from "@/assets/icons/proScreen-backicon.svg";
-import { SubscriptionService } from "@/services/subscription.service";
+import {
+  SubscriptionPlan,
+  SubscriptionService,
+} from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { toast } from "sonner-native";
 
@@ -26,7 +29,28 @@ export default function TattoolaProScreen() {
   const [expandedFaqs, setExpandedFaqs] = React.useState<
     Record<number, boolean>
   >({});
+  const [billingCycle, setBillingCycle] = React.useState<"MONTHLY" | "YEARLY">(
+    "MONTHLY"
+  );
+  const [plans, setPlans] = React.useState<SubscriptionPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = React.useState(false);
   const { updateStep13 } = useArtistRegistrationV2Store();
+
+  // Fetch plans on mount
+  React.useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoadingPlans(true);
+        const fetchedPlans = await SubscriptionService.fetchSubscriptionPlans();
+        setPlans(fetchedPlans);
+      } catch (error) {
+        console.error("Failed to fetch plans:", error);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   const scrollToPlans = () => {
     if (plansSectionY > 0 && scrollViewRef.current) {
@@ -63,9 +87,6 @@ export default function TattoolaProScreen() {
     action: "trial" | "buy" | "studio"
   ) => {
     try {
-      // Fetch plans to get the actual plan data
-      const plans = await SubscriptionService.fetchSubscriptionPlans();
-
       // Find the plan based on type
       const plan = plans.find((p) => {
         const planName = (p.name || "").toLowerCase();
@@ -81,10 +102,10 @@ export default function TattoolaProScreen() {
         return;
       }
 
-      // Store plan data in step13 with MONTHLY billing
+      // Store plan data in step13 with selected billing cycle
       updateStep13({
         selectedPlanId: plan.id,
-        billingCycle: "MONTHLY", // Always set to monthly as requested
+        billingCycle: billingCycle,
       });
 
       // Navigate to artist registration step 1
@@ -93,6 +114,24 @@ export default function TattoolaProScreen() {
       toast.error("Failed to load plans");
     }
   };
+
+  // Get plan prices based on billing cycle
+  const getPremiumPlan = () =>
+    plans.find((p) => (p.name || "").toLowerCase().includes("premium"));
+  const getStudioPlan = () =>
+    plans.find((p) => (p.name || "").toLowerCase().includes("studio"));
+
+  const premiumPlan = getPremiumPlan();
+  const studioPlan = getStudioPlan();
+
+  const premiumPrice =
+    billingCycle === "MONTHLY"
+      ? premiumPlan?.monthlyPrice || 19
+      : premiumPlan?.yearlyPrice || 228;
+  const studioPrice =
+    billingCycle === "MONTHLY"
+      ? studioPlan?.monthlyPrice || 59
+      : studioPlan?.yearlyPrice || 708;
 
   return (
     <View style={styles.container}>
@@ -347,6 +386,63 @@ export default function TattoolaProScreen() {
             Scegli un piano
           </ScaledText>
 
+          {/* Billing Cycle Toggle */}
+          <View
+            className="flex-row items-center justify-center"
+            style={{ gap: mvs(8), marginBottom: mvs(32) }}
+          >
+            <TouchableOpacity
+              onPress={() => setBillingCycle("MONTHLY")}
+              className="rounded-full items-center justify-center"
+              style={{
+                paddingVertical: mvs(8),
+                paddingHorizontal: s(30),
+                minWidth: s(98),
+                borderWidth: 1,
+                borderColor:
+                  billingCycle === "MONTHLY" ? "transparent" : "#a49a99",
+                backgroundColor:
+                  billingCycle === "MONTHLY" ? "#AE0E0E" : "transparent",
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-center font-neueLight"
+                style={{
+                  color: billingCycle === "MONTHLY" ? "#FFFFFF" : "#000000",
+                }}
+              >
+                Monthly
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setBillingCycle("YEARLY")}
+              className="rounded-full items-center justify-center"
+              style={{
+                paddingVertical: mvs(8),
+                paddingHorizontal: s(30),
+                minWidth: s(98),
+                borderWidth: 1,
+                borderColor:
+                  billingCycle === "YEARLY" ? "transparent" : "#a49a99",
+                backgroundColor:
+                  billingCycle === "YEARLY" ? "#AE0E0E" : "transparent",
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className="text-center font-neueLight"
+                style={{
+                  color: billingCycle === "YEARLY" ? "#FFFFFF" : "#000000",
+                }}
+              >
+                Yearly
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+
           {/* Premium Plan */}
           <View style={styles.planCard}>
             <LinearGradient
@@ -381,7 +477,7 @@ export default function TattoolaProScreen() {
                     className="text-black font-neueBold"
                     style={styles.planPrice}
                   >
-                    €19/
+                    €{premiumPrice}/
                   </ScaledText>
                   <ScaledText
                     variant="md"
@@ -389,7 +485,7 @@ export default function TattoolaProScreen() {
                     className="text-black font-neueMedium"
                     style={styles.planPeriod}
                   >
-                    month
+                    {billingCycle === "MONTHLY" ? "month" : "year"}
                   </ScaledText>
                 </View>
 
@@ -519,7 +615,7 @@ export default function TattoolaProScreen() {
                     className="text-black font-neueBold"
                     style={styles.planPrice}
                   >
-                    €59/
+                    €{studioPrice}/
                   </ScaledText>
                   <ScaledText
                     variant="md"
@@ -527,7 +623,7 @@ export default function TattoolaProScreen() {
                     className="text-black font-neueMedium"
                     style={styles.planPeriod}
                   >
-                    month
+                    {billingCycle === "MONTHLY" ? "month" : "year"}
                   </ScaledText>
                 </View>
 

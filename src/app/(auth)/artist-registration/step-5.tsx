@@ -113,11 +113,7 @@ export default function ArtistStep5V2() {
       {/* Header */}
       <AuthStepHeader
         onClose={() => {
-          if (step13?.selectedPlanId) {
-            router.replace("/(auth)/artist-registration/tattoola-pro");
-          } else {
-            router.replace("/(auth)/welcome");
-          }
+          router.replace("/(auth)/welcome");
         }}
       />
 

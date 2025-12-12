@@ -351,6 +351,7 @@ export default function ArtistStep12V2() {
         step10,
         step11,
         step12: step12State,
+        step13: step13State,
       } = useArtistRegistrationV2Store.getState();
 
       const registrationData: CompleteArtistRegistration = {
@@ -397,14 +398,29 @@ export default function ArtistStep12V2() {
           hourlyRate: step11.hourlyRate || 0,
         },
         step12: {
-          projects: (step12State.projects || []).map((project, index) => ({
-            title: project.title,
-            description: project.description,
-            photos: project.photos,
-            videos: project.videos,
-            associatedStyles: project.associatedStyles || [],
-            order: index + 1,
-          })),
+          projects: (step12State.projects || []).map((project, index) => {
+            // Ensure associatedStyles is always an array
+            let stylesArray: string[] = [];
+            if (project.associatedStyles) {
+              if (Array.isArray(project.associatedStyles)) {
+                stylesArray = project.associatedStyles.filter(
+                  (s) => s && typeof s === "string"
+                );
+              } else if (typeof project.associatedStyles === "string") {
+                // If it's a single string, convert to array
+                stylesArray = [project.associatedStyles];
+              }
+            }
+
+            return {
+              title: project.title,
+              description: project.description,
+              photos: project.photos || [],
+              videos: project.videos || [],
+              associatedStyles: stylesArray,
+              order: index + 1,
+            };
+          }),
         },
         // Minimal stub to satisfy type; not used by backend save
         step13: {
@@ -415,17 +431,50 @@ export default function ArtistStep12V2() {
 
       await completeArtistRegistration(registrationData);
 
-      // Check if plan was selected from pro screen
-      if (step13.selectedPlanId) {
+      // Success - redirect to checkout if plan selected, otherwise to pro screen
+      // Use step13State from getState() to ensure we have the latest data
+      if (step13State?.selectedPlanId) {
         // Redirect to checkout with the selected plan
+        logger.log(
+          "Plan selected, redirecting to checkout:",
+          step13State.selectedPlanId
+        );
         router.replace("/(auth)/artist-registration/checkout");
       } else {
         // If no plan selected, redirect to pro screen to select a plan
+        logger.log("No plan selected, redirecting to pro screen");
         router.replace("/(auth)/artist-registration/tattoola-pro");
       }
     } catch (error) {
       logger.error("Registration save error:", error);
       let errorMessage = "Failed to save registration. Please try again.";
+
+      // Check if profile was partially created (user exists in database)
+      // If profile exists, still redirect to checkout so user can complete payment
+      let profileCreated = false;
+      try {
+        const { supabase } = await import("@/utils/supabase");
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: userExists } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (userExists) {
+            profileCreated = true;
+            logger.log(
+              "Profile was created despite error, redirecting to checkout"
+            );
+          }
+        }
+      } catch (checkError) {
+        logger.error("Error checking if profile was created:", checkError);
+      }
+
       if (error instanceof Error) {
         if (
           error.message.includes("duplicate") ||
@@ -433,6 +482,7 @@ export default function ArtistStep12V2() {
         ) {
           errorMessage =
             "Some information already exists. Your profile has been updated.";
+          profileCreated = true; // Profile likely exists
         } else if (
           error.message.includes("foreign key") ||
           error.message.includes("violates")
@@ -462,6 +512,23 @@ export default function ArtistStep12V2() {
               : error.message;
         }
       }
+
+      // If profile was created (even partially), redirect to checkout if plan selected
+      // This ensures user can complete payment even if some data failed to save
+      // Use step13State from getState() to ensure we have the latest data
+      const currentStep13 = useArtistRegistrationV2Store.getState().step13;
+      if (profileCreated && currentStep13?.selectedPlanId) {
+        toast.error(
+          "Profile created but some data may be incomplete. Please check your profile."
+        );
+        logger.log(
+          "Profile created with plan, redirecting to checkout:",
+          currentStep13.selectedPlanId
+        );
+        router.replace("/(auth)/artist-registration/checkout");
+        return;
+      }
+
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -473,11 +540,7 @@ export default function ArtistStep12V2() {
       {/* Header */}
       <AuthStepHeader
         onClose={() => {
-          if (step13?.selectedPlanId) {
-            router.replace("/(auth)/artist-registration/tattoola-pro");
-          } else {
-            router.replace("/(auth)/welcome");
-          }
+          router.replace("/(auth)/welcome");
         }}
       />
 

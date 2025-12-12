@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { getPresenceChannel } from '../services/chat.service';
 import { usePresenceStore } from '../stores/presenceStore';
 import { useAuthRequiredStore } from '../stores/authRequiredStore';
+import { useSignupStore } from '../stores/signupStore';
 import type {
   AuthContextType,
   AuthSession,
@@ -599,6 +600,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     // Hide auth modal if it's visible to prevent it showing during logout
     useAuthRequiredStore.getState().hide();
+    
+    // Clear signup store to prevent pendingVerificationEmail from blocking redirects
+    useSignupStore.getState().reset();
     
     await signOut();
     router.replace('/(auth)/login');

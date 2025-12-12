@@ -1016,19 +1016,31 @@ export class AuthService {
         }
 
         // Add project styles - let Supabase generate UUIDs
-        if (project.associatedStyles && project.associatedStyles.length > 0) {
-          const projectStylesData = project.associatedStyles.map(
-            (styleId: string) => ({
-              projectId: portfolioProject.id,
-              styleId: styleId,
-            })
-          );
+        // Ensure associatedStyles is always an array and filter invalid values
+        let stylesArray: string[] = [];
+        if (project.associatedStyles) {
+          if (Array.isArray(project.associatedStyles)) {
+            stylesArray = project.associatedStyles.filter(
+              (s) => s && typeof s === 'string' && s.trim().length > 0
+            );
+          } else if (typeof project.associatedStyles === 'string') {
+            // If it's a single string, convert to array
+            stylesArray = project.associatedStyles.trim() ? [project.associatedStyles.trim()] : [];
+          }
+        }
+
+        if (stylesArray.length > 0) {
+          const projectStylesData = stylesArray.map((styleId: string) => ({
+            projectId: portfolioProject.id,
+            styleId: styleId,
+          }));
 
           const { error: projectStylesError } = await adminOrUserClient
             .from("portfolio_project_styles")
             .insert(projectStylesData);
 
           if (projectStylesError) {
+            logger.error("Error inserting project styles:", projectStylesError);
             throw new Error(projectStylesError.message);
           }
         }

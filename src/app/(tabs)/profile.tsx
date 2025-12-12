@@ -10,6 +10,7 @@ import {
   TattooLoverProfileView,
   TattooLoverSkeleton,
 } from "@/components/profile";
+import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { DISPLAY_NAME_AR } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
@@ -21,6 +22,7 @@ import {
 } from "@/services/profile.service";
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { WorkArrangement } from "@/types/auth";
+import { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -33,8 +35,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import StudioCard from "@/components/search/StudioCard";
-import { StudioSearchResult } from "@/types/search";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -293,29 +293,11 @@ export default function ProfileScreen() {
           <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
         </TouchableOpacity>
 
-        {/* Test button for Tattoola Pro */}
+        {/* Settings button */}
         <View
           className="absolute right-0 z-10"
-          style={{ paddingHorizontal: s(16), top: mvs(8), flexDirection: "row", gap: s(8) }}
+          style={{ paddingHorizontal: s(16), top: mvs(8) }}
         >
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => router.push("/(auth)/artist-registration/tattoola-pro" as any)}
-            className="items-center justify-center rounded-full"
-            style={{
-              paddingHorizontal: s(12),
-              paddingVertical: mvs(8),
-              backgroundColor: "#EB001B",
-            }}
-          >
-            <ScaledText
-              allowScaling={false}
-              variant="sm"
-              className="text-white font-neueMedium"
-            >
-              Test Pro
-            </ScaledText>
-          </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => router.push("/settings" as any)}
