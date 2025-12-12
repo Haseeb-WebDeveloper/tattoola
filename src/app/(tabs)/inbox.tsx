@@ -2,13 +2,14 @@ import ScaledText from "@/components/ui/ScaledText";
 import { ScaledTextInput } from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { usePresenceStore } from "@/stores/presenceStore";
 import { formatMessageTime } from "@/utils/formatMessageTime";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
-import {  useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 
@@ -48,6 +49,18 @@ export default function InboxScreen() {
   const loadMore = useChatInboxStore((s) => s.loadMore);
   const startRealtime = useChatInboxStore((s) => s.startRealtime);
   const stopRealtime = useChatInboxStore((s) => s.stopRealtime);
+
+  // Show auth modal for anonymous users only when this tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) {
+        useAuthRequiredStore.getState().show("Sign in to access your messages");
+      }
+      // Cleanup not needed as modal will be dismissed by user action
+    }, [user])
+  );
+
+  // Do not early-return; keep hooks consistent across renders
   const onlineUserIds = usePresenceStore((s) => s.onlineUserIds);
 
   // Debounce search query for better performance

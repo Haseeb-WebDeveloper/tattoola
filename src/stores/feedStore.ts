@@ -13,10 +13,10 @@ interface FeedState {
   isRefreshing: boolean;
   hasMore: boolean;
 
-  loadInitial: (userId: string) => Promise<void>;
-  loadMore: (userId: string) => Promise<void>;
-  refresh: (userId: string) => Promise<void>;
-  toggleLikeOptimistic: (postId: string, userId: string) => Promise<void>;
+  loadInitial: (userId?: string | null) => Promise<void>;
+  loadMore: (userId?: string | null) => Promise<void>;
+  refresh: (userId?: string | null) => Promise<void>;
+  toggleLikeOptimistic: (postId: string, userId?: string | null) => Promise<void>;
   upsertPost: (post: PostDetail) => void;
 }
 
@@ -28,11 +28,10 @@ export const useFeedStore = create<FeedState>()(
     isRefreshing: false,
     hasMore: true,
 
-    loadInitial: async (userId: string) => {
-      if (!userId) return;
+    loadInitial: async (userId?: string | null) => {
       set({ isLoading: true });
       try {
-        const page = await fetchFeedItemsPage({ userId, limit: FEED_POSTS_PER_PAGE, offset: 0 });
+        const page = await fetchFeedItemsPage({ userId: userId || null, limit: FEED_POSTS_PER_PAGE, offset: 0 });
         set({
           posts: page.items,
           cursor: page.nextOffset ?? null,
@@ -43,13 +42,13 @@ export const useFeedStore = create<FeedState>()(
       }
     },
 
-    loadMore: async (userId: string) => {
+    loadMore: async (userId?: string | null) => {
       const { cursor, isLoading, hasMore } = get();
-      if (!userId || isLoading || !hasMore) return;
+      if (isLoading || !hasMore) return;
       set({ isLoading: true });
       try {
         const page = await fetchFeedItemsPage({
-          userId,
+          userId: userId || null,
           limit: FEED_POSTS_PER_PAGE,
           offset: cursor ?? 0,
         });
@@ -63,11 +62,10 @@ export const useFeedStore = create<FeedState>()(
       }
     },
 
-    refresh: async (userId: string) => {
-      if (!userId) return;
+    refresh: async (userId?: string | null) => {
       set({ isRefreshing: true });
       try {
-        const page = await fetchFeedItemsPage({ userId, limit: FEED_POSTS_PER_PAGE, offset: 0 });
+        const page = await fetchFeedItemsPage({ userId: userId || null, limit: FEED_POSTS_PER_PAGE, offset: 0 });
         set({
           posts: page.items,
           cursor: page.nextOffset ?? null,
@@ -78,7 +76,13 @@ export const useFeedStore = create<FeedState>()(
       }
     },
 
-    toggleLikeOptimistic: async (postId: string, userId: string) => {
+    toggleLikeOptimistic: async (postId: string, userId?: string | null) => {
+      // Require authentication for likes
+      if (!userId) {
+        console.warn('[feedStore] toggleLikeOptimistic requires authentication');
+        return;
+      }
+      
       const prev = get().posts;
       // Only apply likes to post-type entries
       const idx = prev.findIndex((entry) => entry.kind === 'post' && entry.post.id === postId);

@@ -7,6 +7,7 @@ import { CustomToast } from "@/components/ui/CustomToast";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import {
   addPostsToCollection,
   deleteCollection,
@@ -71,6 +72,7 @@ export default function CollectionDetailsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const { show } = useAuthRequiredStore();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +122,10 @@ export default function CollectionDetailsScreen() {
   }, [id]);
 
   useEffect(() => {
+    // Show auth modal for anonymous users when opening collection
+    if (!user) {
+      show("Sign in to view and manage collections", false);
+    }
     loadCollection();
   }, [loadCollection]);
 

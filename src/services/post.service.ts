@@ -80,11 +80,12 @@ export type FeedPage = {
  * Fetch a page of feed posts using cursor-based pagination (createdAt DESC, id DESC)
  */
 export async function fetchFeedPage(args: {
-  userId: string;
+  userId?: string | null;
   limit?: number;
   cursor?: { createdAt: string; id: string } | null;
 }): Promise<FeedPage> {
   const { userId, limit = 6, cursor } = args;
+  const isAnonymous = !userId;
 
   // Base query
   let query = supabase
@@ -152,7 +153,7 @@ export async function fetchFeedPage(args: {
   // Get likes for current user for these posts in one query
   const postIds = itemsRows.map((r) => r.id);
   let likedMap: Record<string, boolean> = {};
-  if (postIds.length > 0) {
+  if (!isAnonymous && postIds.length > 0) {
     const { data: likesRows } = await supabase
       .from("post_likes")
       .select("postId")
@@ -199,8 +200,10 @@ export async function fetchFeedPage(args: {
  */
 export async function fetchPostDetails(
   postId: string,
-  userId: string
+  userId?: string | null
 ): Promise<PostDetail> {
+  const isAnonymous = !userId;
+  
   // Fetch post with all related data
   const { data: post, error: postError } = await supabase
     .from("posts")
@@ -264,22 +267,25 @@ export async function fetchPostDetails(
     }
   }
 
-  // Run all 4 queries in parallel for faster loading
-  const [locationResult, likeResult, likesResult, followResult] =
-    await Promise.all([
-      // Fetch author's location
-      supabase
-        .from("user_locations")
-        .select(
-          `
+  // Run parallel queries - skip like/follow checks for anonymous users
+  const queries = [
+    // Fetch author's location (always public)
+    supabase
+      .from("user_locations")
+      .select(
+        `
         municipalities(name),
         provinces(name)
       `
-        )
-        .eq("userId", authorId)
-        .eq("isPrimary", true)
-        .maybeSingle(),
+      )
+      .eq("userId", authorId)
+      .eq("isPrimary", true)
+      .maybeSingle(),
+  ];
 
+  // Only check likes and follows if user is authenticated
+  if (!isAnonymous) {
+    queries.push(
       // Check if current user liked this post
       supabase
         .from("post_likes")
@@ -307,8 +313,29 @@ export async function fetchPostDetails(
         .select("id")
         .eq("followerId", userId)
         .eq("followingId", authorId)
-        .maybeSingle(),
-    ]);
+        .maybeSingle()
+    );
+  } else {
+    // For anonymous users, just fetch likes list (no auth check)
+    queries.push(
+      Promise.resolve({ data: null }), // like check placeholder
+      supabase
+        .from("post_likes")
+        .select(
+          `
+        id,
+        users!post_likes_userId_fkey(id,username,avatar)
+      `
+        )
+        .eq("postId", postId)
+        .order("createdAt", { ascending: false })
+        .limit(10),
+      Promise.resolve({ data: null }) // follow check placeholder
+    );
+  }
+
+  const [locationResult, likeResult, likesResult, followResult] =
+    await Promise.all(queries);
 
   const locationData = locationResult.data;
   const likeData = likeResult.data;
