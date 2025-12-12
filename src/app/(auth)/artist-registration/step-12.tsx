@@ -429,25 +429,49 @@ export default function ArtistStep12V2() {
         },
       };
 
+      // Check if plan is selected before attempting registration
+      const currentStep13 = useArtistRegistrationV2Store.getState().step13;
+
+      // If plan is selected, redirect to checkout first (payment required)
+      if (currentStep13?.selectedPlanId) {
+        logger.log("Plan selected, redirecting to checkout for payment");
+        router.replace("/(auth)/artist-registration/checkout");
+        setSubmitting(false);
+        return;
+      }
+
+      // If no plan selected, try to complete registration (will fail with PAYMENT_REQUIRED)
       await completeArtistRegistration(registrationData);
 
-      // Success - redirect to checkout if plan selected, otherwise to pro screen
-      // Use step13State from getState() to ensure we have the latest data
-      if (step13State?.selectedPlanId) {
-        // Redirect to checkout with the selected plan
-        logger.log(
-          "Plan selected, redirecting to checkout:",
-          step13State.selectedPlanId
-        );
-        router.replace("/(auth)/artist-registration/checkout");
-      } else {
-        // If no plan selected, redirect to pro screen to select a plan
-        logger.log("No plan selected, redirecting to pro screen");
-        router.replace("/(auth)/artist-registration/tattoola-pro");
-      }
+      // Success - profile created successfully with active subscription
+      // Redirect to main app or profile page
+      logger.log("Registration completed successfully");
+      router.replace("/(tabs)/profile");
     } catch (error) {
       logger.error("Registration save error:", error);
       let errorMessage = "Failed to save registration. Please try again.";
+
+      // Handle payment required error - redirect to checkout or plan selection
+      if (
+        error instanceof Error &&
+        (error as any).code === "PAYMENT_REQUIRED"
+      ) {
+        logger.log("Payment required, checking plan selection");
+        const currentStep13 = useArtistRegistrationV2Store.getState().step13;
+        if (currentStep13?.selectedPlanId) {
+          // Plan selected but not paid - redirect to checkout
+          logger.log("Plan selected, redirecting to checkout");
+          router.replace("/(auth)/artist-registration/checkout");
+          toast.error("Please complete payment to create your artist profile.");
+        } else {
+          // No plan selected - redirect to plan selection
+          logger.log("No plan selected, redirecting to plan selection");
+          router.replace("/(auth)/artist-registration/tattoola-pro");
+          toast.error("Please select a subscription plan to continue.");
+        }
+        setSubmitting(false);
+        return;
+      }
 
       // Check if profile was partially created (user exists in database)
       // If profile exists, still redirect to checkout so user can complete payment
@@ -513,22 +537,27 @@ export default function ArtistStep12V2() {
         }
       }
 
-      // If profile was created (even partially), redirect to checkout if plan selected
-      // This ensures user can complete payment even if some data failed to save
-      // Use step13State from getState() to ensure we have the latest data
+      // Check if plan is selected - if so, redirect to checkout even on error
+      // This allows user to complete payment and retry
       const currentStep13 = useArtistRegistrationV2Store.getState().step13;
-      if (profileCreated && currentStep13?.selectedPlanId) {
-        toast.error(
-          "Profile created but some data may be incomplete. Please check your profile."
-        );
+      if (currentStep13?.selectedPlanId) {
+        if (profileCreated) {
+          toast.error(
+            "Profile created but some data may be incomplete. Please check your profile."
+          );
+        } else {
+          toast.error("Please complete payment to finish registration.");
+        }
         logger.log(
-          "Profile created with plan, redirecting to checkout:",
+          "Plan selected, redirecting to checkout:",
           currentStep13.selectedPlanId
         );
         router.replace("/(auth)/artist-registration/checkout");
+        setSubmitting(false);
         return;
       }
 
+      // If no plan selected and profile wasn't created, show error
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);

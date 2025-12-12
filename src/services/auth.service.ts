@@ -1,3 +1,4 @@
+import { COLLECTION_NAME } from "@/constants/limits";
 import { generateUUID } from "@/utils/randomUUIDValue";
 import type {
   AuthSession,
@@ -12,9 +13,8 @@ import type {
 import { UserRole } from "../types/auth";
 import { logger } from "../utils/logger";
 import { supabase } from "../utils/supabase";
-import { buildGoogleMapsUrl } from "./location.service";
-import { COLLECTION_NAME } from "@/constants/limits";
 import { cloudinaryService } from "./cloudinary.service";
+import { buildGoogleMapsUrl } from "./location.service";
 
 export class AuthService {
   // In-memory throttle for resend verification email (per app instance)
@@ -433,6 +433,36 @@ export class AuthService {
     const userId = session.session.user.id;
 
     logger.log("user id:", userId);
+
+    // Check if user has an active subscription before allowing profile creation
+    // This ensures payment is required before profile creation
+    const { data: activeSubscription, error: subscriptionError } =
+      await supabase
+        .from("user_subscriptions")
+        .select("id, status, planId")
+        .eq("userId", userId)
+        .eq("status", "ACTIVE")
+        .maybeSingle();
+
+    if (subscriptionError && !subscriptionError.message.includes("No rows")) {
+      logger.error("Error checking subscription:", subscriptionError);
+      throw new Error(
+        "Unable to verify subscription status. Please try again."
+      );
+    }
+
+    // If no active subscription found, throw error to redirect to checkout/pro screen
+    // This prevents profile creation without payment
+    if (!activeSubscription) {
+      logger.log(
+        "No active subscription found, payment required before profile creation"
+      );
+      const error = new Error("PAYMENT_REQUIRED");
+      (error as any).code = "PAYMENT_REQUIRED";
+      throw error;
+    }
+
+    logger.log("Active subscription found, proceeding with profile creation");
 
     // Ensure a users row exists for this auth user
     const email = session.session.user.email || "";
@@ -1021,11 +1051,17 @@ export class AuthService {
         if (project.associatedStyles) {
           if (Array.isArray(project.associatedStyles)) {
             stylesArray = project.associatedStyles.filter(
-              (s) => s && typeof s === 'string' && s.trim().length > 0
+              (s) => s && typeof s === "string" && s.trim().length > 0
             );
-          } else if (typeof project.associatedStyles === 'string') {
-            // If it's a single string, convert to array
-            stylesArray = project.associatedStyles.trim() ? [project.associatedStyles.trim()] : [];
+          } else {
+            // Handle case where it might be a string (runtime safety)
+            const styleValue = project.associatedStyles as any;
+            if (
+              typeof styleValue === "string" &&
+              styleValue.trim().length > 0
+            ) {
+              stylesArray = [styleValue.trim()];
+            }
           }
         }
 
@@ -1163,6 +1199,16 @@ export class AuthService {
         .select()
         .single();
 
+    if (allPostsCollectionError) {
+      logger.error(
+        "Error creating all posts collection:",
+        allPostsCollectionError
+      );
+      // Don't throw error, just log it as collection is not critical
+    } else {
+      logger.log("All posts collection created successfully");
+    }
+
     // Create artist favorite work collection
     logger.log("Creating artist favorite work collection");
     const { data: portfolioCollection, error: collectionError } =
@@ -1190,11 +1236,26 @@ export class AuthService {
 
     // Create posts for each portfolio project
     logger.log("Creating portfolio posts");
-    if (projects.length > 0 && portfolioCollection) {
+    // Only create posts if we have projects AND the portfolio collection was created successfully
+    if (
+      projects.length > 0 &&
+      portfolioCollection &&
+      createdProjectRefs.length > 0
+    ) {
       let postOrder = 1;
       // Use createdProjectRefs so we have the DB projectId for each post
       for (const ref of createdProjectRefs) {
         const project = ref.project;
+
+        // Log project data for debugging
+        logger.log("Processing project for post creation:", {
+          projectId: ref.id,
+          hasPhotos: !!(project.photos && project.photos.length > 0),
+          hasVideos: !!(project.videos && project.videos.length > 0),
+          associatedStyles: project.associatedStyles,
+          associatedStylesType: typeof project.associatedStyles,
+          isArray: Array.isArray(project.associatedStyles),
+        });
         // Skip if no media
         const hasMedia =
           (project.photos && project.photos.length > 0) ||
@@ -1206,17 +1267,98 @@ export class AuthService {
 
         const projectTitle =
           project.title || project.description || `Portfolio Work ${postOrder}`;
-        
+
         // Generate thumbnail URL - use first photo if available, otherwise generate from first video
         let thumbnailUrl: string | undefined;
         if (project.photos?.[0]) {
           thumbnailUrl = project.photos[0];
         } else if (project.videos?.[0]) {
-          thumbnailUrl = cloudinaryService.getVideoThumbnailFromUrl(project.videos[0]);
+          thumbnailUrl = cloudinaryService.getVideoThumbnailFromUrl(
+            project.videos[0]
+          );
         }
 
         // Create post
-        const firstFavoriteStyle = (data.step8.favoriteStyles || [])[0] || null;
+        // styleId should be an array, not a single string
+        // Use project's associatedStyles instead of artist's favoriteStyles
+        let styleIdArray: string[] = [];
+
+        // Handle all possible input types - ensure we always get an array
+        if (project.associatedStyles) {
+          if (Array.isArray(project.associatedStyles)) {
+            // Filter out invalid values and ensure all are valid strings
+            styleIdArray = project.associatedStyles.filter(
+              (s) => s && typeof s === "string" && s.trim().length > 0
+            );
+          } else if (typeof project.associatedStyles === "string") {
+            // If it's a single string, convert to array
+            const trimmed = project.associatedStyles.trim();
+            styleIdArray = trimmed ? [trimmed] : [];
+          } else {
+            // If it's something else (unexpected type), log warning and use empty array
+            logger.warn("Unexpected associatedStyles type:", {
+              type: typeof project.associatedStyles,
+              value: project.associatedStyles,
+            });
+            styleIdArray = [];
+          }
+        }
+
+        // Log for debugging
+        logger.log("Creating post with styleId:", {
+          styleIdArray,
+          associatedStyles: project.associatedStyles,
+          styleIdArrayType: typeof styleIdArray,
+          isArray: Array.isArray(styleIdArray),
+          length: styleIdArray.length,
+        });
+
+        // Final validation: ensure styleId is ALWAYS an array or null (never a string)
+        // PostgreSQL UUID arrays: use null for empty, array for values
+        // This fixes the "malformed array literal" error
+        let finalStyleId: string[] | null = null;
+
+        if (Array.isArray(styleIdArray)) {
+          // Filter out any invalid values
+          const filtered = styleIdArray.filter(
+            (id) => id && typeof id === "string" && id.trim().length > 0
+          );
+          // Use array if we have values, null if empty (PostgreSQL prefers null over empty array)
+          finalStyleId = filtered.length > 0 ? filtered : null;
+        } else if (typeof styleIdArray === "string") {
+          // If it's a string, convert to array
+          logger.warn(
+            "styleIdArray is still a string, converting to array:",
+            styleIdArray
+          );
+          const styleString = String(styleIdArray);
+          const trimmed = styleString.trim();
+          finalStyleId = trimmed ? [trimmed] : null;
+        } else {
+          // If it's something else, use null
+          finalStyleId = null;
+        }
+
+        // CRITICAL: Final safety check - ensure it's either null or a valid array, never a string
+        if (finalStyleId !== null && !Array.isArray(finalStyleId)) {
+          logger.error(
+            "CRITICAL: finalStyleId is not an array or null! Forcing to null.",
+            {
+              finalStyleId,
+              type: typeof finalStyleId,
+            }
+          );
+          finalStyleId = null;
+        }
+
+        // Log final value before insert
+        logger.log("Final styleId for insert:", {
+          finalStyleId,
+          isArray: Array.isArray(finalStyleId),
+          isNull: finalStyleId === null,
+          length: finalStyleId?.length || 0,
+        });
+
         const { data: post, error: postError } = await adminOrUserClient
           .from("posts")
           .insert({
@@ -1224,7 +1366,7 @@ export class AuthService {
             authorId: userId,
             caption: project.description || project.title,
             thumbnailUrl: thumbnailUrl,
-            styleId: firstFavoriteStyle || null,
+            styleId: finalStyleId, // Either null or valid array, never a string
             projectId: ref.id,
             isActive: true,
             likesCount: 0,
@@ -1237,7 +1379,18 @@ export class AuthService {
           .single();
 
         if (postError) {
-          logger.error("Error creating post:", postError);
+          logger.error("Error creating post:", {
+            error: postError,
+            styleId: finalStyleId,
+            styleIdType: typeof finalStyleId,
+            isArray: Array.isArray(finalStyleId),
+            project: {
+              associatedStyles: project.associatedStyles,
+              associatedStylesType: typeof project.associatedStyles,
+              hasPhotos: !!(project.photos && project.photos.length > 0),
+              hasVideos: !!(project.videos && project.videos.length > 0),
+            },
+          });
           continue; // Skip this post but continue with others
         }
 
@@ -1273,17 +1426,45 @@ export class AuthService {
         }
 
         // Add post to portfolio collection
-        const { error: collectionPostError } = await adminOrUserClient
-          .from("collection_posts")
-          .insert({
-            id: generateUUID(),
-            collectionId: portfolioCollection.id,
-            postId: post.id,
-            addedAt: new Date().toISOString(),
-          });
+        if (portfolioCollection) {
+          const { error: collectionPostError } = await adminOrUserClient
+            .from("collection_posts")
+            .insert({
+              id: generateUUID(),
+              collectionId: portfolioCollection.id,
+              postId: post.id,
+              addedAt: new Date().toISOString(),
+            });
 
-        if (collectionPostError) {
-          logger.error("Error adding post to collection:", collectionPostError);
+          if (collectionPostError) {
+            logger.error(
+              "Error adding post to portfolio collection:",
+              collectionPostError
+            );
+          } else {
+            logger.log("Post added to portfolio collection successfully");
+          }
+        }
+
+        // Add post to all posts collection
+        if (allPostsCollection) {
+          const { error: allPostsCollectionPostError } = await adminOrUserClient
+            .from("collection_posts")
+            .insert({
+              id: generateUUID(),
+              collectionId: allPostsCollection.id,
+              postId: post.id,
+              addedAt: new Date().toISOString(),
+            });
+
+          if (allPostsCollectionPostError) {
+            logger.error(
+              "Error adding post to all posts collection:",
+              allPostsCollectionPostError
+            );
+          } else {
+            logger.log("Post added to all posts collection successfully");
+          }
         }
 
         postOrder++;
