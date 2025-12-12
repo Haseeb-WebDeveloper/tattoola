@@ -424,7 +424,7 @@ export async function fetchStudioDetails(userId: string) {
       .from('studio_services')
       .select(`
         serviceId,
-        service:services(id, name, category, imageUrl)
+        service:services(id, name, category, imageUrl, description)
       `)
       .eq('studioId', studio.id);
 
@@ -948,7 +948,7 @@ export async function fetchStudioPublicProfile(studioId: string) {
       .from('studio_services')
       .select(`
         serviceId,
-        service:services(id, name, category, imageUrl)
+        service:services(id, name, category, imageUrl, description)
       `)
       .eq('studioId', studioId);
 
