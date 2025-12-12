@@ -28,6 +28,7 @@ interface StudioPhotoViewerProps {
   photos: StudioPhoto[];
   initialIndex?: number;
   onClose: () => void;
+  studioName?: string;
 }
 
 // Zoomable Image Component
@@ -167,6 +168,7 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
   photos,
   initialIndex = 0,
   onClose,
+  studioName,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const flatListRef = useRef<FlatList>(null);
@@ -261,26 +263,36 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
         >
           <TouchableOpacity
             onPress={onClose}
-            className="absolute items-center justify-center rounded-full bg-foreground/20"
+            className="absolute items-center justify-center rounded-full"
             style={{
               width: s(34),
               height: s(34),
               left: s(21),
               top: mvs(56),
               padding: s(8),
+              backgroundColor: "rgba(0, 0, 0, 0.50)",
             }}
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
           </TouchableOpacity>
 
-          {/* Image Counter */}
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-white font-neueBold"
-          >
-            {currentIndex + 1} / {photos.length}
-          </ScaledText>
+          {/* Studio Name */}
+          {studioName && (
+            <ScaledText
+              allowScaling={false}
+              className="text-white"
+              style={{
+                fontFamily: "font-neueBold",
+                fontSize: 14,
+                fontStyle: "normal",
+                fontWeight: "600",
+                lineHeight: 23,
+                paddingTop: mvs(5),
+              }}
+            >
+              {studioName}
+            </ScaledText>
+          )}
         </View>
 
         {/* Full-screen Photo Carousel */}
@@ -335,7 +347,7 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
                     width: s(35),
                     height: s(35),
                     padding: s(8),
-                    backgroundColor: "#AE0E0E",
+                    backgroundColor: "rgba(0, 0, 0, 0.50)",
                   }}
                 >
                   <SVGIcons.ChevronLeft width={s(20)} height={s(20)} />
@@ -353,7 +365,7 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
                     width: s(35),
                     height: s(35),
                     padding: s(8),
-                    backgroundColor: "#AE0E0E",
+                    backgroundColor: "rgba(0, 0, 0, 0.50)",
                   }}
                 >
                   <SVGIcons.ChevronRight width={s(20)} height={s(20)} />
@@ -367,7 +379,7 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
             <View
               className="absolute flex-row items-center justify-center"
               style={{
-                bottom: mvs(24),
+                bottom: mvs(50),
                 left: 0,
                 right: 0,
                 gap: s(4),
