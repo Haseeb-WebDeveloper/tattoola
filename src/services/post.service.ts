@@ -546,15 +546,12 @@ export async function createPostWithMediaAndCollection(args: {
 
     await addPostMedia(postId, args.media);
 
-    // Check if the collection is "preferiti"
-    let isInPreferiti = false;
+    // Check if the collection is "tutti" to avoid adding twice
     let isTuttiCollectionCheck = false;
-    let isInSpecialCollection = false;
     if (args.collectionId) {
-      isInPreferiti = await isPreferitiCollection(args.collectionId);
       isTuttiCollectionCheck = await isTuttiCollection(args.collectionId);
-      isInSpecialCollection = isInPreferiti || isTuttiCollectionCheck;
 
+      // Add post to the specified collection
       await addPostToCollection(postId, args.collectionId);
       console.log(
         "[createPostWithMediaAndCollection] addedToCollection",
@@ -562,15 +559,30 @@ export async function createPostWithMediaAndCollection(args: {
       );
     }
 
-    // Add to "tutti" collection if NOT in "preferiti" (or if no collection specified)
-    if (!isInSpecialCollection) {
+    // Always add to "tutti" collection (unless it's already the tutti collection)
+    // All posts should be in tutti, regardless of what other collections they're in
+    if (!isTuttiCollectionCheck) {
       try {
         const tuttiCollectionId = await findOrGetTuttiCollection(authorId);
         if (tuttiCollectionId) {
-          await addPostToCollection(postId, tuttiCollectionId);
-          console.log(
-            "[createPostWithMediaAndCollection] added to tutti collection"
-          );
+          // Check if post is already in tutti to avoid duplicates
+          const { data: existingTuttiPost } = await supabase
+            .from("collection_posts")
+            .select("id")
+            .eq("collectionId", tuttiCollectionId)
+            .eq("postId", postId)
+            .maybeSingle();
+
+          if (!existingTuttiPost) {
+            await addPostToCollection(postId, tuttiCollectionId);
+            console.log(
+              "[createPostWithMediaAndCollection] added to tutti collection"
+            );
+          } else {
+            console.log(
+              "[createPostWithMediaAndCollection] post already in tutti collection"
+            );
+          }
         } else {
           console.warn(
             "[createPostWithMediaAndCollection] tutti collection not found for user"
