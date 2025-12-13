@@ -15,7 +15,9 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
   
   const fullName = [artist.firstName, artist.lastName].filter(Boolean).join(" ");
   const location = artist.location
-    ? `${artist.location.municipality || ""}${artist.location.province ? ` (${artist.location.province})` : ""}`
+    ? artist.location.address
+      ? artist.location.address
+      : `${artist.location.municipality || ""}${artist.location.province ? ` (${artist.location.province})` : ""}`
     : "";
 
   const handlePress = () => {
