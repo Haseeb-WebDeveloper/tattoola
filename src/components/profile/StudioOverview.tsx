@@ -124,27 +124,29 @@ export default function StudioOverview({
               style={{
                 marginBottom: mvs(6),
                 flexDirection: "row",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: s(6),
               }}
             >
-              <SVGIcons.Studio style={{ width: s(14), height: s(14) }} />
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-foreground font-neueLight"
-                numberOfLines={1}
-              >
-                Di proprietà di{" "}
+              <View style={{ marginTop: mvs(2) }}>
+                <SVGIcons.Studio style={{ width: s(14), height: s(14) }} />
+              </View>
+              <View style={{ flex: 1, flexShrink: 1 }}>
                 <ScaledText
                   allowScaling={false}
                   variant="md"
-                  className="text-foreground font-neueBold"
-                  numberOfLines={1}
+                  className="text-foreground font-neueLight"
                 >
-                  {ownerName}
+                  Di proprietà di{" "}
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueBold"
+                  >
+                    {ownerName}
+                  </ScaledText>
                 </ScaledText>
-              </ScaledText>
+              </View>
             </View>
           )}
 

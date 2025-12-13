@@ -254,6 +254,10 @@ import ExploreArtist from "@/assets/icons/explore-artist.svg";
 import Help from "@/assets/icons/help.svg"
 // @ts-ignore
 import Accedi from "@/assets/icons/accedi.svg"
+// @ts-ignore
+import HelpArticle from "@/assets/icons/help-article.svg"
+// @ts-ignore
+import HelpQuestion from "@/assets/icons/help-question.svg"
 
 
 
@@ -386,6 +390,8 @@ export const SVGIcons = {
   ExploreArtist,
   Help,
   Accedi,
+  HelpArticle,
+  HelpQuestion,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

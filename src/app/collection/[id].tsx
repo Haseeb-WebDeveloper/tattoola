@@ -122,9 +122,9 @@ export default function CollectionDetailsScreen() {
   }, [id]);
 
   useEffect(() => {
-    // Show auth modal for anonymous users when opening collection
+    // Show auth modal for anonymous users when opening collection (dismissible so they can view)
     if (!user) {
-      show("Sign in to view and manage collections", false);
+      show("Sign in to view and manage collections", true);
     }
     loadCollection();
   }, [loadCollection]);

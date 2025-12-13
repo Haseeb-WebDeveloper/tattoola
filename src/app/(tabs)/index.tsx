@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   RefreshControl,
+  TouchableOpacity,
   useWindowDimensions,
   View,
   ViewToken,
@@ -317,7 +318,14 @@ export default function HomeScreen() {
           {/* <SVGIcons.Flash  /> */}
         </View>
         <SVGIcons.LogoLight />
-        <View style={{ width: s(20), height: s(20) }} />
+        <TouchableOpacity
+          onPress={() => router.push("/(auth)/help")}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          className="items-center justify-center"
+          style={{ width: s(20), height: s(20) }}
+        >
+          <SVGIcons.HelpQuestion width={s(24)} height={s(24)} />
+        </TouchableOpacity>
       </View>
     </View>
   );

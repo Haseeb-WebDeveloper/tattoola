@@ -65,24 +65,26 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
             
             {/* Owner info */}
             {ownerName && (
-              <View className="flex-row items-center" style={{ marginTop: mvs(3) }}>
-                <View style={{ marginRight: s(4) }}>
+              <View className="flex-row items-start" style={{ marginTop: mvs(3) }}>
+                <View style={{ marginRight: s(4), marginTop: mvs(2) }}>
                   <SVGIcons.Studio style={{ width: s(14), height: s(14) }} />
                 </View>
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-neueLight"
-                >
-                  Di proprietà di{" "}
+                <View style={{ flex: 1, flexShrink: 1 }}>
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueBold"
+                    className="text-foreground font-neueLight"
                   >
-                    {ownerName}
+                    Di proprietà di{" "}
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-foreground font-neueBold"
+                    >
+                      {ownerName}
+                    </ScaledText>
                   </ScaledText>
-                </ScaledText>
+                </View>
               </View>
             )}
 

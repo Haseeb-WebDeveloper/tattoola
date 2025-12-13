@@ -76,19 +76,50 @@ export async function searchArtists({
       // .eq("portfolioComplete", true)
       .order("createdAt", { ascending: false });
 
-    // Apply style filter
+    // Apply style and service filters by querying junction tables first
+    let filteredArtistIds: string[] | null = null;
+
+    // Apply style filter - query junction table first
     if (filters.styleIds.length > 0) {
-      query = query.in("styles.style.id", filters.styleIds);
+      const { data: artistStyles } = await supabase
+        .from("artist_styles")
+        .select("artistId")
+        .in("styleId", filters.styleIds);
+      
+      if (artistStyles && artistStyles.length > 0) {
+        filteredArtistIds = [...new Set(artistStyles.map(as => as.artistId))];
+      } else {
+        // No artists match the style filter, return empty
+        return { data: [], hasMore: false };
+      }
     }
 
-    // Apply service filter
+    // Apply service filter - query junction table first
     if (filters.serviceIds.length > 0) {
-      query = query
-        .in("services.serviceId", filters.serviceIds)
-        .eq("services.isActive", true);
+      const { data: artistServices } = await supabase
+        .from("artist_services")
+        .select("artistId")
+        .in("serviceId", filters.serviceIds)
+        .eq("isActive", true);
+      
+      if (artistServices && artistServices.length > 0) {
+        const serviceArtistIds = [...new Set(artistServices.map(as => as.artistId))];
+        // If we already filtered by style, intersect the IDs
+        if (filteredArtistIds !== null) {
+          filteredArtistIds = filteredArtistIds.filter(id => serviceArtistIds.includes(id));
+          if (filteredArtistIds.length === 0) {
+            return { data: [], hasMore: false };
+          }
+        } else {
+          filteredArtistIds = serviceArtistIds;
+        }
+      } else {
+        // No artists match the service filter, return empty
+        return { data: [], hasMore: false };
+      }
     }
 
-    // Apply location filter using inner join to filter parent artists
+    // Apply location filter - query to get artist IDs that match location
     if (filters.provinceId || filters.municipalityId) {
       let locationQuery = supabase
         .from("user_locations")
@@ -104,11 +135,36 @@ export async function searchArtists({
       const { data: userIds } = await locationQuery;
       
       if (userIds && userIds.length > 0) {
-        query = query.in("userId", userIds.map(ul => ul.userId));
+        // Get artist IDs for these users
+        const { data: locationArtists } = await supabase
+          .from("artist_profiles")
+          .select("id")
+          .in("userId", userIds.map(ul => ul.userId));
+        
+        if (locationArtists && locationArtists.length > 0) {
+          const locationArtistIds = locationArtists.map(a => a.id);
+          // Intersect with style/service filtered IDs if they exist
+          if (filteredArtistIds !== null) {
+            filteredArtistIds = filteredArtistIds.filter(id => locationArtistIds.includes(id));
+            if (filteredArtistIds.length === 0) {
+              return { data: [], hasMore: false };
+            }
+          } else {
+            filteredArtistIds = locationArtistIds;
+          }
+        } else {
+          // No artists match the location filter, return empty
+          return { data: [], hasMore: false };
+        }
       } else {
-        // No artists match the location filter, return empty
+        // No users match the location filter, return empty
         return { data: [], hasMore: false };
       }
+    }
+
+    // Apply the filtered IDs to the main query
+    if (filteredArtistIds !== null) {
+      query = query.in("id", filteredArtistIds);
     }
 
     // Apply pagination (Supabase ranges are inclusive, so we subtract 1)
@@ -406,19 +462,50 @@ export async function searchStudios({
       .eq("isActive", true)
       .order("createdAt", { ascending: false });
 
-    // Apply style filter
+    // Apply style and service filters by querying junction tables first
+    let filteredStudioIds: string[] | null = null;
+
+    // Apply style filter - query junction table first
     if (filters.styleIds.length > 0) {
-      query = query.in("styles.style.id", filters.styleIds);
+      const { data: studioStyles } = await supabase
+        .from("studio_styles")
+        .select("studioId")
+        .in("styleId", filters.styleIds);
+      
+      if (studioStyles && studioStyles.length > 0) {
+        filteredStudioIds = [...new Set(studioStyles.map(ss => ss.studioId))];
+      } else {
+        // No studios match the style filter, return empty
+        return { data: [], hasMore: false };
+      }
     }
 
-    // Apply service filter
+    // Apply service filter - query junction table first
     if (filters.serviceIds.length > 0) {
-      query = query
-        .in("services.serviceId", filters.serviceIds)
-        .eq("services.isActive", true);
+      const { data: studioServices } = await supabase
+        .from("studio_services")
+        .select("studioId")
+        .in("serviceId", filters.serviceIds)
+        .eq("isActive", true);
+      
+      if (studioServices && studioServices.length > 0) {
+        const serviceStudioIds = [...new Set(studioServices.map(ss => ss.studioId))];
+        // If we already filtered by style, intersect the IDs
+        if (filteredStudioIds !== null) {
+          filteredStudioIds = filteredStudioIds.filter(id => serviceStudioIds.includes(id));
+          if (filteredStudioIds.length === 0) {
+            return { data: [], hasMore: false };
+          }
+        } else {
+          filteredStudioIds = serviceStudioIds;
+        }
+      } else {
+        // No studios match the service filter, return empty
+        return { data: [], hasMore: false };
+      }
     }
 
-    // Apply location filter using inner join to filter parent studios
+    // Apply location filter - query to get studio IDs that match location
     if (filters.provinceId || filters.municipalityId) {
       let locationQuery = supabase
         .from("studio_locations")
@@ -434,11 +521,25 @@ export async function searchStudios({
       const { data: studioIds } = await locationQuery;
       
       if (studioIds && studioIds.length > 0) {
-        query = query.in("id", studioIds.map(sl => sl.studioId));
+        const locationStudioIds = studioIds.map(sl => sl.studioId);
+        // Intersect with style/service filtered IDs if they exist
+        if (filteredStudioIds !== null) {
+          filteredStudioIds = filteredStudioIds.filter(id => locationStudioIds.includes(id));
+          if (filteredStudioIds.length === 0) {
+            return { data: [], hasMore: false };
+          }
+        } else {
+          filteredStudioIds = locationStudioIds;
+        }
       } else {
         // No studios match the location filter, return empty
         return { data: [], hasMore: false };
       }
+    }
+
+    // Apply the filtered IDs to the main query
+    if (filteredStudioIds !== null) {
+      query = query.in("id", filteredStudioIds);
     }
 
     // Apply pagination (Supabase ranges are inclusive, so we subtract 1)

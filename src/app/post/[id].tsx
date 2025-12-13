@@ -4,6 +4,7 @@ import { CustomToast } from "@/components/ui/CustomToast";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import {
   FeedPost,
   deletePost,
@@ -105,6 +106,7 @@ export default function PostDetailScreen() {
   }>();
   const router = useRouter();
   const { user } = useAuth();
+  const { show: showAuthRequired } = useAuthRequiredStore();
 
   // Parse initial data from feed (if available) for instant render
   const parsedInitial = useMemo(() => {
@@ -237,14 +239,15 @@ export default function PostDetailScreen() {
   }, [post?.media, currentMediaIndex, videoPlayers]);
 
   const loadPost = useCallback(async () => {
-    if (!id || !user) return;
+    if (!id) return;
 
     try {
       // Only show loading if we don't have initial data
       if (!parsedInitial) {
         setLoading(true);
       }
-      const data = await fetchPostDetails(id, user.id);
+      // Allow anonymous users to view posts (pass null if no user)
+      const data = await fetchPostDetails(id, user?.id || null);
       setPost(data);
     } catch (err: any) {
       // Only show error if we don't have initial data to display
@@ -255,7 +258,7 @@ export default function PostDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, user, parsedInitial]);
+  }, [id, user?.id, parsedInitial]);
 
   useEffect(() => {
     loadPost();
@@ -266,7 +269,13 @@ export default function PostDetailScreen() {
   };
 
   const handleLike = async () => {
-    if (!post || !user) return;
+    if (!post) return;
+    
+    // Check if user is authenticated
+    if (!user) {
+      showAuthRequired("Sign in to like posts", true);
+      return;
+    }
 
     const previous = post;
     const optimistic: PostDetail = {
@@ -292,7 +301,14 @@ export default function PostDetailScreen() {
   };
 
   const handleFollow = async () => {
-    if (!post || !user) return;
+    if (!post) return;
+    
+    // Check if user is authenticated
+    if (!user) {
+      showAuthRequired("Sign in to follow artists", true);
+      return;
+    }
+    
     const previous = post;
     const optimistic: PostDetail = {
       ...previous,
