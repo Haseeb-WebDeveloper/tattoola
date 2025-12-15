@@ -255,17 +255,19 @@ function ArtistCard({ artist }: ArtistCardProps) {
               numberOfLines={1}
             >
               {(() => {
-                const parts: string[] = [];
+                // If address exists, show only address
                 if (artist.location.address) {
-                  parts.push(artist.location.address);
+                  return artist.location.address;
                 }
+                // Otherwise, show municipality and province
+                const parts: string[] = [];
                 if (artist.location.municipality) {
                   parts.push(artist.location.municipality);
                 }
                 if (artist.location.province) {
                   parts.push(`(${artist.location.province})`);
                 }
-                return parts.length > 0 ? parts.join(", ") : "";
+                return parts.length > 0 ? parts.join(" ") : "";
               })()}
             </ScaledText>
           </View>

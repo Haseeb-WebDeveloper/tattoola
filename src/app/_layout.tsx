@@ -65,6 +65,10 @@ export default function RootLayout() {
     "NeueHaasDisplay-BoldItalic": require("../assets/fonts/NeueHaasDisplayBoldItalic.ttf"),
     "NeueHaasDisplay-BlackItalic": require("../assets/fonts/NeueHaasDisplayBlackItalic.ttf"),
     "NeueHaasDisplay-ThinItalic": require("../assets/fonts/NeueHaasDisplayThinItalic.ttf"),
+
+    // Product Sans (local TTFs)
+    ProductSans: require("../assets/fonts/ProductSans-Regular.ttf"),
+    // Add other weights as needed (Bold, Medium, Light, etc.)
   });
 
   useEffect(() => {

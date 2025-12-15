@@ -134,9 +134,11 @@ function LoginScreenContent() {
           <View style={{ width: s(44) }} />
           <SVGIcons.LogoLight style={{ height: s(50) }} />
           <TouchableOpacity
-            className=" items-center justify-center"
+            className="items-center justify-center"
+            onPress={() => router.push("/(auth)/help")}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <SVGIcons.Help width={s(24)} height={s(24)} />
+            <SVGIcons.HelpQuestion width={s(24)} height={s(24)} />
           </TouchableOpacity>
         </View>
 
