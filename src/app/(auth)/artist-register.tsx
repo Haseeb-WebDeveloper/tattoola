@@ -118,14 +118,11 @@ export default function ArtistRegisterScreen() {
       return;
     }
 
-    // Navigate immediately to email confirmation and start background signup
-    setInProgress(formData.email, formData);
-    router.push("/(auth)/email-confirmation");
-
     try {
+      setInProgress(formData.email, formData);
       await signUp(formData);
-      // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
+      router.push("/(auth)/email-confirmation");
     } catch (error: any) {
       const code = error?.code;
 

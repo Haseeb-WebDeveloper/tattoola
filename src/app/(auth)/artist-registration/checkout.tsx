@@ -8,7 +8,7 @@ import {
   getPlanTypeFromName,
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
-import { mvs, s, scaledFont } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -27,7 +27,7 @@ export default function ArtistCheckoutScreen() {
       try {
         const data = await SubscriptionService.fetchSubscriptionPlans();
         setPlans(data);
-        
+
         // If no plan selected, redirect to pro screen
         if (!step13.selectedPlanId) {
           router.replace("/(auth)/artist-registration/tattoola-pro");
@@ -159,7 +159,7 @@ export default function ArtistCheckoutScreen() {
         <View className="flex flex-row items-center justify-start">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="rounded-full items-center justify-center"
+            className="items-center justify-center rounded-full"
             style={{
               width: s(32),
               height: s(32),
@@ -199,7 +199,7 @@ export default function ArtistCheckoutScreen() {
           <ScaledText
             allowScaling={false}
             variant="md"
-            className="text-foreground text-center font-neueLight"
+            className="text-center text-foreground font-neueLight"
             style={{ marginTop: mvs(3) }}
           >
             Review your plan and complete payment.
@@ -261,7 +261,7 @@ export default function ArtistCheckoutScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="11"
-                    className="font-neueLight w-full ml-2"
+                    className="w-full ml-2 font-neueLight"
                     style={{ paddingBottom: mvs(2) }}
                   >
                     renews on{" "}
@@ -392,7 +392,7 @@ export default function ArtistCheckoutScreen() {
           <ScaledText
             allowScaling={false}
             variant="11"
-            className="text-gray text-center font-neueLightItalic"
+            className="text-center text-gray font-neueLightItalic"
             style={{ marginTop: mvs(10) }}
           >
             Cancel anytime before trial ends to avoid charges.
@@ -405,7 +405,7 @@ export default function ArtistCheckoutScreen() {
         >
           <TouchableOpacity
             activeOpacity={0.9}
-            className="rounded-full items-center justify-center flex-row"
+            className="flex-row items-center justify-center rounded-full"
             style={{
               backgroundColor: checkoutLoading ? "#AD2E2E80" : "#AD2E2E",
               paddingVertical: mvs(12),

@@ -6,7 +6,7 @@ import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { AR_MAX_FAVORITE_STYLES, AR_MAX_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
-import { SubscriptionService } from "@/services/subscription.service";
+import { SubscriptionService, getPlanTypeFromName } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step8Schema } from "@/utils/artistRegistrationValidation";
 import { mvs, s } from "@/utils/scale";
@@ -86,32 +86,66 @@ export default function ArtistStep8V2() {
     let mounted = true;
     (async () => {
       try {
-        // Fetch plan limits (will fallback to AR_MAX_* constants if no subscription)
-        try {
-          const subscription =
-            await SubscriptionService.getActiveSubscriptionWithPlan();
-          const planMaxStyles = subscription?.subscription_plans?.maxStyles;
-          const planMaxFavoriteStyles =
-            subscription?.subscription_plans?.maxFavoritesStyles;
-
-          if (mounted) {
-            setMaxStyles(
-              planMaxStyles !== null && planMaxStyles !== undefined
-                ? planMaxStyles
-                : AR_MAX_STYLES
-            );
-            setMaxFavoriteStyles(
-              planMaxFavoriteStyles !== null &&
-                planMaxFavoriteStyles !== undefined
-                ? planMaxFavoriteStyles
-                : AR_MAX_FAVORITE_STYLES
-            );
+        // Check if plan is selected in step13
+        if (step13?.selectedPlanId) {
+          try {
+            // Fetch all plans to find the selected one
+            const plans = await SubscriptionService.fetchSubscriptionPlans();
+            const selectedPlan = plans.find((p) => p.id === step13.selectedPlanId);
+            
+            if (selectedPlan && mounted) {
+              // Determine plan type and set limits accordingly
+              const planType = getPlanTypeFromName(selectedPlan.name);
+              
+              if (planType === "STUDIO") {
+                // Studio plan: max 5 styles, max 3 primary
+                setMaxStyles(5);
+                setMaxFavoriteStyles(3);
+              } else {
+                // Premium plan: max 3 styles, max 2 primary
+                setMaxStyles(3);
+                setMaxFavoriteStyles(2);
+              }
+            } else if (mounted) {
+              // Plan not found, use defaults
+              setMaxStyles(AR_MAX_STYLES);
+              setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);
+            }
+          } catch (e) {
+            // Error fetching plans, use defaults
+            if (mounted) {
+              setMaxStyles(AR_MAX_STYLES);
+              setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);
+            }
           }
-        } catch (e) {
-          // No subscription yet (normal during registration) - use default
-          if (mounted) {
-            setMaxStyles(AR_MAX_STYLES);
-            setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);
+        } else {
+          // No plan selected yet, try to get from active subscription
+          try {
+            const subscription =
+              await SubscriptionService.getActiveSubscriptionWithPlan();
+            const planMaxStyles = subscription?.subscription_plans?.maxStyles;
+            const planMaxFavoriteStyles =
+              subscription?.subscription_plans?.maxFavoritesStyles;
+
+            if (mounted) {
+              setMaxStyles(
+                planMaxStyles !== null && planMaxStyles !== undefined
+                  ? planMaxStyles
+                  : AR_MAX_STYLES
+              );
+              setMaxFavoriteStyles(
+                planMaxFavoriteStyles !== null &&
+                planMaxFavoriteStyles !== undefined
+                  ? planMaxFavoriteStyles
+                  : AR_MAX_FAVORITE_STYLES
+              );
+            }
+          } catch (e) {
+            // No subscription yet (normal during registration) - use default
+            if (mounted) {
+              setMaxStyles(AR_MAX_STYLES);
+              setMaxFavoriteStyles(AR_MAX_FAVORITE_STYLES);
+            }
           }
         }
 
@@ -126,7 +160,7 @@ export default function ArtistStep8V2() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [step13?.selectedPlanId]);
 
   const selected = step8.styles || [];
   const favouriteIds = step8.favoriteStyles || [];

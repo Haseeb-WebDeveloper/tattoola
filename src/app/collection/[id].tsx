@@ -621,9 +621,9 @@ export default function CollectionDetailsScreen() {
             editMode ? (
               <View
                 style={{
-                  paddingHorizontal: H_PADDING / 2,
                   marginTop: GAP,
                   marginBottom: GAP,
+                  alignItems: 'center',
                 }}
               >
                 <TouchableOpacity
@@ -633,8 +633,6 @@ export default function CollectionDetailsScreen() {
                   style={{
                     width: POST_WIDTH,
                     height: mvs(253),
-                    marginLeft: 0,
-                    marginRight: 0,
                   }}
                 >
                   <SVGIcons.AddRed width={s(32)} height={s(32)} />
