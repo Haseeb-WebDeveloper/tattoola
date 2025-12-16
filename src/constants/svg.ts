@@ -251,15 +251,16 @@ import DiscoverTattoo from "@/assets/icons/discover-tattoo.svg";
 // @ts-ignore
 import ExploreArtist from "@/assets/icons/explore-artist.svg";
 // @ts-ignore
-import Help from "@/assets/icons/help.svg"
+import Help from "@/assets/icons/help.svg";
 // @ts-ignore
-import Accedi from "@/assets/icons/accedi.svg"
+import Accedi from "@/assets/icons/accedi.svg";
 // @ts-ignore
-import HelpArticle from "@/assets/icons/help-article.svg"
+import HelpArticle from "@/assets/icons/help-article.svg";
 // @ts-ignore
-import HelpQuestion from "@/assets/icons/help-question.svg"
+import HelpQuestion from "@/assets/icons/help-question.svg";
+// @ts-ignore
 
-
+import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
 
 export const SVGIcons = {
   Close,
@@ -392,6 +393,7 @@ export const SVGIcons = {
   Accedi,
   HelpArticle,
   HelpQuestion,
+  GuestUserProfile,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;
