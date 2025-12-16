@@ -914,17 +914,18 @@ export async function fetchStudioPublicProfile(studioId: string) {
       .eq('isPrimary', true)
       .maybeSingle();
 
-    // Get owner details through artist_profiles
+    // Get owner details through artist_profiles, including the user id
     const { data: ownerProfile } = await supabase
       .from('artist_profiles')
       .select(`
         id,
         userId,
-        user:users!artist_profiles_userId_fkey(firstName, lastName, avatar)
+        user:users!artist_profiles_userId_fkey(id, firstName, lastName, avatar)
       `)
       .eq('id', studio.ownerId)
       .single();
 
+    // Expose owner as the underlying user object (with id, firstName, lastName, avatar)
     const owner = ownerProfile?.user || null;
 
     // Get banner media

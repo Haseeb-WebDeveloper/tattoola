@@ -120,25 +120,6 @@ export default function ForgotPasswordScreen() {
         {/* Header with logo */}
         <AuthStepHeader />
 
-        {/* Title and subtitle */}
-        <View className="items-center" style={{ paddingHorizontal: s(24) }}>
-          <ScaledText
-            allowScaling={false}
-            variant="2xl"
-            className="text-center text-foreground font-neueSemibold"
-          >
-            Password dimenticata?
-          </ScaledText>
-          <ScaledText
-            allowScaling={false}
-            variant="md"
-            className="text-center text-gray font-montserratLight"
-          >
-            Inserisci il tuo indirizzo email e ti invieremo un link per
-            reimpostare la password.
-          </ScaledText>
-        </View>
-
         {/* Form */}
         {!emailSent && (
           <View style={{ paddingHorizontal: s(16), paddingTop: mvs(24) }}>

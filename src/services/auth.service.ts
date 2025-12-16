@@ -434,35 +434,12 @@ export class AuthService {
 
     logger.log("user id:", userId);
 
-    // Check if user has an active subscription before allowing profile creation
-    // This ensures payment is required before profile creation
-    const { data: activeSubscription, error: subscriptionError } =
-      await supabase
-        .from("user_subscriptions")
-        .select("id, status, planId")
-        .eq("userId", userId)
-        .eq("status", "ACTIVE")
-        .maybeSingle();
+    // NOTE: Subscription check removed - payment is already enforced at checkout
+    // The webhook handles subscription creation asynchronously after payment
+    // Profile creation should not depend on real-time subscription status
+    // Subscription enforcement happens at feature-level (posting, messaging, etc.)
 
-    if (subscriptionError && !subscriptionError.message.includes("No rows")) {
-      logger.error("Error checking subscription:", subscriptionError);
-      throw new Error(
-        "Unable to verify subscription status. Please try again."
-      );
-    }
-
-    // If no active subscription found, throw error to redirect to checkout/pro screen
-    // This prevents profile creation without payment
-    if (!activeSubscription) {
-      logger.log(
-        "No active subscription found, payment required before profile creation"
-      );
-      const error = new Error("PAYMENT_REQUIRED");
-      (error as any).code = "PAYMENT_REQUIRED";
-      throw error;
-    }
-
-    logger.log("Active subscription found, proceeding with profile creation");
+    logger.log("Proceeding with artist profile creation");
 
     // Ensure a users row exists for this auth user
     const email = session.session.user.email || "";

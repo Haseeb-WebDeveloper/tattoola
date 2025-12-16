@@ -1,10 +1,11 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import { Checkbox } from "@/components/ui/Checkbox";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
-import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useEmailAvailability } from "@/hooks/useEmailAvailability";
+import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSignupStore } from "@/stores/signupStore";
 import type { FormErrors, RegisterCredentials } from "@/types/auth";
@@ -13,7 +14,7 @@ import { mvs, s } from "@/utils/scale";
 import { RegisterValidationSchema, ValidationUtils } from "@/utils/validation";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
 
@@ -27,7 +28,7 @@ export default function RegisterScreen() {
     confirmPassword: "",
     role: UserRole.TATTOO_LOVER,
   });
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [focusedField, setFocusedField] = useState<
     keyof RegisterCredentials | null
@@ -107,31 +108,31 @@ export default function RegisterScreen() {
       return;
     }
 
-
     try {
       setInProgress(formData.email, formData);
       await signUp(formData);
       setSuccess();
-      router.push("/(auth)/email-confirmation")
+      router.push("/(auth)/email-confirmation");
     } catch (error: any) {
       const code = error?.code;
 
-  if (code === "EMAIL_ALREADY_VERIFIED") {
-    const message = "Questa email è già registrata e verificata. Accedi per continuare.";
-    setError(message);
-    toast.error(message);
-    router.replace("/(auth)/login");
-    return;
-  }
+      if (code === "EMAIL_ALREADY_VERIFIED") {
+        const message =
+          "Questa email è già registrata e verificata. Accedi per continuare.";
+        setError(message);
+        toast.error(message);
+        router.replace("/(auth)/login");
+        return;
+      }
 
-  const message =
-    error?.message || "Si è verificato un errore durante la registrazione";
+      const message =
+        error?.message || "Si è verificato un errore durante la registrazione";
 
-  setError(message);
-  toast.error(message);
+      setError(message);
+      toast.error(message);
 
-  // Stay on email confirmation screen, DO NOT redirect back
-  router.replace("/(auth)/email-confirmation");
+      // Stay on email confirmation screen, DO NOT redirect back
+      router.replace("/(auth)/email-confirmation");
     }
   };
 
@@ -165,7 +166,7 @@ export default function RegisterScreen() {
       />
 
       {/* Inputs */}
-        <View className="px-6">
+      <View className="px-6">
         <ScaledText
           variant="sm"
           className="text-tat textcenter mb-2 font-montserratSemibold"
@@ -359,14 +360,63 @@ export default function RegisterScreen() {
           )}
         </View>
 
+        {/* Terms & Privacy checkbox */}
+        <View style={{ marginTop: mvs(20) }}>
+          <View className="flex-row items-start">
+            <Checkbox
+              checked={acceptedTerms}
+              onPress={() => setAcceptedTerms((prev) => !prev)}
+            />
+            <View className="flex-1 ml-2">
+              <ScaledText
+                variant="sm"
+                className="text-foreground font-neueLight"
+              >
+                <ScaledText variant="sm" className="text-error">
+                  *{" "}
+                </ScaledText>
+                Ho preso visione delle condizioni d&apos;uso e
+                dell&apos;informativa privacy
+              </ScaledText>
+            </View>
+          </View>
+          {!!errors.terms && (
+            <ScaledText
+              variant="sm"
+              className="text-xs text-error mt-1 font-neueLight"
+            >
+              {errors.terms}
+            </ScaledText>
+          )}
+        </View>
+
         {/* Register Button */}
         <View className="items-center" style={{ marginTop: mvs(32) }}>
           <TouchableOpacity
             accessibilityRole="button"
             onPress={handleRegister}
-            disabled={loading}
-            className={` rounded-full items-center w-full bg-primary-brand `}
-            style={{ paddingVertical: mvs(12), paddingHorizontal: s(32) }}
+            disabled={
+              loading ||
+              !formData.username.trim() ||
+              !formData.email.trim() ||
+              !formData.password.trim() ||
+              !formData.confirmPassword.trim() ||
+              !acceptedTerms
+            }
+            className="rounded-full items-center w-full bg-primary-brand"
+            style={{
+              paddingVertical: mvs(12),
+              paddingHorizontal: s(32),
+              opacity:
+                loading ||
+                !formData.username.trim() ||
+                !formData.email.trim() ||
+                !formData.password.trim() ||
+                !formData.confirmPassword.trim() ||
+                !acceptedTerms
+                  ? 0.5
+                  : 1,
+            }}
           >
             <ScaledText
               variant="body1"

@@ -126,6 +126,7 @@ export default function StudioScreen() {
             logo={data?.logo}
             ownerFirstName={data?.owner?.firstName}
             ownerLastName={data?.owner?.lastName}
+            ownerId={data?.owner?.id}
             municipality={data?.city}
             province={data?.province}
             address={data?.address}

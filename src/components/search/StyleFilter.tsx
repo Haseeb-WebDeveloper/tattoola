@@ -142,11 +142,17 @@ export default function StyleFilter({
               showsVerticalScrollIndicator={false}
             >
               {isLoading ? (
-                <View className="items-center justify-center" style={{ paddingVertical: mvs(40) }}>
+                <View
+                  className="items-center justify-center"
+                  style={{ paddingVertical: mvs(40) }}
+                >
                   <ActivityIndicator size="small" color="#AE0E0E" />
                 </View>
               ) : availableFacets.length === 0 ? (
-                <View className="items-center justify-center" style={{ paddingVertical: mvs(40) }}>
+                <View
+                  className="items-center justify-center"
+                  style={{ paddingVertical: mvs(40) }}
+                >
                   <ScaledText
                     allowScaling={false}
                     variant="md"
@@ -164,7 +170,6 @@ export default function StyleFilter({
                       onPress={() => toggleStyle(facet.id)}
                       className="border-b border-gray/20"
                       style={{
-                        paddingVertical: mvs(8),
                         paddingHorizontal: s(20),
                       }}
                     >
@@ -174,9 +179,8 @@ export default function StyleFilter({
                             <Image
                               source={{ uri: facet.imageUrl }}
                               style={{
-                                width: s(43),
-                                height: s(46),
-                                borderRadius: s(8),
+                                width: s(120),
+                                height: mvs(72),
                               }}
                               resizeMode="cover"
                             />

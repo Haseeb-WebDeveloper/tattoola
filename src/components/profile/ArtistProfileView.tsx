@@ -1,10 +1,11 @@
+import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { toggleFollow } from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { ArtistSelfProfileInterface } from "@/types/artist";
-import { StudioSearchResult } from "@/types/search";
 import { WorkArrangement } from "@/types/auth";
+import { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
@@ -17,7 +18,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import StudioCard from "@/components/search/StudioCard";
 import { Banner } from "./Banner";
 import { BodyPartsSection } from "./BodyPartsSection";
 import { CollectionsSection } from "./CollectionsSection";
@@ -170,7 +170,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           style={{
             paddingHorizontal: s(12),
             paddingVertical: mvs(12),
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
             borderRadius: s(100),
             position: "absolute",
             top: mvs(8),

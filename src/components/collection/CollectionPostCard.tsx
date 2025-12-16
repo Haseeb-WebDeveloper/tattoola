@@ -98,7 +98,7 @@ export default function CollectionPostCard({
             numberOfLines={1}
             style={{ opacity: 1 }}
           >
-            {caption || "Descrizione del tatuaggio"}
+            {caption || "Nessuna descrizione"}
           </ScaledText>
         </LinearGradient>
 

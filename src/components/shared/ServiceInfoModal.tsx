@@ -1,7 +1,6 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import DraggableBottomSheet from "@/components/DraggableBottomSheet";
-import { ServiceItem } from "@/services/services.service";
 import { mvs, s } from "@/utils/scale";
 import React from "react";
 import {
@@ -14,9 +13,17 @@ import {
   Dimensions,
 } from "react-native";
 
+type ServiceForModal = {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  category?: string | null;
+};
+
 interface ServiceInfoModalProps {
   visible: boolean;
-  service: ServiceItem | null;
+  service: ServiceForModal | null;
   onClose: () => void;
 }
 

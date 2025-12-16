@@ -3,6 +3,7 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { StylePills } from "@/components/ui/stylePills";
 import { SVGIcons } from "@/constants/svg";
+import { COLLECTION_NAME } from "@/constants/limits";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { createCollection } from "@/services/collection.service";
 import { usePostUploadStore } from "@/stores/postUploadStore";
@@ -114,26 +115,29 @@ export default function UploadCollectionStep() {
           .eq("ownerId", userId)
           .order("createdAt", { ascending: false });
         if (error) throw new Error(error.message);
-        const mapped: RichCollection[] = (data || []).map((c: any) => {
-          const medias: string[] = [];
-          (c.collection_posts || []).forEach((cp: any) => {
-            (cp.posts?.post_media || [])
-              .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
-              .forEach((pm: any) => medias.push(pm.mediaUrl));
+        const mapped: RichCollection[] = (data || [])
+          // Hide the "Tutti" (ALL_POSTS) collection from manual selection
+          .filter((c: any) => c.name !== COLLECTION_NAME.ALL_POSTS)
+          .map((c: any) => {
+            const medias: string[] = [];
+            (c.collection_posts || []).forEach((cp: any) => {
+              (cp.posts?.post_media || [])
+                .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+                .forEach((pm: any) => medias.push(pm.mediaUrl));
+            });
+            return {
+              id: c.id,
+              name: c.name,
+              isPortfolioCollection: c.isPortfolioCollection,
+              thumbnails: medias.slice(0, 4),
+            };
           });
-          return {
-            id: c.id,
-            name: c.name,
-            isPortfolioCollection: c.isPortfolioCollection,
-            thumbnails: medias.slice(0, 4),
-          };
-        });
         if (mounted) {
           setCollections(mapped);
           // If collectionId is already set in store (from route params), keep it
           // Otherwise, if we have a collectionId from store, verify it exists in fetched collections
           if (collectionId && !mapped.find((c) => c.id === collectionId)) {
-            // Collection doesn't exist, clear it
+            // Collection doesn't exist OR is not selectable (e.g. 'Tutti') – clear it
             setCollectionId(undefined);
             setRedirectToCollectionId(undefined);
           } else if (collectionId && !redirectToCollectionId) {

@@ -23,8 +23,12 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   country,
   mapImageUrl,
 }) => {
-  const ownerName = `${ownerFirstName || ""} ${ownerLastName || ""}`.trim();
-  const location = `${city || ""}, ${country || ""}`.replace(/^,\s*|,\s*$/g, "");
+  // Show only first name for owner label
+  const ownerName = `${ownerFirstName || ""}`.trim();
+  const location = `${city || ""}, ${country || ""}`.replace(
+    /^,\s*|,\s*$/g,
+    ""
+  );
 
   return (
     <View
@@ -53,7 +57,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
               style={{ width: s(92), height: s(92) }}
             />
           )}
-          
+
           <View className="flex-1">
             <ScaledText
               allowScaling={false}
@@ -62,10 +66,13 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
             >
               {name || ""}
             </ScaledText>
-            
+
             {/* Owner info */}
             {ownerName && (
-              <View className="flex-row items-start" style={{ marginTop: mvs(3) }}>
+              <View
+                className="flex-row items-start"
+                style={{ marginTop: mvs(3) }}
+              >
                 <View style={{ marginRight: s(4), marginTop: mvs(2) }}>
                   <SVGIcons.Studio style={{ width: s(14), height: s(14) }} />
                 </View>
@@ -90,7 +97,10 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
 
             {/* Location */}
             {location && (
-              <View className="flex-row items-center" style={{ marginTop: mvs(3) }}>
+              <View
+                className="flex-row items-center"
+                style={{ marginTop: mvs(3) }}
+              >
                 <View style={{ marginRight: s(4) }}>
                   <SVGIcons.Location style={{ width: s(14), height: s(14) }} />
                 </View>
@@ -123,4 +133,3 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
     </View>
   );
 };
-

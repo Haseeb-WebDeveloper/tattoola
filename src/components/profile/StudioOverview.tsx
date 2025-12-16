@@ -2,6 +2,12 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { buildGoogleMapsUrl } from "@/services/location.service";
 import { mvs, s } from "@/utils/scale";
+import {
+  createInstagramUrl,
+  createTiktokUrl,
+  createWebsiteUrl,
+} from "@/utils/socialMedia";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Linking, TouchableOpacity, View } from "react-native";
 
@@ -10,6 +16,7 @@ type StudioOverviewProps = {
   logo?: string | null;
   ownerFirstName?: string | null;
   ownerLastName?: string | null;
+  ownerId?: string | null;
   municipality?: string | null;
   province?: string | null;
   address?: string | null;
@@ -23,6 +30,7 @@ export default function StudioOverview({
   logo,
   ownerFirstName,
   ownerLastName,
+  ownerId,
   municipality,
   province,
   address,
@@ -30,7 +38,10 @@ export default function StudioOverview({
   tiktok,
   website,
 }: StudioOverviewProps) {
-  const ownerName = [ownerFirstName, ownerLastName].filter(Boolean).join(" ");
+  const router = useRouter();
+
+  // Show only first name for owner label
+  const ownerName = ownerFirstName || "";
   const studioName = name || "Studio";
   const isLongName = studioName.length > 18;
 
@@ -142,6 +153,12 @@ export default function StudioOverview({
                     allowScaling={false}
                     variant="md"
                     className="text-foreground font-neueBold"
+                    // Navigate to artist profile when tapping the owner's name
+                    onPress={() => {
+                      if (ownerId) {
+                        router.push(`/user/${ownerId}` as any);
+                      }
+                    }}
                   >
                     {ownerName}
                   </ScaledText>
@@ -177,7 +194,7 @@ export default function StudioOverview({
           >
             {!!instagram && (
               <TouchableOpacity
-                onPress={() => openUrl(instagram)}
+                onPress={() => openUrl(createInstagramUrl(instagram))}
                 activeOpacity={0.8}
               >
                 <View
@@ -195,7 +212,7 @@ export default function StudioOverview({
             )}
             {!!tiktok && (
               <TouchableOpacity
-                onPress={() => openUrl(tiktok)}
+                onPress={() => openUrl(createTiktokUrl(tiktok))}
                 activeOpacity={0.8}
               >
                 <View
@@ -213,7 +230,7 @@ export default function StudioOverview({
             )}
             {!!website && (
               <TouchableOpacity
-                onPress={() => openUrl(website)}
+                onPress={() => openUrl(createWebsiteUrl(website))}
                 activeOpacity={0.8}
               >
                 <View
