@@ -5,10 +5,10 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { FollowedArtistsList } from "./FollowedArtistsList";
 import { FollowedTattooLoversList } from "./FollowedTattooLoversList";
@@ -110,6 +110,7 @@ export const TattooLoverOtherProfileView: React.FC<
           <ProfileTabNavigation
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            isOwnProfile={false}
           />
 
           {/* Content - Conditional based on active tab */}

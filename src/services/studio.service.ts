@@ -1208,7 +1208,7 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
   try {
     console.log('🔍 Fetching enhanced studio members for studio ID:', studioId);
 
-    // Get studio members with user details
+    // Get studio members with user and basic artist details
     const { data: members, error: membersError } = await supabase
       .from('studio_members')
       .select(`
@@ -1220,6 +1220,7 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           yearsExperience,
           businessName,
           studioAddress,
+          workArrangement,
           user:users!artist_profiles_userId_fkey(
             id,
             username,
@@ -1245,7 +1246,7 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
 
     console.log(`✅ Found ${members.length} active members`);
 
-    // For each member, fetch additional details
+    // For each member, fetch additional details (location, styles, banner, subscription)
     const membersWithDetails = await Promise.all(
       members.map(async (member: any) => {
         if (!member.artist) return null;
@@ -1254,13 +1255,13 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
         const userId = member.artist.user?.id;
         if (!userId) return null;
 
-        // Get primary user location
+        // Get primary user location including province name + code
         const { data: userLocation } = await supabase
           .from('user_locations')
           .select(`
             isPrimary,
             municipality:municipalities(name),
-            province:provinces(code),
+            province:provinces(name,code),
             address
           `)
           .eq('userId', userId)
@@ -1356,10 +1357,35 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           }
         }
 
-        // Transform to ArtistSearchResult format
+        // Prepare data for ArtistSearchResult
         const province = userLocation?.province as any;
         const municipality = userLocation?.municipality as any;
         const plan = activeSubscription?.plan as any;
+
+        // Build "Province (CODE)" label like in global artist search
+        const resolveProvinceLabel = (loc: any | null | undefined): string => {
+          if (!loc?.province) return '';
+          const provName = loc.province?.name || '';
+          const provCode = (loc.province as any)?.code;
+          if (!provName && !provCode) return '';
+          return provCode ? `${provName} (${provCode})` : provName;
+        };
+
+        // Work arrangement: prefer explicit value from profile, otherwise infer
+        let workArrangement =
+          (member.artist.workArrangement as
+            | 'STUDIO_OWNER'
+            | 'STUDIO_EMPLOYEE'
+            | 'FREELANCE'
+            | null) || null;
+
+        if (!workArrangement) {
+          if (ownedStudio) {
+            workArrangement = 'STUDIO_OWNER';
+          } else if (businessName) {
+            workArrangement = 'STUDIO_EMPLOYEE';
+          }
+        }
 
         return {
           id: artistId,
@@ -1373,22 +1399,28 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           businessName: businessName,
           yearsExperience: member.artist.yearsExperience || null,
           isStudioOwner: !!ownedStudio,
+          workArrangement,
           location: userLocation
             ? {
-                province: province?.code || '',
+                province: resolveProvinceLabel({ province }),
                 municipality: municipality?.name || '',
-                address: userLocation.address || studioAddress || null,
+                // Do not expose raw street address in artist cards – UI only shows province/municipality
+                address: null,
               }
             : null,
-          styles: artistStyles?.map((s: any) => ({
-            id: s.style?.id || '',
-            name: s.style?.name || '',
-          })).filter((s: any) => s.id && s.name) || [],
-          bannerMedia: bannerMedia?.map((b: any) => ({
-            mediaUrl: b.mediaUrl,
-            mediaType: b.mediaType as 'IMAGE' | 'VIDEO',
-            order: b.order,
-          })) || [],
+          styles:
+            artistStyles
+              ?.map((s: any) => ({
+                id: s.style?.id || '',
+                name: s.style?.name || '',
+              }))
+              .filter((s: any) => s.id && s.name) || [],
+          bannerMedia:
+            bannerMedia?.map((b: any) => ({
+              mediaUrl: b.mediaUrl,
+              mediaType: b.mediaType as 'IMAGE' | 'VIDEO',
+              order: b.order,
+            })) || [],
           subscription: activeSubscription
             ? {
                 plan: {

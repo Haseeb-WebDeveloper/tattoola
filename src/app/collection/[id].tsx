@@ -7,7 +7,6 @@ import { CustomToast } from "@/components/ui/CustomToast";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import {
   addPostsToCollection,
   deleteCollection,
@@ -17,6 +16,7 @@ import {
   reorderCollectionPosts,
   updateCollectionName,
 } from "@/services/collection.service";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
@@ -96,7 +96,8 @@ export default function CollectionDetailsScreen() {
   const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(
     new Set()
   );
-  const [deleteCollectionModalVisible, setDeleteCollectionModalVisible] = useState(false);
+  const [deleteCollectionModalVisible, setDeleteCollectionModalVisible] =
+    useState(false);
   const [deletingCollection, setDeletingCollection] = useState(false);
 
   // Layout depends on edit mode: 1 column while editing for reliable DnD
@@ -195,12 +196,12 @@ export default function CollectionDetailsScreen() {
     setDeletingCollection(true);
     try {
       await deleteCollection(collection.id);
-      
+
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
         await clearProfileCache(user.id);
       }
-      
+
       // Navigate back after successful deletion
       router.back();
     } catch (err: any) {
@@ -255,20 +256,21 @@ export default function CollectionDetailsScreen() {
 
   const handleDragEnd = async (data: CollectionPost[]) => {
     if (!isOwner || !collection) return;
-    
+
     // Filter out any non-post items and ensure we only have valid posts
-    const validPosts = data.filter((item: any) => 
-      item && 
-      !item.isAddButton && 
-      item.postId && 
-      typeof item.postId === 'string' &&
-      item.postId !== "add-button"
+    const validPosts = data.filter(
+      (item: any) =>
+        item &&
+        !item.isAddButton &&
+        item.postId &&
+        typeof item.postId === "string" &&
+        item.postId !== "add-button"
     ) as CollectionPost[];
-    
+
     // Extract postIds and remove duplicates
-    const postIds = validPosts.map(p => p.postId);
+    const postIds = validPosts.map((p) => p.postId);
     const uniquePostIds = Array.from(new Set(postIds));
-    
+
     // Check for duplicates
     if (postIds.length !== uniquePostIds.length) {
       console.error("Duplicate posts detected in reorder, removing duplicates");
@@ -281,7 +283,7 @@ export default function CollectionDetailsScreen() {
         seen.add(post.postId);
         return true;
       });
-      
+
       if (deduplicatedPosts.length !== posts.length) {
         console.error("Deduplication resulted in different count, reverting");
         if (previousPostsRef.current) {
@@ -289,11 +291,11 @@ export default function CollectionDetailsScreen() {
         }
         return;
       }
-      
+
       // Use deduplicated posts
       previousPostsRef.current = posts;
       setPosts(deduplicatedPosts);
-      
+
       try {
         await reorderCollectionPosts(
           collection.id,
@@ -312,7 +314,7 @@ export default function CollectionDetailsScreen() {
       }
       return;
     }
-    
+
     if (validPosts.length === 0 || validPosts.length !== posts.length) {
       console.warn("Invalid reorder data, reverting");
       if (previousPostsRef.current) {
@@ -320,16 +322,13 @@ export default function CollectionDetailsScreen() {
       }
       return;
     }
-    
+
     // Optimistic reorder
     previousPostsRef.current = posts;
     setPosts(validPosts);
 
     try {
-      await reorderCollectionPosts(
-        collection.id,
-        uniquePostIds
-      );
+      await reorderCollectionPosts(collection.id, uniquePostIds);
 
       // Clear profile cache to refresh collections on profile screen
       if (user?.id) {
@@ -489,22 +488,43 @@ export default function CollectionDetailsScreen() {
           <View className="w-10 h-10 rounded-full bg-foreground/20" />
           <View className="items-center flex-1">
             <View className="w-40 h-6 mb-2 rounded bg-foreground/20" />
-            <View className="flex-row items-center mt-1">
-              <View className="w-5 h-5 mr-2 rounded-full bg-foreground/20" />
-              <View className="w-48 h-4 rounded bg-foreground/20" />
+            <View className="flex-col items-center mt-1">
+              <View className="flex-row items-center mb-1">
+                <View className="w-5 h-5 mr-2 rounded-full bg-foreground/20" />
+                <View className="w-32 h-4 rounded bg-foreground/20" />
+              </View>
+              <View className="w-20 h-4 rounded bg-foreground/20" />
             </View>
           </View>
           <View className="w-10 h-10 rounded-full bg-foreground/20" />
         </View>
 
         {/* Grid skeleton: 2 columns of 9:16 cards */}
-        <View className="px-4">
-          <View className="flex-row flex-wrap" style={{ gap: GAP }}>
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <View key={idx} style={{ width: POST_WIDTH }} className="mb-2">
-                <View className="rounded-lg bg-foreground/10 aspect-[9/16]" />
-              </View>
-            ))}
+        <View style={{ paddingHorizontal: H_PADDING / 2 }}>
+          <View className="flex-row justify-between">
+            {/* Left column */}
+            <View style={{ width: POST_WIDTH }}>
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <View
+                  key={`left-${idx}`}
+                  style={{ marginTop: idx === 0 ? 0 : GAP }}
+                >
+                  <View className="rounded-lg bg-foreground/10 aspect-[9/16]" />
+                </View>
+              ))}
+            </View>
+
+            {/* Right column */}
+            <View style={{ width: POST_WIDTH }}>
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <View
+                  key={`right-${idx}`}
+                  style={{ marginTop: idx === 0 ? 0 : GAP }}
+                >
+                  <View className="rounded-lg bg-foreground/10 aspect-[9/16]" />
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       </View>
@@ -536,57 +556,36 @@ export default function CollectionDetailsScreen() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View className="flex-1 bg-background">
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-4 pb-4">
+        <View className="flex-row items-center justify-between px-4 pt-4 ">
           <TouchableOpacity
             onPress={handleBack}
-            className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
+            className="items-center justify-center w-8 h-8 rounded-full bg-foreground/20"
           >
-            <SVGIcons.ChevronLeft className="w-5 h-5" />
+            <SVGIcons.ChevronLeft width={16} height={16} />
           </TouchableOpacity>
 
           <View className="items-center flex-1">
             <View className="flex-row items-center justify-center">
               <ScaledText
                 allowScaling={false}
-                variant="2xl"
+                variant="lg"
                 className="text-foreground font-neueSemibold"
                 style={{
                   lineHeight: mvs(20),
                   borderBottomWidth: editMode ? mvs(0.5) : 0,
-                  borderBottomColor: editMode ? undefined : 'transparent',
+                  borderBottomColor: editMode ? undefined : "transparent",
                 }}
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
               {isOwner && editMode && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={handleEditName}
                   style={{ marginLeft: s(8) }}
                 >
                   <SVGIcons.Edit width={16} height={16} />
                 </TouchableOpacity>
               )}
-            </View>
-            <View className="flex-row items-center mt-1">
-              <Image
-                source={{
-                  uri:
-                    collection?.author?.avatar ||
-                    user?.avatar ||
-                    `https://api.dicebear.com/7.x/initials/png?seed=${collection?.author?.firstName?.split(" ")[0]}`,
-                }}
-                className="w-5 h-5 mr-2 border rounded-full border-foreground"
-              />
-              <ScaledText
-                variant="sm"
-                className="text-foreground font-montserratSemibold"
-              >
-                {collection?.author?.firstName ||
-                  user?.firstName ||
-                  "Sconosciuto"}{" "}
-                {collection?.author?.lastName || user?.lastName || ""} •{" "}
-                {collection.postsCount} design
-              </ScaledText>
             </View>
           </View>
 
@@ -609,6 +608,42 @@ export default function CollectionDetailsScreen() {
           )}
         </View>
 
+        <View className="flex-col items-center pb-4 mt-1">
+          <View className="flex-row items-center">
+            <Image
+              source={{
+                uri:
+                  collection?.author?.avatar ||
+                  user?.avatar ||
+                  `https://api.dicebear.com/7.x/initials/png?seed=${collection?.author?.firstName?.split(" ")[0]}`,
+              }}
+              className="w-5 h-5 mr-2 border rounded-full border-foreground"
+            />
+            <ScaledText
+              variant="sm"
+              className="text-foreground font-montserratLight"
+            >
+              {collection?.author?.firstName ||
+                user?.firstName ||
+                "Sconosciuto"}{" "}
+              {collection?.author?.lastName || user?.lastName || ""}
+            </ScaledText>
+            {/* <ScaledText variant="sm" className="pl-2 text-foreground font-montserratLight">
+              <span className="text-xl leading-none align-middle font-montserratSemibold">•</span>
+                {collection.postsCount} {collection.postsCount === 1 ? 'design' : 'designs'}
+            </ScaledText> */}
+          </View>
+
+          <View className="flex-row items-center">
+            <ScaledText
+              variant="sm"
+              className="text-foreground font-montserratLight"
+            >
+              {collection.postsCount} design
+            </ScaledText>
+          </View>
+        </View>
+
         {/* Posts Grid */}
         <DraggableFlatList
           key={layoutKey}
@@ -623,13 +658,13 @@ export default function CollectionDetailsScreen() {
                 style={{
                   marginTop: GAP,
                   marginBottom: GAP,
-                  alignItems: 'center',
+                  alignItems: "center",
                 }}
               >
                 <TouchableOpacity
                   onPress={openAddModal}
                   activeOpacity={0.8}
-                  className="rounded-xl border-2 border-dashed border-primary bg-primary/10 items-center justify-center"
+                  className="items-center justify-center border-2 border-dashed rounded-xl border-primary bg-primary/10"
                   style={{
                     width: POST_WIDTH,
                     height: mvs(253),
@@ -639,7 +674,7 @@ export default function CollectionDetailsScreen() {
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueMedium mt-3"
+                    className="mt-3 text-foreground font-neueMedium"
                   >
                     Aggiungi nuovo tatuaggio
                   </ScaledText>

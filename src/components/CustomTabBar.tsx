@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/Badge";
-import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useUser } from "@/providers/AuthProvider";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
@@ -29,7 +28,15 @@ const routeIconMap: Record<string, keyof typeof SVGIcons> = {
 // Memoized Avatar component for better performance
 // React Native's Image component has built-in caching (memory + disk cache)
 const ProfileAvatar = memo(
-  ({ avatar, isFocused }: { avatar?: string; isFocused: boolean }) => {
+  ({
+    avatar,
+    isFocused,
+    isGuest,
+  }: {
+    avatar?: string;
+    isFocused: boolean;
+    isGuest: boolean;
+  }) => {
     const size = s(26);
 
     if (avatar) {
@@ -45,12 +52,27 @@ const ProfileAvatar = memo(
             // borderColor: isFocused ? "#ffffff" : "transparent",
           }}
           resizeMode="cover"
-          fadeDuration={0} // Instant display from cache
+          fadeDuration={0}
         />
       );
     }
 
-    // Fallback to Profile icon if no avatar
+    // Show guest icon for anonymous users
+    if (isGuest) {
+      const GuestIcon = SVGIcons.GuestUserProfile;
+      return (
+        <GuestIcon
+          width={size}
+          height={size}
+          color={isFocused ? "#ffffff" : "#A49A99"}
+          style={{
+            opacity: isFocused ? 1 : 0.7,
+          }}
+        />
+      );
+    }
+
+    // Fallback to Profile icon if no avatar (shouldn't happen)
     const ProfileIcon = SVGIcons.NoUser;
     return (
       <ProfileIcon
@@ -79,14 +101,19 @@ export default function CustomTabBar({
   const getIcon = (routeName: string, isFocused: boolean) => {
     // Special handling for profile tab to show user avatar or Accedi icon
     if (routeName === "profile") {
-      
-      return <ProfileAvatar avatar={user?.avatar} isFocused={isFocused} />;
+      return (
+        <ProfileAvatar
+          avatar={user?.avatar}
+          isFocused={isFocused}
+          isGuest={!user}
+        />
+      );
     }
 
     const iconName = routeIconMap[routeName];
     const IconComponent = iconName ? SVGIcons[iconName] : null;
     if (!IconComponent) return null;
-    
+
     const icon = (
       <IconComponent
         width={s(24)}
@@ -121,7 +148,9 @@ export default function CustomTabBar({
   };
 
   // Find the upload route for the floating button
-  const uploadRoute = state.routes.find((route: any) => route.name === "upload");
+  const uploadRoute = state.routes.find(
+    (route: any) => route.name === "upload"
+  );
   const uploadOptions = uploadRoute ? descriptors[uploadRoute.key].options : {};
 
   const handleUploadPress = () => {
@@ -217,7 +246,9 @@ export default function CustomTabBar({
 
                 // For anonymous users, inbox shows auth modal
                 if (route.name === "inbox" && !user) {
-                  useAuthRequiredStore.getState().show("Sign in to access your messages");
+                  useAuthRequiredStore
+                    .getState()
+                    .show("Sign in to access your messages");
                   return;
                 }
 
@@ -280,34 +311,23 @@ export default function CustomTabBar({
                           backgroundColor: "#AE0E0E",
                           borderTopRightRadius: 9999,
                           borderBottomRightRadius: 9999,
-                          marginVertical: mvs(-16), 
-                          marginRight: s(-16), 
+                          marginVertical: mvs(-16),
+                          marginRight: s(-16),
                           paddingVertical: mvs(16),
-                          paddingRight: s(16), 
+                          paddingRight: s(16),
                         }
                       : {}),
                   }}
                 >
                   {showAccediLabel ? (
-                    <SVGIcons.Accedi 
-                      width={s(24)} 
-                      height={s(24)} 
+                    <SVGIcons.Accedi
+                      width={s(24)}
+                      height={s(24)}
                       color={isFocused ? "#ffffff" : "#A49A99"}
                     />
                   ) : (
                     getIcon(route.name, isFocused)
                   )}
-                  <ScaledText
-                    variant="11"
-                    className={` bg-transparent font-neueBold ${
-                      isFocused
-                        ? "text-foreground"
-                        : "text-gray"
-                    }`}
-                    style={{ marginTop: mvs(4) }}
-                  >
-                    {showAccediLabel ? "Accedi" : label}
-                  </ScaledText>
                 </TouchableOpacity>
               );
             })}
