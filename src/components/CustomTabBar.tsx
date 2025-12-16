@@ -52,7 +52,7 @@ const ProfileAvatar = memo(
             // borderColor: isFocused ? "#ffffff" : "transparent",
           }}
           resizeMode="cover"
-          fadeDuration={0} // Instant display from cache
+          fadeDuration={0}
         />
       );
     }

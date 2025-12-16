@@ -259,6 +259,7 @@ import HelpArticle from "@/assets/icons/help-article.svg";
 // @ts-ignore
 import HelpQuestion from "@/assets/icons/help-question.svg";
 // @ts-ignore
+
 import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
 
 export const SVGIcons = {
