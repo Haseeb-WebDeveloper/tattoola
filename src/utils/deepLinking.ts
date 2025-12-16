@@ -493,6 +493,7 @@ export function initializeDeepLinking() {
       }
 
       // Case 4: Just opened via deep link (no code/token) - check if user has session
+
       const { data: sessionData } = await supabase.auth.getSession();
 
       if (sessionData?.session?.user) {
