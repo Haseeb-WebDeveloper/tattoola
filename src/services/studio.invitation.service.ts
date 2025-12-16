@@ -76,7 +76,7 @@ export async function searchArtistsForInvite(
     let userQuery = supabase
       .from("users")
       .select(
-        `
+      `
         id,
         email,
         username,
@@ -656,7 +656,7 @@ export async function getStudioMembers(
           locations:user_locations(
             isPrimary,
             municipality:municipalities(name),
-            province:provinces(code)
+            province:provinces(name, code)
           ),
           subscriptions:user_subscriptions!user_subscriptions_userId_fkey(
             status,
@@ -693,10 +693,31 @@ export async function getStudioMembers(
     members?.forEach((member: any) => {
       // Get primary location
       const primaryLocation = member.user?.locations?.find((loc: any) => loc.isPrimary);
+      
+      // Format province: check if province is an object with name/code, or just a string
+      let provinceText = "";
+      if (primaryLocation?.province) {
+        if (typeof primaryLocation.province === "object") {
+          // Province is an object with name and code
+          const provName = primaryLocation.province.name;
+          const provCode = primaryLocation.province.code;
+          if (provName && provCode) {
+            provinceText = `${provName} (${provCode})`;
+          } else if (provName) {
+            provinceText = provName;
+          } else if (provCode) {
+            provinceText = provCode;
+          }
+        } else {
+          // Province is just a string (code)
+          provinceText = primaryLocation.province;
+        }
+      }
+      
       const location = primaryLocation
         ? {
             municipality: primaryLocation.municipality?.name || "",
-            province: primaryLocation.province?.code || "",
+            province: provinceText,
           }
         : null;
 
