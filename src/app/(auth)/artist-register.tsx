@@ -1,4 +1,5 @@
 import AuthStepHeader from "@/components/ui/auth-step-header";
+import { Checkbox } from "@/components/ui/Checkbox";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
@@ -37,6 +38,7 @@ export default function ArtistRegisterScreen() {
       role: UserRole.ARTIST,
     }
   );
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [focusedField, setFocusedField] = useState<
     keyof RegisterCredentials | null
@@ -108,6 +110,11 @@ export default function ArtistRegisterScreen() {
       }
     }
 
+    if (!acceptedTerms) {
+      formErrors.terms =
+        "Devi accettare i Termini di utilizzo e l'Informativa sulla privacy";
+    }
+
     setErrors(formErrors);
     return !ValidationUtils.hasErrors(formErrors);
   };
@@ -118,14 +125,11 @@ export default function ArtistRegisterScreen() {
       return;
     }
 
-    // Navigate immediately to email confirmation and start background signup
-    setInProgress(formData.email, formData);
-    router.push("/(auth)/email-confirmation");
-
     try {
+      setInProgress(formData.email, formData);
       await signUp(formData);
-      // If sign up succeeds, mark success and remain on email-confirmation
       setSuccess();
+      router.push("/(auth)/email-confirmation");
     } catch (error: any) {
       const code = error?.code;
 
@@ -384,14 +388,63 @@ export default function ArtistRegisterScreen() {
           )}
         </View>
 
+        {/* Terms & Privacy checkbox */}
+        <View style={{ marginTop: mvs(20) }}>
+          <View className="flex-row items-start">
+            <Checkbox
+              checked={acceptedTerms}
+              onPress={() => setAcceptedTerms((prev) => !prev)}
+            />
+            <View className="flex-1 ml-2">
+              <ScaledText
+                variant="sm"
+                className="text-foreground font-neueLight"
+              >
+                <ScaledText variant="sm" className="text-error">
+                  *{" "}
+                </ScaledText>
+                Ho preso visione delle condizioni d&apos;uso e
+                dell&apos;informativa privacy
+              </ScaledText>
+            </View>
+          </View>
+          {!!errors.terms && (
+            <ScaledText
+              variant="sm"
+              className="mt-1 text-xs text-error font-neueLight"
+            >
+              {errors.terms}
+            </ScaledText>
+          )}
+        </View>
+
         {/* Register Button */}
         <View className="items-center" style={{ marginTop: mvs(32) }}>
           <TouchableOpacity
             accessibilityRole="button"
             onPress={handleRegister}
-            disabled={loading}
+            disabled={
+              loading ||
+              !formData.username.trim() ||
+              !formData.email.trim() ||
+              !formData.password.trim() ||
+              !formData.confirmPassword.trim() ||
+              !acceptedTerms
+            }
             className="items-center w-full rounded-full bg-primary-brand"
-            style={{ paddingVertical: mvs(12), paddingHorizontal: s(32) }}
+            style={{
+              paddingVertical: mvs(12),
+              paddingHorizontal: s(32),
+              opacity:
+                loading ||
+                !formData.username.trim() ||
+                !formData.email.trim() ||
+                !formData.password.trim() ||
+                !formData.confirmPassword.trim() ||
+                !acceptedTerms
+                  ? 0.5
+                  : 1,
+            }}
           >
             <ScaledText
               variant="body1"

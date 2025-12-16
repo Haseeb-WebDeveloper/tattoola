@@ -432,7 +432,7 @@ export default function ArtistStep12V2() {
       // Check if plan is selected before attempting registration
       const currentStep13 = useArtistRegistrationV2Store.getState().step13;
 
-      // If plan is selected, redirect to checkout first (payment required)
+      // If plan is selected, redirect to checkout first (payment required flow)
       if (currentStep13?.selectedPlanId) {
         logger.log("Plan selected, redirecting to checkout for payment");
         router.replace("/(auth)/artist-registration/checkout");
@@ -440,64 +440,16 @@ export default function ArtistStep12V2() {
         return;
       }
 
-      // If no plan selected, try to complete registration (will fail with PAYMENT_REQUIRED)
-      await completeArtistRegistration(registrationData);
-
-      // Success - profile created successfully with active subscription
-      // Redirect to main app or profile page
-      logger.log("Registration completed successfully");
-      router.replace("/(tabs)/profile");
+      // No plan selected - redirect to plan selection screen
+      // Artist must select a plan before creating profile
+      logger.log("No plan selected, redirecting to plan selection");
+      router.replace("/(auth)/artist-registration/tattoola-pro");
+      toast.error("Please select a subscription plan to continue.");
+      setSubmitting(false);
     } catch (error) {
       logger.error("Registration save error:", error);
       let errorMessage = "Failed to save registration. Please try again.";
-
-      // Handle payment required error - redirect to checkout or plan selection
-      if (
-        error instanceof Error &&
-        (error as any).code === "PAYMENT_REQUIRED"
-      ) {
-        logger.log("Payment required, checking plan selection");
-        const currentStep13 = useArtistRegistrationV2Store.getState().step13;
-        if (currentStep13?.selectedPlanId) {
-          // Plan selected but not paid - redirect to checkout
-          logger.log("Plan selected, redirecting to checkout");
-          router.replace("/(auth)/artist-registration/checkout");
-          toast.error("Please complete payment to create your artist profile.");
-        } else {
-          // No plan selected - redirect to plan selection
-          logger.log("No plan selected, redirecting to plan selection");
-          router.replace("/(auth)/artist-registration/tattoola-pro");
-          toast.error("Please select a subscription plan to continue.");
-        }
-        setSubmitting(false);
-        return;
-      }
-
-      // Check if profile was partially created (user exists in database)
-      // If profile exists, still redirect to checkout so user can complete payment
       let profileCreated = false;
-      try {
-        const { supabase } = await import("@/utils/supabase");
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          const { data: userExists } = await supabase
-            .from("users")
-            .select("id")
-            .eq("id", session.user.id)
-            .maybeSingle();
-
-          if (userExists) {
-            profileCreated = true;
-            logger.log(
-              "Profile was created despite error, redirecting to checkout"
-            );
-          }
-        }
-      } catch (checkError) {
-        logger.error("Error checking if profile was created:", checkError);
-      }
 
       if (error instanceof Error) {
         if (

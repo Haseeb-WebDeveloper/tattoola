@@ -28,8 +28,8 @@ const ProfileSettingsItem: React.FC<ProfileSettingsItemProps> = ({
   >
     <ScaledText
       allowScaling={false}
-      variant="md"
-      className={`font-neueSemibold text-white`}
+      variant="lg"
+      className={`font-neueMedium text-white`}
     >
       {title}
     </ScaledText>
@@ -102,7 +102,7 @@ export default function ProfileSettingsScreen() {
   };
 
   // Items according to role and screenshot.
-  // Screenshot items for TATTOO_LOVER (in order): 
+  // Screenshot items for TATTOO_LOVER (in order):
   // - Foto profilo
   // - Dove ti trovi
   // - Social media
@@ -133,8 +133,7 @@ export default function ProfileSettingsScreen() {
     { title: "Esperienza", onPress: handleExperiencePress },
   ];
 
-  const itemsToShow =
-    user?.role === "ARTIST" ? artistItems : tattooLoverItems;
+  const itemsToShow = user?.role === "ARTIST" ? artistItems : tattooLoverItems;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>

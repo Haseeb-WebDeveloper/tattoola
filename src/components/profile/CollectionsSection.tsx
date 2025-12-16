@@ -62,7 +62,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     return (
       <View
         className="flex flex-row flex-wrap w-full aspect-square"
-        style={{ gap: s(8),  }}
+        style={{ gap: s(8) }}
       >
         {[0, 1].map((row) => (
           <View className="flex-1 w-full" key={row} style={{ gap: s(8) }}>
@@ -71,10 +71,11 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
               const url = images[idx];
               const video = isVideo(url);
               // Generate thumbnail URL for videos
-              const thumbnailUrl = video && url
-                ? cloudinaryService.getVideoThumbnailFromUrl(url, 1, 200, 200)
-                : null;
-              
+              const thumbnailUrl =
+                video && url
+                  ? cloudinaryService.getVideoThumbnailFromUrl(url, 1, 200, 200)
+                  : null;
+
               return (
                 <View
                   key={idx}
@@ -119,7 +120,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                     </>
                   ) : (
                     <View
-                      className="border-gray/50 w-full h-full bg-background"
+                      className="w-full h-full border-gray/50 bg-background"
                       style={{
                         // borderWidth: s(1),
                         backgroundColor: "rgba(255,255,255,0.02)",
@@ -276,7 +277,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
     <View style={{ paddingHorizontal: s(16), marginTop: mvs(32) }}>
       <ScaledText
         allowScaling={false}
-        variant="md"
+        variant="lg"
         className="text-foreground font-montserratSemibold"
         style={{ marginBottom: mvs(12) }}
       >

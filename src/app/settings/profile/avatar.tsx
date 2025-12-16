@@ -9,12 +9,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    TouchableOpacity,
-    View,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -125,9 +125,7 @@ export default function AvatarSettingsScreen() {
       }, 500);
     } catch (err: any) {
       console.error("Error updating avatar:", err);
-      toast.error(
-        err.message || "Impossibile aggiornare la foto profilo"
-      );
+      toast.error(err.message || "Impossibile aggiornare la foto profilo");
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +144,7 @@ export default function AvatarSettingsScreen() {
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="relative flex-row items-center justify-center"
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
@@ -155,7 +153,7 @@ export default function AvatarSettingsScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
+            className="absolute items-center justify-center rounded-full bg-foreground/20"
             style={{
               width: s(34),
               height: s(34),
@@ -185,7 +183,10 @@ export default function AvatarSettingsScreen() {
           {/* Upload Section */}
           <View className="items-center" style={{ marginBottom: mvs(40) }}>
             {/* Title */}
-            <View className="flex-row items-center" style={{ marginBottom: mvs(4) }}>
+            <View
+              className="flex-row items-center"
+              style={{ marginBottom: mvs(4) }}
+            >
               <ScaledText
                 allowScaling={false}
                 variant="lg"
@@ -215,7 +216,7 @@ export default function AvatarSettingsScreen() {
             {/* Avatar Display */}
             <View style={{ marginBottom: mvs(40), position: "relative" }}>
               <View
-                className="rounded-full overflow-hidden border-2 border-gray/30"
+                className="overflow-hidden border-2 rounded-full border-gray/30"
                 style={{ width: s(180), height: s(180) }}
               >
                 {currentAvatar ? (
@@ -225,7 +226,7 @@ export default function AvatarSettingsScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <View className="w-full h-full bg-gray/20 items-center justify-center">
+                  <View className="items-center justify-center w-full h-full bg-gray/20">
                     <SVGIcons.User width={s(60)} height={s(60)} />
                   </View>
                 )}
@@ -235,7 +236,7 @@ export default function AvatarSettingsScreen() {
               <TouchableOpacity
                 onPress={handlePickImage}
                 disabled={uploading || isLoading}
-                className="absolute bg-white rounded-full items-center justify-center"
+                className="absolute items-center justify-center bg-white rounded-full"
                 style={{
                   width: s(25),
                   height: s(25),
@@ -287,7 +288,7 @@ export default function AvatarSettingsScreen() {
           <TouchableOpacity
             onPress={handleSave}
             disabled={isLoading || uploading || !hasUnsavedChanges}
-            className="rounded-full items-center justify-center"
+            className="items-center justify-center rounded-full"
             style={{
               backgroundColor:
                 isLoading || uploading || !hasUnsavedChanges
@@ -317,7 +318,7 @@ export default function AvatarSettingsScreen() {
         onRequestClose={handleContinueEditing}
       >
         <View
-          className="flex-1 justify-center items-center"
+          className="items-center justify-center flex-1"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
         >
           <View
@@ -337,7 +338,7 @@ export default function AvatarSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="lg"
-              className="text-background font-neueBold text-center"
+              className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(4) }}
             >
               Hai modifiche non salvate nella foto profilo
@@ -347,7 +348,7 @@ export default function AvatarSettingsScreen() {
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-background font-montserratMedium text-center"
+              className="text-center text-background font-montserratMedium"
               style={{ marginBottom: mvs(32) }}
             >
               Vuoi scartarle?
@@ -358,7 +359,7 @@ export default function AvatarSettingsScreen() {
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}
-                className="rounded-full border-2 items-center justify-center flex-row"
+                className="flex-row items-center justify-center border-2 rounded-full"
                 style={{
                   borderColor: "#AD2E2E",
                   paddingVertical: mvs(10.5),
@@ -384,7 +385,7 @@ export default function AvatarSettingsScreen() {
               {/* Discard Changes Button */}
               <TouchableOpacity
                 onPress={handleDiscardChanges}
-                className="rounded-full items-center justify-center"
+                className="items-center justify-center rounded-full"
                 style={{
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
@@ -406,4 +407,3 @@ export default function AvatarSettingsScreen() {
     </KeyboardAvoidingView>
   );
 }
-

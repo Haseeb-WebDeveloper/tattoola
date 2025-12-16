@@ -4,10 +4,10 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScaledText } from "../ui/ScaledText";
@@ -66,8 +66,12 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => router.back()}
-          className="rounded-full bg-foreground/20 items-center justify-center"
-          style={{ width: s(32), height: s(32) }}
+          className="rounded-full items-center justify-center"
+          style={{
+            width: s(32),
+            height: s(32),
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
         </TouchableOpacity>

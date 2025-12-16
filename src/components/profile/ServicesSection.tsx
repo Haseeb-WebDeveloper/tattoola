@@ -1,26 +1,27 @@
-import ScaledText from "@/components/ui/ScaledText";
 import ServiceInfoModal from "@/components/shared/ServiceInfoModal";
+import ScaledText from "@/components/ui/ScaledText";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 
-interface Service {
+type ServiceSummary = {
   id: string;
   name: string;
   description?: string | null;
   imageUrl?: string | null;
-  price?: number;
-  duration?: number;
-}
+  // Optional category to stay compatible with services that include it
+  category?: string | null;
+};
 
 interface ServicesSectionProps {
-  services: Service[];
+  services: ServiceSummary[];
 }
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({
   services,
 }) => {
-  const [selectedServiceInfo, setSelectedServiceInfo] = useState<Service | null>(null);
+  const [selectedServiceInfo, setSelectedServiceInfo] =
+    useState<ServiceSummary | null>(null);
   const [showServiceInfoModal, setShowServiceInfoModal] = useState(false);
 
   if (!services || services.length === 0) {
@@ -32,7 +33,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
         <ScaledText
           allowScaling={false}
-          variant="md"
+          variant="lg"
           className="text-foreground font-montserratSemibold"
           style={{ marginBottom: mvs(8) }}
         >
@@ -51,8 +52,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
             >
               <ScaledText
                 allowScaling={false}
-                variant="11"
-                className="text-foreground flex-1 font-neueBold"
+                variant="md"
+                className="flex-1 text-foreground font-neueRegular"
               >
                 ✅ {service.name}
               </ScaledText>

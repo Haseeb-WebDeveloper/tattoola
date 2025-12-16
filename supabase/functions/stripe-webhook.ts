@@ -1,35 +1,36 @@
 // @ts-nocheck
 
-
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-import Stripe from 'npm:stripe@12.0.0';
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'), {
-  apiVersion: '2020-08-27'
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import Stripe from "npm:stripe@12.0.0";
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY"), {
+  apiVersion: "2020-08-27",
 });
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
 // Initialize Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
+  console.error(
+    "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables"
+  );
 }
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 // After creating the supabase client, add:
-console.log('Supabase client initialized:', {
+console.log("Supabase client initialized:", {
   url: supabaseUrl,
   hasServiceKey: !!supabaseServiceKey,
-  serviceKeyPrefix: supabaseServiceKey?.substring(0, 20) + '...' // First 20 chars for verification
+  serviceKeyPrefix: supabaseServiceKey?.substring(0, 20) + "...", // First 20 chars for verification
 });
 // Mapping functions
 function mapStripeSubStatus(status) {
-  switch(status){
+  switch (status) {
     case "active":
     case "trialing":
     case "past_due":
@@ -41,11 +42,101 @@ function mapStripeSubStatus(status) {
       return "SUSPENDED";
   }
 }
+
+// Ensure a row exists in the public.users table for the given auth user.
+// This prevents foreign key errors when inserting into user_subscriptions.
+async function ensureUserRow(userId: string) {
+  try {
+    // 1) Check if the user already exists in our public.users table
+    const { data: existingUser, error: existingError } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (existingError && !existingError.message.includes("No rows")) {
+      console.error(
+        "ensureUserRow: error checking existing user by id:",
+        existingError
+      );
+      // Don't block subscription creation due to a read error – just return.
+      return;
+    }
+
+    if (existingUser) {
+      // User already exists, nothing else to do.
+      return;
+    }
+
+    // 2) Fetch the auth user using the service role key
+    const { data: authRes, error: authError } =
+      await supabase.auth.admin.getUserById(userId);
+
+    if (authError || !authRes?.user) {
+      console.error(
+        "ensureUserRow: auth user not found for id:",
+        userId,
+        authError
+      );
+      // If we can't find the auth user, we can't safely create a profile row.
+      // Return without throwing so the webhook doesn't completely fail.
+      return;
+    }
+
+    const authUser: any = authRes.user;
+    const email: string = authUser.email || "";
+    const roleMeta = authUser.user_metadata?.displayName;
+    const role = roleMeta === "AR" ? "ARTIST" : "TATTOO_LOVER";
+
+    // Build a safe username
+    const defaultUsername =
+      (email && email.split("@")[0]) ||
+      authUser.user_metadata?.username ||
+      "user";
+    const now = new Date().toISOString();
+
+    // 3) Upsert a minimal user row to avoid race conditions or duplicates.
+    const { data: upsertedUser, error: upsertError } = await supabase
+      .from("users")
+      .upsert(
+        {
+          id: userId,
+          email,
+          username: defaultUsername,
+          firstName: null,
+          lastName: null,
+          avatar: null,
+          bio: null,
+          isActive: true,
+          isVerified: !!authUser.email_confirmed_at,
+          isPublic: role === "TATTOO_LOVER",
+          role,
+          createdAt: now,
+          updatedAt: now,
+        },
+        { onConflict: "id" }
+      )
+      .select("id")
+      .maybeSingle();
+
+    if (upsertError) {
+      console.error("ensureUserRow: upsert error:", upsertError);
+      // Don't throw – worst case, subscription creation will still work if user already exists.
+    } else if (upsertedUser) {
+      console.log(
+        "ensureUserRow: minimal user ensured for id:",
+        upsertedUser.id
+      );
+    }
+  } catch (e) {
+    console.error("ensureUserRow: unexpected error:", e);
+  }
+}
 function mapIntervalToCycle(interval) {
   return interval === "year" ? "YEARLY" : "MONTHLY";
 }
 function mapInvoiceStatus(status) {
-  switch(status){
+  switch (status) {
     case "paid":
       return "PAID";
     case "void":
@@ -60,7 +151,7 @@ function mapInvoiceStatus(status) {
   }
 }
 function mapPaymentStatus(status) {
-  switch(status){
+  switch (status) {
     case "succeeded":
       return "SUCCEEDED";
     case "requires_payment_method":
@@ -80,19 +171,36 @@ async function ensureUserSubscription(args) {
   const priceId = price?.id ?? "";
   let planId;
   if (priceId) {
-    const { data: plan, error } = await supabase.from('subscription_plans').select('id').or(`stripeMonthlyPriceId.eq.${priceId},stripeYearlyPriceId.eq.${priceId}`).limit(1).single();
+    const { data: plan, error } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .or(
+        `stripeMonthlyPriceId.eq.${priceId},stripeYearlyPriceId.eq.${priceId}`
+      )
+      .limit(1)
+      .single();
     if (!error && plan) {
       planId = plan.id;
     }
   }
   if (!planId && planTypeMeta) {
-    const { data: plan, error } = await supabase.from('subscription_plans').select('id').eq('type', planTypeMeta).limit(1).single();
+    const { data: plan, error } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("type", planTypeMeta)
+      .limit(1)
+      .single();
     if (!error && plan) {
       planId = plan.id;
     }
   }
   if (!planId) {
-    const { data: def, error } = await supabase.from('subscription_plans').select('id').eq('isDefault', true).limit(1).single();
+    const { data: def, error } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("isDefault", true)
+      .limit(1)
+      .single();
     if (!error && def) {
       planId = def.id;
     }
@@ -101,67 +209,80 @@ async function ensureUserSubscription(args) {
     console.warn("No plan found for subscription");
     return null;
   }
-  const startDate = new Date((subscription.start_date ?? subscription.created) * 1000).toISOString();
-  const endDate = subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null;
-  const trialEndsAt = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
+
+  // CRITICAL: ensure a corresponding users row exists so that the
+  // user_subscriptions.userId foreign key never fails.
+  await ensureUserRow(userId);
+
+  const startDate = new Date(
+    (subscription.start_date ?? subscription.created) * 1000
+  ).toISOString();
+  const endDate = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toISOString()
+    : null;
+  const trialEndsAt = subscription.trial_end
+    ? new Date(subscription.trial_end * 1000).toISOString()
+    : null;
   const status = mapStripeSubStatus(subscription.status);
   const cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
-  const canceledAt = subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null;
-  
+  const canceledAt = subscription.canceled_at
+    ? new Date(subscription.canceled_at * 1000).toISOString()
+    : null;
+
   // First, try to find existing subscription by Stripe subscription ID
   let existing = null;
   if (subscription.id) {
     const { data: existingByStripeId } = await supabase
-      .from('user_subscriptions')
-      .select('id, isTrial, planId')
-      .eq('stripeSubscriptionId', subscription.id)
+      .from("user_subscriptions")
+      .select("id, isTrial, planId")
+      .eq("stripeSubscriptionId", subscription.id)
       .maybeSingle();
     existing = existingByStripeId;
   }
-  
+
   // If not found by Stripe ID, find active subscription for this user (for plan changes)
   if (!existing) {
     const { data: existingActive } = await supabase
-      .from('user_subscriptions')
-      .select('id, isTrial, planId')
-      .eq('userId', userId)
-      .eq('status', 'ACTIVE')
-      .order('createdAt', { ascending: false })
+      .from("user_subscriptions")
+      .select("id, isTrial, planId")
+      .eq("userId", userId)
+      .eq("status", "ACTIVE")
+      .order("createdAt", { ascending: false })
       .limit(1)
       .maybeSingle();
     existing = existingActive;
   }
-  
+
   // If still not found, try by userId and planId (original logic)
   if (!existing) {
     const { data: existingByPlan } = await supabase
-      .from('user_subscriptions')
-      .select('id, isTrial, planId')
-      .eq('userId', userId)
-      .eq('planId', planId)
+      .from("user_subscriptions")
+      .select("id, isTrial, planId")
+      .eq("userId", userId)
+      .eq("planId", planId)
       .limit(1)
       .maybeSingle();
     existing = existingByPlan;
   }
-  
+
   if (existing) {
     // If plan changed, cancel other active subscriptions for this user
     if (existing.planId !== planId) {
       await supabase
-        .from('user_subscriptions')
-        .update({ 
-          status: 'CANCELLED',
-          updatedAt: new Date().toISOString()
+        .from("user_subscriptions")
+        .update({
+          status: "CANCELLED",
+          updatedAt: new Date().toISOString(),
         })
-        .eq('userId', userId)
-        .eq('status', 'ACTIVE')
-        .neq('id', existing.id);
+        .eq("userId", userId)
+        .eq("status", "ACTIVE")
+        .neq("id", existing.id);
     }
-    
+
     // Check if subscription is converting from trial to paid
     const isNowPaid = status === "ACTIVE" && subscription.status !== "trialing";
     const wasTrial = existing.isTrial;
-    
+
     // When converting to paid, end the trial
     const updateData = {
       planId: planId, // Update planId when plan changes
@@ -170,66 +291,73 @@ async function ensureUserSubscription(args) {
       startDate: startDate,
       endDate: endDate,
       trialEndsAt: isNowPaid ? null : trialEndsAt, // Clear trial end if paid
-      isTrial: isNowPaid ? false : (wasTrial ? true : false), // End trial if paid
+      isTrial: isNowPaid ? false : wasTrial ? true : false, // End trial if paid
       cancelAtPeriodEnd: cancelAtPeriodEnd,
       canceledAt: canceledAt,
       stripeSubscriptionId: subscription.id, // Store Stripe subscription ID
       autoRenew: !cancelAtPeriodEnd, // Sync autoRenew with cancelAtPeriodEnd
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
-    const { error } = await supabase.from('user_subscriptions').update(updateData).eq('id', existing.id);
+
+    const { error } = await supabase
+      .from("user_subscriptions")
+      .update(updateData)
+      .eq("id", existing.id);
     if (error) {
       console.error("Error updating subscription:", error);
       return null;
     }
-    
+
     if (isNowPaid && wasTrial) {
       console.log("Trial ended, subscription converted to paid", {
         userId,
-        subscriptionId: existing.id
+        subscriptionId: existing.id,
       });
     }
-    
+
     if (existing.planId !== planId) {
       console.log("Plan changed, subscription updated", {
         userId,
         subscriptionId: existing.id,
         oldPlanId: existing.planId,
-        newPlanId: planId
+        newPlanId: planId,
       });
     }
-    
+
     return existing.id;
   }
   console.log("Creating new subscription", {
     userId,
     planId,
     status,
-    billingCycle
+    billingCycle,
   });
   // Generate UUID for the id field (required by database)
   const subscriptionId = crypto.randomUUID();
   const now = new Date().toISOString();
-  const { data: created, error } = await supabase.from('user_subscriptions').insert({
-    id: subscriptionId,
-    userId: userId,
-    planId: planId,
-    status,
-    billingCycle: billingCycle,
-    startDate: startDate,
-    endDate: endDate,
-    trialEndsAt: trialEndsAt,
-    cancelAtPeriodEnd: cancelAtPeriodEnd,
-    canceledAt: canceledAt,
-    stripeSubscriptionId: subscription.id, // Store Stripe subscription ID
-    isAdminAssigned: false,
-    isFree: false,
-    isTrial: Boolean(subscription.status === "trialing"),
-    autoRenew: !cancelAtPeriodEnd, // Sync autoRenew with cancelAtPeriodEnd
-    createdAt: now,
-    updatedAt: now
-  }).select('id').single();
+  const { data: created, error } = await supabase
+    .from("user_subscriptions")
+    .insert({
+      id: subscriptionId,
+      userId: userId,
+      planId: planId,
+      status,
+      billingCycle: billingCycle,
+      startDate: startDate,
+      endDate: endDate,
+      trialEndsAt: trialEndsAt,
+      cancelAtPeriodEnd: cancelAtPeriodEnd,
+      canceledAt: canceledAt,
+      stripeSubscriptionId: subscription.id, // Store Stripe subscription ID
+      isAdminAssigned: false,
+      isFree: false,
+      isTrial: Boolean(subscription.status === "trialing"),
+      autoRenew: !cancelAtPeriodEnd, // Sync autoRenew with cancelAtPeriodEnd
+      createdAt: now,
+      updatedAt: now,
+    })
+    .select("id")
+    .single();
   if (error) {
     console.error("Error creating subscription:", error);
     return null;
@@ -240,21 +368,21 @@ async function upsertInvoiceAndPayment(args) {
   const { invoice, userId, subscriptionId } = args;
   console.log("upsertInvoiceAndPayment:", {
     invoiceId: invoice.id,
-    userId
+    userId,
   });
   const number = invoice.number ?? invoice.id;
   const currency = invoice.currency?.toUpperCase() ?? "USD";
-  
+
   // Check if invoice already exists (fetch paidAt to preserve it if status changes)
   const { data: existingInvoice } = await supabase
-    .from('invoices')
-    .select('id, paidAt')
-    .eq('number', number)
+    .from("invoices")
+    .select("id, paidAt")
+    .eq("number", number)
     .maybeSingle();
-  
+
   // Map invoice status
   const mappedStatus = mapInvoiceStatus(invoice.status ?? null);
-  
+
   // Set paidAt if invoice is paid and has status_transitions.paid_at
   // Preserve existing paidAt if invoice was already paid and status is still paid
   // Clear paidAt if status changes from paid to something else
@@ -267,7 +395,7 @@ async function upsertInvoiceAndPayment(args) {
     paidAt = existingInvoice.paidAt;
   }
   // If status is not PAID, paidAt remains null (clears it if status changed)
-  
+
   const invoiceData = {
     userId: userId,
     subscriptionId: subscriptionId,
@@ -275,24 +403,32 @@ async function upsertInvoiceAndPayment(args) {
     currency,
     amountSubtotal: invoice.amount_subtotal ?? 0,
     amountTax: invoice.amount_tax ?? 0,
-    amountDiscount: invoice.total_discount_amounts?.reduce((s, d)=>s + (d.amount ?? 0), 0) ?? 0,
+    amountDiscount:
+      invoice.total_discount_amounts?.reduce(
+        (s, d) => s + (d.amount ?? 0),
+        0
+      ) ?? 0,
     amountTotal: invoice.amount_due ?? 0,
-    periodStart: new Date((invoice.period_start ?? invoice.created) * 1000).toISOString(),
-    periodEnd: new Date((invoice.period_end ?? invoice.created) * 1000).toISOString(),
+    periodStart: new Date(
+      (invoice.period_start ?? invoice.created) * 1000
+    ).toISOString(),
+    periodEnd: new Date(
+      (invoice.period_end ?? invoice.created) * 1000
+    ).toISOString(),
     status: mappedStatus,
     paidAt: paidAt,
     pdfUrl: invoice.invoice_pdf ?? undefined,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
-  
+
   let inv;
   if (existingInvoice) {
     // Update existing invoice
     const { data: updated, error: updateError } = await supabase
-      .from('invoices')
+      .from("invoices")
       .update(invoiceData)
-      .eq('id', existingInvoice.id)
-      .select('id')
+      .eq("id", existingInvoice.id)
+      .select("id")
       .single();
     if (updateError) {
       console.error("Error updating invoice:", updateError);
@@ -304,9 +440,9 @@ async function upsertInvoiceAndPayment(args) {
     // Insert new invoice with generated UUID
     invoiceData.id = crypto.randomUUID();
     const { data: inserted, error: insertError } = await supabase
-      .from('invoices')
+      .from("invoices")
       .insert(invoiceData)
-      .select('id')
+      .select("id")
       .single();
     if (insertError) {
       console.error("Error inserting invoice:", insertError);
@@ -316,20 +452,23 @@ async function upsertInvoiceAndPayment(args) {
     inv = inserted;
   }
   if (invoice.lines?.data?.length) {
-    for (const line of invoice.lines.data){
+    for (const line of invoice.lines.data) {
       const unitAmount = line.price?.unit_amount ?? line.amount ?? 0;
       const amount = line.amount ?? unitAmount * (line.quantity ?? 1);
-      await supabase.from('invoice_items').upsert({
-        id: `${inv.id}-${line.id}`,
-        invoiceId: inv.id,
-        planId: null,
-        description: line.description ?? undefined,
-        quantity: line.quantity ?? 1,
-        unitAmount: unitAmount ?? 0,
-        amount: amount ?? 0
-      }, {
-        onConflict: 'id'
-      });
+      await supabase.from("invoice_items").upsert(
+        {
+          id: `${inv.id}-${line.id}`,
+          invoiceId: inv.id,
+          planId: null,
+          description: line.description ?? undefined,
+          quantity: line.quantity ?? 1,
+          unitAmount: unitAmount ?? 0,
+          amount: amount ?? 0,
+        },
+        {
+          onConflict: "id",
+        }
+      );
     }
   }
   const pi = invoice.payment_intent;
@@ -339,16 +478,17 @@ async function upsertInvoiceAndPayment(args) {
     // Use providerChargeId if available, otherwise use payment_intent id
     const providerChargeId = charge?.id || pi.id;
     const { data: existingPayment } = await supabase
-      .from('payments')
-      .select('id')
-      .eq('invoiceId', inv.id)
-      .eq('provider', 'STRIPE')
-      .eq('providerChargeId', providerChargeId || '')
+      .from("payments")
+      .select("id")
+      .eq("invoiceId", inv.id)
+      .eq("provider", "STRIPE")
+      .eq("providerChargeId", providerChargeId || "")
       .maybeSingle();
-    
+
     if (!existingPayment) {
-      // Insert new payment
-      await supabase.from('payments').insert({
+      // Insert new payment (ensure primary key id is set)
+      await supabase.from("payments").insert({
+        id: crypto.randomUUID(),
         userId: userId,
         invoiceId: inv.id,
         currency,
@@ -356,227 +496,252 @@ async function upsertInvoiceAndPayment(args) {
         status: mapPaymentStatus(pi.status),
         provider: "STRIPE",
         providerChargeId: providerChargeId ?? undefined,
-        receiptUrl: charge && typeof charge.receipt_url === "string" ? charge.receipt_url : undefined
+        receiptUrl:
+          charge && typeof charge.receipt_url === "string"
+            ? charge.receipt_url
+            : undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     } else if (existingPayment) {
       // Update existing payment status if it changed
       await supabase
-        .from('payments')
+        .from("payments")
         .update({
           status: mapPaymentStatus(pi.status),
           amount: pi.amount_received ?? pi.amount ?? 0,
-          receiptUrl: charge && typeof charge.receipt_url === "string" ? charge.receipt_url : undefined,
-          updatedAt: new Date().toISOString()
+          receiptUrl:
+            charge && typeof charge.receipt_url === "string"
+              ? charge.receipt_url
+              : undefined,
+          updatedAt: new Date().toISOString(),
         })
-        .eq('id', existingPayment.id);
+        .eq("id", existingPayment.id);
     }
   }
 }
-console.log('Stripe Webhook Function booted!');
-Deno.serve(async (request)=>{
+console.log("Stripe Webhook Function booted!");
+Deno.serve(async (request) => {
   // Get the signature header (Stripe sends it as lowercase 'stripe-signature')
-  const signature = request.headers.get('stripe-signature') || request.headers.get('Stripe-Signature');
-  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+  const signature =
+    request.headers.get("stripe-signature") ||
+    request.headers.get("Stripe-Signature");
+  const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
   if (!webhookSecret) {
-    console.error('Missing STRIPE_WEBHOOK_SECRET');
-    return new Response(JSON.stringify({
-      error: "Missing STRIPE_WEBHOOK_SECRET"
-    }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json"
+    console.error("Missing STRIPE_WEBHOOK_SECRET");
+    return new Response(
+      JSON.stringify({
+        error: "Missing STRIPE_WEBHOOK_SECRET",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
   if (!signature) {
-    console.error('Missing stripe-signature header');
-    return new Response(JSON.stringify({
-      error: "Missing stripe-signature header"
-    }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json"
+    console.error("Missing stripe-signature header");
+    return new Response(
+      JSON.stringify({
+        error: "Missing stripe-signature header",
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
-  
+
   // CRITICAL: Read the raw body as ArrayBuffer first to preserve exact bytes
   // This is required for Stripe signature verification
   const rawBody = await request.arrayBuffer();
   const body = new TextDecoder().decode(rawBody);
-  
+
   let receivedEvent;
   try {
     // Use constructEventAsync with the raw body string and crypto provider
     receivedEvent = await stripe.webhooks.constructEventAsync(
-      body, 
-      signature, 
-      webhookSecret, 
-      undefined, 
+      body,
+      signature,
+      webhookSecret,
+      undefined,
       cryptoProvider
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid signature";
     console.error("Webhook signature verification failed:", message);
     console.error("Error details:", err);
-    return new Response(JSON.stringify({
-      error: message
-    }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json"
+    return new Response(
+      JSON.stringify({
+        error: message,
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
   console.log("Webhook event received:", {
     type: receivedEvent.type,
     id: receivedEvent.id,
-    created: new Date(receivedEvent.created * 1000).toISOString()
+    created: new Date(receivedEvent.created * 1000).toISOString(),
   });
   try {
-    switch(receivedEvent.type){
-      case "checkout.session.completed":
-        {
-          const session = receivedEvent.data.object;
-          const userId = session.metadata?.userId ?? "";
-          console.log("checkout.session.completed:", {
-            sessionId: session.id,
-            userId,
-            subscriptionId: session.subscription
-          });
-          if (!userId) {
-            console.warn("No userId in metadata");
-            break;
-          }
-          const subId = session.subscription ?? undefined;
-          if (!subId) break;
-          let subscription = await stripe.subscriptions.retrieve(subId);
-          
-          // Ensure subscription has metadata
-          if (!subscription.metadata?.userId) {
-            await stripe.subscriptions.update(subId, {
-              metadata: {
-                userId,
-                planType: session.metadata?.planType ?? ''
-              }
-            });
-            // Re-fetch subscription with updated metadata
-            subscription = await stripe.subscriptions.retrieve(subId);
-          }
-          
-          const price = subscription.items.data[0]?.price ?? null;
-          const planTypeMeta = session.metadata?.planType ?? null;
-          const userSubscriptionId = await ensureUserSubscription({
-            userId,
-            subscription,
-            price,
-            planTypeMeta
-          });
-          console.log("User subscription created/updated:", {
-            userSubscriptionId,
-            userId
-          });
-          if (session.invoice) {
-            const invoice = await stripe.invoices.retrieve(session.invoice);
-            if (userSubscriptionId) {
-              await upsertInvoiceAndPayment({
-                invoice,
-                userId,
-                subscriptionId: userSubscriptionId
-              });
-            }
-          }
+    switch (receivedEvent.type) {
+      case "checkout.session.completed": {
+        const session = receivedEvent.data.object;
+        const userId = session.metadata?.userId ?? "";
+        console.log("checkout.session.completed:", {
+          sessionId: session.id,
+          userId,
+          subscriptionId: session.subscription,
+        });
+        if (!userId) {
+          console.warn("No userId in metadata");
           break;
         }
+        const subId = session.subscription ?? undefined;
+        if (!subId) break;
+        let subscription = await stripe.subscriptions.retrieve(subId);
+
+        // Ensure subscription has metadata
+        if (!subscription.metadata?.userId) {
+          await stripe.subscriptions.update(subId, {
+            metadata: {
+              userId,
+              planType: session.metadata?.planType ?? "",
+            },
+          });
+          // Re-fetch subscription with updated metadata
+          subscription = await stripe.subscriptions.retrieve(subId);
+        }
+
+        const price = subscription.items.data[0]?.price ?? null;
+        const planTypeMeta = session.metadata?.planType ?? null;
+        const userSubscriptionId = await ensureUserSubscription({
+          userId,
+          subscription,
+          price,
+          planTypeMeta,
+        });
+        console.log("User subscription created/updated:", {
+          userSubscriptionId,
+          userId,
+        });
+        if (session.invoice) {
+          const invoice = await stripe.invoices.retrieve(session.invoice);
+          if (userSubscriptionId) {
+            await upsertInvoiceAndPayment({
+              invoice,
+              userId,
+              subscriptionId: userSubscriptionId,
+            });
+          }
+        }
+        break;
+      }
       case "invoice.payment_succeeded":
       case "invoice.payment_failed":
       case "invoice.paid":
       case "invoice_payment.paid":
       case "invoice.finalized":
       case "invoice.voided":
-      case "invoice.marked_uncollectible":
-        {
-          const invoice = receivedEvent.data.object;
-          // Get userId from invoice metadata first, then from subscription metadata
-          let userId = invoice.metadata?.userId;
-          let subscription = null;
-          if (invoice.subscription) {
-            subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-            // If userId not in invoice metadata, get it from subscription metadata
-            if (!userId) {
-              userId = subscription.metadata?.userId;
-            }
-          }
-          // If still no userId, try to find it from existing subscription in database
-          if (!userId && invoice.subscription) {
-            const { data: existingSub } = await supabase
-              .from('user_subscriptions')
-              .select('userId')
-              .eq('stripeSubscriptionId', invoice.subscription)
-              .maybeSingle();
-            if (existingSub) {
-              userId = existingSub.userId;
-            }
-          }
+      case "invoice.marked_uncollectible": {
+        const invoice = receivedEvent.data.object;
+        // Get userId from invoice metadata first, then from subscription metadata
+        let userId = invoice.metadata?.userId;
+        let subscription = null;
+        if (invoice.subscription) {
+          subscription = await stripe.subscriptions.retrieve(
+            invoice.subscription
+          );
+          // If userId not in invoice metadata, get it from subscription metadata
           if (!userId) {
-            console.warn("No userId found in invoice or subscription metadata");
-            break;
+            userId = subscription.metadata?.userId;
           }
-          if (subscription) {
-            const price = subscription.items.data[0]?.price ?? null;
-            const userSubscriptionId = await ensureUserSubscription({
-              userId,
-              subscription,
-              price,
-              planTypeMeta: null
-            });
-            if (userSubscriptionId) {
-              await upsertInvoiceAndPayment({
-                invoice,
-                userId,
-                subscriptionId: userSubscriptionId
-              });
-            }
+        }
+        // If still no userId, try to find it from existing subscription in database
+        if (!userId && invoice.subscription) {
+          const { data: existingSub } = await supabase
+            .from("user_subscriptions")
+            .select("userId")
+            .eq("stripeSubscriptionId", invoice.subscription)
+            .maybeSingle();
+          if (existingSub) {
+            userId = existingSub.userId;
           }
+        }
+        if (!userId) {
+          console.warn("No userId found in invoice or subscription metadata");
           break;
         }
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted":
-        {
-          const subscription = receivedEvent.data.object;
-          const userId = subscription.metadata?.userId ?? "";
-          if (!userId) break;
+        if (subscription) {
           const price = subscription.items.data[0]?.price ?? null;
-          await ensureUserSubscription({
+          const userSubscriptionId = await ensureUserSubscription({
             userId,
             subscription,
             price,
-            planTypeMeta: null
+            planTypeMeta: null,
           });
-          break;
+          if (userSubscriptionId) {
+            await upsertInvoiceAndPayment({
+              invoice,
+              userId,
+              subscriptionId: userSubscriptionId,
+            });
+          }
         }
+        break;
+      }
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        const subscription = receivedEvent.data.object;
+        const userId = subscription.metadata?.userId ?? "";
+        if (!userId) break;
+        const price = subscription.items.data[0]?.price ?? null;
+        await ensureUserSubscription({
+          userId,
+          subscription,
+          price,
+          planTypeMeta: null,
+        });
+        break;
+      }
       default:
         console.log(`Unhandled event type: ${receivedEvent.type}`);
         break;
     }
-    return new Response(JSON.stringify({
-      received: true
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json"
+    return new Response(
+      JSON.stringify({
+        received: true,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   } catch (err) {
     console.error("Stripe webhook error:", err);
-    const message = err instanceof Error ? err.message : "Webhook handler failed";
-    return new Response(JSON.stringify({
-      error: message
-    }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json"
+    const message =
+      err instanceof Error ? err.message : "Webhook handler failed";
+    return new Response(
+      JSON.stringify({
+        error: message,
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
 });

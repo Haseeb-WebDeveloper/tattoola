@@ -9,12 +9,12 @@ export function initializeDeepLinking() {
   // Ensure we only handle the initial URL once (to avoid unwanted redirects
   // when the app returns to foreground, e.g. after picking media).
   let hasHandledInitialUrl = false;
-  
+
   // Track processed URLs to prevent double processing
   // Use code parameter as key since that's what matters for PKCE flow
   const processedCodes = new Set<string>();
   const processedUrls = new Set<string>();
-  
+
   // Track navigation state to prevent multiple navigations
   let isNavigatingToResetPassword = false;
 
@@ -22,13 +22,16 @@ export function initializeDeepLinking() {
   const handleDeepLink = async (url: string) => {
     try {
       const urlObj = new URL(url);
-      
+
       // Normalize URL for tracking (remove hash, keep pathname and search)
       const normalizedUrl = `${urlObj.origin}${urlObj.pathname}${urlObj.search}`;
-      
+
       // Check if we've already processed this exact URL
       if (processedUrls.has(normalizedUrl)) {
-        logger.log("Deep link: URL already processed, skipping duplicate:", normalizedUrl);
+        logger.log(
+          "Deep link: URL already processed, skipping duplicate:",
+          normalizedUrl
+        );
         return;
       }
 
@@ -37,20 +40,22 @@ export function initializeDeepLinking() {
       if (code) {
         // Check if we've already processed this code
         if (processedCodes.has(code)) {
-          logger.log("Deep link: Code already processed, skipping duplicate code exchange");
+          logger.log(
+            "Deep link: Code already processed, skipping duplicate code exchange"
+          );
           return;
         }
-        
+
         // Mark code as being processed
         processedCodes.add(code);
         processedUrls.add(normalizedUrl);
-        
+
         try {
           // Check if this is a password reset flow by examining the URL
           // Handle various URL formats: tattoola://reset-password, tattoola://(auth)/reset-password, etc.
           const urlLower = url.toLowerCase();
-          const isPasswordReset = 
-            urlLower.includes("reset-password") || 
+          const isPasswordReset =
+            urlLower.includes("reset-password") ||
             urlLower.includes("reset_password") ||
             urlObj.pathname.toLowerCase().includes("reset-password") ||
             urlObj.pathname.toLowerCase().includes("reset_password");
@@ -98,12 +103,16 @@ export function initializeDeepLinking() {
           if (isPasswordReset) {
             // Prevent multiple navigations to reset-password screen
             if (isNavigatingToResetPassword) {
-              logger.log("Deep link: Already navigating to reset-password, skipping duplicate navigation");
+              logger.log(
+                "Deep link: Already navigating to reset-password, skipping duplicate navigation"
+              );
               return;
             }
-            
+
             isNavigatingToResetPassword = true;
-            logger.log("Deep link: Password reset flow detected, routing to reset-password screen");
+            logger.log(
+              "Deep link: Password reset flow detected, routing to reset-password screen"
+            );
             // Small delay to allow auth state to settle before navigation
             setTimeout(() => {
               router.replace("/(auth)/reset-password");
@@ -154,8 +163,8 @@ export function initializeDeepLinking() {
           logger.error("Deep link: exception during code exchange:", error);
           // Check if this was a password reset flow
           const urlLower = url.toLowerCase();
-          const isPasswordReset = 
-            urlLower.includes("reset-password") || 
+          const isPasswordReset =
+            urlLower.includes("reset-password") ||
             urlLower.includes("reset_password") ||
             urlObj.pathname.toLowerCase().includes("reset-password") ||
             urlObj.pathname.toLowerCase().includes("reset_password");
@@ -292,61 +301,199 @@ export function initializeDeepLinking() {
       }
 
       // Case 3.5: Payment success/cancel links
-      // if (url.includes("payment/success") || url.includes("payment/cancel")) {
-      //   const sessionId = urlObj.searchParams.get("session_id");
-      //   const isSuccess = url.includes("payment/success");
+      if (url.includes("payment/success") || url.includes("payment/cancel")) {
+        const sessionId = urlObj.searchParams.get("session_id");
+        const isSuccess = url.includes("payment/success");
 
-      //   logger.log(
-      //     `Deep link: Payment ${isSuccess ? "success" : "cancel"}`,
-      //     sessionId ? `Session ID: ${sessionId}` : "No session ID"
-      //   );
+        logger.log(
+          `🎯 Deep link: Payment ${isSuccess ? "SUCCESS" : "CANCELLED"}`,
+          sessionId ? `Session ID: ${sessionId}` : "No session ID"
+        );
 
-      //   // Get user session to check if authenticated
-      //   const { data: sessionData } = await supabase.auth.getSession();
+        // Get user session to check if authenticated
+        const { data: sessionData } = await supabase.auth.getSession();
 
-      //   if (isSuccess) {
-      //     // Payment successful - navigate to appropriate screen
-      //     if (sessionData?.session?.user) {
-      //       // Check if user has completed profile
-      //       const authUser: any = sessionData.session.user;
-      //       const { data: existingUser } = await supabase
-      //         .from("users")
-      //         .select("id, firstName")
-      //         .eq("id", authUser.id)
-      //         .maybeSingle();
+        if (isSuccess && sessionData?.session?.user) {
+          // Payment successful and user authenticated
+          const authUser: any = sessionData.session.user;
+          logger.log("✅ User authenticated, proceeding with profile creation");
 
-      //       const hasCompletedProfile = !!(existingUser && existingUser.firstName);
+          // Check if user has completed profile
+          const { data: existingUser } = await supabase
+            .from("users")
+            .select("id, firstName")
+            .eq("id", authUser.id)
+            .maybeSingle();
 
-      //       // Small delay to allow any webhook processing
-      //       setTimeout(() => {
-      //         if (hasCompletedProfile) {
-      //           // User has profile - go to home
-      //           router.replace("/(tabs)");
-      //         } else {
-      //           // User doesn't have profile - likely completing registration
-      //           // Stay on current screen or navigate to next registration step
-      //           // The webhook will handle subscription creation
-      //           router.replace("/(auth)/artist-registration/checkout" as any);
-      //         }
-      //       }, 500);
-      //     } else {
-      //       // Not authenticated - redirect to login
-      //       router.replace("/(auth)/login");
-      //     }
-      //   } else {
-      //     // Payment cancelled - stay on checkout screen or go back
-      //     // The user is already on the checkout screen, so we can just show a message
-      //     // or navigate back if needed
-      //     if (sessionData?.session?.user) {
-      //       router.replace("/(auth)/artist-registration/checkout" as any);
-      //     } else {
-      //       router.replace("/(auth)/login");
-      //     }
-      //   }
-      //   return;
-      // }
+          const hasCompletedProfile = !!(
+            existingUser && existingUser.firstName
+          );
+
+          if (hasCompletedProfile) {
+            // User already has profile - go to home
+            logger.log("✅ Profile already exists, redirecting to home");
+            router.replace("/(tabs)");
+            return;
+          }
+
+          // User doesn't have profile - complete artist registration after payment
+          logger.log("📝 No profile found, starting profile creation");
+
+          try {
+            // Import the store and services dynamically
+            const { useArtistRegistrationV2Store } = await import(
+              "@/stores/artistRegistrationV2Store"
+            );
+            const { AuthService } = await import("@/services/auth.service");
+            const { WorkArrangement } = await import("@/types/auth");
+
+            const store = useArtistRegistrationV2Store.getState();
+            const {
+              step3,
+              step4,
+              step5,
+              step7,
+              step8,
+              step9,
+              step10,
+              step11,
+              step12: step12State,
+            } = store;
+
+            // Check if we have registration data
+            if (!step3.firstName) {
+              logger.warn("❌ No registration data found in store");
+              router.replace("/(auth)/artist-registration/step-3");
+              return;
+            }
+
+            logger.log("📋 Building registration data from store");
+            const registrationData = {
+              step3: {
+                firstName: step3.firstName || "",
+                lastName: step3.lastName || "",
+                avatar: step3.avatar || "",
+              },
+              step4: {
+                workArrangement:
+                  step4.workArrangement || WorkArrangement.FREELANCE,
+              },
+              step5: {
+                studioName: step5.studioName || "",
+                province: step5.province || "",
+                provinceId: step5.provinceId || "",
+                municipalityId: step5.municipalityId || "",
+                municipality: step5.municipality || "",
+                studioAddress: step5.studioAddress || "",
+                website: step5.website || "",
+                phone: step5.phone || "",
+              },
+              step6: {
+                certificateUrl: step4.certificateUrl || "",
+              },
+              step7: {
+                bio: step7.bio || "",
+                instagram: step7.instagram || "",
+                tiktok: step7.tiktok || "",
+              },
+              step8: {
+                styles: step8.styles || [],
+                favoriteStyles: step8.favoriteStyles || [],
+              },
+              step9: {
+                servicesOffered: step9.servicesOffered || [],
+              },
+              step10: {
+                bodyParts: step10.bodyParts || [],
+              },
+              step11: {
+                minimumPrice: step11.minimumPrice || 0,
+                hourlyRate: step11.hourlyRate || 0,
+              },
+              step12: {
+                projects: (step12State.projects || []).map((project, index) => {
+                  let stylesArray: string[] = [];
+                  if (project.associatedStyles) {
+                    if (Array.isArray(project.associatedStyles)) {
+                      stylesArray = project.associatedStyles.filter(
+                        (s) => s && typeof s === "string"
+                      );
+                    } else if (typeof project.associatedStyles === "string") {
+                      stylesArray = [project.associatedStyles];
+                    }
+                  }
+                  return {
+                    title: project.title,
+                    description: project.description,
+                    photos: project.photos || [],
+                    videos: project.videos || [],
+                    associatedStyles: stylesArray,
+                    order: index + 1,
+                  };
+                }),
+              },
+              step13: {
+                selectedPlanId: "",
+                billingCycle: "MONTHLY" as "MONTHLY" | "YEARLY",
+              },
+            };
+
+            logger.log("🚀 Calling completeArtistRegistration");
+
+            // Complete artist registration - NO subscription check anymore
+            const user =
+              await AuthService.completeArtistRegistration(registrationData);
+
+            logger.log("✅ Profile created successfully:", user.id);
+
+            // Clear registration store
+            store.reset();
+
+            // Redirect to profile
+            logger.log("📍 Redirecting to profile");
+            router.replace("/(tabs)/profile");
+          } catch (error: any) {
+            logger.error("❌ Profile creation failed:", error);
+
+            // Handle duplicate profile error
+            if (
+              error.message?.includes("duplicate") ||
+              error.message?.includes("already exists")
+            ) {
+              logger.log("✅ Profile already exists, redirecting to home");
+              router.replace("/(tabs)/profile");
+              return;
+            }
+
+            // For other errors, redirect to step-3
+            logger.log("❌ Unknown error, redirecting to step-3");
+            router.replace("/(auth)/artist-registration/step-3");
+          }
+        } else if (!sessionData?.session?.user) {
+          // Not authenticated - redirect to login
+          logger.log("❌ User not authenticated after payment");
+          router.replace("/(auth)/login");
+        } else {
+          // Payment cancelled - redirect to checkout
+          logger.log("⚠️ Payment cancelled");
+          const authUser: any = sessionData.session.user;
+          const { data: existingUser } = await supabase
+            .from("users")
+            .select("id, firstName")
+            .eq("id", authUser.id)
+            .maybeSingle();
+
+          if (existingUser?.firstName) {
+            router.replace("/(tabs)");
+          } else {
+            router.replace("/(auth)/artist-registration/checkout" as any);
+          }
+        }
+        return;
+      }
 
       // Case 4: Just opened via deep link (no code/token) - check if user has session
+
       const { data: sessionData } = await supabase.auth.getSession();
 
       if (sessionData?.session?.user) {
@@ -379,8 +526,6 @@ export function initializeDeepLinking() {
       }
     } catch (e) {
       logger.error("Deep link: error handling deep link:", e);
-    } finally {
-      // no-op
     }
   };
 
@@ -397,10 +542,13 @@ export function initializeDeepLinking() {
     try {
       const urlObj = new URL(url);
       normalizedUrl = `${urlObj.origin}${urlObj.pathname}${urlObj.search}`;
-      
+
       // Check if already processed BEFORE calling handleDeepLink
       if (processedUrls.has(normalizedUrl)) {
-        logger.log("Deep link: URL already processed in event listener, skipping:", normalizedUrl);
+        logger.log(
+          "Deep link: URL already processed in event listener, skipping:",
+          normalizedUrl
+        );
         return;
       }
     } catch (e) {
@@ -412,10 +560,12 @@ export function initializeDeepLinking() {
     // This prevents the event listener from processing the same URL twice
     Linking.getInitialURL().then((initialUrl) => {
       if (initialUrl === url && hasHandledInitialUrl) {
-        logger.log("Deep link: URL event matches initial URL that was already handled, skipping");
+        logger.log(
+          "Deep link: URL event matches initial URL that was already handled, skipping"
+        );
         return;
       }
-      
+
       // Process the URL
       handleDeepLink(url).catch((error) => {
         logger.error("Error in handleDeepLink:", error);

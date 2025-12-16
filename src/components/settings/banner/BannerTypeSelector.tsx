@@ -19,16 +19,20 @@ export function BannerTypeSelector({
   bannerMedia,
   isEditMode,
 }: BannerTypeSelectorProps) {
-  const videoMedia = bannerMedia.length > 0 && bannerMedia[0] ? bannerMedia[0] : null;
+  const videoMedia =
+    bannerMedia.length > 0 && bannerMedia[0] ? bannerMedia[0] : null;
   const shouldUseVideo = videoMedia && selectedType === "1_VIDEO";
   // Always call hook at top level
-  const videoPlayer = useVideoPlayer(shouldUseVideo ? videoMedia.mediaUrl : '', (player) => {
-    if (shouldUseVideo) {
-      player.loop = true;
-      player.muted = true;
-      player.play();
+  const videoPlayer = useVideoPlayer(
+    shouldUseVideo ? videoMedia.mediaUrl : "",
+    (player) => {
+      if (shouldUseVideo) {
+        player.loop = true;
+        player.muted = true;
+        player.play();
+      }
     }
-  });
+  );
 
   return (
     <View style={{ marginBottom: mvs(32), paddingHorizontal: s(16) }}>
@@ -107,7 +111,7 @@ export function BannerTypeSelector({
                   style={{
                     width: `${100 / 4}%`,
                     height: s(80),
-                    backgroundColor: 'rgba(156,163,175,0.3)',
+                    backgroundColor: "rgba(156,163,175,0.3)",
                     borderRadius: s(8),
                   }}
                 />
@@ -248,4 +252,3 @@ export function BannerTypeSelector({
     </View>
   );
 }
-

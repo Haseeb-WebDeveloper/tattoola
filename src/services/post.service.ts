@@ -43,6 +43,7 @@ export type PostDetail = {
   isFollowingAuthor: boolean;
   likes: {
     id: string;
+    userId: string;
     username: string;
     avatar?: string;
   }[];
@@ -344,6 +345,7 @@ export async function fetchPostDetails(
 
   const likes = (likesData || []).map((like: any) => ({
     id: like.id,
+    userId: like.users.id,
     username: like.users.username,
     avatar: like.users.avatar,
   }));

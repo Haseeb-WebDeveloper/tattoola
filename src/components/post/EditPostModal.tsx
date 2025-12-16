@@ -1,15 +1,12 @@
-import { ScaledText } from "@/components/ui/ScaledText";
 import StyleInfoModal from "@/components/shared/StyleInfoModal";
+import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { createCollection } from "@/services/collection.service";
 import { fetchTattooStyles, TattooStyleItem } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
-import { LinearGradient } from "expo-linear-gradient";
-import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Dimensions,
   Image,
   Modal,
   Pressable,
@@ -18,60 +15,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
-// Component to display post media (image or video)
-function PostMediaDisplay({
-  media,
-}: {
-  media: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO" };
-}) {
-  const videoPlayer =
-    media.mediaType === "VIDEO"
-      ? useVideoPlayer(media.mediaUrl, (player) => {
-          player.loop = true;
-          player.muted = false;
-          // Auto-play video
-          setTimeout(() => {
-            player.play();
-          }, 100);
-        })
-      : null;
-
-  return (
-    <View
-      style={{
-        width: "100%",
-        height: screenHeight * 0.35,
-        borderBottomLeftRadius: s(32),
-        borderBottomRightRadius: s(32),
-        overflow: "hidden",
-      }}
-    >
-      {media.mediaType === "IMAGE" ? (
-        <Image
-          source={{ uri: media.mediaUrl }}
-          style={{
-            width: "100%",
-            height: "100%",
-            resizeMode: "cover",
-          }}
-        />
-      ) : videoPlayer ? (
-        <VideoView
-          player={videoPlayer}
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-          contentFit="cover"
-          nativeControls={false}
-        />
-      ) : null}
-    </View>
-  );
-}
 
 interface Collection {
   id: string;
@@ -123,7 +66,8 @@ export default function EditPostModal({
     useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [creatingCollection, setCreatingCollection] = useState(false);
-  const [selectedStyleForInfo, setSelectedStyleForInfo] = useState<TattooStyleItem | null>(null);
+  const [selectedStyleForInfo, setSelectedStyleForInfo] =
+    useState<TattooStyleItem | null>(null);
   // Track newly created collections that should be deleted if user doesn't save
   // Track pending collections (created in frontend but not yet saved to database)
   const pendingCollectionsRef = useRef<{ tempId: string; name: string }[]>([]);
@@ -468,39 +412,19 @@ export default function EditPostModal({
 
   const content = (
     <View className="flex-1" style={{ position: "relative" }}>
-      {/* Post Image/Media - Show when bottom sheet, positioned behind header */}
-      {isBottomSheet && post.media && post.media.length > 0 && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1,
-            height: screenHeight * 0.35,
-          }}
-        >
-          <PostMediaDisplay
-            media={
-              post.media[Math.min(currentMediaIndex, post.media.length - 1)]
-            }
-          />
-        </View>
-      )}
-
-      {/* Header - show for both modal and bottom sheet, overlay on image */}
+      {/* Header */}
       <View
         className="flex-row items-center justify-between px-4 pb-4"
         style={{
           paddingTop: isBottomSheet ? s(20) : s(48),
           zIndex: 10,
-          backgroundColor: "transparent",
+          backgroundColor: "#0F0202", // Match form background
           position: "relative",
         }}
       >
         <TouchableOpacity
           onPress={onClose}
-          className="items-center justify-center rounded-full bg-foreground/30"
+          className="items-center justify-center rounded-full bg-background/50"
           style={{
             padding: mvs(10),
           }}
@@ -517,33 +441,13 @@ export default function EditPostModal({
         <View style={{ width: s(35) }} />
       </View>
 
-      {/* Background for form area below image */}
-      {isBottomSheet && (
-        <View
-          style={{
-            position: "absolute",
-            top: screenHeight * 0.35, // Start below image
-            left: 0,
-            right: 0,
-            bottom: 0, // Extend to bottom of screen
-            backgroundColor: "#0F0202", // Background color for form area and below
-            zIndex: 2,
-          }}
-        />
-      )}
-
       {/* Form container with background */}
       <View
         style={{
           zIndex: 3,
-          height: isBottomSheet ? screenHeight * 0.6 : undefined,
           backgroundColor: "#0F0202", // Background color for form area
           flexDirection: "column",
-          position: "absolute",
-          top: isBottomSheet ? screenHeight * 0.35 : 0, // Start below image
-          left: 0,
-          right: 0,
-          bottom: 0,
+          flex: 1,
         }}
       >
         <ScrollView
@@ -879,41 +783,42 @@ export default function EditPostModal({
               </View>
             )}
           </View>
+        </ScrollView>
 
-          {/* Save Button - Fixed at bottom of form area */}
-          <View
+        {/* Save Button - fixed at bottom of screen */}
+        <View
+          style={{
+            backgroundColor: "#0F0202", // Match form background
+            paddingTop: s(12),
+            paddingHorizontal: s(16),
+            paddingBottom: mvs(12),
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={
+              saving ||
+              !hasChanges ||
+              selectedStyleIds.length === 0 ||
+              selectedCollectionIds.length === 0
+            }
+            className="items-center justify-center rounded-full bg-primary"
             style={{
-              backgroundColor: "#0F0202", // Match form background
-              paddingTop: s(16),
-              paddingHorizontal: s(16),
-            }}
-          >
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={
+              paddingVertical: mvs(10.5),
+              opacity:
                 saving ||
                 !hasChanges ||
                 selectedStyleIds.length === 0 ||
                 selectedCollectionIds.length === 0
-              }
-              className="items-center justify-center rounded-full bg-primary"
-              style={{
-                paddingVertical: mvs(10.5),
-                opacity:
-                  saving ||
-                  !hasChanges ||
-                  selectedStyleIds.length === 0 ||
-                  selectedCollectionIds.length === 0
-                    ? 0.5
-                    : 1,
-              }}
-            >
-              <ScaledText variant="md" className="text-white font-neueMedium">
-                {saving ? "Salvataggio..." : "Salva modifiche"}
-              </ScaledText>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+                  ? 0.5
+                  : 1,
+            }}
+          >
+            <ScaledText variant="md" className="text-white font-neueMedium">
+              {saving ? "Salvataggio..." : "Salva modifiche"}
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Create Collection Modal */}
