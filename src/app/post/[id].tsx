@@ -13,6 +13,7 @@ import {
 } from "@/services/post.service";
 import { toggleFollow } from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
+import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -934,10 +935,23 @@ export default function PostDetailScreen() {
               <View className="z-10 flex-row items-center justify-between mb-8">
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() =>
-                    post.author?.id &&
-                    router.push(`/user/${post.author.id}` as any)
-                  }
+                  onPress={() => {
+                    if (!post.author?.id) return;
+                    const a = post.author;
+                    const initialUser: UserSummary = {
+                      id: a.id,
+                      username: a.username,
+                      firstName: a.firstName ?? null,
+                      lastName: a.lastName ?? null,
+                      avatar: a.avatar ?? null,
+                      city: a.municipality ?? null,
+                      province: a.province ?? null,
+                    };
+                    router.push({
+                      pathname: `/user/${a.id}`,
+                      params: { initialUser: JSON.stringify(initialUser) },
+                    } as any);
+                  }}
                   className="flex-row items-center flex-1"
                 >
                   <Image

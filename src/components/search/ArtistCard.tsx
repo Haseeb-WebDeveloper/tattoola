@@ -2,7 +2,8 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { prefetchUserProfile } from "@/services/prefetch.service";
-import type { ArtistSearchResult } from "@/types/search";
+import type { ArtistProfileSummary, ArtistSearchResult } from "@/types/search";
+import { UserRole, UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -18,11 +19,40 @@ function ArtistCard({ artist }: ArtistCardProps) {
   const router = useRouter();
 
   const handlePress = () => {
-    // Start prefetching profile data before navigation for faster load
     prefetchUserProfile(artist.userId).catch(() => {
       // Ignore prefetch errors – navigation should still work
     });
-    router.push(`/user/${artist.userId}`);
+
+    const u = artist.user;
+    const initialUser: UserSummary = {
+      id: artist.userId,
+      username: u.username,
+      firstName: u.firstName ?? null,
+      lastName: u.lastName ?? null,
+      avatar: u.avatar ?? null,
+      role: UserRole.ARTIST,
+      city: artist.location?.municipality ?? null,
+      province: artist.location?.province ?? null,
+    };
+
+    // Pass rich artist data from search for instant profile render
+    const initialArtist: ArtistProfileSummary = {
+      businessName: artist.businessName,
+      yearsExperience: artist.yearsExperience,
+      workArrangement: artist.workArrangement,
+      bio: artist.bio ?? null,
+      location: artist.location,
+      styles: artist.styles,
+      bannerMedia: artist.bannerMedia,
+    };
+
+    router.push({
+      pathname: `/user/${artist.userId}`,
+      params: {
+        initialUser: JSON.stringify(initialUser),
+        initialArtist: JSON.stringify(initialArtist),
+      },
+    } as any);
   };
 
   const displayName =
@@ -97,8 +127,6 @@ function ArtistCard({ artist }: ArtistCardProps) {
       isMounted = false;
     };
   }, [videoUrl, videoPlayer]);
-
-  // artist.isStudioOwner
 
   return (
     <TouchableOpacity

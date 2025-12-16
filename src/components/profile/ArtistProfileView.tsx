@@ -5,6 +5,7 @@ import {
   fetchArtistSelfProfile,
   toggleFollow,
 } from "@/services/profile.service";
+import { prefetchStudioProfile } from "@/services/studio.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { WorkArrangement } from "@/types/auth";
@@ -49,6 +50,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   const [isTogglingFollow, setIsTogglingFollow] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionMessage, setRejectionMessage] = useState<string>("");
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // After initial paint, progressively enhance with full profile data
   useEffect(() => {
@@ -56,15 +58,20 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
     (async () => {
       try {
-        const detailed = await fetchArtistSelfProfile(profileData.user.id, false, {
-          includeCollectionsAndBodyParts: true,
-        });
+        const detailed = await fetchArtistSelfProfile(
+          profileData.user.id,
+          false,
+          {
+            includeCollectionsAndBodyParts: true,
+          }
+        );
 
         if (!cancelled && detailed) {
           setProfileData((prev) => ({
             ...detailed,
             isFollowing: prev.isFollowing,
           }));
+          setIsHydrated(true);
         }
       } catch (err) {
         console.error("Failed to load detailed artist profile:", err);
@@ -241,7 +248,15 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           }
           yearsExperience={profileData?.artistProfile?.yearsExperience}
           onBusinessNamePress={
-            studio ? () => router.push(`/studio/${studio.id}` as any) : undefined
+            studio
+              ? () => {
+                  // Prefetch studio profile before navigation
+                  prefetchStudioProfile(studio.id).catch(() => {
+                    // Ignore prefetch errors
+                  });
+                  router.push(`/studio/${studio.id}` as any);
+                }
+              : undefined
           }
         />
 
@@ -290,8 +305,8 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           </View>
         )}
 
-        {/* Bottom actions - only show if not viewing own profile */}
-        {currentUserId !== profileData.user.id && (
+        {/* Bottom actions - only show if not viewing own profile AND full data is hydrated */}
+        {currentUserId !== profileData.user.id && isHydrated && (
           <View className="px-4 py-3 bg-background">
             <View className="flex-row gap-3">
               <TouchableOpacity

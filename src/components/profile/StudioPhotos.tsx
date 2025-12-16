@@ -1,7 +1,8 @@
 import { StudioPhotoViewer } from "./StudioPhotoViewer";
 import ScaledText from "@/components/ui/ScaledText";
+import { fetchStudioPhotosForProfile } from "@/services/studio.service";
 import { mvs, s } from "@/utils/scale";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 
 interface StudioPhoto {
@@ -13,11 +14,43 @@ interface StudioPhoto {
 interface StudioPhotosProps {
   photos: StudioPhoto[];
   studioName?: string;
+  studioId?: string;
 }
 
-export const StudioPhotos: React.FC<StudioPhotosProps> = ({ photos, studioName }) => {
+export const StudioPhotos: React.FC<StudioPhotosProps> = ({ 
+  photos: initialPhotos, 
+  studioName,
+  studioId 
+}) => {
   const [viewerVisible, setViewerVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [photos, setPhotos] = useState<StudioPhoto[]>(initialPhotos || []);
+  
+  // Lazy load photos if studioId is provided and we don't have photos yet
+  useEffect(() => {
+    let cancelled = false;
+    
+    // Only fetch if we have studioId and no photos yet
+    if (studioId && (!initialPhotos || initialPhotos.length === 0)) {
+      // Delay fetch slightly to allow first paint
+      const timeoutId = setTimeout(() => {
+        fetchStudioPhotosForProfile(studioId)
+          .then((fetchedPhotos) => {
+            if (!cancelled && fetchedPhotos && fetchedPhotos.length > 0) {
+              setPhotos(fetchedPhotos);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to load studio photos:", err);
+          });
+      }, 200); // Small delay to prioritize first paint
+      
+      return () => {
+        cancelled = true;
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [studioId, initialPhotos]);
 
   if (!photos || photos.length === 0) {
     return null;

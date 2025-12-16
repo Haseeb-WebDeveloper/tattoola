@@ -1,4 +1,5 @@
 import { ArtistSelfProfileInterface } from "@/types/artist";
+import { UserSummary, UserRole } from "@/types/auth";
 import { StudioSearchResult } from "@/types/search";
 import {
   getProfileFromCache,
@@ -7,6 +8,8 @@ import {
 } from "@/utils/database";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
+
+const USER_SUMMARY_CACHE_PREFIX = "user-summary-";
 
 // Get current user's primary location for personalized search
 export async function getCurrentUserLocation(): Promise<{
@@ -1129,6 +1132,21 @@ export async function fetchTattooLoverSelfProfile(
     console.error("Failed to cache tattoo lover profile:", err)
   );
 
+  // Also save summary for instant future loads
+  const summary: UserSummary = {
+    id: profileTL.user.id,
+    username: profileTL.user.username,
+    firstName: profileTL.user.firstName ?? null,
+    lastName: profileTL.user.lastName ?? null,
+    avatar: profileTL.user.avatar ?? null,
+    role: UserRole.TATTOO_LOVER,
+    city: profileTL.location?.municipality?.name ?? null,
+    province: profileTL.location?.province?.name ?? null,
+  };
+  saveProfileToCache(`${USER_SUMMARY_CACHE_PREFIX}${userId}`, summary).catch(
+    (err) => console.error("Failed to cache user summary from TL profile:", err)
+  );
+
   return profileTL;
 }
 
@@ -1561,10 +1579,28 @@ export async function fetchArtistProfile(
     followPromise,
   ]);
 
-  return {
+  const result = {
     ...profile,
     isFollowing: isFollowingArtist,
   };
+
+  // Also save summary for instant future loads
+  const summary: UserSummary = {
+    id: profile.user.id,
+    username: profile.user.username,
+    firstName: profile.user.firstName ?? null,
+    lastName: profile.user.lastName ?? null,
+    avatar: profile.user.avatar ?? null,
+    role: UserRole.ARTIST,
+    city: profile.location?.municipality?.name ?? null,
+    province: profile.location?.province?.name ?? null,
+  };
+  saveProfileToCache(`${USER_SUMMARY_CACHE_PREFIX}${userId}`, summary).catch(
+    (err) =>
+      console.error("Failed to cache user summary from artist profile:", err)
+  );
+
+  return result;
 }
 
 /**
@@ -1686,4 +1722,143 @@ export async function fetchStudioForArtistProfile(
     console.error("Error fetching studio for artist profile:", error);
     return null;
   }
+}
+
+/**
+ * Build UserSummary from TattooLoverProfile
+ */
+function buildUserSummaryFromTattooLoverProfile(
+  profile: TattooLoverProfile
+): UserSummary {
+  return {
+    id: profile.user.id,
+    username: profile.user.username,
+    firstName: profile.user.firstName ?? null,
+    lastName: profile.user.lastName ?? null,
+    avatar: profile.user.avatar ?? null,
+    role: UserRole.TATTOO_LOVER,
+    city: profile.location?.municipality?.name ?? null,
+    province: profile.location?.province?.name ?? null,
+  };
+}
+
+/**
+ * Build UserSummary from ArtistProfile
+ */
+function buildUserSummaryFromArtistProfile(
+  profile: ArtistSelfProfileInterface & { isFollowing?: boolean }
+): UserSummary {
+  return {
+    id: profile.user.id,
+    username: profile.user.username,
+    firstName: profile.user.firstName ?? null,
+    lastName: profile.user.lastName ?? null,
+    avatar: profile.user.avatar ?? null,
+    role: UserRole.ARTIST,
+    city: profile.location?.municipality?.name ?? null,
+    province: profile.location?.province?.name ?? null,
+  };
+}
+
+/**
+ * Fetch minimal user summary for instant first paint
+ */
+export async function fetchUserSummary(
+  userId: string
+): Promise<UserSummary | null> {
+  try {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("id, username, firstName, lastName, avatar, role")
+      .eq("id", userId)
+      .single();
+
+    if (error || !user) return null;
+
+    // Fetch location and banner in parallel for faster summary
+    const [locationResult, artistProfileResult] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          province:provinces(name),
+          municipality:municipalities(name)
+        `)
+        .eq("userId", userId)
+        .eq("isPrimary", true)
+        .maybeSingle(),
+      // For artists, fetch minimal banner (1-2 items) for instant display
+      user.role === "ARTIST"
+        ? supabase
+            .from("artist_profiles")
+            .select("id")
+            .eq("userId", userId)
+            .single()
+            .then(({ data: ap }) => {
+              if (!ap) return null;
+              return supabase
+                .from("artist_banner_media")
+                .select("mediaUrl, mediaType, order")
+                .eq("artistId", ap.id)
+                .order("order", { ascending: true })
+                .limit(2);
+            })
+        : Promise.resolve(null),
+    ]);
+
+    const location = locationResult.data;
+    const bannerData = artistProfileResult?.data;
+
+    return {
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
+      avatar: user.avatar ?? null,
+      role: user.role as UserRole,
+      city: (location?.municipality as any)?.name ?? null,
+      province: (location?.province as any)?.name ?? null,
+    };
+  } catch (e) {
+    console.error("Error in fetchUserSummary:", e);
+    return null;
+  }
+}
+
+/**
+ * Cached wrapper for user summary
+ */
+export async function fetchUserSummaryCached(
+  userId: string,
+  forceRefresh = false
+): Promise<UserSummary | null> {
+  const cacheKey = `${USER_SUMMARY_CACHE_PREFIX}${userId}`;
+
+  if (!forceRefresh) {
+    try {
+      const cached = await getProfileFromCache(cacheKey);
+      if (cached) {
+        shouldRefreshCache(cacheKey).then((should) => {
+          if (should) {
+            fetchUserSummaryCached(userId, true).catch((err) =>
+              console.error(
+                "Background user summary cache refresh failed:",
+                err
+              )
+            );
+          }
+        });
+        return cached as UserSummary;
+      }
+    } catch (err) {
+      console.error("Error reading user summary cache:", err);
+    }
+  }
+
+  const summary = await fetchUserSummary(userId);
+  if (summary) {
+    saveProfileToCache(cacheKey, summary).catch((err) =>
+      console.error("Failed to cache user summary:", err)
+    );
+  }
+  return summary;
 }

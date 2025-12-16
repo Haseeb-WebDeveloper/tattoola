@@ -7,6 +7,7 @@ import { prefetchUserProfile } from "@/services/prefetch.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
+import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -288,15 +289,26 @@ export default function HomeScreen() {
       {currentPost && !isCurrentBanner && (
         <FeedPostOverlay
           post={currentPost}
-          onAuthorPress={() =>
-            {
-              // Prefetch author profile before navigating from overlay
-              prefetchUserProfile(currentPost.author.id).catch(() => {
-                // Ignore prefetch errors
-              });
-              router.push(`/user/${currentPost.author.id}` as any);
-            }
-          }
+          onAuthorPress={() => {
+            const author = currentPost.author;
+            const initialUser: UserSummary = {
+              id: author.id,
+              username: author.username,
+              firstName: author.firstName ?? null,
+              lastName: author.lastName ?? null,
+              avatar: author.avatar ?? null,
+            };
+
+            prefetchUserProfile(author.id).catch(() => {
+              // Ignore prefetch errors
+            });
+            router.push({
+              pathname: `/user/${author.id}`,
+              params: {
+                initialUser: JSON.stringify(initialUser),
+              },
+            } as any);
+          }}
           onLikePress={() => {
             console.log("onLikePress", currentPost.id, user?.id);
             if (!user?.id) {

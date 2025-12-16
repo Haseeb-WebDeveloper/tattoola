@@ -9,8 +9,18 @@ import {
   StudioSetupStep8,
 } from "@/stores/studioSetupStore";
 import { StudioInfo } from "@/types/studio";
+import { StudioSummary } from "@/types/search";
 import { generateUUID } from "@/utils/randomUUIDValue";
+import {
+  getProfileFromCache,
+  saveProfileToCache,
+  shouldRefreshCache,
+} from "@/utils/database";
 import { supabase } from "@/utils/supabase";
+
+const STUDIO_CACHE_PREFIX = "studio-";
+const STUDIO_MEMBERS_CACHE_PREFIX = "studio-members-";
+const STUDIO_SUMMARY_CACHE_PREFIX = "studio-summary-";
 
 /**
  * Fetch studio information for an artist user
@@ -870,7 +880,6 @@ export async function updateStudioFAQs(
  */
 export async function fetchStudioPublicProfile(studioId: string) {
   try {
-    
     // Get studio basic info
     const { data: studio, error: studioError } = await supabase
       .from('studios')
@@ -960,152 +969,6 @@ export async function fetchStudioPublicProfile(studioId: string) {
       .eq('studioId', studioId)
       .order('order');
 
-    // Get connected artists (studio members)
-    const { data: members } = await supabase
-      .from('studio_members')
-      .select(`
-        artistId,
-        role,
-        artist:artist_profiles!studio_members_artistId_fkey(
-          id,
-          userId,
-          bio,
-          experienceYears,
-          businessName,
-          studioAddress,
-          user:users!artist_profiles_userId_fkey(
-            id,
-            firstName,
-            lastName,
-            avatar
-          )
-        )
-      `)
-      .eq('studioId', studioId);
-
-    // For each artist, get their location, styles, and studio info
-    const artistsWithDetails = await Promise.all(
-      (members || []).map(async (member: any) => {
-        if (!member.artist) return null;
-
-        const userId = member.artist.user?.id;
-        if (!userId) return null;
-
-        // Get artist location (for province/municipality)
-        const { data: location } = await supabase
-          .from('artist_locations')
-          .select(`
-            locationId,
-            location:locations(
-              id,
-              municipality:municipalities(name),
-              province:provinces(name)
-            )
-          `)
-          .eq('artistId', member.artist.id)
-          .single();
-
-        // Get artist styles
-        const { data: artistStyles } = await supabase
-          .from('artist_styles')
-          .select(`
-            styleId,
-            style:tattoo_styles(id, name, imageUrl)
-          `)
-          .eq('artistId', member.artist.id)
-          .limit(2);
-
-        // Use businessName and studioAddress from artist profile first
-        let businessName = member.artist.businessName;
-        let studioAddress = member.artist.studioAddress;
-        let ownedStudio = null;
-        
-        // Only query studio if businessName is missing
-        if (!businessName) {
-          const { data: ownedStudioData } = await supabase
-            .from('studios')
-            .select('id, name')
-            .eq('ownerId', member.artist.id)
-            .maybeSingle();
-          ownedStudio = ownedStudioData;
-          if (ownedStudio?.name) {
-            businessName = ownedStudio.name;
-          }
-        } else {
-          // Still check if artist owns a studio for ownedStudio field
-          const { data: ownedStudioData } = await supabase
-            .from('studios')
-            .select('id, name')
-            .eq('ownerId', member.artist.id)
-            .maybeSingle();
-          ownedStudio = ownedStudioData;
-        }
-
-        // Fallback: If studioAddress is missing, query studio membership for address
-        if (!studioAddress && userId) {
-          const { data: studioMembership } = await supabase
-            .from('studio_members')
-            .select(`
-              studio:studios(
-                id,
-                locations:studio_locations(
-                  address,
-                  isPrimary
-                )
-              )
-            `)
-            .eq('userId', userId)
-            .eq('status', 'ACCEPTED')
-            .eq('isActive', true)
-            .maybeSingle();
-
-          if (studioMembership?.studio) {
-            const studio = studioMembership.studio as any;
-            if (studio.locations) {
-              const primaryStudioLocation = studio.locations.find(
-                (loc: any) => loc.isPrimary
-              );
-              if (primaryStudioLocation?.address) {
-                studioAddress = primaryStudioLocation.address;
-              }
-            }
-          }
-        }
-
-        // Get artist banner
-        const { data: artistBanner } = await supabase
-          .from('artist_banner_media')
-          .select('mediaUrl, mediaType, order')
-          .eq('artistId', member.artist.id)
-          .order('order')
-          .limit(2);
-
-        // Build location object with studioAddress from artist profile or studio fallback
-        const locationData = location?.location;
-        const locationWithAddress = locationData
-          ? {
-              ...locationData,
-              address: studioAddress || null, // Use studioAddress from artist profile or studio fallback
-            }
-          : null;
-
-        return {
-          id: member.artist.id,
-          userId: userId,
-          firstName: member.artist.user?.firstName,
-          lastName: member.artist.user?.lastName,
-          avatar: member.artist.user?.avatar,
-          experienceYears: member.artist.experienceYears,
-          businessName: businessName,
-          location: locationWithAddress,
-          styles: artistStyles?.map((s: any) => s.style) || [],
-          ownedStudio: ownedStudio,
-          banner: artistBanner || [],
-          role: member.role,
-        };
-      })
-    );
-
     // Get FAQs
     const { data: faqs } = await supabase
       .from('studio_faqs')
@@ -1128,13 +991,213 @@ export async function fetchStudioPublicProfile(studioId: string) {
       styles: styles?.map((s: any) => s.style).filter(Boolean) || [],
       services: services?.map((s: any) => s.service).filter(Boolean) || [],
       photos: photos || [],
-      artists: artistsWithDetails.filter(Boolean) || [],
       faqs: faqs || [],
     };
   } catch (error: any) {
     console.error('Error in fetchStudioPublicProfile:', error);
     throw error;
   }
+}
+
+/**
+ * Cached wrapper for public studio profile
+ */
+export async function fetchStudioPublicProfileCached(
+  studioId: string,
+  forceRefresh = false
+) {
+  const cacheKey = `${STUDIO_CACHE_PREFIX}${studioId}`;
+
+  if (!forceRefresh) {
+    try {
+      const cached = await getProfileFromCache(cacheKey);
+      if (cached) {
+        shouldRefreshCache(cacheKey).then((should) => {
+          if (should) {
+            fetchStudioPublicProfileCached(studioId, true).catch((err) =>
+              console.error("Background studio cache refresh failed:", err)
+            );
+          }
+        });
+        return cached;
+      }
+    } catch (err) {
+      console.error("Error reading studio profile cache:", err);
+    }
+  }
+
+  const profile = await fetchStudioPublicProfile(studioId);
+  saveProfileToCache(cacheKey, profile).catch((err) =>
+    console.error("Failed to cache studio profile:", err)
+  );
+  
+  // Also save summary for instant future loads
+  const summary: StudioSummary = {
+    id: profile.id,
+    name: profile.name,
+    logo: profile.logo,
+    city: profile.city,
+    province: profile.province,
+    address: profile.address,
+    owner: profile.owner,
+    banner: profile.banner?.slice(0, 2) || [],
+    styles: profile.styles?.slice(0, 3) || [],
+    services: profile.services?.slice(0, 5) || null,
+    instagram: profile.instagram,
+    tiktok: profile.tiktok,
+    website: profile.website,
+    description: profile.description,
+  };
+  const summaryCacheKey = `${STUDIO_SUMMARY_CACHE_PREFIX}${studioId}`;
+  saveProfileToCache(summaryCacheKey, summary).catch((err) =>
+    console.error("Failed to cache studio summary:", err)
+  );
+  
+  return profile;
+}
+
+/**
+ * Fetch minimal studio summary for instant first paint
+ * Returns StudioSummary type with only essential fields
+ */
+export async function fetchStudioSummary(studioId: string): Promise<StudioSummary | null> {
+  try {
+    // Get studio basic info
+    const { data: studio, error: studioError } = await supabase
+      .from('studios')
+      .select(`
+        id,
+        name,
+        logo,
+        address,
+        website,
+        instagram,
+        tiktok,
+        description,
+        ownerId
+      `)
+      .eq('id', studioId)
+      .single();
+
+    if (studioError || !studio) {
+      return null;
+    }
+
+    // Get studio location
+    const { data: studioLocation } = await supabase
+      .from('studio_locations')
+      .select(`
+        provinceId,
+        municipalityId,
+        address,
+        province:provinces(id, name),
+        municipality:municipalities(id, name)
+      `)
+      .eq('studioId', studioId)
+      .eq('isPrimary', true)
+      .maybeSingle();
+
+    // Get owner details
+    const { data: ownerProfile } = await supabase
+      .from('artist_profiles')
+      .select(`
+        id,
+        userId,
+        user:users!artist_profiles_userId_fkey(id, firstName, lastName, avatar)
+      `)
+      .eq('id', studio.ownerId)
+      .single();
+
+    const owner = ownerProfile?.user || null;
+
+    // Get banner media (limit to 1-2 items)
+    const { data: bannerMedia } = await supabase
+      .from('studio_banner_media')
+      .select('mediaUrl, mediaType, order')
+      .eq('studioId', studioId)
+      .order('order')
+      .limit(2);
+
+    // Get styles (limit to top 3)
+    const { data: styles } = await supabase
+      .from('studio_styles')
+      .select(`
+        styleId,
+        style:tattoo_styles(id, name, imageUrl)
+      `)
+      .eq('studioId', studioId)
+      .limit(3);
+
+    // Get services (limit to top 5 or just count)
+    const { data: services } = await supabase
+      .from('studio_services')
+      .select(`
+        serviceId,
+        service:services(id, name)
+      `)
+      .eq('studioId', studioId)
+      .limit(5);
+
+    return {
+      id: studio.id,
+      name: studio.name,
+      logo: studio.logo,
+      city: (studioLocation?.municipality as any)?.name || '',
+      province: (studioLocation?.province as any)?.name || '',
+      address: studioLocation?.address || null,
+      owner: owner,
+      banner: bannerMedia?.map((m: any) => ({
+        mediaType: m.mediaType,
+        mediaUrl: m.mediaUrl,
+        order: m.order,
+      })) || [],
+      styles: styles?.map((s: any) => s.style).filter(Boolean) || [],
+      services: services?.map((s: any) => s.service).filter(Boolean) || null,
+      instagram: studio.instagram,
+      tiktok: studio.tiktok,
+      website: studio.website,
+      description: studio.description,
+    };
+  } catch (error: any) {
+    console.error('Error in fetchStudioSummary:', error);
+    return null;
+  }
+}
+
+/**
+ * Cached wrapper for studio summary
+ */
+export async function fetchStudioSummaryCached(
+  studioId: string,
+  forceRefresh = false
+): Promise<StudioSummary | null> {
+  const cacheKey = `${STUDIO_SUMMARY_CACHE_PREFIX}${studioId}`;
+
+  if (!forceRefresh) {
+    try {
+      const cached = await getProfileFromCache(cacheKey);
+      if (cached) {
+        shouldRefreshCache(cacheKey).then((should) => {
+          if (should) {
+            fetchStudioSummaryCached(studioId, true).catch((err) =>
+              console.error("Background studio summary cache refresh failed:", err)
+            );
+          }
+        });
+        return cached as StudioSummary;
+      }
+    } catch (err) {
+      console.error("Error reading studio summary cache:", err);
+    }
+  }
+
+  const summary = await fetchStudioSummary(studioId);
+  if (summary) {
+    saveProfileToCache(cacheKey, summary).catch((err) =>
+      console.error("Failed to cache studio summary:", err)
+    );
+  }
+  return summary;
 }
 
 /**
@@ -1350,6 +1413,58 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
 }
 
 /**
+ * Cached wrapper for studio members
+ */
+export async function fetchStudioMembersForPublicProfileCached(
+  studioId: string,
+  forceRefresh = false
+) {
+  const cacheKey = `${STUDIO_MEMBERS_CACHE_PREFIX}${studioId}`;
+
+  if (!forceRefresh) {
+    try {
+      const cached = await getProfileFromCache(cacheKey);
+      if (cached) {
+        shouldRefreshCache(cacheKey).then((should) => {
+          if (should) {
+            fetchStudioMembersForPublicProfileCached(studioId, true).catch(
+              (err) =>
+                console.error(
+                  "Background studio members cache refresh failed:",
+                  err
+                )
+            );
+          }
+        });
+        return cached as any[];
+      }
+    } catch (err) {
+      console.error("Error reading studio members cache:", err);
+    }
+  }
+
+  const members = await fetchStudioMembersForPublicProfile(studioId);
+  saveProfileToCache(cacheKey, members).catch((err) =>
+    console.error("Failed to cache studio members:", err)
+  );
+  return members;
+}
+
+/**
+ * Prefetch studio profile + members for faster navigation
+ */
+export async function prefetchStudioProfile(studioId: string): Promise<void> {
+  try {
+    await Promise.all([
+      fetchStudioPublicProfileCached(studioId),
+      fetchStudioMembersForPublicProfileCached(studioId),
+    ]);
+  } catch (err) {
+    console.error("Error during studio profile prefetch:", err);
+  }
+}
+
+/**
  * Fetch studio photos for editing
  */
 export async function fetchStudioPhotos(userId: string) {
@@ -1380,6 +1495,29 @@ export async function fetchStudioPhotos(userId: string) {
   } catch (error: any) {
     console.error('Error fetching studio photos:', error);
     throw error;
+  }
+}
+
+/**
+ * Fetch studio photos by studioId (for public profiles)
+ */
+export async function fetchStudioPhotosForProfile(studioId: string): Promise<Array<{ id: string; imageUrl: string; order: number }>> {
+  try {
+    const { data: photos, error } = await supabase
+      .from('studio_photos')
+      .select('id, imageUrl, order')
+      .eq('studioId', studioId)
+      .order('order');
+
+    if (error) {
+      console.error('Error fetching studio photos for profile:', error);
+      return [];
+    }
+
+    return photos || [];
+  } catch (error: any) {
+    console.error('Error fetching studio photos for profile:', error);
+    return [];
   }
 }
 
