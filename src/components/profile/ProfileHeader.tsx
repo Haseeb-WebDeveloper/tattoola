@@ -3,7 +3,7 @@ import { SVGIcons } from "@/constants/svg";
 import { WorkArrangement } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import React from "react";
-import { Image, View } from "react-native";
+import { Image, TouchableOpacity, View } from "react-native";
 
 interface ProfileHeaderProps {
   firstName?: string;
@@ -16,6 +16,7 @@ interface ProfileHeaderProps {
   username?: string;
   workArrangement?: WorkArrangement;
   yearsExperience?: number;
+  onBusinessNamePress?: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -29,23 +30,17 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   username,
   workArrangement,
   yearsExperience,
+  onBusinessNamePress,
 }) => {
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   const displayName =
     fullName.length > 18 ? `${fullName.slice(0, 18)}..` : fullName;
   
-  // Build location string with address, municipality, and province
-  const locationParts: string[] = [];
-  if (address) {
-    locationParts.push(address);
-  }
-  if (municipality) {
-    locationParts.push(municipality);
-  }
-  if (province) {
-    locationParts.push(`(${province})`);
-  }
-  const location = locationParts.join(", ");
+  // Build location string:
+  // For artist profile UI we only display province/municipality label,
+  // not the raw street address. The caller already formats `province`
+  // as needed (e.g. "Milano (MI)").
+  const location = province || municipality || "";
 
   return (
     <View
@@ -97,15 +92,17 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {/* Years of Experience */}
           {yearsExperience && (
             <View
-              className="flex-row items-center"
-              style={{ marginTop: mvs(4) }}
+              className="flex-row"
+              style={{ marginTop: mvs(4), alignItems: "flex-start" }}
             >
-              <SVGIcons.StarRounded style={{ width: s(14), height: s(14) }} />
+              <View style={{ marginTop: mvs(2) }}>
+                <SVGIcons.StarRounded style={{ width: s(14), height: s(14) }} />
+              </View>
               <ScaledText
                 allowScaling={false}
                 variant="md"
                 className="text-foreground font-neueLight"
-                style={{ marginLeft: s(4) }}
+                style={{ marginLeft: s(6), flexShrink: 1 }}
               >
                 {yearsExperience} anni di esperienza
               </ScaledText>
@@ -114,15 +111,21 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {/* Business Name (Studio Owner, Employee, or Freelancer) */}
           {workArrangement && (
             <View
-              className="flex-row items-center"
-              style={{ marginTop: mvs(2) }}
+              className="flex-row"
+              style={{ marginTop: mvs(2), alignItems: "flex-start" }}
             >
-              <View style={{ marginRight: s(4) }}>
+              <View style={{ marginTop: mvs(2), marginRight: s(4) }}>
                 <SVGIcons.Studio style={{ width: s(20), height: s(20) }} />
               </View>
               <View style={{ flex: 1, flexShrink: 1 }}>
                 {(() => {
                   const arrangement = String(workArrangement).toUpperCase();
+                  const normalizedBusinessName =
+                    businessName && businessName.length > 0
+                      ? businessName.charAt(0).toUpperCase() +
+                        businessName.slice(1)
+                      : businessName;
+
                   if (arrangement === "STUDIO_OWNER" && businessName) {
                     return (
                       <View className="flex-row" style={{ flexWrap: "wrap" }}>
@@ -133,15 +136,21 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         >
                           Titolare di{" "}
                         </ScaledText>
-                        <ScaledText
-                          allowScaling={false}
-                          variant="md"
-                          className="text-foreground font-neueBold"
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
+                        <TouchableOpacity
+                          disabled={!onBusinessNamePress}
+                          onPress={onBusinessNamePress}
+                          activeOpacity={onBusinessNamePress ? 0.7 : 1}
                         >
-                          {businessName}
-                        </ScaledText>
+                          <ScaledText
+                            allowScaling={false}
+                            variant="md"
+                            className="text-foreground font-neueBold"
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {normalizedBusinessName}
+                          </ScaledText>
+                        </TouchableOpacity>
                       </View>
                     );
                   } else if (arrangement === "STUDIO_EMPLOYEE" && businessName) {
@@ -154,15 +163,21 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         >
                           Tattoo Artist residente in{" "}
                         </ScaledText>
-                        <ScaledText
-                          allowScaling={false}
-                          variant="md"
-                          className="text-foreground font-neueBold"
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
+                        <TouchableOpacity
+                          disabled={!onBusinessNamePress}
+                          onPress={onBusinessNamePress}
+                          activeOpacity={onBusinessNamePress ? 0.7 : 1}
                         >
-                          {businessName}
-                        </ScaledText>
+                          <ScaledText
+                            allowScaling={false}
+                            variant="md"
+                            className="text-foreground font-neueBold"
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {normalizedBusinessName}
+                          </ScaledText>
+                        </TouchableOpacity>
                       </View>
                     );
                   } else if (arrangement === "FREELANCE") {
@@ -181,16 +196,20 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </View>
             </View>
           )}
-          <View className="flex-row items-center" style={{ marginTop: mvs(2) }}>
+          <View
+            className="flex-row"
+            style={{ marginTop: mvs(2), alignItems: "flex-start" }}
+          >
             {location && (
               <>
-                <View style={{ marginRight: s(4) }}>
+                <View style={{ marginTop: mvs(2), marginRight: s(4) }}>
                   <SVGIcons.Location style={{ width: s(20), height: s(20) }} />
                 </View>
                 <ScaledText
                   allowScaling={false}
                   variant="md"
                   className="text-foreground font-neueLight"
+                  style={{ flexShrink: 1 }}
                 >
                   {location}
                 </ScaledText>

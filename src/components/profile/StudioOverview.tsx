@@ -42,7 +42,10 @@ export default function StudioOverview({
 
   // Show only first name for owner label
   const ownerName = ownerFirstName || "";
-  const studioName = name || "Studio";
+  const studioName =
+    name && name.length > 0
+      ? name.charAt(0).toUpperCase() + name.slice(1)
+      : "Studio";
   const isLongName = studioName.length > 18;
 
   const openUrl = (url?: string | null) => {
@@ -130,19 +133,21 @@ export default function StudioOverview({
       >
         {/* Left column */}
         <View style={{ flex: 1 }}>
-          {!!ownerName && (
-            <View
-              style={{
-                marginBottom: mvs(6),
-                flexDirection: "row",
-                alignItems: "flex-start",
-                gap: s(6),
-              }}
-            >
-              <View style={{ marginTop: mvs(2) }}>
-                <SVGIcons.Studio style={{ width: s(14), height: s(14) }} />
-              </View>
-              <View style={{ flex: 1, flexShrink: 1 }}>
+        {!!ownerName && (
+          <View
+            style={{
+              marginBottom: mvs(6),
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: s(6),
+            }}
+          >
+            <View style={{ marginTop: mvs(2) }}>
+              <SVGIcons.Studio style={{ width: s(14), height: s(14) }} />
+            </View>
+            <View style={{ flex: 1, flexShrink: 1 }}>
+              {ownerName.length <= 18 ? (
+                // Short owner name: keep label and name on the same line
                 <ScaledText
                   allowScaling={false}
                   variant="md"
@@ -153,7 +158,6 @@ export default function StudioOverview({
                     allowScaling={false}
                     variant="md"
                     className="text-foreground font-neueBold"
-                    // Navigate to artist profile when tapping the owner's name
                     onPress={() => {
                       if (ownerId) {
                         router.push(`/user/${ownerId}` as any);
@@ -163,27 +167,58 @@ export default function StudioOverview({
                     {ownerName}
                   </ScaledText>
                 </ScaledText>
-              </View>
+              ) : (
+                // Long owner name: move name to next line
+                <>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueLight"
+                  >
+                    Di proprietà di
+                  </ScaledText>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-foreground font-neueBold"
+                    style={{ marginTop: mvs(2) }}
+                    onPress={() => {
+                      if (ownerId) {
+                        router.push(`/user/${ownerId}` as any);
+                      }
+                    }}
+                  >
+                    {ownerName}
+                  </ScaledText>
+                </>
+              )}
             </View>
-          )}
+          </View>
+        )}
 
-          {(municipality || province) && (
+          {(municipality || province || address) && (
             <View
               style={{
                 flexDirection: "row",
-                alignItems: "center",
+                alignItems: "flex-start",
                 marginBottom: mvs(10),
               }}
             >
-              <SVGIcons.Location style={{ width: s(14), height: s(14) }} />
+              <View style={{ marginTop: mvs(2) }}>
+                <SVGIcons.Location style={{ width: s(14), height: s(14) }} />
+              </View>
               <ScaledText
                 allowScaling={false}
                 variant="md"
                 className="text-foreground font-neueLight"
-                style={{ marginLeft: s(6) }}
+                style={{ marginLeft: s(6), flexShrink: 1 }}
               >
-                {municipality}
-                {province ? ` (${province})` : ""}
+                {/* If we have a full address, show only that; otherwise fallback to "Comune (PROV)" */}
+                {address
+                  ? address
+                  : `${municipality || ""}${
+                      province ? ` (${province})` : ""
+                    }`}
               </ScaledText>
             </View>
           )}

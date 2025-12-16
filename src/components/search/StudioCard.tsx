@@ -11,10 +11,16 @@ import { StylePills } from "../ui/stylePills";
 
 type StudioCardProps = {
   studio: StudioSearchResult;
+  onEditPress?: () => void;
 };
 
-function StudioCard({ studio }: StudioCardProps) {
+function StudioCard({ studio, onEditPress }: StudioCardProps) {
   const router = useRouter();
+
+  const normalizedName =
+    studio.name && studio.name.length > 0
+      ? studio.name.charAt(0).toUpperCase() + studio.name.slice(1)
+      : studio.name;
 
   const handlePress = () => {
     router.push(`/studio/${studio.id}`);
@@ -76,26 +82,59 @@ function StudioCard({ studio }: StudioCardProps) {
     >
       {/* Top Section - Logo, Name, Locations */}
       <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
-        {/* Subscription Badge */}
-        {studio.subscription && (
+        {/* Subscription badge + optional "Modifica" button (only when onEditPress is provided) */}
+        {(studio.subscription || onEditPress) && (
           <View
-            className="absolute top-0 right-0 flex-row items-center justify-center bg-gray"
             style={{
-              paddingLeft: s(8),
-              paddingRight: s(25),
-              paddingVertical: mvs(5),
+              position: "absolute",
+              top: 0,
+              right: 0,
+              alignItems: "flex-end",
               gap: s(4),
-              borderBottomLeftRadius: s(9),
             }}
           >
-            <SVGIcons.DimondRed width={s(12)} height={s(12)} />
-            <ScaledText
-              allowScaling={false}
-              variant="11"
-              className="text-primary font-neueMedium"
-            >
-              Profilo studio
-            </ScaledText>
+            {studio.subscription && (
+              <View
+                className="flex-row items-center justify-center bg-gray"
+                style={{
+                  paddingLeft: s(8),
+                  paddingRight: s(25),
+                  paddingVertical: mvs(5),
+                  gap: s(4),
+                  borderBottomLeftRadius: s(9),
+                  borderTopRightRadius: s(9),
+                }}
+              >
+                <SVGIcons.DimondRed width={s(12)} height={s(12)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="11"
+                  className="text-primary font-neueMedium"
+                >
+                  Profilo studio
+                </ScaledText>
+              </View>
+            )}
+
+            {onEditPress && (
+              <TouchableOpacity
+                onPress={onEditPress}
+                activeOpacity={0.8}
+                style={{
+                  marginRight: s(10),
+                  marginTop: mvs(10),
+                  width: s(30),
+                  height: s(30),
+                  borderRadius: s(18),
+                  borderWidth: s(1),
+                  backgroundColor: "#D9D9D9",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <SVGIcons.EditRed width={s(14)} height={s(14)} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -126,7 +165,7 @@ function StudioCard({ studio }: StudioCardProps) {
                 variant="lg"
                 className="text-foreground font-neueBold"
               >
-                {studio.name}
+                {normalizedName}
               </ScaledText>
               {/* <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} /> */}
             </View>
@@ -179,26 +218,35 @@ function StudioCard({ studio }: StudioCardProps) {
         {/* Locations */}
         {studio.locations.length > 0 && (
           <View style={{ marginBottom: mvs(4) }}>
-            {studio.locations.map((location, index) => (
-              <View
-                key={index}
-                className="flex-row items-center"
-                style={{
-                  marginBottom:
-                    index < studio.locations.length - 1 ? mvs(2) : 0,
-                }}
-              >
-                <SVGIcons.Location width={s(14)} height={s(14)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="ml-1 text-white font-neueLight"
-                  numberOfLines={1}
+            {studio.locations.map((location, index) => {
+              const hasAddress = !!location?.address;
+              const lineText = hasAddress
+                ? location.address
+                : `${location?.province || ""}${
+                    location?.municipality ? `, ${location.municipality}` : ""
+                  }`;
+
+              return (
+                <View
+                  key={index}
+                  className="flex-row items-center"
+                  style={{
+                    marginBottom:
+                      index < studio.locations.length - 1 ? mvs(2) : 0,
+                  }}
                 >
-                  {location?.province}, {location?.municipality}
-                </ScaledText>
-              </View>
-            ))}
+                  <SVGIcons.Location width={s(14)} height={s(14)} />
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="ml-1 text-white font-neueLight"
+                    numberOfLines={1}
+                  >
+                    {lineText}
+                  </ScaledText>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -260,3 +308,4 @@ function StudioCard({ studio }: StudioCardProps) {
 }
 
 export default React.memo(StudioCard);
+

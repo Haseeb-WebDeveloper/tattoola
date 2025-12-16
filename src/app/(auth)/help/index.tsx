@@ -1,6 +1,7 @@
 import { HelpCategoryItem } from "@/components/help/HelpCategoryItem";
 import { HelpHeader } from "@/components/help/HelpHeader";
 import { HelpTabs } from "@/components/help/HelpTabs";
+import { useAuth } from "@/providers/AuthProvider";
 import { getHelpCategories } from "@/services/help.service";
 import type { HelpCategory, HelpTab } from "@/types/help";
 import { mvs, s } from "@/utils/scale";
@@ -12,6 +13,7 @@ import { StyleSheet } from "react-native";
 
 export default function HelpScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<HelpTab>("artisiti");
   
   // Cache categories for both tabs
@@ -54,6 +56,9 @@ export default function HelpScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       const type = getCategoryType(activeTab);
+      // If user is logged in (coming from feed/app), show only loginRequired=true.
+      // If not logged in (e.g. from sign-in), show only loginRequired=false.
+      const loginRequiredFilter = !!user;
       
       // Check if we have cached data for this tab using ref
       const hasCachedData = cacheRef.current[type].length > 0;
@@ -64,7 +69,7 @@ export default function HelpScreen() {
       }
 
       try {
-        const categories = await getHelpCategories(type);
+        const categories = await getHelpCategories(type, loginRequiredFilter);
         // Update cache for this tab type (this will show new categories if added)
         setCachedCategories((prev) => ({
           ...prev,
