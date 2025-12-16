@@ -1,8 +1,8 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
-import React from "react";
-import { View } from "react-native";
+import React, { useState } from "react";
+import { TouchableOpacity, View } from "react-native";
 
 interface BodyPart {
   id: string;
@@ -16,9 +16,17 @@ interface BodyPartsSectionProps {
 export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
   bodyParts,
 }) => {
+  const [expanded, setExpanded] = useState(false);
+
   if (!bodyParts || bodyParts.length === 0) {
     return null;
   }
+
+  const MAX_VISIBLE = 3;
+  const hasMore = bodyParts.length > MAX_VISIBLE;
+  const visibleBodyParts =
+    expanded || !hasMore ? bodyParts : bodyParts.slice(0, MAX_VISIBLE);
+  const remainingCount = hasMore ? bodyParts.length - MAX_VISIBLE : 0;
 
   return (
     <View
@@ -42,7 +50,7 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
         </ScaledText>
       </View>
       <View className="flex-row flex-wrap" style={{ gap: s(8) }}>
-        {bodyParts.map((bodyPart) => (
+        {visibleBodyParts.map((bodyPart) => (
           <View
             key={bodyPart.id}
             className="border rounded-xl bg-black/40 border-error"
@@ -60,6 +68,28 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
             </ScaledText>
           </View>
         ))}
+        {hasMore && (
+          <TouchableOpacity
+            onPress={() => setExpanded((prev) => !prev)}
+            className="border rounded-xl bg-black/40 border-error"
+            style={{
+              paddingHorizontal: s(10),
+              paddingVertical: mvs(6),
+            }}
+          >
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-foreground font-neueBold"
+            >
+              {expanded
+                ? "Mostra meno"
+                : remainingCount === 1
+                ? "+ 1 altra"
+                : `+ ${remainingCount} altre`}
+            </ScaledText>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

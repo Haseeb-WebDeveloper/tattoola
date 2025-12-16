@@ -8,17 +8,28 @@ import type {
 /**
  * Fetch help categories from database based on type
  * @param type - The category type (USER or ARTIST)
+ * @param loginRequired - Optional filter for loginRequired flag
+ *   - true  → only categories that require login
+ *   - false → only categories that do NOT require login
+ *   - undefined → no filter (all categories)
  * @returns Array of help categories
  */
 export async function getHelpCategories(
-  type: HelpCategoryType
+  type: HelpCategoryType,
+  loginRequired?: boolean
 ): Promise<HelpCategory[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("help_categories")
     .select("*")
     .eq("type", type)
     .order("order", { ascending: true })
     .order("createdAt", { ascending: false });
+
+  if (loginRequired !== undefined) {
+    query = query.eq("loginRequired", loginRequired);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);

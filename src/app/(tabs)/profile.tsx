@@ -60,11 +60,9 @@ export default function ProfileScreen() {
           const profile = await fetchArtistSelfProfile(user.id, forceRefresh);
           setData(profile);
           try {
-            const isStudioOwner =
-              profile?.artistProfile?.workArrangement === "STUDIO_OWNER" ||
-              (profile?.artistProfile as any)?.isStudioOwner === true;
-
-            if (isStudioOwner && profile?.artistProfile?.id) {
+            // Always attempt to load studio owned by this artist profile;
+            // fetchStudioForArtistProfile will return null if no studio exists.
+            if (profile?.artistProfile?.id) {
               const { fetchStudioForArtistProfile } = await import(
                 "@/services/profile.service"
               );
@@ -325,11 +323,26 @@ export default function ProfileScreen() {
               lastName={artistData?.user?.lastName}
               avatar={artistData?.user?.avatar}
               businessName={artistData?.artistProfile?.businessName}
-              municipality={artistData?.location?.municipality?.name}
-              province={artistData?.location?.province?.name}
-              address={artistData?.location?.address}
+              // For artists: show only "Municipality (PROV_CODE)" if available,
+              // otherwise just municipality or province. No street address.
+              municipality={undefined}
+              province={
+                artistData?.location?.province
+                  ? `${artistData.location.province.name}${
+                      artistData.location.province.code
+                        ? ` (${artistData.location.province.code})`
+                        : ""
+                    }`
+                  : artistData?.location?.municipality?.name
+              }
+              address={undefined}
               workArrangement={
                 artistData?.artistProfile?.workArrangement as WorkArrangement
+              }
+              onBusinessNamePress={
+                studioData
+                  ? () => router.push(`/studio/${studioData.id}` as any)
+                  : undefined
               }
             />
           );
@@ -380,30 +393,26 @@ export default function ProfileScreen() {
             (data as ArtistSelfProfileInterface)?.bodyPartsNotWorkedOn || []
           }
         />
-        {data && user?.role === "ARTIST" && studioData && (
-          <View style={{ marginTop: mvs(24), marginBottom: mvs(16) }}>
-            <StudioCard studio={studioData} />
-            <TouchableOpacity
-              onPress={() => router.push("/settings/studio" as any)}
-              style={{
-                marginHorizontal: s(16),
-                marginTop: mvs(12),
-                paddingVertical: mvs(12),
-                paddingHorizontal: s(16),
-                borderRadius: s(12),
-                borderWidth: s(1),
-                borderColor: "#FF4C4C",
-                alignItems: "center",
-              }}
-            >
+        {/* Own studio card: show only when artist has an active STUDIO plan and a completed/active studio */}
+        {data &&
+          user?.role === "ARTIST" &&
+          studioData &&
+          studioData.subscription?.plan?.type === "STUDIO" && (
+          <View >
+            {/* Section heading to match other profile sections */}
+            <View style={{ paddingHorizontal: s(16), marginBottom: mvs(8) }}>
               <ScaledText
                 allowScaling={false}
-                variant="sm"
-                className="text-white font-montserratMedium"
+                variant="lg"
+                className="text-foreground font-neueSemibold"
               >
-                Modifica Studio
+                Il mio studio
               </ScaledText>
-            </TouchableOpacity>
+            </View>
+            <StudioCard
+              studio={studioData}
+              onEditPress={() => router.push("/settings/studio" as any)}
+            />
           </View>
         )}
         <View style={{ height: mvs(90) }} />

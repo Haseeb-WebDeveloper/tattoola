@@ -191,13 +191,26 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           lastName={data?.user?.lastName}
           avatar={data?.user?.avatar}
           businessName={data?.artistProfile?.businessName}
-          municipality={data?.location?.municipality?.name}
-          province={data?.location?.province?.name}
-          address={data?.location?.address}
+          // For artist profiles: show only "Province (CODE)" or municipality label,
+          // never the raw street address.
+          municipality={undefined}
+          province={
+            data?.location?.province
+              ? `${data.location.province.name}${
+                  (data.location.province as any).code
+                    ? ` (${(data.location.province as any).code})`
+                    : ""
+                }`
+              : data?.location?.municipality?.name || ""
+          }
+          address={undefined}
           workArrangement={
             data?.artistProfile?.workArrangement as WorkArrangement
           }
           yearsExperience={data?.artistProfile?.yearsExperience}
+          onBusinessNamePress={
+            studio ? () => router.push(`/studio/${studio.id}` as any) : undefined
+          }
         />
 
         {/* Social Media Icons */}
