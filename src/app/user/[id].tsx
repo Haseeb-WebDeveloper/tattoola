@@ -58,28 +58,17 @@ export default function UserProfileScreen() {
         // Get artist profile ID first to check for studio ownership
         const { data: artistProfileData } = await supabase
           .from("artist_profiles")
-          .select("id, workArrangement, isStudioOwner")
+          .select("id")
           .eq("userId", String(id))
           .maybeSingle();
         
-              console.log("🎨 Artist Profile Data:", artistProfileData);
-      console.log("🎨 Is Studio Owner?", artistProfileData?.isStudioOwner);
-      console.log("🎨 Work Arrangement:", artistProfileData?.workArrangement);
-
         // Fetch artist profile and studio data in parallel
         const [artistProfile, studio] = await Promise.all([
           fetchArtistProfile(String(id), currentUser?.id),
-          // Only fetch studio if artist is a studio owner
-          artistProfileData &&
-          (artistProfileData.workArrangement === "STUDIO_OWNER" ||
-            artistProfileData.isStudioOwner === true)
+          artistProfileData?.id
             ? fetchStudioForArtistProfile(artistProfileData.id)
             : Promise.resolve(null),
         ]);
-      console.log("📊 Studio Data Fetched:", studio);
-      console.log("📊 Studio ID:", studio?.id);
-      console.log("📊 Studio Completed:", studio?.isCompleted);
-      console.log("📊 Studio Active:", studio?.isActive);
         profile = artistProfile;
         setStudioData(studio);
       } else {

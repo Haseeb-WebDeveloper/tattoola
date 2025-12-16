@@ -19,7 +19,7 @@
       "url": "https://u.expo.dev/624fc895-19a3-4765-9329-1f3ecb47aa61"
     },
     "ios": {
-      "buildNumber": "9",
+      "buildNumber": "11",
       "supportsTablet": true,
       "bundleIdentifier": "com.figmentalabs.tattoola",
       "infoPlist": {
@@ -30,12 +30,15 @@
       "associatedDomains": ["applinks:haehelhifvbafqmdrhfg.supabase.co"]
     },
     "android": {
-      "versionCode": 9,
+      "versionCode": 11,
       "adaptiveIcon": {
         "backgroundColor": "#0A0101",
-        "foregroundImage": "./src/assets/app-icons/android-icon-foreground.png",
-        "backgroundImage": "./src/assets/app-icons/icon-background.png",
-        "monochromeImage": "./src/assets/app-icons/android-icon-monochrome.png"
+        // "foregroundImage": "./src/assets/app-icons/android-icon-foreground.png",
+        // "backgroundImage": "./src/assets/app-icons/icon-background.png",
+        // "monochromeImage": "./src/assets/app-icons/android-icon-monochrome.png"
+        "foregroundImage": "./src/assets/app-icons/favicon.png",
+        "backgroundImage": "./src/assets/app-icons/favicon.png",
+        "monochromeImage": "./src/assets/app-icons/favicon.png"
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",

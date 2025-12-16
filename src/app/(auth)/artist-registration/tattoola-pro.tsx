@@ -156,7 +156,7 @@ export default function TattoolaProScreen() {
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
             <Image
-              source={require("@/assets/logo/tattoolà-dark.png")}
+              source={require("@/assets/logo/tattoola-dark.png")}
               style={styles.logoImage}
               resizeMode="contain"
             />
