@@ -2,6 +2,7 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { FeedPost } from "@/services/post.service";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { prefetchUserProfile } from "@/services/prefetch.service";
 import { useTabBarStore } from "@/stores/tabBarStore";
 import { mvs, s } from "@/utils/scale";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -34,6 +35,10 @@ function FeedPostOverlayComponent({
   const bottomPosition = tabBarHeight > 0 ? tabBarHeight : mvs(119);
 
   const handleAuthorPress = () => {
+    // Prefetch author profile to speed up profile screen transition
+    prefetchUserProfile(post.author.id).catch(() => {
+      // Ignore prefetch errors
+    });
     if (onAuthorPress) {
       onAuthorPress();
     } else {

@@ -1,7 +1,10 @@
 import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { toggleFollow } from "@/services/profile.service";
+import {
+  fetchArtistSelfProfile,
+  toggleFollow,
+} from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { WorkArrangement } from "@/types/auth";
@@ -9,7 +12,7 @@ import { StudioSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Linking,
   Modal,
@@ -39,10 +42,39 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [profileData, setProfileData] = useState<
+    ArtistSelfProfileInterface & { isFollowing?: boolean }
+  >(data);
   const [isFollowing, setIsFollowing] = useState(data.isFollowing || false);
   const [isTogglingFollow, setIsTogglingFollow] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionMessage, setRejectionMessage] = useState<string>("");
+
+  // After initial paint, progressively enhance with full profile data
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const detailed = await fetchArtistSelfProfile(profileData.user.id, false, {
+          includeCollectionsAndBodyParts: true,
+        });
+
+        if (!cancelled && detailed) {
+          setProfileData((prev) => ({
+            ...detailed,
+            isFollowing: prev.isFollowing,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load detailed artist profile:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileData.user.id]);
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -65,7 +97,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
     setIsTogglingFollow(true);
 
     try {
-      const result = await toggleFollow(currentUserId, data.user.id);
+      const result = await toggleFollow(currentUserId, profileData.user.id);
       setIsFollowing(result.isFollowing);
     } catch (error) {
       // Revert on error
@@ -77,7 +109,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   };
 
   const handleSendRequest = async () => {
-    if (!data?.user?.id) return;
+    if (!profileData?.user?.id) return;
 
     // Show auth modal for anonymous users
     if (!currentUserId) {
@@ -86,11 +118,11 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
     }
 
     // Check if this is a self-request
-    const isSelfRequest = currentUserId === data.user.id;
+    const isSelfRequest = currentUserId === profileData.user.id;
 
     // Self-requests don't need validation, proceed directly
     if (isSelfRequest) {
-      router.push(`/user/${data.user.id}/request/size` as any);
+      router.push(`/user/${profileData.user.id}/request/size` as any);
       return;
     }
 
@@ -99,13 +131,13 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
       const { data: artistProfile, error: profileError } = await supabase
         .from("artist_profiles")
         .select("acceptPrivateRequests, rejectionMessage")
-        .eq("userId", data.user.id)
+        .eq("userId", profileData.user.id)
         .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching artist profile:", profileError);
         // If error, proceed anyway (user might not be an artist)
-        router.push(`/user/${data.user.id}/request/size` as any);
+        router.push(`/user/${profileData.user.id}/request/size` as any);
         return;
       }
 
@@ -124,7 +156,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
     } catch (error) {
       console.error("Error checking artist profile:", error);
       // Proceed anyway if there's an error
-      router.push(`/user/${data.user.id}/request/size` as any);
+      router.push(`/user/${profileData.user.id}/request/size` as any);
     }
   };
 
@@ -182,32 +214,32 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         </TouchableOpacity>
 
         {/* Banner */}
-        <Banner banner={data?.artistProfile?.banner || []} />
+        <Banner banner={profileData?.artistProfile?.banner || []} />
 
         {/* Profile Header */}
         <ProfileHeader
-          username={data?.user?.username}
-          firstName={data?.user?.firstName}
-          lastName={data?.user?.lastName}
-          avatar={data?.user?.avatar}
-          businessName={data?.artistProfile?.businessName}
+          username={profileData?.user?.username}
+          firstName={profileData?.user?.firstName}
+          lastName={profileData?.user?.lastName}
+          avatar={profileData?.user?.avatar}
+          businessName={profileData?.artistProfile?.businessName}
           // For artist profiles: show only "Province (CODE)" or municipality label,
           // never the raw street address.
           municipality={undefined}
           province={
-            data?.location?.province
-              ? `${data.location.province.name}${
-                  (data.location.province as any).code
-                    ? ` (${(data.location.province as any).code})`
+            profileData?.location?.province
+              ? `${profileData.location.province.name}${
+                  (profileData.location.province as any).code
+                    ? ` (${(profileData.location.province as any).code})`
                     : ""
                 }`
-              : data?.location?.municipality?.name || ""
+              : profileData?.location?.municipality?.name || ""
           }
           address={undefined}
           workArrangement={
-            data?.artistProfile?.workArrangement as WorkArrangement
+            profileData?.artistProfile?.workArrangement as WorkArrangement
           }
-          yearsExperience={data?.artistProfile?.yearsExperience}
+          yearsExperience={profileData?.artistProfile?.yearsExperience}
           onBusinessNamePress={
             studio ? () => router.push(`/studio/${studio.id}` as any) : undefined
           }
@@ -215,41 +247,41 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
         {/* Social Media Icons */}
         <SocialMediaIcons
-          instagram={data?.user?.instagram}
-          tiktok={data?.user?.tiktok}
-          website={data?.user?.website}
+          instagram={profileData?.user?.instagram}
+          tiktok={profileData?.user?.tiktok}
+          website={profileData?.user?.website}
           onInstagramPress={handleSocialMediaPress}
           onTiktokPress={handleSocialMediaPress}
           onWebsitePress={handleSocialMediaPress}
         />
 
         {/* Bio */}
-        {!!data?.artistProfile?.bio && (
+        {!!profileData?.artistProfile?.bio && (
           <View className="px-4 mt-6">
             <ScaledText
               allowScaling={false}
               variant="md"
               className="text-foreground font-neueLight"
             >
-              {data.artistProfile.bio}
+              {profileData.artistProfile.bio}
             </ScaledText>
           </View>
         )}
 
         {/* Styles Section */}
-        <StylesSection styles={data?.favoriteStyles || []} />
+        <StylesSection styles={profileData?.favoriteStyles || []} />
 
         {/* Services Section */}
-        <ServicesSection services={data?.services || []} />
+        <ServicesSection services={profileData?.services || []} />
 
         {/* Collections Section */}
         <CollectionsSection
-          collections={data?.collections || []}
+          collections={profileData?.collections || []}
           showNewCollection={false}
         />
 
         {/* Body Parts Section */}
-        <BodyPartsSection bodyParts={data?.bodyPartsNotWorkedOn || []} />
+        <BodyPartsSection bodyParts={profileData?.bodyPartsNotWorkedOn || []} />
 
         {/* Studio Card - show at bottom if artist owns a studio */}
         {studio && (
@@ -259,7 +291,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         )}
 
         {/* Bottom actions - only show if not viewing own profile */}
-        {currentUserId !== data.user.id && (
+        {currentUserId !== profileData.user.id && (
           <View className="px-4 py-3 bg-background">
             <View className="flex-row gap-3">
               <TouchableOpacity

@@ -1,6 +1,7 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { prefetchUserProfile } from "@/services/prefetch.service";
 import type { ArtistSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
@@ -17,6 +18,10 @@ function ArtistCard({ artist }: ArtistCardProps) {
   const router = useRouter();
 
   const handlePress = () => {
+    // Start prefetching profile data before navigation for faster load
+    prefetchUserProfile(artist.userId).catch(() => {
+      // Ignore prefetch errors – navigation should still work
+    });
     router.push(`/user/${artist.userId}`);
   };
 

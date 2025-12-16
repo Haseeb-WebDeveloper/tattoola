@@ -3,6 +3,7 @@ import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { FeedEntry } from "@/services/feed.service";
+import { prefetchUserProfile } from "@/services/prefetch.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
@@ -288,7 +289,13 @@ export default function HomeScreen() {
         <FeedPostOverlay
           post={currentPost}
           onAuthorPress={() =>
-            router.push(`/user/${currentPost.author.id}` as any)
+            {
+              // Prefetch author profile before navigating from overlay
+              prefetchUserProfile(currentPost.author.id).catch(() => {
+                // Ignore prefetch errors
+              });
+              router.push(`/user/${currentPost.author.id}` as any);
+            }
           }
           onLikePress={() => {
             console.log("onLikePress", currentPost.id, user?.id);
