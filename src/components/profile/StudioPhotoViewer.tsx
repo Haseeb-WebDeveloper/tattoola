@@ -268,7 +268,7 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
               left: s(21),
               top: mvs(56),
               padding: s(8),
-              backgroundColor: "rgba(0, 0, 0, 0.50)",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
             }}
           >
             <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />

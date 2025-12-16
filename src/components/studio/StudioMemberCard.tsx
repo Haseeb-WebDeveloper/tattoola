@@ -45,8 +45,10 @@ export const StudioMemberCard: React.FC<StudioMemberCardProps> = ({
     .filter(Boolean)
     .join(" ");
   const isPending = item.status === "PENDING";
+  // Format location similar to artist cards: prefer province (which should be "Name (CODE)"),
+  // fallback to municipality, or show default message
   const locationText = item.location
-    ? `${item.location.municipality} (${item.location.province})`
+    ? item.location.province || item.location.municipality || "Località non impostata"
     : "Località non impostata";
   const diamondType = item.planType === "STUDIO" ? "red" : "yellow";
 
@@ -117,15 +119,34 @@ export const StudioMemberCard: React.FC<StudioMemberCardProps> = ({
               {fullName}
             </ScaledText>
           ) : null}
-           <View style={{ height: mvs(2) }} />
-           <ScaledText
-             allowScaling={false}
-             variant="11"
-             className="text-gray font-neueLight"
-             style={{ flexDirection: "row", alignItems: "center" }}
-           >
-             <SVGIcons.LocationsGray width={s(8)} height={s(8)} /> {locationText}
-           </ScaledText>
+
+          {/* Optional business/studio name (similar to artist cards) */}
+          {item.artist?.businessName && (
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-gray font-neueLight"
+              numberOfLines={1}
+              style={{ marginTop: mvs(2) }}
+            >
+              {item.artist.businessName}
+            </ScaledText>
+          )}
+
+          {/* Location, formatted similarly to artist cards */}
+          <View style={{ height: mvs(2) }} />
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <SVGIcons.LocationsGray width={s(8)} height={s(8)} />
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-gray font-neueLight"
+              numberOfLines={1}
+              style={{ marginLeft: s(4) }}
+            >
+              {locationText}
+            </ScaledText>
+          </View>
         </View>
       </View>
 
