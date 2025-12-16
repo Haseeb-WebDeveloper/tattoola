@@ -48,7 +48,7 @@ export async function searchArtists({
             municipalityId,
             address,
             isPrimary,
-            province:provinces(name),
+            province:provinces(name,code),
             municipality:municipalities(name)
           ),
           subscriptions:user_subscriptions!user_subscriptions_userId_fkey(
@@ -313,34 +313,39 @@ export async function searchArtists({
         
         // Create location object with priority: studioAddress (profile) > primaryLocation > studioAddress (from studio)
         let location = null;
+        // For artists we display only "Province (CODE)" (no address) in UI,
+        // so here we pre-format province with its code when available.
+        const resolveProvinceLabel = (loc: any | null | undefined): string => {
+          if (!loc?.province) return "";
+          const provName = loc.province?.name || "";
+          const provCode = (loc.province as any)?.code;
+          if (!provName && !provCode) return "";
+          return provCode ? `${provName} (${provCode})` : provName;
+        };
+
         if (studioAddress) {
-          // Priority 1: Use studioAddress from artist profile
+          // Priority 1: Use studioAddress from artist profile as location anchor,
+          // but only expose province label (no street) to callers.
           const anyLocation = primaryLocation || artist.user?.locations?.[0];
           location = {
-            province: anyLocation?.province?.name || "",
+            province: resolveProvinceLabel(anyLocation),
             municipality: anyLocation?.municipality?.name || "",
-            address: studioAddress, // Always use studioAddress from profile when available
-          };
-        } else if (primaryLocation?.address) {
-          // Priority 2: Use primaryLocation address if studioAddress from profile is not available
-          location = {
-            province: primaryLocation.province?.name || "",
-            municipality: primaryLocation.municipality?.name || "",
-            address: primaryLocation.address,
-          };
-        } else if (studioAddressFromStudio) {
-          // Priority 3: Use studio address from linked studio as fallback
-          const anyLocation = primaryLocation || artist.user?.locations?.[0];
-          location = {
-            province: anyLocation?.province?.name || "",
-            municipality: anyLocation?.municipality?.name || "",
-            address: studioAddressFromStudio,
+            address: null,
           };
         } else if (primaryLocation) {
-          // Fallback: Use primaryLocation even without address (for province/municipality)
+          // Priority 2: Use primaryLocation (with province+code) even if address is missing
           location = {
-            province: primaryLocation.province?.name || "",
+            province: resolveProvinceLabel(primaryLocation),
             municipality: primaryLocation.municipality?.name || "",
+            address: null,
+          };
+        } else if (studioAddressFromStudio) {
+          // Priority 3: Use studio address from linked studio as anchor,
+          // but again only expose province label.
+          const anyLocation = artist.user?.locations?.[0] || null;
+          location = {
+            province: resolveProvinceLabel(anyLocation),
+            municipality: anyLocation?.municipality?.name || "",
             address: null,
           };
         }

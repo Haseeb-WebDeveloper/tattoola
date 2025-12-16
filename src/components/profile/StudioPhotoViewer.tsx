@@ -66,11 +66,10 @@ const ZoomableImage: React.FC<{
       }
     });
 
+  // Pan only when zoomed in, and require 2 fingers so one-finger swipes go to FlatList
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10]) // Only activate if vertical movement is dominant
-    .activeOffsetY([-10, 10])
+    .minPointers(2)
     .onUpdate((e) => {
-      // Only allow panning when zoomed in
       if (scale.value > 1) {
         translateX.value = savedTranslateX.value + e.translationX;
         translateY.value = savedTranslateY.value + e.translationY;
@@ -78,7 +77,6 @@ const ZoomableImage: React.FC<{
     })
     .onEnd(() => {
       if (scale.value > 1) {
-        // Constrain panning to image bounds
         const maxTranslateX = (width * (scale.value - 1)) / 2;
         const maxTranslateY = (height * (scale.value - 1)) / 2;
 

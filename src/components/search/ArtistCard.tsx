@@ -243,8 +243,8 @@ function ArtistCard({ artist }: ArtistCardProps) {
           </View>
         )}
 
-        {/* Location */}
-        {artist.location && (artist.location.address || artist.location.municipality || artist.location.province)  && (
+        {/* Location - show only "Province (CODE)" or municipality (no street address) */}
+        {artist.location && (artist.location.province || artist.location.municipality) && (
           <View className="flex-row items-center">
             <SVGIcons.Location width={s(14)} height={s(14)} />
             <ScaledText
@@ -254,21 +254,9 @@ function ArtistCard({ artist }: ArtistCardProps) {
               style={{ marginLeft: s(4) }}
               numberOfLines={1}
             >
-              {(() => {
-                // If address exists, show only address
-                if (artist.location.address) {
-                  return artist.location.address;
-                }
-                // Otherwise, show municipality and province
-                const parts: string[] = [];
-                if (artist.location.municipality) {
-                  parts.push(artist.location.municipality);
-                }
-                if (artist.location.province) {
-                  parts.push(`(${artist.location.province})`);
-                }
-                return parts.length > 0 ? parts.join(" ") : "";
-              })()}
+              {artist.location.province ||
+                artist.location.municipality ||
+                ""}
             </ScaledText>
           </View>
         )}
