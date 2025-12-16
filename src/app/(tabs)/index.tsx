@@ -319,7 +319,7 @@ export default function HomeScreen() {
         </View>
         <SVGIcons.LogoLight />
         <TouchableOpacity
-          onPress={() => router.push("/(auth)/help")}
+          onPress={() => router.push("/(auth)/help" as any)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           className="items-center justify-center"
           style={{ width: s(20), height: s(20) }}

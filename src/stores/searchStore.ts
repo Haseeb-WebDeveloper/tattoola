@@ -1,20 +1,23 @@
-import { getCurrentUserLocation } from "@/services/profile.service";
 import { searchAll, searchArtists, searchStudios } from "@/services/search.service";
+import { getFacets } from "@/services/facet.service";
 import type {
   SearchFilters,
   SearchResults,
   SearchTab
 } from "@/types/search";
+import type { Facets } from "@/types/facets";
 import { create } from "zustand";
 
 type SearchState = {
   activeTab: SearchTab;
   filters: SearchFilters;
   results: SearchResults;
+  facets: Facets | null;
   page: number;
   isInitializing: boolean;
   isLoading: boolean;
   isLoadingMore: boolean;
+  isLoadingFacets: boolean;
   hasMore: boolean;
   error: string | null;
   locationDisplay: {
@@ -30,8 +33,8 @@ type SearchState = {
   clearLocation: () => void;
   search: () => Promise<void>;
   loadMore: () => Promise<void>;
+  loadFacets: () => Promise<void>;
   resetSearch: () => void;
-  initializeWithUserLocation: () => Promise<void>;
   resetFilters: () => void;
 };
 
@@ -49,24 +52,29 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     artists: [],
     studios: [],
   },
+  facets: null,
   page: 0,
   isInitializing: true,
   isLoading: false,
   isLoadingMore: false,
+  isLoadingFacets: false,
   hasMore: true,
   error: null,
   locationDisplay: null,
 
   setActiveTab: (tab: SearchTab) => {
     set({ activeTab: tab });
-    // Re-search with new tab
+    // Re-search with new tab and reload facets
     get().search();
+    get().loadFacets();
   },
 
   updateFilters: (newFilters: Partial<SearchFilters>) => {
     set((state) => ({
       filters: { ...state.filters, ...newFilters },
     }));
+    // Reload facets when filters change
+    get().loadFacets();
   },
 
   clearFilters: () => {
@@ -96,7 +104,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
 
   search: async () => {
-    const { activeTab, filters } = get();
+    const { activeTab, filters, isInitializing } = get();
     set({ isLoading: true, error: null, page: 0 });
 
     try {
@@ -110,6 +118,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           hasMore: result.hasMore,
           error: result.error || null,
           isLoading: false,
+          isInitializing: false,
         });
       } else if (activeTab === "artists") {
         const result = await searchArtists({ filters, page: 0 });
@@ -121,6 +130,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           hasMore: result.hasMore,
           error: result.error || null,
           isLoading: false,
+          isInitializing: false,
         });
       } else if (activeTab === "studios") {
         const result = await searchStudios({ filters, page: 0 });
@@ -132,12 +142,16 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           hasMore: result.hasMore,
           error: result.error || null,
           isLoading: false,
+          isInitializing: false,
         });
       }
+      // Load facets after search completes
+      get().loadFacets();
     } catch (error: any) {
       set({
         error: error.message || "An error occurred while searching",
         isLoading: false,
+        isInitializing: false,
       });
     }
   },
@@ -193,6 +207,18 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
   },
 
+  loadFacets: async () => {
+    const { activeTab, filters } = get();
+    set({ isLoadingFacets: true });
+    try {
+      const facets = await getFacets({ filters, activeTab });
+      set({ facets, isLoadingFacets: false });
+    } catch (error: any) {
+      console.error("Error loading facets:", error);
+      set({ isLoadingFacets: false });
+    }
+  },
+
   resetSearch: () => {
     set({
       activeTab: "all",
@@ -201,6 +227,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         artists: [],
         studios: [],
       },
+      facets: null,
       page: 0,
       isLoading: false,
       isLoadingMore: false,
@@ -210,35 +237,10 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     });
   },
 
-  initializeWithUserLocation: async () => {
-    set({ isInitializing: true, isLoading: true, error: null, page: 0, results: { artists: [], studios: [] } });
-    try {
-      const userLocation = await getCurrentUserLocation();
-      if (userLocation) {
-        set({
-          filters: {
-            ...get().filters,
-            provinceId: userLocation.provinceId,
-            municipalityId: userLocation.municipalityId,
-          },
-          locationDisplay: {
-            province: userLocation.province,
-            municipality: userLocation.municipality,
-          },
-        });
-      }
-      await get().search();
-    } catch (error) {
-      console.error("Error initializing with user location:", error);
-      await get().search();
-    } finally {
-      set({ isInitializing: false });
-    }
-  },
-
   resetFilters: () => {
     set({ filters: initialFilters, locationDisplay: null });
     get().search();
+    get().loadFacets();
   },
 }));
 

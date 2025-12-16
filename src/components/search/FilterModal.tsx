@@ -1,6 +1,8 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
+import { getFacets } from "@/services/facet.service";
+import type { Facets } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import {
   BottomSheetModal,
@@ -8,9 +10,9 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import LocationPicker from "../shared/LocationPicker";
+import SearchLocationPicker from "../shared/SearchLocationPicker";
 import ServiceFilter from "./ServiceFilter";
 import StyleFilter from "./StyleFilter";
 
@@ -21,7 +23,7 @@ type FilterModalProps = {
 
 export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const insets = useSafeAreaInsets();
-  const { filters, updateFilters, search } = useSearchStore();
+  const { filters, updateFilters, search, activeTab, facets } = useSearchStore();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const [tempFilters, setTempFilters] = useState(filters);
@@ -30,15 +32,19 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     province: string;
     municipality: string;
   } | null>(null);
+  const [tempFacets, setTempFacets] = useState<Facets | null>(null);
+  const [isLoadingFacets, setIsLoadingFacets] = useState(false);
   const isShowingLocationPickerRef = useRef(false);
+  const facetDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Snap points for the bottom sheet (90% of screen height)
   const snapPoints = useMemo(() => ["90%"], []);
 
-  // Open/close bottom sheet based on visible prop
+  // Load facets when modal opens
   useEffect(() => {
     if (visible) {
       setTempFilters(filters);
+      setTempFacets(facets);
       // Get location names from store if they exist
       const { locationDisplay } = useSearchStore.getState();
       if (locationDisplay && filters.provinceId && filters.municipalityId) {
@@ -46,6 +52,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       } else {
         setLocationNames(null);
       }
+      // Load initial facets
+      loadFacetsForFilters(filters);
       // Open bottom sheet modal
       requestAnimationFrame(() => {
         bottomSheetRef.current?.present();
@@ -56,8 +64,69 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       // Reset state when parent closes modal
       setShowLocationPicker(false);
       isShowingLocationPickerRef.current = false;
+      // Clear debounce
+      if (facetDebounceRef.current) {
+        clearTimeout(facetDebounceRef.current);
+        facetDebounceRef.current = null;
+      }
     }
   }, [visible, filters]);
+
+  // Track previous activeTab to detect changes
+  const prevActiveTabRef = useRef(activeTab);
+
+  // Reload facets immediately when activeTab changes (no debounce)
+  useEffect(() => {
+    if (!visible) return;
+    
+    // Check if tab actually changed
+    if (prevActiveTabRef.current !== activeTab) {
+      prevActiveTabRef.current = activeTab;
+      // Clear any pending debounced call
+      if (facetDebounceRef.current) {
+        clearTimeout(facetDebounceRef.current);
+        facetDebounceRef.current = null;
+      }
+      // Load facets immediately for new tab
+      console.log(`🔄 [FILTER_MODAL] Tab changed to ${activeTab}, reloading facets immediately`);
+      loadFacetsForFilters(tempFilters);
+    }
+  }, [activeTab, visible]);
+
+  // Debounced facet loading when tempFilters change (but not when tab changes)
+  useEffect(() => {
+    if (!visible) return;
+    // Skip if this is a tab change (handled by the effect above)
+    if (prevActiveTabRef.current !== activeTab) return;
+
+    // Clear existing debounce
+    if (facetDebounceRef.current) {
+      clearTimeout(facetDebounceRef.current);
+    }
+
+    // Set new debounce
+    facetDebounceRef.current = setTimeout(() => {
+      loadFacetsForFilters(tempFilters);
+    }, 300);
+
+    return () => {
+      if (facetDebounceRef.current) {
+        clearTimeout(facetDebounceRef.current);
+      }
+    };
+  }, [tempFilters, visible]);
+
+  const loadFacetsForFilters = async (filterToUse: typeof filters) => {
+    setIsLoadingFacets(true);
+    try {
+      const newFacets = await getFacets({ filters: filterToUse, activeTab });
+      setTempFacets(newFacets);
+    } catch (error) {
+      console.error("Error loading facets:", error);
+    } finally {
+      setIsLoadingFacets(false);
+    }
+  };
 
   // Handle bottom sheet dismiss (called when modal is fully dismissed)
   const handleSheetDismiss = useCallback(() => {
@@ -227,6 +296,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                 <StyleFilter
                   selectedIds={tempFilters.styleIds}
                   onSelectionChange={handleStyleChange}
+                  facets={tempFacets?.styles || []}
+                  isLoading={isLoadingFacets}
                 />
               </View>
 
@@ -268,6 +339,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                 <ServiceFilter
                   selectedIds={tempFilters.serviceIds}
                   onSelectionChange={handleServiceChange}
+                  facets={tempFacets?.services || []}
+                  isLoading={isLoadingFacets}
                 />
               </View>
 
@@ -373,7 +446,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               </View>
         </BottomSheetScrollView>
       </BottomSheetModal>
-      <LocationPicker
+      <SearchLocationPicker
         visible={showLocationPicker}
         onClose={() => {
           setShowLocationPicker(false);
@@ -389,6 +462,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         onSelect={handleLocationSelect}
         initialProvinceId={tempFilters.provinceId}
         initialMunicipalityId={tempFilters.municipalityId}
+        facets={tempFacets?.locations || []}
+        isLoading={isLoadingFacets}
       />
     </>
   );

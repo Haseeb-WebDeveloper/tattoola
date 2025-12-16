@@ -4,16 +4,25 @@ import { HelpTabs } from "@/components/help/HelpTabs";
 import { getHelpCategories } from "@/services/help.service";
 import type { HelpCategory, HelpTab } from "@/types/help";
 import { mvs, s } from "@/utils/scale";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ScrollView, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet } from "react-native";
 
 export default function HelpScreen() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<HelpTab>("artisiti");
-  
+
   // Cache categories for both tabs
   const [cachedCategories, setCachedCategories] = useState<{
     ARTIST: HelpCategory[];
@@ -22,15 +31,15 @@ export default function HelpScreen() {
     ARTIST: [],
     USER: [],
   });
-  
+
   // Ref to track cache for checking without causing re-renders
   const cacheRef = useRef(cachedCategories);
-  
+
   // Keep ref in sync with state
   useEffect(() => {
     cacheRef.current = cachedCategories;
   }, [cachedCategories]);
-  
+
   const [loading, setLoading] = useState(true);
 
   // Map tab to category type
@@ -54,10 +63,10 @@ export default function HelpScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       const type = getCategoryType(activeTab);
-      
+
       // Check if we have cached data for this tab using ref
       const hasCachedData = cacheRef.current[type].length > 0;
-      
+
       // Only show loading if we don't have cached data
       if (!hasCachedData) {
         setLoading(true);
@@ -98,44 +107,41 @@ export default function HelpScreen() {
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
-      
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        {/* Header */}
-        <HelpHeader />
 
-        {/* Divider */}
-        <View
-          style={{
-            height: 0.5,
-            backgroundColor: "#A49A99",
-            marginHorizontal: s(20),
-            marginBottom: mvs(16),
-          }}
-        />
+      {/* Header */}
+      <HelpHeader />
 
-        {/* Tabs */}
-        <HelpTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Divider */}
+      <View
+        style={{
+          height: 0.5,
+          backgroundColor: "#A49A99",
+          marginHorizontal: s(20),
+          marginBottom: mvs(16),
+        }}
+      />
 
-        {/* Scrollable Content */}
-        <ScrollView
-          showsVerticalScrollIndicator
-          contentContainerStyle={{
-            paddingHorizontal: s(20),
-            paddingBottom: mvs(32) + insets.bottom,
-          }}
-          style={{ flex: 1 }}
-        >
-          {/* Help Categories */}
-          {helpCategories.map((category, index) => (
-            <HelpCategoryItem
-              key={category.id}
-              category={category}
-              isLast={index === helpCategories.length - 1}
-            />
-          ))}
-        </ScrollView>
-      </SafeAreaView>
+      {/* Tabs */}
+      <HelpTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Scrollable Content */}
+      <ScrollView
+        showsVerticalScrollIndicator
+        contentContainerStyle={{
+          paddingHorizontal: s(20),
+          paddingBottom: mvs(32) + insets.bottom,
+        }}
+        style={{ flex: 1 }}
+      >
+        {/* Help Categories */}
+        {helpCategories.map((category, index) => (
+          <HelpCategoryItem
+            key={category.id}
+            category={category}
+            isLast={index === helpCategories.length - 1}
+          />
+        ))}
+      </ScrollView>
     </View>
   );
 }
-

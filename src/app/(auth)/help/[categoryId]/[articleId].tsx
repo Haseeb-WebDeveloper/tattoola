@@ -5,7 +5,10 @@ import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, View, useWindowDimensions } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet } from "react-native";
 import ScaledText from "@/components/ui/ScaledText";
@@ -168,61 +171,58 @@ export default function HelpArticleDetailScreen() {
         pointerEvents="none"
       />
 
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        {/* Header */}
-        <HelpHeader />
+      {/* Header */}
+      <HelpHeader />
 
-        {/* Divider */}
-        <View
-          style={{
-            height: 0.5,
-            backgroundColor: "#A49A99",
-            marginHorizontal: s(20),
-            marginBottom: mvs(16),
-          }}
-        />
+      {/* Divider */}
+      <View
+        style={{
+          height: 0.5,
+          backgroundColor: "#A49A99",
+          marginHorizontal: s(20),
+          marginBottom: mvs(16),
+        }}
+      />
 
-        {/* Article Content */}
-        <ScrollView
-          showsVerticalScrollIndicator
-          contentContainerStyle={{
-            paddingHorizontal: s(28),
-            paddingBottom: mvs(32) + insets.bottom,
-          }}
-          style={{ flex: 1 }}
-        >
-          {/* Article Title */}
-          {article && (
-            <>
-              <ScaledText
-                allowScaling={false}
-                variant="2xl"
-                className="text-foreground"
-                style={{
-                  fontSize: s(24),
-                  lineHeight: s(31.2),
-                  fontFamily: "ProductSans",
-                  fontWeight: "bold",
-                  paddingVertical: mvs(28),
-                }}
-              >
-                {article.title}
-              </ScaledText>
+      {/* Article Content */}
+      <ScrollView
+        showsVerticalScrollIndicator
+        contentContainerStyle={{
+          paddingHorizontal: s(28),
+          paddingBottom: mvs(32) + insets.bottom,
+        }}
+        style={{ flex: 1 }}
+      >
+        {/* Article Title */}
+        {article && (
+          <>
+            <ScaledText
+              allowScaling={false}
+              variant="2xl"
+              className="text-foreground"
+              style={{
+                fontSize: s(24),
+                lineHeight: s(31.2),
+                fontFamily: "ProductSans",
+                fontWeight: "bold",
+                paddingVertical: mvs(28),
+              }}
+            >
+              {article.title}
+            </ScaledText>
 
-              {/* HTML Content */}
-              {article.description && (
-                <RenderHTML
-                  contentWidth={contentWidth}
-                  source={{ html: article.description }}
-                  tagsStyles={tagsStyles}
-                  baseStyle={htmlStyles.body}
-                />
-              )}
-            </>
-          )}
-        </ScrollView>
-      </SafeAreaView>
+            {/* HTML Content */}
+            {article.description && (
+              <RenderHTML
+                contentWidth={contentWidth}
+                source={{ html: article.description }}
+                tagsStyles={tagsStyles}
+                baseStyle={htmlStyles.body}
+              />
+            )}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 }
-

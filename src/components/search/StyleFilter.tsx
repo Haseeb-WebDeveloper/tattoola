@@ -1,8 +1,8 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import type { StyleFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
-import { supabase } from "@/utils/supabase";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Image,
   Modal,
@@ -10,43 +10,23 @@ import {
   ScrollView,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
-
-type Style = {
-  id: string;
-  name: string;
-  imageUrl: string | null;
-};
 
 type StyleFilterProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
+  facets: StyleFacet[];
+  isLoading?: boolean;
 };
 
 export default function StyleFilter({
   selectedIds,
   onSelectionChange,
+  facets,
+  isLoading = false,
 }: StyleFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [styles, setStyles] = useState<Style[]>([]);
-
-  useEffect(() => {
-    loadStyles();
-  }, []);
-
-  const loadStyles = async () => {
-    const { data, error } = await supabase
-      .from("tattoo_styles")
-      .select("id, name, imageUrl")
-      .eq("isActive", true)
-      .order("name");
-
-    if (error) {
-      console.error("Error loading styles:", error);
-    } else {
-      setStyles(data || []);
-    }
-  };
 
   const toggleStyle = (styleId: string) => {
     const newSelectedIds = selectedIds.includes(styleId)
@@ -60,8 +40,11 @@ export default function StyleFilter({
     selectedIds.length === 0
       ? "Tutti"
       : selectedIds.length === 1
-        ? styles.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        ? facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
         : `${selectedIds.length} selezionati`;
+
+  // Show all available facets
+  const availableFacets = facets;
 
   return (
     <>
@@ -152,54 +135,72 @@ export default function StyleFilter({
               contentContainerStyle={{ paddingBottom: mvs(32) }}
               showsVerticalScrollIndicator={false}
             >
-              {styles.map((style) => {
-                const isSelected = selectedIds.includes(style.id);
-                return (
-                  <Pressable
-                    key={style.id}
-                    onPress={() => toggleStyle(style.id)}
-                    className="border-b border-gray/20"
-                    style={{
-                      paddingVertical: mvs(8),
-                      paddingHorizontal: s(20),
-                    }}
+              {isLoading ? (
+                <View className="items-center justify-center" style={{ paddingVertical: mvs(40) }}>
+                  <ActivityIndicator size="small" color="#AE0E0E" />
+                </View>
+              ) : availableFacets.length === 0 ? (
+                <View className="items-center justify-center" style={{ paddingVertical: mvs(40) }}>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-gray font-neueLight"
                   >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-3">
-                        {style.imageUrl && (
-                          <Image
-                            source={{ uri: style.imageUrl }}
-                            style={{
-                              width: s(43),
-                              height: s(46),
-                              borderRadius: s(8),
-                            }}
-                            resizeMode="cover"
+                    Nessuno stile disponibile
+                  </ScaledText>
+                </View>
+              ) : (
+                availableFacets.map((facet) => {
+                  const isSelected = selectedIds.includes(facet.id);
+                  return (
+                    <Pressable
+                      key={facet.id}
+                      onPress={() => toggleStyle(facet.id)}
+                      className="border-b border-gray/20"
+                      style={{
+                        paddingVertical: mvs(8),
+                        paddingHorizontal: s(20),
+                      }}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center gap-3 flex-1">
+                          {facet.imageUrl && (
+                            <Image
+                              source={{ uri: facet.imageUrl }}
+                              style={{
+                                width: s(43),
+                                height: s(46),
+                                borderRadius: s(8),
+                              }}
+                              resizeMode="cover"
+                            />
+                          )}
+                          <View className="flex-1">
+                            <ScaledText
+                              allowScaling={false}
+                              variant="md"
+                              className="text-gray font-montserratSemibold"
+                            >
+                              {facet.name}
+                            </ScaledText>
+                          </View>
+                        </View>
+                        {isSelected ? (
+                          <SVGIcons.CheckedCheckbox
+                            width={s(17)}
+                            height={s(17)}
+                          />
+                        ) : (
+                          <SVGIcons.UncheckedCheckbox
+                            width={s(17)}
+                            height={s(17)}
                           />
                         )}
-                        <ScaledText
-                          allowScaling={false}
-                          variant="md"
-                          className="text-gray font-montserratSemibold"
-                        >
-                          {style.name}
-                        </ScaledText>
                       </View>
-                      {isSelected ? (
-                        <SVGIcons.CheckedCheckbox
-                          width={s(17)}
-                          height={s(17)}
-                        />
-                      ) : (
-                        <SVGIcons.UncheckedCheckbox
-                          width={s(17)}
-                          height={s(17)}
-                        />
-                      )}
-                    </View>
-                  </Pressable>
-                );
-              })}
+                    </Pressable>
+                  );
+                })
+              )}
             </ScrollView>
           </View>
         </View>
