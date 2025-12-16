@@ -3,7 +3,7 @@ import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
 import FilterModal from "@/components/search/FilterModal";
 import StudioCard from "@/components/search/StudioCard";
 import StudioCardSkeleton from "@/components/search/StudioCardSkeleton";
-import LocationPicker from "@/components/shared/LocationPicker";
+import SearchLocationPicker from "@/components/shared/SearchLocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
@@ -24,10 +24,12 @@ export default function SearchScreen() {
     hasMore,
     search,
     loadMore,
+    loadFacets,
     locationDisplay,
     filters,
-    initializeWithUserLocation,
     resetFilters,
+    facets,
+    isLoadingFacets,
   } = useSearchStore();
 
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -35,7 +37,12 @@ export default function SearchScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    initializeWithUserLocation();
+    // Initialize search and facets on mount
+    const initialize = async () => {
+      await search();
+      await loadFacets();
+    };
+    initialize();
   }, []);
 
   const handleRefresh = async () => {
@@ -419,12 +426,14 @@ export default function SearchScreen() {
       />
 
       {/* Location Picker Bottom Sheet */}
-      <LocationPicker
+      <SearchLocationPicker
         visible={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         onSelect={handleLocationSelect}
         initialProvinceId={filters.provinceId}
         initialMunicipalityId={filters.municipalityId}
+        facets={facets?.locations || []}
+        isLoading={isLoadingFacets}
       />
     </View>
   );

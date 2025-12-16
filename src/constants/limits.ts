@@ -17,6 +17,12 @@ export const DISPLAY_NAME_AR = "AR";
 // For artists tab we fetch 21 artist. On load more we fetch next 21 artist so total results is 42. Same for studios tab.
 export const SEARCH_RESULTS_PER_PAGE = 20;
 
+// Search filter compression mode
+// "medium": Show filters that have at least 1 result for the current tab type (artists can be 0 on studios tab, studios can be 0 on artists tab)
+// "high": Show filters only when both studios AND artists exist for that filter (common filters only)
+export type SearchFilterCompression = "medium" | "high";
+export const SEARCH_FILTER_COMPRESSION: SearchFilterCompression = "high";
+
 // collection mame while aritst signup and we save his work posts
 export const COLLECTION_NAME = {
   ARTIST_FAV_WORK: "Prefetti",

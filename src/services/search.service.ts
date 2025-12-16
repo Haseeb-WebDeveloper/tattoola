@@ -89,8 +89,9 @@ export async function searchArtists({
       if (artistStyles && artistStyles.length > 0) {
         filteredArtistIds = [...new Set(artistStyles.map(as => as.artistId))];
       } else {
-        // No artists match the style filter, return empty
-        return { data: [], hasMore: false };
+        // No artists match the style filter - continue with empty filter set
+        // Facets should prevent this scenario, but if it happens, return empty
+        filteredArtistIds = [];
       }
     }
 
@@ -107,15 +108,13 @@ export async function searchArtists({
         // If we already filtered by style, intersect the IDs
         if (filteredArtistIds !== null) {
           filteredArtistIds = filteredArtistIds.filter(id => serviceArtistIds.includes(id));
-          if (filteredArtistIds.length === 0) {
-            return { data: [], hasMore: false };
-          }
         } else {
           filteredArtistIds = serviceArtistIds;
         }
       } else {
-        // No artists match the service filter, return empty
-        return { data: [], hasMore: false };
+        // No artists match the service filter - continue with empty filter set
+        // Facets should prevent this scenario, but if it happens, return empty
+        filteredArtistIds = filteredArtistIds !== null ? [] : [];
       }
     }
 
@@ -146,25 +145,28 @@ export async function searchArtists({
           // Intersect with style/service filtered IDs if they exist
           if (filteredArtistIds !== null) {
             filteredArtistIds = filteredArtistIds.filter(id => locationArtistIds.includes(id));
-            if (filteredArtistIds.length === 0) {
-              return { data: [], hasMore: false };
-            }
           } else {
             filteredArtistIds = locationArtistIds;
           }
         } else {
-          // No artists match the location filter, return empty
-          return { data: [], hasMore: false };
+          // No artists match the location filter - continue with empty filter set
+          // Facets should prevent this scenario, but if it happens, return empty
+          filteredArtistIds = filteredArtistIds !== null ? [] : [];
         }
       } else {
-        // No users match the location filter, return empty
-        return { data: [], hasMore: false };
+        // No users match the location filter - continue with empty filter set
+        // Facets should prevent this scenario, but if it happens, return empty
+        filteredArtistIds = filteredArtistIds !== null ? [] : [];
       }
     }
 
     // Apply the filtered IDs to the main query
-    if (filteredArtistIds !== null) {
+    if (filteredArtistIds !== null && filteredArtistIds.length > 0) {
       query = query.in("id", filteredArtistIds);
+    } else if (filteredArtistIds !== null && filteredArtistIds.length === 0) {
+      // No matching artists - return empty result
+      // Facets should prevent this, but handle gracefully
+      return { data: [], hasMore: false };
     }
 
     // Apply pagination (Supabase ranges are inclusive, so we subtract 1)
@@ -368,7 +370,7 @@ export async function searchArtists({
                 if (!a.isFavorite && b.isFavorite) return 1;
                 return a.order - b.order;
               })
-              .slice(0, 2)
+              // .slice(0, 2)
               .map((fs: any) => ({
                 id: fs.style?.id || "",
                 name: fs.style?.name || "",
@@ -480,8 +482,9 @@ export async function searchStudios({
       if (studioStyles && studioStyles.length > 0) {
         filteredStudioIds = [...new Set(studioStyles.map(ss => ss.studioId))];
       } else {
-        // No studios match the style filter, return empty
-        return { data: [], hasMore: false };
+        // No studios match the style filter - continue with empty filter set
+        // Facets should prevent this scenario, but if it happens, return empty
+        filteredStudioIds = [];
       }
     }
 
@@ -498,15 +501,13 @@ export async function searchStudios({
         // If we already filtered by style, intersect the IDs
         if (filteredStudioIds !== null) {
           filteredStudioIds = filteredStudioIds.filter(id => serviceStudioIds.includes(id));
-          if (filteredStudioIds.length === 0) {
-            return { data: [], hasMore: false };
-          }
         } else {
           filteredStudioIds = serviceStudioIds;
         }
       } else {
-        // No studios match the service filter, return empty
-        return { data: [], hasMore: false };
+        // No studios match the service filter - continue with empty filter set
+        // Facets should prevent this scenario, but if it happens, return empty
+        filteredStudioIds = filteredStudioIds !== null ? [] : [];
       }
     }
 
@@ -530,21 +531,23 @@ export async function searchStudios({
         // Intersect with style/service filtered IDs if they exist
         if (filteredStudioIds !== null) {
           filteredStudioIds = filteredStudioIds.filter(id => locationStudioIds.includes(id));
-          if (filteredStudioIds.length === 0) {
-            return { data: [], hasMore: false };
-          }
         } else {
           filteredStudioIds = locationStudioIds;
         }
       } else {
-        // No studios match the location filter, return empty
-        return { data: [], hasMore: false };
+        // No studios match the location filter - continue with empty filter set
+        // Facets should prevent this scenario, but if it happens, return empty
+        filteredStudioIds = filteredStudioIds !== null ? [] : [];
       }
     }
 
     // Apply the filtered IDs to the main query
-    if (filteredStudioIds !== null) {
+    if (filteredStudioIds !== null && filteredStudioIds.length > 0) {
       query = query.in("id", filteredStudioIds);
+    } else if (filteredStudioIds !== null && filteredStudioIds.length === 0) {
+      // No matching studios - return empty result
+      // Facets should prevent this, but handle gracefully
+      return { data: [], hasMore: false };
     }
 
     // Apply pagination (Supabase ranges are inclusive, so we subtract 1)
@@ -583,7 +586,7 @@ export async function searchStudios({
         styles:
           studio.styles
             ?.sort((a: any, b: any) => a.order - b.order)
-            .slice(0, 2)
+            // .slice(0, 2)
             .map((ss: any) => ({
               id: ss.style?.id || "",
               name: ss.style?.name || "",

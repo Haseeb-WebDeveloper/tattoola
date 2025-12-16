@@ -47,7 +47,7 @@ export const StylePills = ({
             <ScaledText
               allowScaling={false}
               variant="md"
-              className="text-white font-neueRegular"
+              className="text-white font-neueMedium"
             >
               {addEmojiWithStyle(style.name)}
             </ScaledText>
