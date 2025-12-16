@@ -13,31 +13,33 @@ export type ProfileTabId =
 interface ProfileTabNavigationProps {
   activeTab: ProfileTabId;
   onTabChange?: (tab: ProfileTabId) => void;
+  isOwnProfile?: boolean;
 }
 
 export const ProfileTabNavigation: React.FC<ProfileTabNavigationProps> = ({
   activeTab,
   onTabChange,
+  isOwnProfile = false,
 }) => {
   const tabs = [
     {
       id: "my-tattoos" as const,
-      label: "I miei tatuaggi",
+      label: isOwnProfile ? "I tuoi tatuaggi" : "I suoi tatuaggi",
       icon: SVGIcons.Magic,
     },
     {
       id: "liked" as const,
-      label: "Mi piace",
+      label: isOwnProfile ? "Ti piace" : "Gli piace",
       icon: SVGIcons.Heart,
     },
     {
       id: "artists-you-follow" as const,
-      label: "Artisti che segui",
+      label: isOwnProfile ? "Artisti che segui" : "Artisti che segue",
       icon: SVGIcons.UserArt,
     },
     {
       id: "tattoolers" as const,
-      label: "Tattoo lover",
+      label: "Tattoolers",
       icon: SVGIcons.Users,
     },
   ];

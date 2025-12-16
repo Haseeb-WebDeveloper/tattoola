@@ -113,7 +113,11 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
       <PreferredStylesSection styles={data.favoriteStyles} />
 
       {/* Tab Navigation */}
-      <ProfileTabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <ProfileTabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isOwnProfile={true}
+      />
 
       {/* Content - Conditional based on active tab */}
       {activeTab === "my-tattoos" && <TattooPostsGrid posts={data.posts} />}

@@ -1,3 +1,4 @@
+import { AnimatedDots } from "@/components/ui/AnimatedDots";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import { Checkbox } from "@/components/ui/Checkbox";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
@@ -169,7 +170,7 @@ export default function RegisterScreen() {
       <View className="px-6">
         <ScaledText
           variant="sm"
-          className="text-tat textcenter mb-2 font-montserratSemibold"
+          className="mb-2 text-tat textcenter font-montserratSemibold"
         >
           Username (inserisci un nome univoco)
         </ScaledText>
@@ -208,7 +209,7 @@ export default function RegisterScreen() {
         {usernameValidation.formatError && (
           <ScaledText
             variant="sm"
-            className="text-xs text-error mt-1 font-neueLight"
+            className="mt-1 text-xs text-error font-neueLight"
           >
             {usernameValidation.formatError}
           </ScaledText>
@@ -217,7 +218,7 @@ export default function RegisterScreen() {
           usernameValidation.available === false && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               Questo username è già stato utilizzato
             </ScaledText>
@@ -226,7 +227,7 @@ export default function RegisterScreen() {
           usernameValidation.available === true && (
             <ScaledText
               variant="sm"
-              className="text-xs text-success mt-1 font-neueLight"
+              className="mt-1 text-xs text-success font-neueLight"
             >
               Username disponibile
             </ScaledText>
@@ -237,7 +238,7 @@ export default function RegisterScreen() {
           usernameValidation.available !== false && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.username}
             </ScaledText>
@@ -246,7 +247,7 @@ export default function RegisterScreen() {
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
             variant="sm"
-            className="text-tat mb-2 font-montserratSemibold"
+            className="mb-2 text-tat font-montserratSemibold"
           >
             Email
           </ScaledText>
@@ -263,11 +264,24 @@ export default function RegisterScreen() {
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
           />
+          {/* Show verifying state */}
+          {emailAvailability.checking && (
+            <View className="flex-row items-center" style={{ gap: 6 }}>
+              <ScaledText
+                variant="sm"
+                className="font-neueLight"
+                style={{ color: "#F49E00", fontSize: s(10) }}
+              >
+                Verifying
+              </ScaledText>
+              <AnimatedDots color="#F4C430" size={4} />
+            </View>
+          )}
           {/* Only show error state if email is already registered */}
-          {!!errors.email && (
+          {!emailAvailability.checking && !!errors.email && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.email}
             </ScaledText>
@@ -277,7 +291,7 @@ export default function RegisterScreen() {
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
             variant="sm"
-            className="text-tat mb-2 font-montserratSemibold"
+            className="mb-2 text-tat font-montserratSemibold"
           >
             Password (min. 8 caratteri, di cui almeno un numero)
           </ScaledText>
@@ -309,7 +323,7 @@ export default function RegisterScreen() {
           {!!errors.password && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.password}
             </ScaledText>
@@ -319,7 +333,7 @@ export default function RegisterScreen() {
         <View style={{ marginTop: mvs(15) }}>
           <ScaledText
             variant="sm"
-            className="text-tat mb-2 font-montserratSemibold"
+            className="mb-2 text-tat font-montserratSemibold"
           >
             Conferma Password
           </ScaledText>
@@ -353,7 +367,7 @@ export default function RegisterScreen() {
           {!!errors.confirmPassword && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.confirmPassword}
             </ScaledText>
@@ -383,7 +397,7 @@ export default function RegisterScreen() {
           {!!errors.terms && (
             <ScaledText
               variant="sm"
-              className="text-xs text-error mt-1 font-neueLight"
+              className="mt-1 text-xs text-error font-neueLight"
             >
               {errors.terms}
             </ScaledText>
@@ -403,7 +417,7 @@ export default function RegisterScreen() {
               !formData.confirmPassword.trim() ||
               !acceptedTerms
             }
-            className="rounded-full items-center w-full bg-primary-brand"
+            className="items-center w-full rounded-full bg-primary-brand"
             style={{
               paddingVertical: mvs(12),
               paddingHorizontal: s(32),

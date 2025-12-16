@@ -71,7 +71,13 @@ const SkeletonCard: React.FC = () => {
       {/* Content Skeleton */}
       <View style={{ flex: 1 }}>
         {/* Username skeleton */}
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: mvs(2) }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: mvs(2),
+          }}
+        >
           <Animated.View
             style={{
               width: s(100),
@@ -206,7 +212,13 @@ const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => {
       {/* User Info */}
       <View style={{ flex: 1 }}>
         {/* Username with verification badge */}
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: mvs(2) }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: mvs(2),
+          }}
+        >
           <ScaledText
             allowScaling={false}
             variant="md"
@@ -215,7 +227,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => {
           >
             @{user.username}
           </ScaledText>
-          <SVGIcons.VarifiedGreen width={s(17)} height={s(17)} />
+          {user.role === "ARTIST" && (
+            <SVGIcons.VarifiedGreen width={s(17)} height={s(17)} />
+          )}
         </View>
 
         {/* Full name */}
@@ -234,7 +248,11 @@ const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => {
         {/* Location */}
         {location && (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <SVGIcons.LocationsGray width={s(10)} height={s(10)} style={{ marginRight: s(2) }} />
+            <SVGIcons.LocationsGray
+              width={s(10)}
+              height={s(10)}
+              style={{ marginRight: s(2) }}
+            />
             <ScaledText
               allowScaling={false}
               variant="body4"
@@ -300,7 +318,7 @@ export default function FollowingScreen() {
 
   return (
     <View
-      className="bg-background min-h-screen"
+      className="min-h-screen bg-background"
       style={{
         flex: 1,
       }}
@@ -313,7 +331,7 @@ export default function FollowingScreen() {
       >
         {/* Header */}
         <View
-          className="flex-row items-center justify-center relative"
+          className="relative flex-row items-center justify-center"
           style={{
             paddingHorizontal: s(16),
             paddingVertical: mvs(16),
@@ -322,7 +340,7 @@ export default function FollowingScreen() {
         >
           <TouchableOpacity
             onPress={handleBack}
-            className="absolute rounded-full bg-foreground/20 items-center justify-center"
+            className="absolute items-center justify-center rounded-full bg-foreground/20"
             style={{
               width: s(34),
               height: s(34),
@@ -441,16 +459,16 @@ export default function FollowingScreen() {
             </>
           ) : displayedUsers.length === 0 ? (
             <View style={{ alignItems: "center", marginTop: mvs(32) }}>
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-                className="text-gray text-center font-neueLight"
-            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-center text-gray font-neueLight"
+              >
                 {activeTab === "artists"
                   ? "Non segui ancora nessun artista"
                   : "Non segui ancora nessun tattoo lover"}
-            </ScaledText>
-          </View>
+              </ScaledText>
+            </View>
           ) : (
             displayedUsers.map((user) => (
               <UserCard key={user.id} user={user} onPress={handleUserPress} />
@@ -461,4 +479,3 @@ export default function FollowingScreen() {
     </View>
   );
 }
-
