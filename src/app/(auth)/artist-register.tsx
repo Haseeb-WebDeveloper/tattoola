@@ -1,3 +1,4 @@
+import { AnimatedDots } from "@/components/ui/AnimatedDots";
 import AuthStepHeader from "@/components/ui/auth-step-header";
 import { Checkbox } from "@/components/ui/Checkbox";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
@@ -289,8 +290,21 @@ export default function ArtistRegisterScreen() {
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
           />
+          {/* Show verifying state */}
+          {emailAvailability.checking && (
+            <View className="flex-row items-center" style={{ gap: 6 }}>
+              <ScaledText
+                variant="sm"
+                className="font-neueLight"
+                style={{ color: "#F49E00", fontSize: s(10) }}
+              >
+                Verifying
+              </ScaledText>
+              <AnimatedDots color="#F4C430" size={4} />
+            </View>
+          )}
           {/* Only show error state if email is already registered */}
-          {!!errors.email && (
+          {!emailAvailability.checking && !!errors.email && (
             <ScaledText
               variant="sm"
               className="mt-1 text-xs text-error font-neueLight"

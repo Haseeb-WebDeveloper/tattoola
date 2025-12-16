@@ -311,6 +311,13 @@ export default function EditPostModal({
   };
 
   const toggleCollection = (collectionId: string) => {
+    // Find the collection to check if it's "Tutti"
+    const collection = collections.find((c) => c.id === collectionId);
+    // Prevent toggling "Tutti" collection (case-insensitive)
+    if (collection && collection.name.toLowerCase() === "tutti") {
+      return;
+    }
+
     setSelectedCollectionIds((prev) => {
       if (prev.includes(collectionId)) {
         return prev.filter((id) => id !== collectionId);
@@ -713,11 +720,14 @@ export default function EditPostModal({
                     const isSelected = selectedCollectionIds.includes(
                       collection.id
                     );
+                    const isTutti = collection.name.toLowerCase() === "tutti";
                     return (
                       <TouchableOpacity
                         key={collection.id}
                         onPress={() => toggleCollection(collection.id)}
                         className="flex-row items-center justify-between px-4 py-3"
+                        disabled={isTutti}
+                        style={{ opacity: isTutti ? 0.5 : 1 }}
                       >
                         <ScaledText
                           variant="sm"
@@ -725,7 +735,7 @@ export default function EditPostModal({
                         >
                           {collection.name}
                         </ScaledText>
-                        {isSelected ? (
+                        {isSelected || isTutti ? (
                           <SVGIcons.CheckedCheckbox
                             width={s(20)}
                             height={s(20)}

@@ -895,14 +895,18 @@ export default function PostDetailScreen() {
           {/* Content below media */}
           <View className="px-4 py-4">
             {/* Caption and like button */}
-            <View className="flex-row items-start justify-between mb-6">
+            <View
+              className={`flex-row items-start justify-between ${post.caption || post.style ? "mb-6" : ""}`}
+            >
               <View className="flex-1 mr-4">
-                <ScaledText
-                  variant="lg"
-                  className="mb-2 text-foreground font-neueBold"
-                >
-                  {String(post.caption || "Nessuna descrizione")}
-                </ScaledText>
+                {post.caption && (
+                  <ScaledText
+                    variant="lg"
+                    className="mb-2 text-foreground font-neueBold"
+                  >
+                    {String(post.caption)}
+                  </ScaledText>
+                )}
 
                 {/* Style tag */}
                 {post.style && (

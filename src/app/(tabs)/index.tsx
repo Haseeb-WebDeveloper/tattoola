@@ -39,7 +39,7 @@ export default function HomeScreen() {
   useEffect(() => {
     // Load feed for both anonymous and authenticated users
     loadInitial(user?.id || null);
-    
+
     // Only start realtime for authenticated users
     if (user?.id) {
       startRealtime(user.id);
