@@ -130,57 +130,30 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
   return (
     <View className="flex-1 bg-background">
-      {/* Follow button - positioned top-right */}
-      {/* {currentUserId && (
-        <View
-          className="absolute right-0 z-10 top-2"
-          style={{ paddingHorizontal: s(16) }}
-        >
-          <TouchableOpacity
-            onPress={handleFollowToggle}
-            disabled={isTogglingFollow}
-            className={`rounded-full items-center justify-center ${
-              isFollowing ? "border border-gray" : "bg-primary"
-            }`}
-            style={{ paddingHorizontal: s(20), height: s(36) }}
-          >
-            <ScaledText
-              allowScaling={false}
-              variant="body4"
-              className={isFollowing ? "text-foreground" : "text-white"}
-              style={{ fontWeight: "500" }}
-            >
-              {isFollowing ? "Seguendo" : "Segui"}
-            </ScaledText>
-          </TouchableOpacity>
-        </View>
-      )} */}
+      {/* Sticky back button */}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{
+          position: "absolute",
+          top:  mvs(8),
+          left: s(16),
+          zIndex: 10,
+          paddingHorizontal: s(12),
+          paddingVertical: mvs(12),
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          borderRadius: s(100),
+        }}
+      >
+        <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
+      </TouchableOpacity>
 
       <ScrollView
         className="relative"
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
-        contentContainerStyle={{ paddingBottom: 10 }}
+        contentContainerStyle={{ paddingBottom: mvs(96) }}
       >
-        {/* Back icon */}
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="z-10 "
-          style={{
-            paddingHorizontal: s(12),
-            paddingVertical: mvs(12),
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            borderRadius: s(100),
-            position: "absolute",
-            top: mvs(8),
-            left: s(16),
-            zIndex: 10,
-          }}
-        >
-          <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
-        </TouchableOpacity>
-
         {/* Banner */}
         <Banner banner={data?.artistProfile?.banner || []} />
 
@@ -257,46 +230,63 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <StudioCard studio={studio} />
           </View>
         )}
-
-        {/* Bottom actions - only show if not viewing own profile */}
-        {currentUserId !== data.user.id && (
-          <View className="px-4 py-3 bg-background">
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                onPress={handleFollowToggle}
-                disabled={isTogglingFollow}
-                className={`flex-1 flex-row rounded-full items-center justify-center ${
-                  isFollowing ? "border border-gray" : "border border-gray"
-                }`}
-                style={{ gap: s(8), paddingVertical: mvs(8) }}
-              >
-                <SVGIcons.Follow width={s(14)} height={s(14)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-foreground font-neueMedium"
-                >
-                  {isFollowing ? "Seguendo" : "Segui"}
-                </ScaledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleSendRequest}
-                className="flex-row items-center justify-center flex-1 gap-2 rounded-full bg-primary"
-                style={{ gap: s(8), paddingVertical: mvs(8) }}
-              >
-                <SVGIcons.Send2 width={s(14)} height={s(14)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="lg"
-                  className="text-white font-neueMedium"
-                >
-                  Invia richiesta
-                </ScaledText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </ScrollView>
+
+      {/* Floating bottom actions - only show if not viewing own profile */}
+      {currentUserId !== data.user.id && (
+        <View
+          className="px-4"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: mvs(6),
+          }}
+        >
+          <View
+            className="flex-row gap-3  rounded-full"
+            style={{
+              paddingVertical: mvs(6),
+              paddingHorizontal: s(5),
+              shadowColor: "#000",
+              shadowOpacity: 0.15,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 4,
+            }}
+          >
+            <TouchableOpacity
+              onPress={handleFollowToggle}
+              disabled={isTogglingFollow}
+              className={`flex-1 flex-row rounded-full items-center justify-center border bg-background  border-gray`}
+              style={{ gap: s(8), paddingVertical: mvs(8) }}
+            >
+              <SVGIcons.Follow width={s(14)} height={s(14)} />
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueMedium"
+              >
+                {isFollowing ? "Seguendo" : "Segui"}
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSendRequest}
+              className="flex-row items-center justify-center flex-1 gap-2 rounded-full bg-primary"
+              style={{ gap: s(8), paddingVertical: mvs(8) }}
+            >
+              <SVGIcons.Send2 width={s(14)} height={s(14)} />
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-white font-neueMedium"
+              >
+                Invia richiesta
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Rejection Modal */}
       <Modal
