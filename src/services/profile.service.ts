@@ -1583,7 +1583,11 @@ export async function fetchStudioForArtistProfile(
     }
 
     // Transform data to match StudioSearchResult format
-    const activeSubscription = studio.owner?.user?.subscriptions?.find(
+    // Supabase's generated types currently treat nested relations here as arrays,
+    // so we normalize the owner user shape first to satisfy TypeScript.
+    const ownerUser = (studio as any)?.owner?.user;
+
+    const activeSubscription = ownerUser?.subscriptions?.find(
       (sub: any) =>
         sub.status === "ACTIVE" &&
         (!sub.endDate || new Date(sub.endDate) >= new Date())
@@ -1595,7 +1599,7 @@ export async function fetchStudioForArtistProfile(
       slug: studio.slug,
       logo: studio.logo,
       description: studio.description,
-      ownerName: studio.owner?.user?.username || "",
+      ownerName: ownerUser?.username || "",
       locations:
         studio.locations?.map((loc: any) => ({
           province: loc.province?.name || "",

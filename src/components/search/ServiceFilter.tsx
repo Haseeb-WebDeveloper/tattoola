@@ -1,52 +1,33 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import type { ServiceFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
-import { supabase } from "@/utils/supabase";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
   ScrollView,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
-
-type Service = {
-  id: string;
-  name: string;
-  category: string;
-  imageUrl?: string | null;
-};
 
 type ServiceFilterProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
+  facets: ServiceFacet[];
+  isLoading?: boolean;
+  onConfirm?: () => void;
 };
 
 export default function ServiceFilter({
   selectedIds,
   onSelectionChange,
+  facets,
+  isLoading = false,
+  onConfirm,
 }: ServiceFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
-
-  useEffect(() => {
-    loadServices();
-  }, []);
-
-  const loadServices = async () => {
-    const { data, error } = await supabase
-      .from("services")
-      .select("id, name, category, imageUrl")
-      .eq("isActive", true)
-      .order("name");
-
-    if (error) {
-      console.error("Error loading services:", error);
-    } else {
-      setServices(data || []);
-    }
-  };
 
   const toggleService = (serviceId: string) => {
     const newSelectedIds = selectedIds.includes(serviceId)
@@ -60,8 +41,11 @@ export default function ServiceFilter({
     selectedIds.length === 0
       ? "Tutti"
       : selectedIds.length === 1
-        ? services.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        ? facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
         : `${selectedIds.length} selezionati`;
+
+  // Show all available facets
+  const availableFacets = facets;
 
   return (
     <>
@@ -101,7 +85,11 @@ export default function ServiceFilter({
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
             <TouchableOpacity
-              onPress={() => setIsExpanded(false)}
+              onPress={() => {
+                // User confirms current selection and closes modal
+                onConfirm?.();
+                setIsExpanded(false);
+              }}
               activeOpacity={1}
               className="flex-row items-center justify-between bg-background border-gray"
               style={{
@@ -152,41 +140,59 @@ export default function ServiceFilter({
               contentContainerStyle={{ paddingBottom: mvs(32) }}
               showsVerticalScrollIndicator={false}
             >
-              {services.map((service) => {
-                const isSelected = selectedIds.includes(service.id);
-                return (
-                  <Pressable
-                    key={service.id}
-                    onPress={() => toggleService(service.id)}
-                    className="border-b border-gray/20"
-                    style={{
-                      paddingVertical: mvs(14),
-                      paddingHorizontal: s(20),
-                    }}
+              {isLoading ? (
+                <View className="items-center justify-center" style={{ paddingVertical: mvs(40) }}>
+                  <ActivityIndicator size="small" color="#AE0E0E" />
+                </View>
+              ) : availableFacets.length === 0 ? (
+                <View className="items-center justify-center" style={{ paddingVertical: mvs(40) }}>
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="text-gray font-neueLight"
                   >
-                    <View className="flex-row items-center justify-between">
-                      <ScaledText
-                        allowScaling={false}
-                        variant="sm"
-                        className="text-gray font-montserratMedium"
-                      >
-                        {service.name}
-                      </ScaledText>
-                      {isSelected ? (
-                        <SVGIcons.CheckedCheckbox
-                          width={s(17)}
-                          height={s(17)}
-                        />
-                      ) : (
-                        <SVGIcons.UncheckedCheckbox
-                          width={s(17)}
-                          height={s(17)}
-                        />
-                      )}
-                    </View>
-                  </Pressable>
-                );
-              })}
+                    Nessun servizio disponibile
+                  </ScaledText>
+                </View>
+              ) : (
+                availableFacets.map((facet) => {
+                  const isSelected = selectedIds.includes(facet.id);
+                  return (
+                    <Pressable
+                      key={facet.id}
+                      onPress={() => toggleService(facet.id)}
+                      className="border-b border-gray/20"
+                      style={{
+                        paddingVertical: mvs(14),
+                        paddingHorizontal: s(20),
+                      }}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1">
+                          <ScaledText
+                            allowScaling={false}
+                            variant="sm"
+                            className="text-gray font-montserratMedium"
+                          >
+                            {facet.name}
+                          </ScaledText>
+                        </View>
+                        {isSelected ? (
+                          <SVGIcons.CheckedCheckbox
+                            width={s(17)}
+                            height={s(17)}
+                          />
+                        ) : (
+                          <SVGIcons.UncheckedCheckbox
+                            width={s(17)}
+                            height={s(17)}
+                          />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })
+              )}
             </ScrollView>
           </View>
         </View>

@@ -56,71 +56,69 @@ export default function HelpCategoryDetailScreen() {
         pointerEvents="none"
       />
 
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        {/* Header */}
-        <HelpHeader />
+      {/* Header */}
+      <HelpHeader />
 
-        {/* Divider */}
+      {/* Divider */}
+      <View
+        style={{
+          height: 0.5,
+          backgroundColor: "#A49A99",
+          marginHorizontal: s(20),
+          marginBottom: mvs(16),
+        }}
+      />
+
+      {/* Category Title */}
+      {category && (
         <View
           style={{
-            height: 0.5,
-            backgroundColor: "#A49A99",
-            marginHorizontal: s(20),
-            marginBottom: mvs(16),
-          }}
-        />
-
-        {/* Category Title */}
-        {category && (
-          <View
-            style={{
-              paddingHorizontal: s(20),
-              paddingTop: mvs(14),
-              paddingBottom: mvs(12),
-              alignItems: "center",
-            }}
-          >
-            <ScaledText
-              allowScaling={false}
-              variant="lg"
-              className="text-foreground font-neueSemibold"
-              style={{
-                fontSize: s(16),
-                lineHeight: s(23),
-                textAlign: "center",
-              }}
-            >
-              {category.title}
-            </ScaledText>
-          </View>
-        )}
-
-        {/* Articles List */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: mvs(40) + insets.bottom,
-            paddingHorizontal: s(42),
+            paddingHorizontal: s(20),
+            paddingTop: mvs(14),
+            paddingBottom: mvs(12),
             alignItems: "center",
           }}
         >
-          <View
+          <ScaledText
+            allowScaling={false}
+            variant="lg"
+            className="text-foreground font-neueSemibold"
             style={{
-              width: s(297),
-              maxWidth: "100%",
+              fontSize: s(16),
+              lineHeight: s(23),
+              textAlign: "center",
             }}
           >
-            {articles.map((article, index) => (
-              <HelpArticleItem
-                key={article.id}
-                article={article}
-                isLast={index === articles.length - 1}
-                categoryId={categoryId}
-              />
-            ))}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+            {category.title}
+          </ScaledText>
+        </View>
+      )}
+
+      {/* Articles List */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: mvs(40) + insets.bottom,
+          paddingHorizontal: s(42),
+          alignItems: "center",
+        }}
+      >
+        <View
+          style={{
+            width: s(297),
+            maxWidth: "100%",
+          }}
+        >
+          {articles.map((article, index) => (
+            <HelpArticleItem
+              key={article.id}
+              article={article}
+              isLast={index === articles.length - 1}
+              categoryId={categoryId}
+            />
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
