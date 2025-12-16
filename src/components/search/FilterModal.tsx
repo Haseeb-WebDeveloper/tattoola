@@ -33,12 +33,17 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     municipality: string;
   } | null>(null);
   const [tempFacets, setTempFacets] = useState<Facets | null>(null);
-  const [isLoadingFacets, setIsLoadingFacets] = useState(false);
+  // Separate loading states for each filter type
+  const [isLoadingStyles, setIsLoadingStyles] = useState(false);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const isShowingLocationPickerRef = useRef(false);
-  const facetDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Track pending filter changes for rapid selections
+  const pendingFilterChangeRef = useRef<"style" | "service" | "location" | null>(null);
+  const isLoadingRef = useRef(false);
 
   // Snap points for the bottom sheet (90% of screen height)
-  const snapPoints = useMemo(() => ["90%"], []);
+  const snapPoints = useMemo(() => ["80%"], []);
 
   // Load facets when modal opens
   useEffect(() => {
@@ -52,7 +57,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       } else {
         setLocationNames(null);
       }
-      // Load initial facets
+      // Load initial facets (no changedFilterType = all loading)
       loadFacetsForFilters(filters);
       // Open bottom sheet modal
       requestAnimationFrame(() => {
@@ -64,11 +69,12 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       // Reset state when parent closes modal
       setShowLocationPicker(false);
       isShowingLocationPickerRef.current = false;
-      // Clear debounce
-      if (facetDebounceRef.current) {
-        clearTimeout(facetDebounceRef.current);
-        facetDebounceRef.current = null;
-      }
+      // Reset loading states
+      setIsLoadingStyles(false);
+      setIsLoadingServices(false);
+      setIsLoadingLocations(false);
+      isLoadingRef.current = false;
+      pendingFilterChangeRef.current = null;
     }
   }, [visible, filters]);
 
@@ -82,49 +88,102 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     // Check if tab actually changed
     if (prevActiveTabRef.current !== activeTab) {
       prevActiveTabRef.current = activeTab;
-      // Clear any pending debounced call
-      if (facetDebounceRef.current) {
-        clearTimeout(facetDebounceRef.current);
-        facetDebounceRef.current = null;
-      }
-      // Load facets immediately for new tab
+      // Load facets immediately for new tab (no changedFilterType = all loading)
       console.log(`🔄 [FILTER_MODAL] Tab changed to ${activeTab}, reloading facets immediately`);
       loadFacetsForFilters(tempFilters);
     }
   }, [activeTab, visible]);
 
-  // Debounced facet loading when tempFilters change (but not when tab changes)
-  useEffect(() => {
-    if (!visible) return;
-    // Skip if this is a tab change (handled by the effect above)
-    if (prevActiveTabRef.current !== activeTab) return;
-
-    // Clear existing debounce
-    if (facetDebounceRef.current) {
-      clearTimeout(facetDebounceRef.current);
+  const loadFacetsForFilters = async (
+    filterToUse: typeof filters,
+    changedFilterType?: "style" | "service" | "location"
+  ) => {
+    // If already loading and a new change comes in, update pending
+    if (isLoadingRef.current && changedFilterType) {
+      pendingFilterChangeRef.current = changedFilterType;
+      // Adjust loading states immediately
+      updateLoadingStates(changedFilterType);
+      return; // Don't start new request, let current one finish
     }
 
-    // Set new debounce
-    facetDebounceRef.current = setTimeout(() => {
-      loadFacetsForFilters(tempFilters);
-    }, 300);
+    isLoadingRef.current = true;
+    updateLoadingStates(changedFilterType);
 
-    return () => {
-      if (facetDebounceRef.current) {
-        clearTimeout(facetDebounceRef.current);
-      }
-    };
-  }, [tempFilters, visible]);
-
-  const loadFacetsForFilters = async (filterToUse: typeof filters) => {
-    setIsLoadingFacets(true);
     try {
       const newFacets = await getFacets({ filters: filterToUse, activeTab });
       setTempFacets(newFacets);
+
+      // Sync selected filters with newly available facets so we don't keep
+      // \"ghost\" selections for styles/services/locations that are no longer valid
+      setTempFilters((prev) => {
+        if (!newFacets) return prev;
+
+        const styleIdsSet = new Set(newFacets.styles.map((s) => s.id));
+        const serviceIdsSet = new Set(newFacets.services.map((s) => s.id));
+        const locationKeySet = new Set(
+          newFacets.locations.map(
+            (l) => `${l.provinceId}::${l.municipalityId}`
+          )
+        );
+
+        const next = {
+          ...prev,
+          styleIds: prev.styleIds.filter((id) => styleIdsSet.has(id)),
+          serviceIds: prev.serviceIds.filter((id) => serviceIdsSet.has(id)),
+        };
+
+        // If current location is no longer valid for the new facets, clear it
+        if (next.provinceId && next.municipalityId) {
+          const key = `${next.provinceId}::${next.municipalityId}`;
+          if (!locationKeySet.has(key)) {
+            next.provinceId = null;
+            next.municipalityId = null;
+            setLocationNames(null);
+          }
+        }
+
+        return next;
+      });
+
+      // Check if there's a pending change
+      if (pendingFilterChangeRef.current) {
+        const pendingType = pendingFilterChangeRef.current;
+        pendingFilterChangeRef.current = null;
+        // Recursively call with pending change using current tempFilters
+        await loadFacetsForFilters(tempFilters, pendingType);
+      }
     } catch (error) {
       console.error("Error loading facets:", error);
     } finally {
-      setIsLoadingFacets(false);
+      isLoadingRef.current = false;
+      // Only clear loading states if no pending change
+      if (!pendingFilterChangeRef.current) {
+        setIsLoadingStyles(false);
+        setIsLoadingServices(false);
+        setIsLoadingLocations(false);
+      }
+    }
+  };
+
+  // Helper function to update loading states based on changed filter type
+  const updateLoadingStates = (changedFilterType?: "style" | "service" | "location") => {
+    if (changedFilterType === "style") {
+      setIsLoadingServices(true);
+      setIsLoadingLocations(true);
+      setIsLoadingStyles(false);
+    } else if (changedFilterType === "service") {
+      setIsLoadingStyles(true);
+      setIsLoadingLocations(true);
+      setIsLoadingServices(false);
+    } else if (changedFilterType === "location") {
+      setIsLoadingStyles(true);
+      setIsLoadingServices(true);
+      setIsLoadingLocations(false);
+    } else {
+      // Default: all loading (for initial load or tab change)
+      setIsLoadingStyles(true);
+      setIsLoadingServices(true);
+      setIsLoadingLocations(true);
     }
   };
 
@@ -170,16 +229,21 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     municipality: string;
     municipalityId: string;
   }) => {
-    setTempFilters((prev) => ({
-      ...prev,
+    const newFilters = {
+      ...tempFilters,
       provinceId: data.provinceId,
       municipalityId: data.municipalityId,
-    }));
+    };
+
+    setTempFilters(newFilters);
     setLocationNames({
       province: data.province,
       municipality: data.municipality,
     });
     setShowLocationPicker(false);
+
+    // User finished choosing location -> update facets for other filters
+    loadFacetsForFilters(newFilters, "location");
   };
   const handleResetAll = () => {
     setTempFilters({
@@ -206,6 +270,15 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       municipalityId: null,
     }));
     setLocationNames(null);
+  };
+
+  // Confirm handlers: user finished choosing styles/services
+  const handleStyleConfirm = () => {
+    loadFacetsForFilters(tempFilters, "style");
+  };
+
+  const handleServiceConfirm = () => {
+    loadFacetsForFilters(tempFilters, "service");
   };
 
   const handleApply = () => {
@@ -297,7 +370,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   selectedIds={tempFilters.styleIds}
                   onSelectionChange={handleStyleChange}
                   facets={tempFacets?.styles || []}
-                  isLoading={isLoadingFacets}
+                  isLoading={isLoadingStyles}
+                  onConfirm={handleStyleConfirm}
                 />
               </View>
 
@@ -340,7 +414,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   selectedIds={tempFilters.serviceIds}
                   onSelectionChange={handleServiceChange}
                   facets={tempFacets?.services || []}
-                  isLoading={isLoadingFacets}
+                  isLoading={isLoadingServices}
+                  onConfirm={handleServiceConfirm}
                 />
               </View>
 
@@ -463,7 +538,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         initialProvinceId={tempFilters.provinceId}
         initialMunicipalityId={tempFilters.municipalityId}
         facets={tempFacets?.locations || []}
-        isLoading={isLoadingFacets}
+        isLoading={isLoadingLocations}
       />
     </>
   );

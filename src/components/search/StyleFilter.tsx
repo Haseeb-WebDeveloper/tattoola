@@ -18,6 +18,7 @@ type StyleFilterProps = {
   onSelectionChange: (ids: string[]) => void;
   facets: StyleFacet[];
   isLoading?: boolean;
+  onConfirm?: () => void;
 };
 
 export default function StyleFilter({
@@ -25,6 +26,7 @@ export default function StyleFilter({
   onSelectionChange,
   facets,
   isLoading = false,
+  onConfirm,
 }: StyleFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -84,7 +86,11 @@ export default function StyleFilter({
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
             <TouchableOpacity
-              onPress={() => setIsExpanded(false)}
+              onPress={() => {
+                // User confirms current selection and closes modal
+                onConfirm?.();
+                setIsExpanded(false);
+              }}
               activeOpacity={1}
               className="flex-row items-center justify-between bg-background border-gray"
               style={{

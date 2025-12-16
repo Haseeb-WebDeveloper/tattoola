@@ -365,7 +365,7 @@ export async function searchArtists({
                 if (!a.isFavorite && b.isFavorite) return 1;
                 return a.order - b.order;
               })
-              .slice(0, 2)
+              // .slice(0, 2)
               .map((fs: any) => ({
                 id: fs.style?.id || "",
                 name: fs.style?.name || "",
@@ -581,7 +581,7 @@ export async function searchStudios({
         styles:
           studio.styles
             ?.sort((a: any, b: any) => a.order - b.order)
-            .slice(0, 2)
+            // .slice(0, 2)
             .map((ss: any) => ({
               id: ss.style?.id || "",
               name: ss.style?.name || "",

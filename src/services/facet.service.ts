@@ -114,19 +114,24 @@ async function getFilteredArtistIds(
     }
   }
 
-  // Get all artists with active subscriptions if no filters applied
-  if (filteredArtistIds === null) {
-    const { data: allArtists } = await supabase
-      .from("artist_profiles")
-      .select("id, userId")
-      .limit(10000);
-
-    if (!allArtists || allArtists.length === 0) {
+  // If we have some candidate artist IDs from filters (style/service/location),
+  // we still need to enforce active subscriptions, to match searchArtists logic.
+  if (filteredArtistIds !== null) {
+    if (filteredArtistIds.length === 0) {
       return [];
     }
 
-    // Filter by active subscriptions
-    const userIds = allArtists.map((a) => a.userId);
+    // Fetch userIds for the filtered artist profiles
+    const { data: artistsForSubs } = await supabase
+      .from("artist_profiles")
+      .select("id, userId")
+      .in("id", filteredArtistIds);
+
+    if (!artistsForSubs || artistsForSubs.length === 0) {
+      return [];
+    }
+
+    const userIds = artistsForSubs.map((a) => a.userId);
     const { data: subscriptions } = await supabase
       .from("user_subscriptions")
       .select("userId")
@@ -139,12 +144,45 @@ async function getFilteredArtistIds(
     }
 
     const activeUserIds = new Set(subscriptions.map((s) => s.userId));
-    filteredArtistIds = allArtists
-      .filter((a) => activeUserIds.has(a.userId))
-      .map((a) => a.id);
+    const artistIdToUserId = new Map(
+      artistsForSubs.map((a) => [a.id, a.userId] as const)
+    );
+
+    filteredArtistIds = filteredArtistIds.filter((id) => {
+      const userId = artistIdToUserId.get(id);
+      return userId && activeUserIds.has(userId);
+    });
+
+    return filteredArtistIds;
   }
 
-  return filteredArtistIds || [];
+  // No filters applied: get all artists with active subscriptions (existing behavior)
+  const { data: allArtists } = await supabase
+    .from("artist_profiles")
+    .select("id, userId")
+    .limit(10000);
+
+  if (!allArtists || allArtists.length === 0) {
+    return [];
+  }
+
+  // Filter by active subscriptions
+  const userIds = allArtists.map((a) => a.userId);
+  const { data: subscriptions } = await supabase
+    .from("user_subscriptions")
+    .select("userId")
+    .in("userId", userIds)
+    .eq("status", "ACTIVE")
+    .or(`endDate.is.null,endDate.gte.${new Date().toISOString()}`);
+
+  if (!subscriptions || subscriptions.length === 0) {
+    return [];
+  }
+
+  const activeUserIds = new Set(subscriptions.map((s) => s.userId));
+  return allArtists
+    .filter((a) => activeUserIds.has(a.userId))
+    .map((a) => a.id);
 }
 
 /**
@@ -219,21 +257,26 @@ async function getFilteredStudioIds(
     }
   }
 
-  // Get all active studios if no filters applied
-  if (filteredStudioIds === null) {
-    const { data: allStudios } = await supabase
-      .from("studios")
-      .select("id, ownerId")
-      .eq("isCompleted", true)
-      .eq("isActive", true)
-      .limit(10000);
-
-    if (!allStudios || allStudios.length === 0) {
+  // If we have some candidate studio IDs from filters (style/service/location),
+  // we still need to enforce owner's active subscriptions, to match searchStudios logic.
+  if (filteredStudioIds !== null) {
+    if (filteredStudioIds.length === 0) {
       return [];
     }
 
-    // Filter by active subscriptions of owners
-    const ownerIds = allStudios.map((s) => s.ownerId);
+    // Fetch studios and their ownerIds for the filtered set
+    const { data: studiosForSubs } = await supabase
+      .from("studios")
+      .select("id, ownerId")
+      .in("id", filteredStudioIds)
+      .eq("isCompleted", true)
+      .eq("isActive", true);
+
+    if (!studiosForSubs || studiosForSubs.length === 0) {
+      return [];
+    }
+
+    const ownerIds = studiosForSubs.map((s) => s.ownerId);
     const { data: ownerProfiles } = await supabase
       .from("artist_profiles")
       .select("id, userId")
@@ -243,9 +286,8 @@ async function getFilteredStudioIds(
       return [];
     }
 
-    // Create a map from artist profile ID to user ID
     const artistIdToUserId = new Map(
-      ownerProfiles.map((p) => [p.id, p.userId])
+      ownerProfiles.map((p) => [p.id, p.userId] as const)
     );
 
     const userIds = ownerProfiles.map((p) => p.userId);
@@ -262,15 +304,63 @@ async function getFilteredStudioIds(
 
     const activeUserIds = new Set(subscriptions.map((s) => s.userId));
 
-    filteredStudioIds = allStudios
+    filteredStudioIds = studiosForSubs
       .filter((s) => {
         const ownerUserId = artistIdToUserId.get(s.ownerId);
         return ownerUserId && activeUserIds.has(ownerUserId);
       })
       .map((s) => s.id);
+
+    return filteredStudioIds;
   }
 
-  return filteredStudioIds || [];
+  // No filters applied: get all active studios whose owners have active subscriptions (existing behavior)
+  const { data: allStudios } = await supabase
+    .from("studios")
+    .select("id, ownerId")
+    .eq("isCompleted", true)
+    .eq("isActive", true)
+    .limit(10000);
+
+  if (!allStudios || allStudios.length === 0) {
+    return [];
+  }
+
+  // Filter by active subscriptions of owners
+  const ownerIds = allStudios.map((s) => s.ownerId);
+  const { data: ownerProfiles } = await supabase
+    .from("artist_profiles")
+    .select("id, userId")
+    .in("id", ownerIds);
+
+  if (!ownerProfiles || ownerProfiles.length === 0) {
+    return [];
+  }
+
+  const artistIdToUserId = new Map(
+    ownerProfiles.map((p) => [p.id, p.userId] as const)
+  );
+
+  const userIds = ownerProfiles.map((p) => p.userId);
+  const { data: subscriptions } = await supabase
+    .from("user_subscriptions")
+    .select("userId")
+    .in("userId", userIds)
+    .eq("status", "ACTIVE")
+    .or(`endDate.is.null,endDate.gte.${new Date().toISOString()}`);
+
+  if (!subscriptions || subscriptions.length === 0) {
+    return [];
+  }
+
+  const activeUserIds = new Set(subscriptions.map((s) => s.userId));
+
+  return allStudios
+    .filter((s) => {
+      const ownerUserId = artistIdToUserId.get(s.ownerId);
+      return ownerUserId && activeUserIds.has(ownerUserId);
+    })
+    .map((s) => s.id);
 }
 
 /**

@@ -17,6 +17,7 @@ type ServiceFilterProps = {
   onSelectionChange: (ids: string[]) => void;
   facets: ServiceFacet[];
   isLoading?: boolean;
+  onConfirm?: () => void;
 };
 
 export default function ServiceFilter({
@@ -24,6 +25,7 @@ export default function ServiceFilter({
   onSelectionChange,
   facets,
   isLoading = false,
+  onConfirm,
 }: ServiceFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -83,7 +85,11 @@ export default function ServiceFilter({
           >
             {/* Dropdown Header (Collapsed State in Modal) */}
             <TouchableOpacity
-              onPress={() => setIsExpanded(false)}
+              onPress={() => {
+                // User confirms current selection and closes modal
+                onConfirm?.();
+                setIsExpanded(false);
+              }}
               activeOpacity={1}
               className="flex-row items-center justify-between bg-background border-gray"
               style={{
