@@ -2,8 +2,9 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { toggleFollow } from "@/services/profile.service";
 import { mvs, s } from "@/utils/scale";
+import { createInstagramUrl, createTiktokUrl } from "@/utils/socialMedia";
 import React, { useState } from "react";
-import { Image, TouchableOpacity, View } from "react-native";
+import { Image, Linking, TouchableOpacity, View } from "react-native";
 
 interface TattooLoverProfileHeaderProps {
   firstName?: string;
@@ -139,7 +140,7 @@ export const TattooLoverProfileHeader: React.FC<
                   borderWidth: s(1.1),
                 }}
               >
-                <SVGIcons.Follow width={s(14)} height={s(14)}/>
+                <SVGIcons.Follow width={s(14)} height={s(14)} />
                 <ScaledText
                   allowScaling={false}
                   variant="11"
@@ -175,7 +176,13 @@ export const TattooLoverProfileHeader: React.FC<
           style={{ marginTop: mvs(12), gap: s(10) }}
         >
           {instagram && (
-            <View
+            <TouchableOpacity
+              onPress={() => {
+                const url = createInstagramUrl(instagram);
+                Linking.openURL(url).catch((err) =>
+                  console.error("Failed to open Instagram:", err)
+                );
+              }}
               className="items-center justify-center"
               style={{
                 width: s(41.5),
@@ -185,10 +192,16 @@ export const TattooLoverProfileHeader: React.FC<
               }}
             >
               <SVGIcons.Instagram style={{ width: s(20), height: s(20) }} />
-            </View>
+            </TouchableOpacity>
           )}
           {tiktok && (
-            <View
+            <TouchableOpacity
+              onPress={() => {
+                const url = createTiktokUrl(tiktok);
+                Linking.openURL(url).catch((err) =>
+                  console.error("Failed to open TikTok:", err)
+                );
+              }}
               className="items-center justify-center"
               style={{
                 width: s(41.5),
@@ -198,7 +211,7 @@ export const TattooLoverProfileHeader: React.FC<
               }}
             >
               <SVGIcons.Tiktok style={{ width: s(20), height: s(20) }} />
-            </View>
+            </TouchableOpacity>
           )}
         </View>
       )}
