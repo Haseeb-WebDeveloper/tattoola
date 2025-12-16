@@ -59,15 +59,15 @@ const ProfileAvatar = memo(
 
     // Show guest icon for anonymous users
     if (isGuest) {
+      const GuestIcon = SVGIcons.GuestUserProfile;
       return (
-        <Image
-          source={require("@/assets/images/icons/GuestUserProfile.png")}
+        <GuestIcon
+          width={size}
+          height={size}
+          color={isFocused ? "#ffffff" : "#A49A99"}
           style={{
-            width: size,
-            height: size,
             opacity: isFocused ? 1 : 0.7,
           }}
-          resizeMode="contain"
         />
       );
     }
