@@ -1,6 +1,6 @@
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import ScaledText from "@/components/ui/ScaledText";
 import { StylePills } from "@/components/ui/stylePills";
-import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { fetchTattooStyles } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
@@ -18,15 +18,30 @@ interface StylesSectionProps {
 }
 
 export const StylesSection: React.FC<StylesSectionProps> = ({ styles }) => {
-  const [selectedStyleInfo, setSelectedStyleInfo] = useState<{ id: string; name: string; imageUrl?: string | null; description?: string | null } | null>(null);
+  const [selectedStyleInfo, setSelectedStyleInfo] = useState<{
+    id: string;
+    name: string;
+    imageUrl?: string | null;
+    description?: string | null;
+  } | null>(null);
   const [showStyleInfoModal, setShowStyleInfoModal] = useState(false);
-  const [fullStyleData, setFullStyleData] = useState<{ id: string; name: string; imageUrl?: string | null; description?: string | null } | null>(null);
+  const [fullStyleData, setFullStyleData] = useState<{
+    id: string;
+    name: string;
+    imageUrl?: string | null;
+    description?: string | null;
+  } | null>(null);
 
-  const handleStylePress = async (style: { id: string; name: string; imageUrl?: string | null; description?: string | null }) => {
+  const handleStylePress = async (style: {
+    id: string;
+    name: string;
+    imageUrl?: string | null;
+    description?: string | null;
+  }) => {
     // Try to fetch full style data with description
     try {
       const allStyles = await fetchTattooStyles();
-      const fullStyle = allStyles.find(s => s.id === style.id);
+      const fullStyle = allStyles.find((s) => s.id === style.id);
       if (fullStyle) {
         setFullStyleData(fullStyle);
       } else {
@@ -59,7 +74,7 @@ export const StylesSection: React.FC<StylesSectionProps> = ({ styles }) => {
       <View style={{ paddingHorizontal: s(16), marginTop: mvs(24) }}>
         <ScaledText
           allowScaling={false}
-          variant="md"
+          variant="lg"
           className="text-foreground font-montserratSemibold"
         >
           Stili preferiti

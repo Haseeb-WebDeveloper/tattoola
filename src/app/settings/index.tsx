@@ -43,15 +43,15 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
         <View className="flex-row items-center flex-1" style={{ gap: s(24) }}>
           <ScaledText
             allowScaling={false}
-            variant="md"
-            className={`font-neueSemibold ${isDanger && icon ? "text-error" : "text-white"}`}
+            variant="lg"
+            className={`font-neueMedium ${isDanger && icon ? "text-error" : "text-white"}`}
           >
             {title}
           </ScaledText>
           {value && (
             <ScaledText
               allowScaling={false}
-              variant="11"
+              variant="md"
               className="text-gray-300 font-neueLight"
             >
               {value}
@@ -190,6 +190,18 @@ export default function SettingsScreen() {
     router.push("/settings/studio" as any);
   };
 
+  const handlePrivacyPolicyPress = () => {
+    router.push("/settings/privacy-policy" as any);
+  };
+
+  const handleTermsPress = () => {
+    router.push("/settings/terms-conditions" as any);
+  };
+
+  const handleHelpPress = () => {
+    router.push("/(auth)/help" as any);
+  };
+
   const handleAccountDeletionPress = () => {
     setShowDeleteModal(true);
   };
@@ -257,7 +269,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
         <ScaledText
           allowScaling={false}
-          variant="2xl"
+          variant="xl"
           className="text-white font-neueSemibold"
         >
           Impostazioni
@@ -327,6 +339,21 @@ export default function SettingsScreen() {
               />
             </>
           )}
+        </SettingsSection>
+
+        {/* Other information */}
+        <SettingsSection title="Altre informazioni">
+          <SettingsItem
+            title="Privacy Policy"
+            onPress={handlePrivacyPolicyPress}
+          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
+          <SettingsItem
+            title="Termini e condizioni"
+            onPress={handleTermsPress}
+          />
+          <View className="bg-gray" style={{ height: s(0.5) }} />
+          <SettingsItem title="Help" onPress={handleHelpPress} />
         </SettingsSection>
 
         {/* Danger zone */}

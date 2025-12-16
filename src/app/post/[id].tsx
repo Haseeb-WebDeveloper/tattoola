@@ -4,7 +4,6 @@ import { CustomToast } from "@/components/ui/CustomToast";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
-import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import {
   FeedPost,
   deletePost,
@@ -13,6 +12,7 @@ import {
   updatePost,
 } from "@/services/post.service";
 import { toggleFollow } from "@/services/profile.service";
+import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -70,6 +70,7 @@ interface PostDetail {
   isFollowingAuthor: boolean;
   likes: {
     id: string;
+    userId?: string;
     username: string;
     avatar?: string;
   }[];
@@ -270,7 +271,7 @@ export default function PostDetailScreen() {
 
   const handleLike = async () => {
     if (!post) return;
-    
+
     // Check if user is authenticated
     if (!user) {
       showAuthRequired("Sign in to like posts", true);
@@ -302,13 +303,13 @@ export default function PostDetailScreen() {
 
   const handleFollow = async () => {
     if (!post) return;
-    
+
     // Check if user is authenticated
     if (!user) {
       showAuthRequired("Sign in to follow artists", true);
       return;
     }
-    
+
     const previous = post;
     const optimistic: PostDetail = {
       ...previous,
@@ -674,7 +675,7 @@ export default function PostDetailScreen() {
         <View className="absolute z-10 top-4 left-4">
           <TouchableOpacity
             onPress={handleBack}
-            className="items-center justify-center w-10 h-10 rounded-full bg-foreground/20"
+            className="items-center justify-center w-10 h-10 rounded-full bg-background/50"
           >
             <SVGIcons.ChevronLeft
               width={s(14)}
@@ -950,8 +951,8 @@ export default function PostDetailScreen() {
                   />
                   <View className="justify-center flex-1">
                     <ScaledText
-                      variant="11"
-                      className="text-foreground font-neueMedium"
+                      variant="md"
+                      className="text-foreground font-neueRegular"
                     >
                       {(() => {
                         const name =
@@ -961,7 +962,7 @@ export default function PostDetailScreen() {
                     </ScaledText>
                     {post.author?.username ? (
                       <ScaledText
-                        variant="11"
+                        variant="md"
                         className="text-gray font-neueLight"
                       >
                         {`@${post.author.username}`}
@@ -1006,9 +1007,11 @@ export default function PostDetailScreen() {
             <View className="relative">
               <ScaledText
                 variant="sm"
-                className="text-foreground font-montserratSemibold mb-3"
+                className="mb-3 text-foreground font-montserratSemibold"
               >
-                {`Piace a ${String(post.likesCount || 0)} persone`}
+                {`Piace a ${String(post.likesCount || 0)} ${
+                  (post.likesCount || 0) === 1 ? "persona" : "persone"
+                }`}
               </ScaledText>
 
               {/* Scrollable likes list container */}
@@ -1032,7 +1035,16 @@ export default function PostDetailScreen() {
                   >
                     {post.likes && post.likes.length > 0
                       ? post.likes.map((like) => (
-                          <View key={like.id} className="flex-row items-center">
+                          <TouchableOpacity
+                            key={like.id}
+                            className="flex-row items-center"
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              if (like.userId) {
+                                router.push(`/user/${like.userId}`);
+                              }
+                            }}
+                          >
                             <Image
                               source={{
                                 uri:
@@ -1055,7 +1067,7 @@ export default function PostDetailScreen() {
                                 {`@${like.username}`}
                               </ScaledText>
                             )}
-                          </View>
+                          </TouchableOpacity>
                         ))
                       : null}
                   </View>

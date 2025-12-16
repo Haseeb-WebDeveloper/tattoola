@@ -37,7 +37,8 @@ export function Checkbox({
 
   const checkboxClasses = cn(
     'w-5 h-5 border-2 rounded items-center justify-center',
-    checked ? 'bg-foreground border-foreground' : 'bg-card border-border',
+    // Transparent background by default, red when checked to match primary theme
+    checked ? 'bg-primary border-primary' : 'bg-transparent border-border',
     disabled && 'opacity-50'
   );
 
@@ -59,8 +60,10 @@ export function Checkbox({
         {checked && (
           <Ionicons
             name="checkmark"
-            size={16}
-            color="#000000"
+            size={14}
+            color="#FFFFFF"
+            // Slightly bolder look
+            style={{ fontWeight: '700' as any }}
           />
         )}
       </View>

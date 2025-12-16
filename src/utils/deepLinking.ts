@@ -306,191 +306,187 @@ export function initializeDeepLinking() {
         const isSuccess = url.includes("payment/success");
 
         logger.log(
-          `Deep link: Payment ${isSuccess ? "success" : "cancel"}`,
+          `🎯 Deep link: Payment ${isSuccess ? "SUCCESS" : "CANCELLED"}`,
           sessionId ? `Session ID: ${sessionId}` : "No session ID"
         );
 
         // Get user session to check if authenticated
         const { data: sessionData } = await supabase.auth.getSession();
 
-        if (isSuccess) {
-          // Payment successful - navigate to appropriate screen
-          if (sessionData?.session?.user) {
-            // Check if user has completed profile
-            const authUser: any = sessionData.session.user;
-            const { data: existingUser } = await supabase
-              .from("users")
-              .select("id, firstName")
-              .eq("id", authUser.id)
-              .maybeSingle();
+        if (isSuccess && sessionData?.session?.user) {
+          // Payment successful and user authenticated
+          const authUser: any = sessionData.session.user;
+          logger.log("✅ User authenticated, proceeding with profile creation");
 
-            const hasCompletedProfile = !!(
-              existingUser && existingUser.firstName
-            );
+          // Check if user has completed profile
+          const { data: existingUser } = await supabase
+            .from("users")
+            .select("id, firstName")
+            .eq("id", authUser.id)
+            .maybeSingle();
 
-            // Small delay to allow any webhook processing (subscription creation)
-            setTimeout(async () => {
-              if (hasCompletedProfile) {
-                // User has profile - go to home
-                router.replace("/(tabs)");
-              } else {
-                // User doesn't have profile - complete artist registration after payment
-                try {
-                  // Import the store and services dynamically
-                  const { useArtistRegistrationV2Store } = await import("@/stores/artistRegistrationV2Store");
-                  const { AuthService } = await import("@/services/auth.service");
-                  const { WorkArrangement } = await import("@/types/artist");
-                  
-                  const store = useArtistRegistrationV2Store.getState();
-                  const {
-                    step3,
-                    step4,
-                    step5,
-                    step6,
-                    step7,
-                    step8,
-                    step9,
-                    step10,
-                    step11,
-                    step12: step12State,
-                  } = store;
+          const hasCompletedProfile = !!(
+            existingUser && existingUser.firstName
+          );
 
-                  // Check if we have registration data
-                  if (!step3.firstName) {
-                    logger.warn("No registration data found in store, redirecting to step-3");
-                    router.replace("/(auth)/artist-registration/step-3");
-                    return;
-                  }
-
-                  const registrationData = {
-                    step3: {
-                      firstName: step3.firstName || "",
-                      lastName: step3.lastName || "",
-                      avatar: step3.avatar || "",
-                    },
-                    step4: {
-                      workArrangement: step4.workArrangement || WorkArrangement.FREELANCE,
-                    },
-                    step5: {
-                      studioName: step5.studioName || "",
-                      province: step5.province || "",
-                      provinceId: step5.provinceId || "",
-                      municipalityId: step5.municipalityId || "",
-                      municipality: step5.municipality || "",
-                      studioAddress: step5.studioAddress || "",
-                      website: step5.website || "",
-                      phone: step5.phone || "",
-                    },
-                    step6: {
-                      certificateUrl: step4.certificateUrl || "",
-                    },
-                    step7: {
-                      bio: step7.bio || "",
-                      instagram: step7.instagram || "",
-                      tiktok: step7.tiktok || "",
-                    },
-                    step8: {
-                      styles: step8.styles || [],
-                      favoriteStyles: step8.favoriteStyles || [],
-                    },
-                    step9: {
-                      servicesOffered: step9.servicesOffered || [],
-                    },
-                    step10: {
-                      bodyParts: step10.bodyParts || [],
-                    },
-                    step11: {
-                      minimumPrice: step11.minimumPrice || 0,
-                      hourlyRate: step11.hourlyRate || 0,
-                    },
-                    step12: {
-                      projects: (step12State.projects || []).map((project, index) => {
-                        let stylesArray: string[] = [];
-                        if (project.associatedStyles) {
-                          if (Array.isArray(project.associatedStyles)) {
-                            stylesArray = project.associatedStyles.filter(
-                              (s) => s && typeof s === "string"
-                            );
-                          } else if (typeof project.associatedStyles === "string") {
-                            stylesArray = [project.associatedStyles];
-                          }
-                        }
-                        return {
-                          title: project.title,
-                          description: project.description,
-                          photos: project.photos || [],
-                          videos: project.videos || [],
-                          associatedStyles: stylesArray,
-                          order: index + 1,
-                        };
-                      }),
-                    },
-                    step13: {
-                      selectedPlanId: "",
-                      billingCycle: "MONTHLY",
-                    },
-                  };
-
-                  // Wait a bit more for webhook to process subscription
-                  // Retry logic: check for subscription, wait if needed
-                  let retries = 0;
-                  const maxRetries = 5;
-                  while (retries < maxRetries) {
-                    const { data: subscription } = await supabase
-                      .from("user_subscriptions")
-                      .select("id, status")
-                      .eq("userId", authUser.id)
-                      .eq("status", "ACTIVE")
-                      .maybeSingle();
-                    
-                    if (subscription) {
-                      logger.log("Active subscription found, completing registration");
-                      break;
-                    }
-                    
-                    if (retries === maxRetries - 1) {
-                      logger.warn("Subscription not found after payment, but proceeding anyway");
-                    } else {
-                      logger.log(`Waiting for subscription... (attempt ${retries + 1}/${maxRetries})`);
-                      await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
-                    retries++;
-                  }
-
-                  // Complete artist registration now that payment is done
-                  await AuthService.completeArtistRegistration(registrationData);
-                  
-                  logger.log("Artist registration completed after payment success");
-                  
-                  // Redirect to profile
-                  router.replace("/(tabs)/profile");
-                } catch (error: any) {
-                  logger.error("Error completing artist registration after payment:", error);
-                  
-                  // If payment is required error, subscription might not be ready yet
-                  if (error.code === "PAYMENT_REQUIRED" || error.message === "PAYMENT_REQUIRED") {
-                    logger.log("Subscription not ready yet, redirecting to checkout");
-                    router.replace("/(auth)/artist-registration/checkout" as any);
-                  } else {
-                    // Other error - redirect to step-3 to restart registration
-                    logger.log("Registration failed, redirecting to step-3");
-                    router.replace("/(auth)/artist-registration/step-3");
-                  }
-                }
-              }
-            }, 1000); // Increased delay to allow webhook processing
-          } else {
-            // Not authenticated - redirect to login
-            router.replace("/(auth)/login");
+          if (hasCompletedProfile) {
+            // User already has profile - go to home
+            logger.log("✅ Profile already exists, redirecting to home");
+            router.replace("/(tabs)");
+            return;
           }
+
+          // User doesn't have profile - complete artist registration after payment
+          logger.log("📝 No profile found, starting profile creation");
+
+          try {
+            // Import the store and services dynamically
+            const { useArtistRegistrationV2Store } = await import(
+              "@/stores/artistRegistrationV2Store"
+            );
+            const { AuthService } = await import("@/services/auth.service");
+            const { WorkArrangement } = await import("@/types/auth");
+
+            const store = useArtistRegistrationV2Store.getState();
+            const {
+              step3,
+              step4,
+              step5,
+              step7,
+              step8,
+              step9,
+              step10,
+              step11,
+              step12: step12State,
+            } = store;
+
+            // Check if we have registration data
+            if (!step3.firstName) {
+              logger.warn("❌ No registration data found in store");
+              router.replace("/(auth)/artist-registration/step-3");
+              return;
+            }
+
+            logger.log("📋 Building registration data from store");
+            const registrationData = {
+              step3: {
+                firstName: step3.firstName || "",
+                lastName: step3.lastName || "",
+                avatar: step3.avatar || "",
+              },
+              step4: {
+                workArrangement:
+                  step4.workArrangement || WorkArrangement.FREELANCE,
+              },
+              step5: {
+                studioName: step5.studioName || "",
+                province: step5.province || "",
+                provinceId: step5.provinceId || "",
+                municipalityId: step5.municipalityId || "",
+                municipality: step5.municipality || "",
+                studioAddress: step5.studioAddress || "",
+                website: step5.website || "",
+                phone: step5.phone || "",
+              },
+              step6: {
+                certificateUrl: step4.certificateUrl || "",
+              },
+              step7: {
+                bio: step7.bio || "",
+                instagram: step7.instagram || "",
+                tiktok: step7.tiktok || "",
+              },
+              step8: {
+                styles: step8.styles || [],
+                favoriteStyles: step8.favoriteStyles || [],
+              },
+              step9: {
+                servicesOffered: step9.servicesOffered || [],
+              },
+              step10: {
+                bodyParts: step10.bodyParts || [],
+              },
+              step11: {
+                minimumPrice: step11.minimumPrice || 0,
+                hourlyRate: step11.hourlyRate || 0,
+              },
+              step12: {
+                projects: (step12State.projects || []).map((project, index) => {
+                  let stylesArray: string[] = [];
+                  if (project.associatedStyles) {
+                    if (Array.isArray(project.associatedStyles)) {
+                      stylesArray = project.associatedStyles.filter(
+                        (s) => s && typeof s === "string"
+                      );
+                    } else if (typeof project.associatedStyles === "string") {
+                      stylesArray = [project.associatedStyles];
+                    }
+                  }
+                  return {
+                    title: project.title,
+                    description: project.description,
+                    photos: project.photos || [],
+                    videos: project.videos || [],
+                    associatedStyles: stylesArray,
+                    order: index + 1,
+                  };
+                }),
+              },
+              step13: {
+                selectedPlanId: "",
+                billingCycle: "MONTHLY" as "MONTHLY" | "YEARLY",
+              },
+            };
+
+            logger.log("🚀 Calling completeArtistRegistration");
+
+            // Complete artist registration - NO subscription check anymore
+            const user =
+              await AuthService.completeArtistRegistration(registrationData);
+
+            logger.log("✅ Profile created successfully:", user.id);
+
+            // Clear registration store
+            store.reset();
+
+            // Redirect to profile
+            logger.log("📍 Redirecting to profile");
+            router.replace("/(tabs)/profile");
+          } catch (error: any) {
+            logger.error("❌ Profile creation failed:", error);
+
+            // Handle duplicate profile error
+            if (
+              error.message?.includes("duplicate") ||
+              error.message?.includes("already exists")
+            ) {
+              logger.log("✅ Profile already exists, redirecting to home");
+              router.replace("/(tabs)/profile");
+              return;
+            }
+
+            // For other errors, redirect to step-3
+            logger.log("❌ Unknown error, redirecting to step-3");
+            router.replace("/(auth)/artist-registration/step-3");
+          }
+        } else if (!sessionData?.session?.user) {
+          // Not authenticated - redirect to login
+          logger.log("❌ User not authenticated after payment");
+          router.replace("/(auth)/login");
         } else {
-          // Payment cancelled - stay on checkout screen or go back
-          // The user is already on the checkout screen, so we can just show a message
-          // or navigate back if needed
-          if (sessionData?.session?.user) {
-            router.replace("/(auth)/artist-registration/checkout" as any);
+          // Payment cancelled - redirect to checkout
+          logger.log("⚠️ Payment cancelled");
+          const authUser: any = sessionData.session.user;
+          const { data: existingUser } = await supabase
+            .from("users")
+            .select("id, firstName")
+            .eq("id", authUser.id)
+            .maybeSingle();
+
+          if (existingUser?.firstName) {
+            router.replace("/(tabs)");
           } else {
-            router.replace("/(auth)/login");
+            router.replace("/(auth)/artist-registration/checkout" as any);
           }
         }
         return;
@@ -529,8 +525,6 @@ export function initializeDeepLinking() {
       }
     } catch (e) {
       logger.error("Deep link: error handling deep link:", e);
-    } finally {
-      // no-op
     }
   };
 

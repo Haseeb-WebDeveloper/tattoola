@@ -67,27 +67,41 @@ Deno.serve(async (request) => {
         }
       );
     }
-    // Get app URL from environment variable
-    const appUrl = Deno.env.get("NEXT_PUBLIC_APP_URL");
-    if (!appUrl) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Errore di configurazione del server (manca NEXT_PUBLIC_APP_URL)",
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
     // Build success and cancel URLs
-    const successUrl = new URL("/payment/success", appUrl);
-    successUrl.searchParams.set("returnToApp", returnToApp ? "1" : "0");
-    successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
-    const cancelUrl = new URL("/payment/cancel", appUrl);
+    // If returnToApp is true, redirect directly to the app scheme
+    // Otherwise, use web URLs
+    let successUrl: string;
+    let cancelUrl: string;
+
+    if (returnToApp) {
+      // Direct app redirect with session_id
+      successUrl = `tattoola://payment/success?session_id={CHECKOUT_SESSION_ID}`;
+      cancelUrl = `tattoola://payment/cancel`;
+    } else {
+      // Web URL redirect (for non-mobile flows)
+      const appUrl = Deno.env.get("NEXT_PUBLIC_APP_URL");
+      if (!appUrl) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Errore di configurazione del server (manca NEXT_PUBLIC_APP_URL)",
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+      const successUrlObj = new URL("/payment/success", appUrl);
+      successUrlObj.searchParams.set("returnToApp", "1");
+      successUrlObj.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+      successUrl = successUrlObj.toString();
+
+      const cancelUrlObj = new URL("/payment/cancel", appUrl);
+      cancelUrl = cancelUrlObj.toString();
+    }
     const sessionConfig = {
       mode: "subscription",
       line_items: [
@@ -96,8 +110,8 @@ Deno.serve(async (request) => {
           quantity: 1,
         },
       ],
-      success_url: successUrl.toString(),
-      cancel_url: cancelUrl.toString(),
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         userId,
         planType: planType ?? "",
@@ -118,6 +132,7 @@ Deno.serve(async (request) => {
       cancel_url: sessionConfig.cancel_url,
       priceId,
       userId,
+      returnToApp,
     });
     const session = await stripe.checkout.sessions.create(sessionConfig);
     console.log("Checkout session created:", {

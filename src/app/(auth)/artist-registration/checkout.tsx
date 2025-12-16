@@ -9,6 +9,7 @@ import {
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -62,8 +63,17 @@ export default function ArtistCheckoutScreen() {
   }, [isYearly]);
 
   const handleCheckout = async () => {
-    // Validate user is authenticated
-    if (!user?.id) {
+    // Ensure we have a valid authenticated userId.
+    // Prefer the AuthProvider context, but fall back to Supabase session
+    // in case the context hasn't hydrated yet.
+    let userId = user?.id;
+
+    if (!userId) {
+      const { data } = await supabase.auth.getSession();
+      userId = data.session?.user?.id ?? undefined;
+    }
+
+    if (!userId) {
       const toastId = toast.custom(
         <CustomToast
           message="Please sign in to continue"
@@ -115,7 +125,7 @@ export default function ArtistCheckoutScreen() {
       // Create checkout session
       const checkoutUrl = await PaymentService.createCheckoutSession({
         priceId,
-        userId: user.id,
+        userId,
         planType,
         cycle,
         returnToApp: true,
@@ -407,11 +417,14 @@ export default function ArtistCheckoutScreen() {
             activeOpacity={0.9}
             className="flex-row items-center justify-center rounded-full"
             style={{
+              // Keep visual feedback for loading, but don't silently block taps
               backgroundColor: checkoutLoading ? "#AD2E2E80" : "#AD2E2E",
               paddingVertical: mvs(12),
             }}
             onPress={handleCheckout}
-            disabled={checkoutLoading || !plan || !user}
+            // Only block while a checkout request is in flight; let handleCheckout
+            // itself show clear error messages if plan/user/Stripe config is missing.
+            disabled={checkoutLoading}
           >
             <ScaledText
               allowScaling={false}

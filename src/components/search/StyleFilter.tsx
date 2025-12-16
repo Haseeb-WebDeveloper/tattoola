@@ -160,27 +160,33 @@ export default function StyleFilter({
                     onPress={() => toggleStyle(style.id)}
                     className="border-b border-gray/20"
                     style={{
-                      paddingVertical: mvs(8),
+                      paddingVertical: mvs(6),
                       paddingHorizontal: s(20),
                     }}
                   >
                     <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-3">
+                      <View
+                        className="flex-row items-center"
+                        style={{ gap: s(12) }}
+                      >
                         {style.imageUrl && (
                           <Image
                             source={{ uri: style.imageUrl }}
                             style={{
-                              width: s(43),
-                              height: s(46),
-                              borderRadius: s(8),
+                              // Taller, wider preview similar to style list mock
+                              width: s(120),
+                              height: mvs(72),
+                              // borderRadius: s(8),
                             }}
                             resizeMode="cover"
                           />
                         )}
                         <ScaledText
                           allowScaling={false}
-                          variant="md"
+                          // Slightly larger text for better readability
+                          variant="lg"
                           className="text-gray font-montserratSemibold"
+                          numberOfLines={2}
                         >
                           {style.name}
                         </ScaledText>

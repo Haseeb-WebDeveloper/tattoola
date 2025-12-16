@@ -12,12 +12,14 @@ interface ArtistCardProps {
 
 export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
   const router = useRouter();
-  
-  const fullName = [artist.firstName, artist.lastName].filter(Boolean).join(" ");
+
+  const fullName = [artist.firstName, artist.lastName]
+    .filter(Boolean)
+    .join(" ");
   const location = artist.location
-    ? artist.location.address
-      ? artist.location.address
-      : `${artist.location.municipality || ""}${artist.location.province ? ` (${artist.location.province})` : ""}`
+    ? `${artist.location.municipality || ""}${
+        artist.location.province ? ` (${artist.location.province})` : ""
+      }`
     : "";
 
   const handlePress = () => {
@@ -74,7 +76,13 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
       {/* Artist Info */}
       <View style={{ flex: 1 }}>
         {/* Username with verification badge */}
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: mvs(2) }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: mvs(2),
+          }}
+        >
           <ScaledText
             allowScaling={false}
             variant="md"
@@ -102,7 +110,11 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
         {/* Location */}
         {location && (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <SVGIcons.LocationsGray width={s(10)} height={s(10)} style={{ marginRight: s(2) }} />
+            <SVGIcons.LocationsGray
+              width={s(10)}
+              height={s(10)}
+              style={{ marginRight: s(2) }}
+            />
             <ScaledText
               allowScaling={false}
               variant="body4"
@@ -129,4 +141,3 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
     </TouchableOpacity>
   );
 };
-

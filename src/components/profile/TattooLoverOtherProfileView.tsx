@@ -58,8 +58,12 @@ export const TattooLoverOtherProfileView: React.FC<
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => router.back()}
-          className="rounded-full bg-foreground/20 items-center justify-center"
-          style={{ width: s(32), height: s(32) }}
+          className="rounded-full items-center justify-center"
+          style={{
+            width: s(32),
+            height: s(32),
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
         </TouchableOpacity>

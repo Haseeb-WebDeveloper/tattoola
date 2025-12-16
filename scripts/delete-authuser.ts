@@ -74,7 +74,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // User credentials to delete
-const USER_EMAIL = "rangerover2735@gmail.com";
+const USER_EMAIL = "12102080601101@adit.ac.in";
 const USERNAME: string | undefined = undefined; // Will search by email only
 
 /**

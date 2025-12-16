@@ -1,20 +1,29 @@
-import { TouchableOpacity, View } from "react-native";
-import { ScaledText } from "./ScaledText";
+import { SVGIcons } from "@/constants/svg";
 import { addEmojiWithStyle } from "@/utils/content/add-emoji-with-style";
 import { mvs, s } from "@/utils/scale";
-import { SVGIcons } from "@/constants/svg";
+import { TouchableOpacity, View } from "react-native";
+import { ScaledText } from "./ScaledText";
 
 export const StylePills = ({
   styles,
   onStylePress,
 }: {
-  styles: { id: string; name: string; isFavorite?: boolean; imageUrl?: string | null; description?: string | null }[];
-  onStylePress?: (style: { id: string; name: string; imageUrl?: string | null; description?: string | null }) => void;
+  styles: {
+    id: string;
+    name: string;
+    isFavorite?: boolean;
+    imageUrl?: string | null;
+    description?: string | null;
+  }[];
+  onStylePress?: (style: {
+    id: string;
+    name: string;
+    imageUrl?: string | null;
+    description?: string | null;
+  }) => void;
 }) => {
   // Filter out invalid styles (where id or name is missing)
-  const validStyles = styles.filter(
-    (style) => style.id && style.name
-  );
+  const validStyles = styles.filter((style) => style.id && style.name);
 
   if (validStyles.length === 0) {
     return null;
@@ -25,7 +34,7 @@ export const StylePills = ({
       {validStyles.map((style) => {
         const PillContent = (
           <View
-            className=" rounded-full relative"
+            className="relative rounded-full "
             style={{
               paddingHorizontal: s(12),
               paddingVertical: mvs(4),
@@ -37,8 +46,8 @@ export const StylePills = ({
           >
             <ScaledText
               allowScaling={false}
-              variant="11"
-              className="text-white font-neueBold"
+              variant="md"
+              className="text-white font-neueRegular"
             >
               {addEmojiWithStyle(style.name)}
             </ScaledText>

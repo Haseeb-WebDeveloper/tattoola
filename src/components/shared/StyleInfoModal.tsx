@@ -1,6 +1,6 @@
+import DraggableBottomSheet from "@/components/DraggableBottomSheet";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import DraggableBottomSheet from "@/components/DraggableBottomSheet";
 import { TattooStyleItem } from "@/services/style.service";
 import { mvs, s } from "@/utils/scale";
 import React from "react";
@@ -47,7 +47,12 @@ export default function StyleInfoModal({
   const screenHeight = Dimensions.get("window").height;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       {/* Backdrop */}
       <Pressable
         style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
@@ -56,7 +61,6 @@ export default function StyleInfoModal({
 
       {/* Draggable bottom sheet */}
       <DraggableBottomSheet onClose={onClose} maxHeight={screenHeight * 0.85}>
-        
         {/* Drag handle */}
         <TouchableOpacity
           onPress={onClose}
@@ -91,7 +95,7 @@ export default function StyleInfoModal({
           <TouchableOpacity
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            className="absolute left-4 items-center justify-center rounded-full bg-foreground/20"
+            className="absolute items-center justify-center rounded-full left-4 bg-foreground/20"
             style={{ width: s(30), height: s(30) }}
           >
             <SVGIcons.Close width={s(12)} height={s(12)} />
@@ -161,7 +165,6 @@ export default function StyleInfoModal({
             </ScaledText>
           )}
         </ScrollView>
-
       </DraggableBottomSheet>
     </Modal>
   );
