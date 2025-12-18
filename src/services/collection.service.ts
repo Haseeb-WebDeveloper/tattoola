@@ -1,13 +1,18 @@
-import { supabase } from "@/utils/supabase";
 import type { ArtistSearchResult } from "@/types/search";
-
-import { v4 as uuidv4 } from 'uuid';
+import { isSystemCollection } from "@/utils/collection.utils";
+import { supabase } from "@/utils/supabase";
+import { v4 as uuidv4 } from "uuid";
 
 // Simple in-memory cache for collection artists
-const collectionArtistsCache = new Map<string, { data: ArtistSearchResult[]; timestamp: number }>();
+const collectionArtistsCache = new Map<
+  string,
+  { data: ArtistSearchResult[]; timestamp: number }
+>();
 
-
-function setCachedCollectionArtists(collectionId: string, data: ArtistSearchResult[]): void {
+function setCachedCollectionArtists(
+  collectionId: string,
+  data: ArtistSearchResult[]
+): void {
   collectionArtistsCache.set(collectionId, { data, timestamp: Date.now() });
 }
 
@@ -90,14 +95,13 @@ export async function fetchCollectionArtists(
         return provCode ? `${provName} (${provCode})` : provName;
       };
 
-      const location =
-        primaryLocation
-          ? {
-              province: resolveProvinceLabel(primaryLocation),
-              municipality: primaryLocation.municipality?.name || "",
-              address: null,
-            }
-          : null;
+      const location = primaryLocation
+        ? {
+            province: resolveProvinceLabel(primaryLocation),
+            municipality: primaryLocation.municipality?.name || "",
+            address: null,
+          }
+        : null;
 
       const activeSubscription = artist.user?.subscriptions?.find(
         (sub: any) =>
@@ -160,7 +164,6 @@ export async function fetchCollectionArtists(
   return artists;
 }
 
-
 export type CollectionPost = {
   id: string;
   postId: string;
@@ -216,11 +219,14 @@ export type CollectionDetails = {
 /**
  * Fetch collection details with posts
  */
-export async function fetchCollectionDetails(collectionId: string): Promise<CollectionDetails> {
+export async function fetchCollectionDetails(
+  collectionId: string
+): Promise<CollectionDetails> {
   // Fetch collection basic info
   const { data: collection, error: collectionError } = await supabase
     .from("collections")
-    .select(`
+    .select(
+      `
       id,
       name,
       description,
@@ -229,7 +235,8 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
       ownerId,
       createdAt,
       updatedAt
-    `)
+    `
+    )
     .eq("id", collectionId)
     .single();
 
@@ -238,13 +245,15 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
   // Fetch collection owner data
   const { data: owner, error: ownerError } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       username,
       firstName,
       lastName,
       avatar
-    `)
+    `
+    )
     .eq("id", collection.ownerId)
     .single();
 
@@ -253,7 +262,8 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
   // Fetch posts in collection with all related data
   const { data: collectionPosts, error: postsError } = await supabase
     .from("collection_posts")
-    .select(`
+    .select(
+      `
       postId,
       posts!inner(
         id,
@@ -267,23 +277,29 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
         users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
         post_media(id,mediaType,mediaUrl,order)
       )
-    `)
+    `
+    )
     .eq("collectionId", collectionId)
     .order("addedAt", { ascending: true });
 
   if (postsError) throw new Error(postsError.message);
 
   // Fetch location data for all users (owner + post authors)
-  const userIds = [collection.ownerId, ...(collectionPosts || []).map((cp: any) => cp.posts.authorId)];
+  const userIds = [
+    collection.ownerId,
+    ...(collectionPosts || []).map((cp: any) => cp.posts.authorId),
+  ];
   const uniqueUserIds = Array.from(new Set(userIds));
-  
+
   const { data: locationsData } = await supabase
     .from("user_locations")
-    .select(`
+    .select(
+      `
       userId,
       municipalities(name),
       provinces(name)
-    `)
+    `
+    )
     .in("userId", uniqueUserIds)
     .eq("isPrimary", true);
 
@@ -306,26 +322,34 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
   });
 
   // Fetch all styles in one query
-  let stylesMap: Record<string, { id: string; name: string; imageUrl?: string }> = {};
+  let stylesMap: Record<
+    string,
+    { id: string; name: string; imageUrl?: string }
+  > = {};
   if (allStyleIds.size > 0) {
     const { data: stylesData } = await supabase
       .from("tattoo_styles")
       .select("id, name, imageUrl")
       .in("id", Array.from(allStyleIds));
-    
+
     if (stylesData) {
       stylesData.forEach((style: any) => {
-        stylesMap[style.id] = { id: style.id, name: style.name, imageUrl: style.imageUrl };
+        stylesMap[style.id] = {
+          id: style.id,
+          name: style.name,
+          imageUrl: style.imageUrl,
+        };
       });
     }
   }
 
   const posts: CollectionPost[] = (collectionPosts || []).map((cp: any) => {
     const authorLocation = locationMap.get(cp.posts.authorId) || {};
-    
+
     // Get first style from array (for backward compatibility)
     const styleIds = cp.posts?.styleId || [];
-    const firstStyleId = Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
+    const firstStyleId =
+      Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
     const firstStyle = firstStyleId ? stylesMap[firstStyleId] : undefined;
 
     return {
@@ -336,7 +360,9 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
       likesCount: cp.posts.likesCount,
       commentsCount: cp.posts.commentsCount,
       createdAt: cp.posts.createdAt,
-      media: (cp.posts.post_media || []).sort((a: any, b: any) => a.order - b.order),
+      media: (cp.posts.post_media || []).sort(
+        (a: any, b: any) => a.order - b.order
+      ),
       style: firstStyle,
       author: {
         id: cp.posts.users.id,
@@ -378,7 +404,26 @@ export async function fetchCollectionDetails(collectionId: string): Promise<Coll
 /**
  * Update collection name
  */
-export async function updateCollectionName(collectionId: string, name: string): Promise<void> {
+export async function updateCollectionName(
+  collectionId: string,
+  name: string
+): Promise<void> {
+  // First, check if this is a system collection
+  const { data: collection, error: fetchError } = await supabase
+    .from("collections")
+    .select("name")
+    .eq("id", collectionId)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  // Prevent editing system collections
+  if (collection && isSystemCollection(collection.name)) {
+    throw new Error(
+      "Non puoi modificare il nome di questa collezione di sistema"
+    );
+  }
+
   const { error } = await supabase
     .from("collections")
     .update({ name, updatedAt: new Date().toISOString() })
@@ -390,7 +435,10 @@ export async function updateCollectionName(collectionId: string, name: string): 
 /**
  * Remove post from collection
  */
-export async function removePostFromCollection(collectionId: string, postId: string): Promise<void> {
+export async function removePostFromCollection(
+  collectionId: string,
+  postId: string
+): Promise<void> {
   const { error } = await supabase
     .from("collection_posts")
     .delete()
@@ -404,16 +452,18 @@ export async function removePostFromCollection(collectionId: string, postId: str
  * Reorder posts in collection
  */
 export async function reorderCollectionPosts(
-  collectionId: string, 
+  collectionId: string,
   postIds: string[]
 ): Promise<void> {
   // Remove duplicates from postIds array
   const uniquePostIds = Array.from(new Set(postIds));
-  
+
   if (uniquePostIds.length !== postIds.length) {
-    console.warn(`Removed ${postIds.length - uniquePostIds.length} duplicate postIds before reordering`);
+    console.warn(
+      `Removed ${postIds.length - uniquePostIds.length} duplicate postIds before reordering`
+    );
   }
-  
+
   // Since we don't have an order field in collection_posts, we'll delete and re-insert
   // This is not ideal for performance but works for now
   const { error: deleteError } = await supabase
@@ -442,7 +492,10 @@ export async function reorderCollectionPosts(
 /**
  * Create a new collection
  */
-export async function createCollection(ownerId: string, name: string): Promise<{ id: string }> {
+export async function createCollection(
+  ownerId: string,
+  name: string
+): Promise<{ id: string }> {
   const { data, error } = await supabase
     .from("collections")
     .insert({
@@ -464,7 +517,9 @@ export async function createCollection(ownerId: string, name: string): Promise<{
 /**
  * Fetch user's posts
  */
-export async function fetchUserPosts(userId: string): Promise<Array<{ id: string; caption?: string; thumbnailUrl?: string }>> {
+export async function fetchUserPosts(
+  userId: string
+): Promise<Array<{ id: string; caption?: string; thumbnailUrl?: string }>> {
   const { data, error } = await supabase
     .from("posts")
     .select("id,caption,thumbnailUrl")
@@ -478,17 +533,18 @@ export async function fetchUserPosts(userId: string): Promise<Array<{ id: string
 /**
  * Add posts to collection
  */
-export async function addPostsToCollection(collectionId: string, postIds: string[]): Promise<void> {
-  const { error } = await supabase
-    .from("collection_posts")
-    .insert(
-      postIds.map((postId) => ({
-        id: uuidv4(), // Generate UUID for the id field
-        collectionId,
-        postId,
-        addedAt: new Date().toISOString(),
-      }))
-    );
+export async function addPostsToCollection(
+  collectionId: string,
+  postIds: string[]
+): Promise<void> {
+  const { error } = await supabase.from("collection_posts").insert(
+    postIds.map((postId) => ({
+      id: uuidv4(), // Generate UUID for the id field
+      collectionId,
+      postId,
+      addedAt: new Date().toISOString(),
+    }))
+  );
 
   if (error) throw new Error(error.message);
 }
@@ -497,6 +553,20 @@ export async function addPostsToCollection(collectionId: string, postIds: string
  * Delete a collection
  */
 export async function deleteCollection(collectionId: string): Promise<void> {
+  // First, check if this is a system collection
+  const { data: collection, error: fetchError } = await supabase
+    .from("collections")
+    .select("name")
+    .eq("id", collectionId)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  // Prevent deleting system collections
+  if (collection && isSystemCollection(collection.name)) {
+    throw new Error("Non puoi eliminare questa collezione di sistema");
+  }
+
   const { error } = await supabase
     .from("collections")
     .delete()

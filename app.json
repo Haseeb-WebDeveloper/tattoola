@@ -24,8 +24,9 @@
       "bundleIdentifier": "com.figmentalabs.tattoola",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "The app accesses your photos to let you share them with your friends.",
-        "NSCameraUsageDescription": "The app accesses your camera to let you take photos and share them with your friends."
+        "NSPhotoLibraryUsageDescription": "L'app ha bisogno di accedere alle tue foto per caricare la foto del profilo e i tatuaggi.",
+        "NSCameraUsageDescription": "L'app ha bisogno di accedere alla fotocamera per scattare foto.",
+        "NSPhotoLibraryAddUsageDescription": "L'app ha bisogno di salvare foto nella tua galleria."
       },
       "associatedDomains": ["applinks:haehelhifvbafqmdrhfg.supabase.co"]
     },
@@ -35,10 +36,10 @@
         "backgroundColor": "#0A0101",
         // "foregroundImage": "./src/assets/app-icons/android-icon-foreground.png",
         // "backgroundImage": "./src/assets/app-icons/icon-background.png",
-        // "monochromeImage": "./src/assets/app-icons/android-icon-monochrome.png"
-        "foregroundImage": "./src/assets/app-icons/short-favicon.png",
-        "backgroundImage": "./src/assets/app-icons/short-favicon.png",
-        "monochromeImage": "./src/assets/app-icons/short-favicon.png"
+        // "monochromeImage": "./src/assets/app-icons/android-icon-monochrome.png",
+        "foregroundImage": "./src/assets/app-icons/favicon.png",
+        "backgroundImage": "./src/assets/app-icons/favicon.png",
+        "monochromeImage": "./src/assets/app-icons/favicon.png"
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
@@ -76,8 +77,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends.",
-          "cameraPermission": "The app accesses your camera to let you take photos and share them with your friends."
+          "photosPermission": "L'app ha bisogno di accedere alle tue foto per caricare la foto del profilo e i tatuaggi.",
+          "cameraPermission": "L'app ha bisogno di accedere alla fotocamera per scattare foto e registrare video."
         }
       ],
       [
