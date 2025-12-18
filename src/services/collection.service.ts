@@ -1,6 +1,168 @@
+import type { ArtistSearchResult } from "@/types/search";
 import { isSystemCollection } from "@/utils/collection.utils";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
+
+// Simple in-memory cache for collection artists
+const collectionArtistsCache = new Map<
+  string,
+  { data: ArtistSearchResult[]; timestamp: number }
+>();
+
+function setCachedCollectionArtists(
+  collectionId: string,
+  data: ArtistSearchResult[]
+): void {
+  collectionArtistsCache.set(collectionId, { data, timestamp: Date.now() });
+}
+
+export async function fetchCollectionArtists(
+  collectionId: string
+): Promise<ArtistSearchResult[]> {
+  if (!collectionId) return [];
+
+  const { data, error } = await supabase
+    .from("collection_artists")
+    .select(
+      `
+      artist:artist_profiles(
+        id,
+        userId,
+        businessName,
+        yearsExperience,
+        workArrangement,
+        user:users(
+          username,
+          avatar,
+          firstName,
+          lastName,
+          isVerified,
+          locations:user_locations(
+            provinceId,
+            municipalityId,
+            address,
+            isPrimary,
+            province:provinces(name,code),
+            municipality:municipalities(name)
+          ),
+          subscriptions:user_subscriptions!user_subscriptions_userId_fkey(
+            status,
+            endDate,
+            plan:subscription_plans(name, type)
+          )
+        ),
+        bannerMedia:artist_banner_media(
+          mediaUrl,
+          mediaType,
+          order
+        ),
+        styles:artist_styles(
+          style:tattoo_styles(id, name, imageUrl)
+        ),
+        services:artist_services(
+          serviceId,
+          services:services(id, name)
+        )
+      )
+    `
+    )
+    .eq("collectionId", collectionId);
+
+  if (error) {
+    console.error(
+      "[collection.service] error fetching collection artists",
+      error
+    );
+    return [];
+  }
+
+  const rows = (data || []) as any[];
+
+  const artists: ArtistSearchResult[] = rows
+    .map((row) => {
+      const artist = row.artist;
+      if (!artist) return null;
+
+      const primaryLocation = artist.user?.locations?.find(
+        (loc: any) => loc.isPrimary
+      );
+
+      const resolveProvinceLabel = (loc: any | null | undefined): string => {
+        if (!loc?.province) return "";
+        const provName = loc.province?.name || "";
+        const provCode = (loc.province as any)?.code;
+        if (!provName && !provCode) return "";
+        return provCode ? `${provName} (${provCode})` : provName;
+      };
+
+      const location = primaryLocation
+        ? {
+            province: resolveProvinceLabel(primaryLocation),
+            municipality: primaryLocation.municipality?.name || "",
+            address: null,
+          }
+        : null;
+
+      const activeSubscription = artist.user?.subscriptions?.find(
+        (sub: any) =>
+          sub.status === "ACTIVE" &&
+          (!sub.endDate || new Date(sub.endDate) >= new Date())
+      );
+
+      const mapped: ArtistSearchResult = {
+        id: artist.id,
+        userId: artist.userId,
+        user: {
+          username: artist.user?.username ?? "",
+          avatar: artist.user?.avatar ?? null,
+          firstName: artist.user?.firstName ?? null,
+          lastName: artist.user?.lastName ?? null,
+        },
+        businessName: artist.businessName ?? null,
+        yearsExperience: artist.yearsExperience ?? null,
+        isStudioOwner: artist.workArrangement === "STUDIO_OWNER",
+        workArrangement: artist.workArrangement ?? null,
+        location,
+        styles:
+          (artist.styles || []).map((s: any) => ({
+            id: s.style?.id,
+            name: s.style?.name,
+            imageUrl: s.style?.imageUrl ?? null,
+          })) ?? [],
+        services:
+          (artist.services || [])
+            .filter((srv: any) => !!srv.services?.id)
+            .map((srv: any) => ({
+              id: srv.services.id,
+              name: srv.services.name,
+            })) ?? [],
+        bannerMedia: (artist.bannerMedia || []).map((b: any) => ({
+          mediaUrl: b.mediaUrl,
+          mediaType: b.mediaType,
+          order: b.order,
+        })),
+        subscription: activeSubscription
+          ? {
+              plan: {
+                name: activeSubscription.plan?.name || "",
+                type: activeSubscription.plan?.type || "",
+              },
+            }
+          : null,
+        isVerified: !!artist.user?.isVerified,
+      };
+
+      return mapped;
+    })
+    .filter(Boolean) as ArtistSearchResult[];
+
+  // Cache the result (used only as a best-effort optimization, but
+  // we always return fresh data above so admin updates are reflected
+  // immediately when re-opening the collection).
+  setCachedCollectionArtists(collectionId, artists);
+
+  return artists;
+}
 
 export type CollectionPost = {
   id: string;

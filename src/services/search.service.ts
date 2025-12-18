@@ -61,7 +61,7 @@ export async function searchArtists({
         styles:artist_styles(
           order,
           isFavorite,
-          style:tattoo_styles(id, name)
+          style:tattoo_styles(id, name, imageUrl)
         ),
         services:artist_services(
           isActive,
