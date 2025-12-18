@@ -582,7 +582,7 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
  */
 async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> {
   const { filters, activeTab } = params;
-  console.log("📍 [LOCATION_FACETS] Starting calculation for tab:", activeTab);
+  // console.log("📍 [LOCATION_FACETS] Starting calculation for tab:", activeTab);
 
   // Get filtered IDs excluding location filter (with caching)
   const cacheKey = getCacheKey(filters, activeTab, false, false, true);
@@ -612,10 +612,10 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     baseIdCache.set(cacheKey, { artistIds, studioIds });
   }
 
-  console.log("📍 [LOCATION_FACETS] Base IDs:", {
-    artists: artistIds.length,
-    studios: studioIds.length,
-  });
+  // console.log("📍 [LOCATION_FACETS] Base IDs:", {
+  //   artists: artistIds.length,
+  //   studios: studioIds.length,
+  // });
 
   if (artistIds.length === 0 && studioIds.length === 0) {
     console.log("📍 [LOCATION_FACETS] No base IDs, returning empty");
@@ -691,7 +691,7 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     locationKeys = new Set([...artistLocationKeys, ...studioLocationKeys]);
   }
 
-  console.log(`  📍 [LOCATION_FACETS] Collected ${locationKeys.size} unique location keys from ${userLocationsResult.data?.length || 0} user locations and ${studioLocationsResult.data?.length || 0} studio locations`);
+  // console.log(`  📍 [LOCATION_FACETS] Collected ${locationKeys.size} unique location keys from ${userLocationsResult.data?.length || 0} user locations and ${studioLocationsResult.data?.length || 0} studio locations`);
 
   if (locationKeys.size === 0) {
     console.log("📍 [LOCATION_FACETS] No locations found");
@@ -709,8 +709,8 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     allMunicipalityIds.add(String(municipalityId));
   }
 
-  console.log(`  📍 [LOCATION_FACETS] Found ${locationKeys.size} unique locations, fetching names...`);
-  console.log(`  📍 [LOCATION_FACETS] Sample location keys:`, Array.from(locationKeys).slice(0, 5));
+  // console.log(`  📍 [LOCATION_FACETS] Found ${locationKeys.size} unique locations, fetching names...`);
+  // console.log(`  📍 [LOCATION_FACETS] Sample location keys:`, Array.from(locationKeys).slice(0, 5));
 
   // Batch fetch all provinces and municipalities
   const [provincesResult, municipalitiesResult] = await Promise.all([
