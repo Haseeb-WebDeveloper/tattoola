@@ -125,6 +125,10 @@ function LoginScreenContent() {
         extraKeyboardSpace={100}
         bottomOffset={62}
         ScrollViewComponent={ScrollView}
+        // Disable bounce/overscroll on iOS & Android so only content area scrolls
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
         showsVerticalScrollIndicator={false}
         className="flex-1 bg-transparent"
         contentContainerStyle={{ flexGrow: 1 }}
@@ -151,11 +155,11 @@ function LoginScreenContent() {
 
         {/* Header with Logo and Help Icon */}
         <View
-          className="w-full flex-row justify-between items-center px-6"
+          className="grid w-full flex-row justify-between items-center px-6"
           style={{ marginTop: mvs(20), marginBottom: mvs(40) }}
         >
-          <View style={{ width: s(44) }} />
-          <SVGIcons.LogoLight style={{ height: s(50) }} />
+          <View style={{ width: s(24) }} />
+          <SVGIcons.LogoLight style={{ height: s(50) }}  />
           <TouchableOpacity
             className="items-center justify-center"
             onPress={() => router.push("/(auth)/help")}
@@ -179,6 +183,7 @@ function LoginScreenContent() {
         {/* New registration button */}
         <View className="px-6" style={{ marginBottom: mvs(32) }}>
           <TouchableOpacity
+           activeOpacity={0.8}
             accessibilityRole="button"
             onPress={handleRegister}
             className="bg-primary rounded-full items-center justify-center w-full flex-row"
@@ -253,6 +258,7 @@ function LoginScreenContent() {
               onBlur={() => setFocusedField(null)}
               rightAccessory={
                 <TouchableOpacity
+                  activeOpacity={0.8}
                   accessibilityRole="button"
                   className="px-3 py-1 rounded-xl m-1"
                   onPress={() => setShowPassword((v) => !v)}
@@ -293,6 +299,7 @@ function LoginScreenContent() {
 
           {/* Sign in button */}
           <TouchableOpacity
+            activeOpacity={0.8}
             accessibilityRole="button"
             onPress={handleLogin}
             disabled={loading}
@@ -329,6 +336,7 @@ function LoginScreenContent() {
 
           {/* Artist text overlay */}
           <TouchableOpacity
+            activeOpacity={0.8}
             onPress={handleArtistLogin}
             style={StyleSheet.absoluteFillObject}
             className="items-center justify-center"

@@ -2,6 +2,8 @@ import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { FeedPost } from "@/services/post.service";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { prefetchUserProfile } from "@/services/prefetch.service";
+import { UserSummary } from "@/types/auth";
 import { useTabBarStore } from "@/stores/tabBarStore";
 import { mvs, s } from "@/utils/scale";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -37,7 +39,24 @@ function FeedPostOverlayComponent({
     if (onAuthorPress) {
       onAuthorPress();
     } else {
-      router.push(`/user/${post.author.id}` as any);
+      const author = post.author;
+      const initialUser: UserSummary = {
+        id: author.id,
+        username: author.username,
+        firstName: author.firstName ?? null,
+        lastName: author.lastName ?? null,
+        avatar: author.avatar ?? null,
+      };
+
+      prefetchUserProfile(author.id).catch(() => {
+        // Ignore prefetch errors
+      });
+      router.push({
+        pathname: `/user/${author.id}`,
+        params: {
+          initialUser: JSON.stringify(initialUser),
+        },
+      } as any);
     }
   };
 
@@ -235,7 +254,22 @@ function FeedPostCardComponent({
     if (onAuthorPress) {
       onAuthorPress();
     } else {
-      router.push(`/user/${post.author.id}` as any);
+      const author = post.author;
+      const initialUser: UserSummary = {
+        id: author.id,
+        username: author.username,
+        firstName: author.firstName ?? null,
+        lastName: author.lastName ?? null,
+        avatar: author.avatar ?? null,
+      };
+
+      prefetchUserProfile(author.id).catch(() => {});
+      router.push({
+        pathname: `/user/${author.id}`,
+        params: {
+          initialUser: JSON.stringify(initialUser),
+        },
+      } as any);
     }
   };
 

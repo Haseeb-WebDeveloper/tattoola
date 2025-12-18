@@ -11,8 +11,13 @@ import {
   togglePostLike,
   updatePost,
 } from "@/services/post.service";
-import { toggleFollow } from "@/services/profile.service";
+import {
+  toggleFollow,
+  fetchUserSummaryCached,
+  fetchArtistProfileSummary,
+} from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
+import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -31,11 +36,11 @@ import {
   FlatList,
   Image,
   Modal,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -526,12 +531,15 @@ export default function PostDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView
+        <KeyboardAwareScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           horizontal={false}
           contentContainerStyle={{ paddingBottom: 32 }}
+          enableOnAndroid={true}
+          enableAutomaticScroll={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Media Carousel skeleton */}
           <View className="bg-[#230808]">
@@ -644,7 +652,7 @@ export default function PostDetailScreen() {
               </View>
             </View>
           </LinearGradient>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
     );
   }
@@ -686,12 +694,15 @@ export default function PostDetailScreen() {
         </View>
       )}
 
-      <ScrollView
+      <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
         contentContainerStyle={{ paddingBottom: 32 }}
+        enableOnAndroid={true}
+        enableAutomaticScroll={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Media Carousel */}
         <Animated.View
@@ -940,10 +951,53 @@ export default function PostDetailScreen() {
               >
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() =>
-                    post.author?.id &&
-                    router.push(`/user/${post.author.id}` as any)
-                  }
+                  onPress={async () => {
+                    if (!post.author?.id) return;
+                    const a = post.author;
+                    
+                    // Build initialUser from available data
+                    const initialUser: UserSummary = {
+                      id: a.id,
+                      username: a.username,
+                      firstName: a.firstName ?? null,
+                      lastName: a.lastName ?? null,
+                      avatar: a.avatar ?? null,
+                      city: a.municipality ?? null,
+                      province: a.province ?? null,
+                    };
+
+                    // Fetch user summary to get role (cached, fast)
+                    const userSummary = await fetchUserSummaryCached(a.id).catch(() => null);
+                    
+                    // If user is an artist, fetch artist profile summary
+                    let initialArtist = null;
+                    if (userSummary?.role === "ARTIST") {
+                      const artistSummary = await fetchArtistProfileSummary(a.id).catch(() => null);
+                      if (artistSummary) {
+                        initialArtist = artistSummary;
+                      }
+                      // Merge location data from summary if available and not already set
+                      if (!initialUser.city && userSummary.city) {
+                        initialUser.city = userSummary.city;
+                      }
+                      if (!initialUser.province && userSummary.province) {
+                        initialUser.province = userSummary.province;
+                      }
+                      if (userSummary.role) {
+                        initialUser.role = userSummary.role;
+                      }
+                    }
+
+                    router.push({
+                      pathname: `/user/${a.id}`,
+                      params: {
+                        initialUser: JSON.stringify(initialUser),
+                        ...(initialArtist && {
+                          initialArtist: JSON.stringify(initialArtist),
+                        }),
+                      },
+                    } as any);
+                  }}
                   className="flex-row items-center flex-1"
                 >
                   <Image
@@ -958,7 +1012,7 @@ export default function PostDetailScreen() {
                   <View className="justify-center flex-1">
                     <ScaledText
                       variant="md"
-                      className="text-foreground font-neueRegular"
+                      className="text-foreground font-neueMedium"
                     >
                       {(() => {
                         const name =
@@ -1023,7 +1077,7 @@ export default function PostDetailScreen() {
               {/* Scrollable likes list container */}
               <View className="relative">
                 {/* Scrollable likes list */}
-                <ScrollView
+                <KeyboardAwareScrollView
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
                   style={{
@@ -1077,7 +1131,7 @@ export default function PostDetailScreen() {
                         ))
                       : null}
                   </View>
-                </ScrollView>
+                </KeyboardAwareScrollView>
 
                 {/* Fixed Edit/Delete buttons positioned 120px from top of likes section */}
                 {isOwnPost && (
@@ -1139,7 +1193,7 @@ export default function PostDetailScreen() {
             </View>
           </View>
         </LinearGradient>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Delete Confirmation Modal */}
       <Modal

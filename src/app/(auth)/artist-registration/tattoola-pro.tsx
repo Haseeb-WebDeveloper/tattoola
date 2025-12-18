@@ -140,6 +140,9 @@ export default function TattoolaProScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
       >
         {/* Back Button */}
         <View style={styles.backButtonContainer}>

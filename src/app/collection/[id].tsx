@@ -17,6 +17,7 @@ import {
   updateCollectionName,
 } from "@/services/collection.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
+import { isSystemCollection } from "@/utils/collection.utils";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
@@ -106,6 +107,21 @@ export default function CollectionDetailsScreen() {
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
 
+  // Check if this is a system collection (Tutti, preferiti, prefretti)
+  const isSystemColl = React.useMemo(() => {
+    if (!collection?.name) return false;
+    const normalized = collection.name.toLowerCase().trim();
+    return (
+      normalized === "tutti" ||
+      normalized === "preferiti" ||
+      normalized === "prefretti"
+    );
+  }, [collection?.name]);
+
+  // For system collections: can manage posts but cannot edit name or delete collection
+  const canEditCollectionName = isOwner && !isSystemColl;
+  const canDeleteCollection = isOwner && !isSystemColl;
+
   const loadCollection = useCallback(async () => {
     if (!id) return;
 
@@ -143,12 +159,27 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleEditName = () => {
-    if (!isOwner) return;
+    if (!canEditCollectionName) return;
     setShowEditModal(true);
   };
 
   const handleSaveName = async () => {
     if (!collection || !editName.trim()) return;
+
+    // Prevent editing system collections
+    if (isSystemCollection(collection.name)) {
+      setShowEditModal(false);
+      const toastId = toast.custom(
+        <CustomToast
+          message="Non puoi modificare il nome di questa collezione di sistema"
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      return;
+    }
+
     // Optimistic update
     const newName = editName.trim();
     previousNameRef.current = collection.name;
@@ -187,12 +218,27 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleDeleteCollection = () => {
-    if (!isOwner) return;
+    if (!canDeleteCollection) return;
     setDeleteCollectionModalVisible(true);
   };
 
   const confirmDeleteCollection = async () => {
     if (!isOwner || !collection) return;
+
+    // Prevent deleting system collections
+    if (isSystemCollection(collection.name)) {
+      setDeleteCollectionModalVisible(false);
+      const toastId = toast.custom(
+        <CustomToast
+          message="Non puoi eliminare questa collezione di sistema"
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      return;
+    }
+
     setDeletingCollection(true);
     try {
       await deleteCollection(collection.id);
@@ -578,7 +624,7 @@ export default function CollectionDetailsScreen() {
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
-              {isOwner && editMode && (
+              {canEditCollectionName && editMode && (
                 <TouchableOpacity
                   onPress={handleEditName}
                   style={{ marginLeft: s(8) }}
@@ -600,7 +646,11 @@ export default function CollectionDetailsScreen() {
               }}
             >
               {editMode ? (
-                <SVGIcons.Trash width={20} height={20} />
+                canDeleteCollection ? (
+                  <SVGIcons.Trash width={20} height={20} />
+                ) : (
+                  <View style={{ width: 32, height: 32 }} />
+                )
               ) : (
                 <SVGIcons.Edit width={20} height={20} />
               )}

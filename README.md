@@ -51,7 +51,7 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "ui and some logic refactored"
+eas update --branch preview --message "ui refactored search functionality is rebuilt and optimized the user and studio profile screens"
 
 eas build --profile development --platform android
 
