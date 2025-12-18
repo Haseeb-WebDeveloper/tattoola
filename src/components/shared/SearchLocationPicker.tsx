@@ -202,7 +202,7 @@ export default function SearchLocationPicker({
             className="relative flex-row items-center justify-between border-b border-gray bg-primary/30"
             style={{
               paddingBottom: mvs(15),
-              // paddingTop: mvs(50),
+              paddingTop: mvs(50),
               paddingHorizontal: s(20),
             }}
           >

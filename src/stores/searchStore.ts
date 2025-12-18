@@ -100,7 +100,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
 
   search: async () => {
-    const { activeTab, filters, isInitializing } = get();
+    const { activeTab, filters, isInitializing, results } = get();
     set({ isLoading: true, error: null, page: 0 });
 
     try {
@@ -109,7 +109,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         set({
           results: {
             artists: result.data,
-            studios: [],
+            studios: results.studios, // Preserve existing studios data
           },
           hasMore: result.hasMore,
           error: result.error || null,
@@ -120,7 +120,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         const result = await searchStudios({ filters, page: 0 });
         set({
           results: {
-            artists: [],
+            artists: results.artists, // Preserve existing artists data
             studios: result.data,
           },
           hasMore: result.hasMore,

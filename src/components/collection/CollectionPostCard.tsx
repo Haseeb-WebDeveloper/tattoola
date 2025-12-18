@@ -89,7 +89,13 @@ export default function CollectionPostCard({
           <LinearGradient
             colors={["transparent", "rgba(0,0,0,1)"]}
             className="absolute bottom-0 left-0 right-0 rounded-b-lg"
-            style={{ padding: 12 }}
+            style={{
+              padding: 12,
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+            }}
           >
             <ScaledText
               allowScaling={false}

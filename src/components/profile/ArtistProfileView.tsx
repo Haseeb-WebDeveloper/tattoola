@@ -196,6 +196,9 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         enableOnAndroid={true}
         enableAutomaticScroll={false}
         keyboardShouldPersistTaps="handled"
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
       >
         {/* Banner */}
         <Banner banner={profileData?.artistProfile?.banner || []} />
@@ -312,8 +315,8 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         )}
       </KeyboardAwareScrollView>
 
-      {/* Floating bottom actions - only show if not viewing own profile */}
-      {currentUserId !== data.user.id && (
+      {/* Floating bottom actions - only show if not viewing own profile  */}
+      {currentUserId !== data.user.id &&   (
         <View
           className="px-4"
           style={{

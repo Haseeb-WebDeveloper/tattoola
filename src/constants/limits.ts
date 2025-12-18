@@ -29,7 +29,12 @@ export const COLLECTION_NAME = {
   ALL_POSTS: "Tutti",
 };
 
-
-
 export const BANNER_SMALL_CARD_HEIGHT = s(294);
 export const BANNER_LARGE_CARD_HEIGHT = s(300);
+
+export const MOST_POPULAR_PROVINCES_IDS = [
+  {
+    id: "3a2cd93b-dec9-4a52-9a28-9d0f54468ad0",
+    name: "Milano",
+  },
+];
