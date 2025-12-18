@@ -11,6 +11,13 @@ export type BannerFeedItem = {
   size: "SMALL" | "MEDIUM" | "LARGE";
 };
 
+export type CollectionBannerFeedItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  thumbnailUrl?: string | null;
+};
+
 export type FeedEntry =
   | {
       kind: "post";
@@ -22,6 +29,11 @@ export type FeedEntry =
       kind: "banner";
       position: number;
       banner: BannerFeedItem;
+    }
+  | {
+      kind: "collectionBanner";
+      position: number;
+      collection: CollectionBannerFeedItem;
     };
 
 export type FeedItemsPage = {
@@ -44,6 +56,12 @@ type RawFeedItem = {
     thumbnailUrl?: string | null;
     redirectUrl: string;
     size: "SMALL" | "MEDIUM" | "LARGE";
+      } | null;
+  collection?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    thumbnailUrl?: string | null;
   } | null;
 };
 
@@ -56,8 +74,8 @@ const FEED_ITEMS_PER_PAGE = 10;
  * - MAGAZINE: currently ignored for MVP (see TODO below).
  * - BANNER: rendered as a banner feed entry with redirectUrl navigation.
  * - ARTIST / USER: expected to have postId; we resolve and render that post.
- * - ADMIN_COLLECTION: expected to have collectionId; we fetch all posts in that collection
- *   and expand them into multiple post entries that share the same position.
+ * - ADMIN_COLLECTION: expected to have collectionId; we render it as a collection banner
+ *   that links to a curated list of artists or posts for that collection.
  */
 export async function fetchFeedItemsPage(args: {
   userId?: string | null;
@@ -87,6 +105,12 @@ export async function fetchFeedItemsPage(args: {
         thumbnailUrl,
         redirectUrl,
         size
+      ),
+      collection:collections(
+        id,
+        name,
+        description,
+        thumbnailUrl
       )
     `
     )
@@ -196,95 +220,6 @@ export async function fetchFeedItemsPage(args: {
     }
   }
 
-  // Fetch collection posts for ADMIN_COLLECTION.
-  let collectionPostsByCollectionId: Record<string, FeedPost[]> = {};
-  if (collectionIds.length > 0) {
-    const { data: collectionRows, error: collectionError } = await supabase
-      .from("collection_posts")
-      .select(
-        `
-        collectionId,
-        posts:posts!collection_posts_postId_fkey(
-          id,caption,thumbnailUrl,likesCount,commentsCount,createdAt,authorId,styleId,
-          users!posts_authorId_fkey(id,username,firstName,lastName,avatar),
-          post_media(id,mediaType,mediaUrl,order)
-        )
-      `
-      )
-      .in("collectionId", collectionIds);
-
-    if (collectionError) {
-      console.error(
-        "[feed.service] error fetching collection_posts for ADMIN_COLLECTION feed items",
-        collectionError
-      );
-    } else {
-      const rows = (collectionRows || []) as any[];
-      
-      // Collect all style IDs from collection posts
-      const allCollectionStyleIds = new Set<string>();
-      rows.forEach((row) => {
-        const post = row.posts;
-        if (post && post.styleId) {
-          const styleIds = post.styleId || [];
-          if (Array.isArray(styleIds)) {
-            styleIds.forEach((id: string) => allCollectionStyleIds.add(id));
-          }
-        }
-      });
-
-      // Fetch all styles in one query
-      let collectionStylesMap: Record<string, { id: string; name: string }> = {};
-      if (allCollectionStyleIds.size > 0) {
-        const { data: stylesData } = await supabase
-          .from("tattoo_styles")
-          .select("id, name")
-          .in("id", Array.from(allCollectionStyleIds));
-        
-        if (stylesData) {
-          stylesData.forEach((style: any) => {
-            collectionStylesMap[style.id] = { id: style.id, name: style.name };
-          });
-        }
-      }
-
-      rows.forEach((row) => {
-        const colId = row.collectionId as string;
-        const post = row.posts;
-        if (!post) return;
-        
-        // Get first style from array (for backward compatibility with FeedPost type)
-        const styleIds = post.styleId || [];
-        const firstStyleId = Array.isArray(styleIds) && styleIds.length > 0 ? styleIds[0] : null;
-        const firstStyle = firstStyleId ? collectionStylesMap[firstStyleId] : undefined;
-
-        const mapped: FeedPost = {
-          id: post.id,
-          caption: post.caption,
-          createdAt: post.createdAt,
-          likesCount: post.likesCount,
-          commentsCount: post.commentsCount,
-          isLiked: false,
-          style: firstStyle,
-          author: {
-            id: post.users.id,
-            username: post.users.username,
-            firstName: post.users.firstName,
-            lastName: post.users.lastName,
-            avatar: post.users.avatar,
-          },
-          media: (post.post_media || []).sort(
-            (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
-          ),
-        };
-        if (!collectionPostsByCollectionId[colId]) {
-          collectionPostsByCollectionId[colId] = [];
-        }
-        collectionPostsByCollectionId[colId].push(mapped);
-      });
-    }
-  }
-
   // Build final flattened feed entries, preserving position ordering.
   const feedEntries: FeedEntry[] = [];
 
@@ -324,17 +259,18 @@ export async function fetchFeedItemsPage(args: {
         return;
       }
       case "ADMIN_COLLECTION": {
-        if (!item.collectionId) return;
-        const posts = collectionPostsByCollectionId[item.collectionId] || [];
-        if (!posts.length) return;
-        const groupId = `collection:${item.collectionId}`;
-        posts.forEach((post) => {
-          feedEntries.push({
-            kind: "post",
-            position: item.position,
-            post,
-            groupId,
-          });
+        if (!item.collectionId || !item.collection) return;
+        const col = item.collection;
+        const collectionBanner: CollectionBannerFeedItem = {
+          id: col.id,
+          name: col.name,
+          description: col.description ?? null,
+          thumbnailUrl: col.thumbnailUrl ?? null,
+        };
+        feedEntries.push({
+          kind: "collectionBanner",
+          position: item.position,
+          collection: collectionBanner,
         });
         return;
       }

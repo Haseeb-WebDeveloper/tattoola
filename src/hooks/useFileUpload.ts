@@ -5,7 +5,7 @@ import {
 } from "@/services/cloudinary.service";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Platform } from "react-native";
+import { Linking, Platform } from "react-native";
 import { toast } from "sonner-native";
 
 export interface FileUploadOptions {
@@ -34,15 +34,44 @@ export const useFileUpload = () => {
    */
   const requestPermissions = async (): Promise<boolean> => {
     try {
-      if (Platform.OS !== "web") {
+      if (Platform.OS === "web") {
+        return true;
+      }
+
+      // 1) Check current permission without triggering any system dialog
+      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+
+      if (current.granted) {
+        // Already granted -> don't ask again
+        return true;
+      }
+
+      // 2) If we can still ask, request once -> OS shows native dialog
+      if (current.canAskAgain) {
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-          toast.error("Autorizzazione richiesta");
-          return false;
+
+        if (status === "granted") {
+          return true;
         }
+
+        // User just denied
+        toast.error(
+          "Autorizzazione alle foto necessaria per caricare immagini."
+        );
+        return false;
       }
-      return true;
+
+      // 3) Permission is denied and we cannot ask again -> guide to settings
+      toast.error(
+        "Per continuare abilita l’accesso alle foto dalle impostazioni."
+      );
+      if (typeof Linking.openSettings === "function") {
+        Linking.openSettings().catch((err) => {
+          console.error("Error opening settings:", err);
+        });
+      }
+      return false;
     } catch (error) {
       console.error("Permission request error:", error);
       return false;

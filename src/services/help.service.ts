@@ -1,22 +1,17 @@
+import type { HelpArticle, HelpCategory, HelpCategoryType } from "@/types/help";
 import { supabase } from "@/utils/supabase";
-import type {
-  HelpArticle,
-  HelpCategory,
-  HelpCategoryType,
-} from "@/types/help";
 
 /**
- * Fetch help categories from database based on type
+ * Fetch help categories from database based on type and user authentication status
  * @param type - The category type (USER or ARTIST)
- * @param loginRequired - Optional filter for loginRequired flag
- *   - true  → only categories that require login
- *   - false → only categories that do NOT require login
- *   - undefined → no filter (all categories)
+ * @param isLoggedIn - Whether user is logged in
+ *   - true  → shows ALL categories (both loginRequired: true and false)
+ *   - false → shows only categories where loginRequired: false
  * @returns Array of help categories
  */
 export async function getHelpCategories(
   type: HelpCategoryType,
-  loginRequired?: boolean
+  isLoggedIn: boolean
 ): Promise<HelpCategory[]> {
   let query = supabase
     .from("help_categories")
@@ -25,9 +20,11 @@ export async function getHelpCategories(
     .order("order", { ascending: true })
     .order("createdAt", { ascending: false });
 
-  if (loginRequired !== undefined) {
-    query = query.eq("loginRequired", loginRequired);
+  // If NOT logged in, only show categories that don't require login
+  if (!isLoggedIn) {
+    query = query.eq("loginRequired", false);
   }
+  // If logged in, show ALL categories (no filter needed)
 
   const { data, error } = await query;
 
@@ -146,4 +143,3 @@ export async function getHelpArticle(
     updatedAt: data.updatedAt,
   };
 }
-

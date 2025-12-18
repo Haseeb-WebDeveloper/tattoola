@@ -1,7 +1,12 @@
-import type { SearchFilters, SearchTab } from "@/types/search";
-import type { Facets, LocationFacet, ServiceFacet, StyleFacet } from "@/types/facets";
-import { supabase } from "@/utils/supabase";
 import { SEARCH_FILTER_COMPRESSION } from "@/constants/limits";
+import type {
+  Facets,
+  LocationFacet,
+  ServiceFacet,
+  StyleFacet,
+} from "@/types/facets";
+import type { SearchFilters, SearchTab } from "@/types/search";
+import { supabase } from "@/utils/supabase";
 
 type FacetParams = {
   filters: SearchFilters;
@@ -9,7 +14,10 @@ type FacetParams = {
 };
 
 // Cache for base IDs to avoid redundant subscription queries
-const baseIdCache = new Map<string, { artistIds: string[]; studioIds: string[] }>();
+const baseIdCache = new Map<
+  string,
+  { artistIds: string[]; studioIds: string[] }
+>();
 
 // Request deduplication - prevent multiple simultaneous calls with same params
 let pendingFacetRequest: Promise<Facets> | null = null;
@@ -67,9 +75,13 @@ async function getFilteredArtistIds(
       .eq("isActive", true);
 
     if (artistServices && artistServices.length > 0) {
-      const serviceArtistIds = [...new Set(artistServices.map((as) => as.artistId))];
+      const serviceArtistIds = [
+        ...new Set(artistServices.map((as) => as.artistId)),
+      ];
       if (filteredArtistIds !== null) {
-        filteredArtistIds = filteredArtistIds.filter((id) => serviceArtistIds.includes(id));
+        filteredArtistIds = filteredArtistIds.filter((id) =>
+          serviceArtistIds.includes(id)
+        );
         if (filteredArtistIds.length === 0) return [];
       } else {
         filteredArtistIds = serviceArtistIds;
@@ -87,7 +99,10 @@ async function getFilteredArtistIds(
       locationQuery = locationQuery.eq("provinceId", filters.provinceId);
     }
     if (filters.municipalityId) {
-      locationQuery = locationQuery.eq("municipalityId", filters.municipalityId);
+      locationQuery = locationQuery.eq(
+        "municipalityId",
+        filters.municipalityId
+      );
     }
 
     const { data: userIds } = await locationQuery;
@@ -96,12 +111,17 @@ async function getFilteredArtistIds(
       const { data: locationArtists } = await supabase
         .from("artist_profiles")
         .select("id")
-        .in("userId", userIds.map((ul) => ul.userId));
+        .in(
+          "userId",
+          userIds.map((ul) => ul.userId)
+        );
 
       if (locationArtists && locationArtists.length > 0) {
         const locationArtistIds = locationArtists.map((a) => a.id);
         if (filteredArtistIds !== null) {
-          filteredArtistIds = filteredArtistIds.filter((id) => locationArtistIds.includes(id));
+          filteredArtistIds = filteredArtistIds.filter((id) =>
+            locationArtistIds.includes(id)
+          );
           if (filteredArtistIds.length === 0) return [];
         } else {
           filteredArtistIds = locationArtistIds;
@@ -180,9 +200,7 @@ async function getFilteredArtistIds(
   }
 
   const activeUserIds = new Set(subscriptions.map((s) => s.userId));
-  return allArtists
-    .filter((a) => activeUserIds.has(a.userId))
-    .map((a) => a.id);
+  return allArtists.filter((a) => activeUserIds.has(a.userId)).map((a) => a.id);
 }
 
 /**
@@ -219,9 +237,13 @@ async function getFilteredStudioIds(
       .eq("isActive", true);
 
     if (studioServices && studioServices.length > 0) {
-      const serviceStudioIds = [...new Set(studioServices.map((ss) => ss.studioId))];
+      const serviceStudioIds = [
+        ...new Set(studioServices.map((ss) => ss.studioId)),
+      ];
       if (filteredStudioIds !== null) {
-        filteredStudioIds = filteredStudioIds.filter((id) => serviceStudioIds.includes(id));
+        filteredStudioIds = filteredStudioIds.filter((id) =>
+          serviceStudioIds.includes(id)
+        );
         if (filteredStudioIds.length === 0) return [];
       } else {
         filteredStudioIds = serviceStudioIds;
@@ -239,7 +261,10 @@ async function getFilteredStudioIds(
       locationQuery = locationQuery.eq("provinceId", filters.provinceId);
     }
     if (filters.municipalityId) {
-      locationQuery = locationQuery.eq("municipalityId", filters.municipalityId);
+      locationQuery = locationQuery.eq(
+        "municipalityId",
+        filters.municipalityId
+      );
     }
 
     const { data: studioIds } = await locationQuery;
@@ -247,7 +272,9 @@ async function getFilteredStudioIds(
     if (studioIds && studioIds.length > 0) {
       const locationStudioIds = studioIds.map((sl) => sl.studioId);
       if (filteredStudioIds !== null) {
-        filteredStudioIds = filteredStudioIds.filter((id) => locationStudioIds.includes(id));
+        filteredStudioIds = filteredStudioIds.filter((id) =>
+          locationStudioIds.includes(id)
+        );
         if (filteredStudioIds.length === 0) return [];
       } else {
         filteredStudioIds = locationStudioIds;
@@ -369,8 +396,9 @@ async function getFilteredStudioIds(
 async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   const { filters, activeTab } = params;
 
-  // Get filtered IDs excluding style filter (with caching)
-  const cacheKey = getCacheKey(filters, activeTab, true, false, false);
+  // Get filtered IDs excluding style filter AND location filter (with caching)
+  // We want to show all styles regardless of location selection
+  const cacheKey = getCacheKey(filters, activeTab, true, false, true);
   let artistIds: string[];
   let studioIds: string[];
 
@@ -381,15 +409,17 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
-    
+    const shouldFetchArtists =
+      SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios =
+      SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
+
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
-        ? getFilteredArtistIds(filters, true, false, false)
+        ? getFilteredArtistIds(filters, true, false, true)
         : Promise.resolve([]),
       shouldFetchStudios
-        ? getFilteredStudioIds(filters, true, false, false)
+        ? getFilteredStudioIds(filters, true, false, true)
         : Promise.resolve([]),
     ]);
     artistIds = fetchedArtistIds;
@@ -402,7 +432,10 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   }
 
   // If compression is "high", require both artists and studios to have results
-  if (SEARCH_FILTER_COMPRESSION === "high" && (artistIds.length === 0 || studioIds.length === 0)) {
+  if (
+    SEARCH_FILTER_COMPRESSION === "high" &&
+    (artistIds.length === 0 || studioIds.length === 0)
+  ) {
     return [];
   }
 
@@ -450,7 +483,9 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   if (SEARCH_FILTER_COMPRESSION === "high") {
     // High compression: only show styles that have both artists AND studios
     validStyleIds = new Set(
-      Array.from(artistStyleIds).filter((styleId) => studioStyleIds.has(styleId))
+      Array.from(artistStyleIds).filter((styleId) =>
+        studioStyleIds.has(styleId)
+      )
     );
   } else {
     // Medium compression: show styles that have artists OR studios (current behavior)
@@ -475,8 +510,9 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
 async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   const { filters, activeTab } = params;
 
-  // Get filtered IDs excluding service filter (with caching)
-  const cacheKey = getCacheKey(filters, activeTab, false, true, false);
+  // Get filtered IDs excluding service filter AND location filter (with caching)
+  // We want to show all services regardless of location selection
+  const cacheKey = getCacheKey(filters, activeTab, false, true, true);
   let artistIds: string[];
   let studioIds: string[];
 
@@ -487,15 +523,17 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
-    
+    const shouldFetchArtists =
+      SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios =
+      SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
+
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
-        ? getFilteredArtistIds(filters, false, true, false)
+        ? getFilteredArtistIds(filters, false, true, true)
         : Promise.resolve([]),
       shouldFetchStudios
-        ? getFilteredStudioIds(filters, false, true, false)
+        ? getFilteredStudioIds(filters, false, true, true)
         : Promise.resolve([]),
     ]);
     artistIds = fetchedArtistIds;
@@ -508,7 +546,10 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   }
 
   // If compression is "high", require both artists and studios to have results
-  if (SEARCH_FILTER_COMPRESSION === "high" && (artistIds.length === 0 || studioIds.length === 0)) {
+  if (
+    SEARCH_FILTER_COMPRESSION === "high" &&
+    (artistIds.length === 0 || studioIds.length === 0)
+  ) {
     return [];
   }
 
@@ -558,7 +599,9 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   if (SEARCH_FILTER_COMPRESSION === "high") {
     // High compression: only show services that have both artists AND studios
     validServiceIds = new Set(
-      Array.from(artistServiceIds).filter((serviceId) => studioServiceIds.has(serviceId))
+      Array.from(artistServiceIds).filter((serviceId) =>
+        studioServiceIds.has(serviceId)
+      )
     );
   } else {
     // Medium compression: show services that have artists OR studios (current behavior)
@@ -580,7 +623,9 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
 /**
  * Get location facets (simplified - no counting)
  */
-async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> {
+async function getLocationFacets(
+  params: FacetParams
+): Promise<LocationFacet[]> {
   const { filters, activeTab } = params;
 
   // Get filtered IDs excluding location filter (with caching)
@@ -595,9 +640,11 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
-    
+    const shouldFetchArtists =
+      SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios =
+      SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
+
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
         ? getFilteredArtistIds(filters, false, false, true)
@@ -616,7 +663,10 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
   }
 
   // If compression is "high", require both artists and studios to have results
-  if (SEARCH_FILTER_COMPRESSION === "high" && (artistIds.length === 0 || studioIds.length === 0)) {
+  if (
+    SEARCH_FILTER_COMPRESSION === "high" &&
+    (artistIds.length === 0 || studioIds.length === 0)
+  ) {
     return [];
   }
 
@@ -676,7 +726,9 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
   if (SEARCH_FILTER_COMPRESSION === "high") {
     // High compression: only show locations that have both artists AND studios
     locationKeys = new Set(
-      Array.from(artistLocationKeys).filter((key) => studioLocationKeys.has(key))
+      Array.from(artistLocationKeys).filter((key) =>
+        studioLocationKeys.has(key)
+      )
     );
   } else {
     // Medium compression: show locations that have artists OR studios (current behavior)
@@ -715,10 +767,16 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
   ]);
 
   if (provincesResult.error) {
-    console.error(`  📍 [LOCATION_FACETS] Error fetching provinces:`, provincesResult.error);
+    console.error(
+      `  📍 [LOCATION_FACETS] Error fetching provinces:`,
+      provincesResult.error
+    );
   }
   if (municipalitiesResult.error) {
-    console.error(`  📍 [LOCATION_FACETS] Error fetching municipalities:`, municipalitiesResult.error);
+    console.error(
+      `  📍 [LOCATION_FACETS] Error fetching municipalities:`,
+      municipalitiesResult.error
+    );
   }
 
   const provincesMap = new Map(
@@ -771,7 +829,7 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
  */
 export async function getFacets(params: FacetParams): Promise<Facets> {
   const requestKey = getRequestKey(params);
-  
+
   // Deduplicate: if same request is already in progress, return that promise
   if (pendingFacetRequest && pendingRequestParams === requestKey) {
     return pendingFacetRequest;
@@ -813,4 +871,3 @@ export async function getFacets(params: FacetParams): Promise<Facets> {
     }
   }
 }
-

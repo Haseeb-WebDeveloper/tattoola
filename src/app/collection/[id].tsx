@@ -71,9 +71,9 @@ function useCollectionDetail(
     }
   }, [collectionId]);
 
-  const saveName = useCallback(async () => {
+  const handleSaveName = useCallback(async () => {
     if (!collection || !editName.trim()) return;
-
+    // Optimistic update
     const newName = editName.trim();
     previousNameRef.current = collection.name;
     setCollection((prev: any) => ({ ...prev, name: newName }));
@@ -102,9 +102,8 @@ function useCollectionDetail(
     }
   }, [collection, editName, viewerId]);
 
-  const deleteCollection = useCallback(async () => {
+  const confirmDeleteCollection = useCallback(async () => {
     if (!collection) return;
-
     try {
       await deleteCollectionApi(collection.id);
 
@@ -301,8 +300,8 @@ function useCollectionDetail(
     editName,
     setEditName,
     reload: loadCollection,
-    saveName,
-    deleteCollection,
+    saveName: handleSaveName,
+    deleteCollection: confirmDeleteCollection,
     deletePost,
     reorderPosts,
     addPosts,
@@ -605,26 +604,143 @@ export default function CollectionDetailsScreen() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View className="flex-1 bg-background">
-        <CollectionHeader
-          collectionName={collection.name}
-          postsCount={collection.postsCount}
-          author={collection.author}
-          viewerFallback={user}
-          isOwner={isOwner}
-          editMode={editMode}
-          onBack={handleBack}
-          onToggleEditMode={handleToggleEditMode}
-          onEditName={handleEditName}
-          onDeleteCollection={handleDeleteCollection}
-        />
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-4 pt-4 ">
+          <TouchableOpacity
+            onPress={handleBack}
+            className="items-center justify-center w-8 h-8 rounded-full bg-foreground/20"
+          >
+            <SVGIcons.ChevronLeft width={16} height={16} />
+          </TouchableOpacity>
 
-        <CollectionPostsGrid
-          posts={posts}
-          editMode={editMode}
-          onReorder={handleDragEnd}
-          onPostPress={handlePostPress}
-          onDeletePost={handleDeletePost}
-          onOpenAddModal={openAddModal}
+          <View className="items-center flex-1">
+            <View className="flex-row items-center justify-center">
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground font-neueSemibold"
+                style={{
+                  lineHeight: mvs(20),
+                  borderBottomWidth: editMode ? mvs(0.5) : 0,
+                  borderBottomColor: editMode ? undefined : "transparent",
+                }}
+              >
+                {TrimText(collection.name, 15)}
+              </ScaledText>
+              {isOwner && editMode && (
+                <TouchableOpacity
+                  onPress={handleEditName}
+                  style={{ marginLeft: s(8) }}
+                >
+                  <SVGIcons.Edit width={16} height={16} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {isOwner && (
+            <TouchableOpacity
+              onPress={editMode ? handleDeleteCollection : handleToggleEditMode}
+              style={{
+                width: 32,
+                height: 32,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {editMode ? (
+                <SVGIcons.Trash width={20} height={20} />
+              ) : (
+                <SVGIcons.Edit width={20} height={20} />
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View className="flex-col items-center pb-4 mt-1">
+          <View className="flex-row items-center">
+            <Image
+              source={{
+                uri:
+                  collection?.author?.avatar ||
+                  user?.avatar ||
+                  `https://api.dicebear.com/7.x/initials/png?seed=${collection?.author?.firstName?.split(" ")[0]}`,
+              }}
+              className="w-5 h-5 mr-2 border rounded-full border-foreground"
+            />
+            <ScaledText
+              variant="sm"
+              className="text-foreground font-montserratLight"
+            >
+              {collection?.author?.firstName ||
+                user?.firstName ||
+                "Sconosciuto"}{" "}
+              {collection?.author?.lastName || user?.lastName || ""}
+            </ScaledText>
+            {/* <ScaledText variant="sm" className="pl-2 text-foreground font-montserratLight">
+              <span className="text-xl leading-none align-middle font-montserratSemibold">•</span>
+                {collection.postsCount} {collection.postsCount === 1 ? 'design' : 'designs'}
+            </ScaledText> */}
+          </View>
+
+          <View className="flex-row items-center">
+            <ScaledText
+              variant="sm"
+              className="text-foreground font-montserratLight"
+            >
+              {collection.postsCount} design
+            </ScaledText>
+          </View>
+        </View>
+
+        {/* Posts Grid */}
+        <DraggableFlatList
+          key={layoutKey}
+          data={posts}
+          onDragEnd={({ data }) => handleDragEnd(data)}
+          keyExtractor={(item) => item.postId}
+          renderItem={renderPostItem}
+          numColumns={NUM_COLUMNS}
+          ListHeaderComponent={
+            editMode ? (
+              <View
+                style={{
+                  marginTop: GAP,
+                  marginBottom: GAP,
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={openAddModal}
+                  activeOpacity={0.8}
+                  className="items-center justify-center border-2 border-dashed rounded-xl border-primary bg-primary/10"
+                  style={{
+                    width: POST_WIDTH,
+                    height: mvs(253),
+                  }}
+                >
+                  <SVGIcons.AddRed width={s(32)} height={s(32)} />
+                  <ScaledText
+                    allowScaling={false}
+                    variant="md"
+                    className="mt-3 text-foreground font-neueMedium"
+                  >
+                    Aggiungi nuovo tatuaggio
+                  </ScaledText>
+                </TouchableOpacity>
+              </View>
+            ) : null
+          }
+          containerStyle={{
+            flex: 1,
+          }}
+          contentContainerStyle={{
+            paddingHorizontal: H_PADDING / 2,
+            paddingBottom: 20,
+          }}
+          dragItemOverflow={true}
+          activationDistance={editMode ? 0 : 999999}
+          autoscrollThreshold={24}
         />
 
         <CollectionModals

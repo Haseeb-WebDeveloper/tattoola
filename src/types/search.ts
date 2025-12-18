@@ -17,7 +17,8 @@ export type ArtistSearchResult = {
     municipality: string;
     address: string | null;
   } | null;
-  styles: { id: string; name: string }[];
+  styles: { id: string; name: string; imageUrl?: string | null }[];
+  services?: { id: string; name: string }[];
   bannerMedia: {
     mediaUrl: string;
     mediaType: "IMAGE" | "VIDEO";
