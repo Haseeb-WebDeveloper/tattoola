@@ -1,10 +1,9 @@
-import React, { useMemo } from "react";
-import { Image, TouchableOpacity, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { mvs } from "@/utils/scale";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useMemo } from "react";
+import { Image, TouchableOpacity, View } from "react-native";
 
 type Props = {
   thumbnailUrl?: string | null;
@@ -45,12 +44,12 @@ export default function CollectionPostCard({
     if (thumbnailUrl) {
       return thumbnailUrl;
     }
-    
+
     // If it's a video and we have a mediaUrl, generate thumbnail from video URL
     if (mediaType === "VIDEO" && mediaUrl) {
       return cloudinaryService.getVideoThumbnailFromUrl(mediaUrl);
     }
-    
+
     // Otherwise, use mediaUrl as-is (for images)
     return mediaUrl || undefined;
   }, [thumbnailUrl, mediaUrl, mediaType]);
@@ -86,21 +85,23 @@ export default function CollectionPostCard({
           resizeMode="cover"
         />
 
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,1)"]}
-          className="absolute bottom-0 left-0 right-0 rounded-b-lg"
-          style={{ padding: 12 }}
-        >
-          <ScaledText
-            allowScaling={false}
-            variant="sm"
-            className="text-foreground font-neueMedium"
-            numberOfLines={1}
-            style={{ opacity: 1 }}
+        {caption && (
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,1)"]}
+            className="absolute bottom-0 left-0 right-0 rounded-b-lg"
+            style={{ padding: 12 }}
           >
-            {caption || "Nessuna descrizione"}
-          </ScaledText>
-        </LinearGradient>
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-foreground font-neueMedium"
+              numberOfLines={1}
+              style={{ opacity: 1 }}
+            >
+              {caption}
+            </ScaledText>
+          </LinearGradient>
+        )}
 
         {editMode && (
           <>

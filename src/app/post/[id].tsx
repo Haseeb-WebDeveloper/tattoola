@@ -36,11 +36,11 @@ import {
   FlatList,
   Image,
   Modal,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { toast } from "sonner-native";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -531,12 +531,15 @@ export default function PostDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView
+        <KeyboardAwareScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           horizontal={false}
           contentContainerStyle={{ paddingBottom: 32 }}
+          enableOnAndroid={true}
+          enableAutomaticScroll={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Media Carousel skeleton */}
           <View className="bg-[#230808]">
@@ -649,7 +652,7 @@ export default function PostDetailScreen() {
               </View>
             </View>
           </LinearGradient>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
     );
   }
@@ -691,12 +694,15 @@ export default function PostDetailScreen() {
         </View>
       )}
 
-      <ScrollView
+      <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
         contentContainerStyle={{ paddingBottom: 32 }}
+        enableOnAndroid={true}
+        enableAutomaticScroll={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Media Carousel */}
         <Animated.View
@@ -940,7 +946,9 @@ export default function PostDetailScreen() {
 
             {/* Author info (clickable -> navigate to user profile) */}
             {post.author && (
-              <View className="z-10 flex-row items-center justify-between mb-8">
+              <View
+                className={`z-10 flex-row justify-between mb-8 ${post.caption ? "items-center" : "items-end"}`}
+              >
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={async () => {
@@ -1069,7 +1077,7 @@ export default function PostDetailScreen() {
               {/* Scrollable likes list container */}
               <View className="relative">
                 {/* Scrollable likes list */}
-                <ScrollView
+                <KeyboardAwareScrollView
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
                   style={{
@@ -1123,7 +1131,7 @@ export default function PostDetailScreen() {
                         ))
                       : null}
                   </View>
-                </ScrollView>
+                </KeyboardAwareScrollView>
 
                 {/* Fixed Edit/Delete buttons positioned 120px from top of likes section */}
                 {isOwnPost && (
@@ -1185,7 +1193,7 @@ export default function PostDetailScreen() {
             </View>
           </View>
         </LinearGradient>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -1217,7 +1225,7 @@ export default function PostDetailScreen() {
               className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(6) }}
             >
-              Eliminare il post?
+              Eliminare il tatuaggio?
             </ScaledText>
             <ScaledText
               allowScaling={false}
@@ -1225,8 +1233,8 @@ export default function PostDetailScreen() {
               className="text-center text-background font-montserratSemibold"
               style={{ marginBottom: mvs(20) }}
             >
-              Questa azione non può essere annullata. Il post verrà eliminato
-              definitivamente.
+              Questa azione non può essere annullata. Il tatuaggio verrà
+              eliminato definitivamente.
             </ScaledText>
             <View
               className="flex-row justify-center"

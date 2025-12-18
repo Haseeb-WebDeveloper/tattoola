@@ -20,8 +20,9 @@ import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
+import { Linking, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function StudioScreen() {
   const { id, initialStudio: initialStudioParam } = useLocalSearchParams<{
@@ -171,12 +172,15 @@ export default function StudioScreen() {
         end={{ x: 0.6, y: 1 }}
         className="flex-1"
       >
-        <ScrollView
+        <KeyboardAwareScrollView
           className="relative"
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           horizontal={false}
           contentContainerStyle={{ paddingBottom: mvs(50) }}
+          enableOnAndroid={true}
+          enableAutomaticScroll={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Back icon */}
           <TouchableOpacity
@@ -259,7 +263,7 @@ export default function StudioScreen() {
 
           {/* FAQs Section */}
           <StudioFAQs faqs={data?.faqs || []} />
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </LinearGradient>
     </View>
   );

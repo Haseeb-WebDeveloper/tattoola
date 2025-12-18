@@ -18,7 +18,11 @@ export type ArtistSearchResult = {
     address: string | null;
   } | null;
   styles: { id: string; name: string }[];
-  bannerMedia: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; order: number }[];
+  bannerMedia: {
+    mediaUrl: string;
+    mediaType: "IMAGE" | "VIDEO";
+    order: number;
+  }[];
   subscription: {
     plan: { name: string; type: string };
   } | null;
@@ -38,7 +42,11 @@ export type StudioSearchResult = {
     address: string | null;
   }[];
   styles: { id: string; name: string }[];
-  bannerMedia: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; order: number }[];
+  bannerMedia: {
+    mediaUrl: string;
+    mediaType: "IMAGE" | "VIDEO";
+    order: number;
+  }[];
   subscription: {
     plan: { name: string; type: string };
   } | null;
@@ -81,7 +89,7 @@ export type SearchFilters = {
   municipalityId: string | null;
 };
 
-export type SearchTab = "all" | "artists" | "studios";
+export type SearchTab = "artists" | "studios" ;
 
 export type SearchResults = {
   artists: ArtistSearchResult[];

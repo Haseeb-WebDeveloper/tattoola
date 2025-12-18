@@ -91,6 +91,10 @@ function LoginScreenContent() {
     router.push("/(auth)/artist-registration/tattoola-pro");
   };
 
+  const handleBackToWelcome = () => {
+    router.replace("/(auth)/welcome");
+  };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background">
@@ -121,18 +125,41 @@ function LoginScreenContent() {
         extraKeyboardSpace={100}
         bottomOffset={62}
         ScrollViewComponent={ScrollView}
+        // Disable bounce/overscroll on iOS & Android so only content area scrolls
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
         showsVerticalScrollIndicator={false}
         className="flex-1 bg-transparent"
         contentContainerStyle={{ flexGrow: 1 }}
         style={{ zIndex: 1 }}
       >
+        {/* Back Button */}
+        <View className="px-6" style={{ marginTop: mvs(15) }}>
+          <TouchableOpacity
+            onPress={handleBackToWelcome}
+            className="rounded-full items-center justify-center self-start"
+            style={{
+              width: s(36),
+              height: s(36),
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+            }}
+          >
+            <SVGIcons.ChevronLeft
+              width={s(16)}
+              height={s(16)}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Header with Logo and Help Icon */}
         <View
-          className="w-full flex-row justify-between items-center px-6"
+          className="grid w-full flex-row justify-between items-center px-6"
           style={{ marginTop: mvs(20), marginBottom: mvs(40) }}
         >
-          <View style={{ width: s(44) }} />
-          <SVGIcons.LogoLight style={{ height: s(50) }} />
+          <View style={{ width: s(24) }} />
+          <SVGIcons.LogoLight style={{ height: s(50) }}  />
           <TouchableOpacity
             className="items-center justify-center"
             onPress={() => router.push("/(auth)/help")}
@@ -156,6 +183,7 @@ function LoginScreenContent() {
         {/* New registration button */}
         <View className="px-6" style={{ marginBottom: mvs(32) }}>
           <TouchableOpacity
+           activeOpacity={0.8}
             accessibilityRole="button"
             onPress={handleRegister}
             className="bg-primary rounded-full items-center justify-center w-full flex-row"
@@ -182,11 +210,11 @@ function LoginScreenContent() {
             allowScaling={false}
             variant="md"
             className="text-gray font-montserratLight"
-            style={{ 
+            style={{
               marginHorizontal: s(16),
               fontSize: s(14),
               lineHeight: 23,
-              color: '#A49A99'
+              color: "#A49A99",
             }}
           >
             Oppure
@@ -230,6 +258,7 @@ function LoginScreenContent() {
               onBlur={() => setFocusedField(null)}
               rightAccessory={
                 <TouchableOpacity
+                  activeOpacity={0.8}
                   accessibilityRole="button"
                   className="px-3 py-1 rounded-xl m-1"
                   onPress={() => setShowPassword((v) => !v)}
@@ -270,6 +299,7 @@ function LoginScreenContent() {
 
           {/* Sign in button */}
           <TouchableOpacity
+            activeOpacity={0.8}
             accessibilityRole="button"
             onPress={handleLogin}
             disabled={loading}
@@ -287,7 +317,10 @@ function LoginScreenContent() {
         </View>
 
         {/* Bottom image with artist text overlay */}
-        <View className="w-full relative" style={{ marginTop: 'auto', flex: 1, minHeight: scaledVSize(200) }}>
+        <View
+          className="w-full relative"
+          style={{ marginTop: "auto", flex: 1, minHeight: scaledVSize(200) }}
+        >
           <Image
             source={require("@/assets/auth/login-2.png")}
             className="w-full h-full"
@@ -300,9 +333,10 @@ function LoginScreenContent() {
             style={StyleSheet.absoluteFillObject}
             pointerEvents="none"
           />
-          
+
           {/* Artist text overlay */}
           <TouchableOpacity
+            activeOpacity={0.8}
             onPress={handleArtistLogin}
             style={StyleSheet.absoluteFillObject}
             className="items-center justify-center"

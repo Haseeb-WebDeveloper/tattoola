@@ -88,7 +88,7 @@ export default function UploadHeader() {
             <SVGIcons.Close className="w-8 h-8" />
           </TouchableOpacity>
           <Text className="text-foreground section-title font-neueBold">
-            Nuovo post
+            Nuovo tatuaggio
           </Text>
           {/* Steps Indicator */}
           <View className="items-center mt-4 mb-2">

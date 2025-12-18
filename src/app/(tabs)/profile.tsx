@@ -264,6 +264,8 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
+        // Prevent visual overscroll on Android without affecting RefreshControl
+        overScrollMode="never"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

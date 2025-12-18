@@ -47,7 +47,7 @@ export default function DiscardPostConfirmModal({
             className="text-center text-background font-neueBold"
             style={{ marginBottom: mvs(6) }}
           >
-            Abbandonare la creazione del post?
+            Abbandonare la creazione del tatuaggio?
           </ScaledText>
           <ScaledText
             allowScaling={false}
@@ -55,7 +55,8 @@ export default function DiscardPostConfirmModal({
             className="text-center text-background font-montserratSemibold"
             style={{ marginBottom: mvs(20) }}
           >
-            Se esci ora, perderai tutti i dettagli inseriti per questo post.
+            Se esci ora, perderai tutti i dettagli inseriti per questo
+            tatuaggio.
           </ScaledText>
           <View
             className="flex-row justify-center"

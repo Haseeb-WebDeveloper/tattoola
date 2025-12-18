@@ -4,7 +4,7 @@ import { SVGIcons } from "@/constants/svg";
 import type { LocationFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -202,7 +202,7 @@ export default function SearchLocationPicker({
             className="relative flex-row items-center justify-between border-b border-gray bg-primary/30"
             style={{
               paddingBottom: mvs(15),
-              paddingTop: mvs(50),
+              // paddingTop: mvs(50),
               paddingHorizontal: s(20),
             }}
           >

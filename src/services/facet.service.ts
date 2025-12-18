@@ -381,8 +381,8 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "studios";
+    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
     
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
@@ -487,8 +487,8 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "studios";
+    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
     
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
@@ -595,8 +595,8 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "studios";
+    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
     
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists

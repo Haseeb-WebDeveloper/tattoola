@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Banner } from "./Banner";
 import { BodyPartsSection } from "./BodyPartsSection";
 import { CollectionsSection } from "./CollectionsSection";
@@ -186,12 +187,15 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
         <SVGIcons.ChevronLeft width={s(14)} height={s(14)} />
       </TouchableOpacity>
 
-      <ScrollView
+      <KeyboardAwareScrollView
         className="relative"
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
         contentContainerStyle={{ paddingBottom: mvs(96) }}
+        enableOnAndroid={true}
+        enableAutomaticScroll={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Banner */}
         <Banner banner={profileData?.artistProfile?.banner || []} />
@@ -306,7 +310,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <StudioCard studio={studio} />
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Floating bottom actions - only show if not viewing own profile */}
       {currentUserId !== data.user.id && (

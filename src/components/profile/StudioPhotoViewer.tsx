@@ -2,7 +2,14 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import React, { useEffect, useRef, useState } from "react";
-import { Dimensions, FlatList, Image, Modal, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -12,7 +19,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from "react-native-reanimated";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -172,7 +178,12 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    if (visible && initialIndex !== undefined && initialIndex >= 0 && initialIndex < photos.length) {
+    if (
+      visible &&
+      initialIndex !== undefined &&
+      initialIndex >= 0 &&
+      initialIndex < photos.length
+    ) {
       setCurrentIndex(initialIndex);
       // Scroll to initial index after a short delay to ensure FlatList is rendered
       setTimeout(() => {
@@ -193,9 +204,7 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
   }, [visible, initialIndex, photos.length]);
 
   const handleScroll = (event: any) => {
-    const index = Math.round(
-      event.nativeEvent.contentOffset.x / screenWidth
-    );
+    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
     if (index >= 0 && index < photos.length) {
       setCurrentIndex(index);
     }
@@ -250,156 +259,158 @@ export const StudioPhotoViewer: React.FC<StudioPhotoViewerProps> = ({
     >
       <GestureHandlerRootView className="flex-1">
         <View className="flex-1 bg-black">
-        {/* Header */}
-        <View
-          className="relative flex-row items-center justify-center"
-          style={{
-            paddingHorizontal: s(16),
-            paddingTop: mvs(56),
-            paddingBottom: mvs(16),
-          }}
-        >
-          <TouchableOpacity
-            onPress={onClose}
-            className="absolute items-center justify-center rounded-full"
+          {/* Header */}
+          <View
+            className="relative flex-row items-center justify-center"
             style={{
-              width: s(34),
-              height: s(34),
-              left: s(21),
-              top: mvs(56),
-              padding: s(8),
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              paddingHorizontal: s(16),
+              paddingTop: mvs(56),
+              paddingBottom: mvs(16),
             }}
           >
-            <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
-          </TouchableOpacity>
-
-          {/* Studio Name */}
-          {studioName && (
-            <ScaledText
-              allowScaling={false}
-              className="text-white"
+            <TouchableOpacity
+              onPress={onClose}
+              className="absolute items-center justify-center rounded-full"
               style={{
-                fontFamily: "font-neueBold",
-                fontSize: 14,
-                fontStyle: "normal",
-                fontWeight: "600",
-                lineHeight: 23,
-                paddingTop: mvs(5),
+                width: s(34),
+                height: s(34),
+                left: s(21),
+                top: mvs(56),
+                padding: s(8),
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
               }}
             >
-              {studioName}
-            </ScaledText>
-          )}
-        </View>
+              <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
+            </TouchableOpacity>
 
-        {/* Full-screen Photo Carousel */}
-        <View className="flex-1 items-center justify-center" style={{ position: "relative" }}>
-          <FlatList
-            ref={flatListRef}
-            data={photos}
-            horizontal
-            pagingEnabled
-            scrollEnabled={photos.length > 1}
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleScroll}
-            keyExtractor={(item) => item.id}
-            getItemLayout={(_, index) => ({
-              length: screenWidth,
-              offset: screenWidth * index,
-              index,
-            })}
-            contentContainerStyle={{
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            renderItem={({ item }) => (
-              <View 
-                style={{ 
-                  width: screenWidth,
-                  height: screenHeight * 0.7,
-                  alignItems: "center",
-                  justifyContent: "center",
+            {/* Studio Name */}
+            {studioName && (
+              <ScaledText
+                allowScaling={false}
+                className="text-white font-neueBold"
+                variant="md"
+                style={{
+                  lineHeight: 23,
+                  paddingTop: mvs(5),
                 }}
               >
-                <ZoomableImage
-                  imageUrl={item.imageUrl}
-                  width={screenWidth}
-                  height={screenHeight * 0.7}
-                />
+                {studioName}
+              </ScaledText>
+            )}
+          </View>
+
+          {/* Full-screen Photo Carousel */}
+          <View
+            className="flex-1 items-center justify-center"
+            style={{ position: "relative" }}
+          >
+            <FlatList
+              ref={flatListRef}
+              data={photos}
+              horizontal
+              pagingEnabled
+              scrollEnabled={photos.length > 1}
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleScroll}
+              keyExtractor={(item) => item.id}
+              getItemLayout={(_, index) => ({
+                length: screenWidth,
+                offset: screenWidth * index,
+                index,
+              })}
+              contentContainerStyle={{
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    width: screenWidth,
+                    height: screenHeight * 0.7,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ZoomableImage
+                    imageUrl={item.imageUrl}
+                    width={screenWidth}
+                    height={screenHeight * 0.7}
+                  />
+                </View>
+              )}
+            />
+
+            {/* Navigation Arrows - Centered in the image container */}
+            {photos.length > 1 && (
+              <>
+                {currentIndex > 0 && (
+                  <TouchableOpacity
+                    onPress={handlePrevious}
+                    className="absolute items-center justify-center rounded-full"
+                    style={{
+                      left: s(16),
+                      top: "50%",
+                      marginTop: -s(17.5), // Center the arrow button itself
+                      width: s(35),
+                      height: s(35),
+                      padding: s(8),
+                      backgroundColor: "rgba(0, 0, 0, 0.50)",
+                    }}
+                  >
+                    <SVGIcons.ChevronLeft width={s(20)} height={s(20)} />
+                  </TouchableOpacity>
+                )}
+
+                {currentIndex < photos.length - 1 && (
+                  <TouchableOpacity
+                    onPress={handleNext}
+                    className="absolute items-center justify-center rounded-full"
+                    style={{
+                      right: s(16),
+                      top: "50%",
+                      marginTop: -s(17.5), // Center the arrow button itself
+                      width: s(35),
+                      height: s(35),
+                      padding: s(8),
+                      backgroundColor: "rgba(0, 0, 0, 0.50)",
+                    }}
+                  >
+                    <SVGIcons.ChevronRight width={s(20)} height={s(20)} />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
+            {/* Page Indicators - Dots at bottom of viewer */}
+            {photos.length > 1 && (
+              <View
+                className="absolute flex-row items-center justify-center"
+                style={{
+                  bottom: mvs(50),
+                  left: 0,
+                  right: 0,
+                  gap: s(4),
+                }}
+              >
+                {photos.map((_, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      width: s(6),
+                      height: s(6),
+                      borderRadius: s(3),
+                      backgroundColor:
+                        index === currentIndex
+                          ? "#AE0E0E"
+                          : "rgba(255, 255, 255, 0.3)",
+                    }}
+                  />
+                ))}
               </View>
             )}
-          />
-
-          {/* Navigation Arrows - Centered in the image container */}
-          {photos.length > 1 && (
-            <>
-              {currentIndex > 0 && (
-                <TouchableOpacity
-                  onPress={handlePrevious}
-                  className="absolute items-center justify-center rounded-full"
-                  style={{
-                    left: s(16),
-                    top: "50%",
-                    marginTop: -s(17.5), // Center the arrow button itself
-                    width: s(35),
-                    height: s(35),
-                    padding: s(8),
-                    backgroundColor: "rgba(0, 0, 0, 0.50)",
-                  }}
-                >
-                  <SVGIcons.ChevronLeft width={s(20)} height={s(20)} />
-                </TouchableOpacity>
-              )}
-
-              {currentIndex < photos.length - 1 && (
-                <TouchableOpacity
-                  onPress={handleNext}
-                  className="absolute items-center justify-center rounded-full"
-                  style={{
-                    right: s(16),
-                    top: "50%",
-                    marginTop: -s(17.5), // Center the arrow button itself
-                    width: s(35),
-                    height: s(35),
-                    padding: s(8),
-                    backgroundColor: "rgba(0, 0, 0, 0.50)",
-                  }}
-                >
-                  <SVGIcons.ChevronRight width={s(20)} height={s(20)} />
-                </TouchableOpacity>
-              )}
-            </>
-          )}
-
-          {/* Page Indicators - Dots at bottom of viewer */}
-          {photos.length > 1 && (
-            <View
-              className="absolute flex-row items-center justify-center"
-              style={{
-                bottom: mvs(50),
-                left: 0,
-                right: 0,
-                gap: s(4),
-              }}
-            >
-              {photos.map((_, index) => (
-                <View
-                  key={index}
-                  style={{
-                    width: s(6),
-                    height: s(6),
-                    borderRadius: s(3),
-                    backgroundColor: index === currentIndex ? "#AE0E0E" : "rgba(255, 255, 255, 0.3)",
-                  }}
-                />
-              ))}
-            </View>
-          )}
+          </View>
         </View>
-      </View>
       </GestureHandlerRootView>
     </Modal>
   );
 };
-
