@@ -1,4 +1,5 @@
 import { BannerCard } from "@/components/BannerCard";
+import { CollectionBannerCard } from "@/components/CollectionBannerCard";
 import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
@@ -93,7 +94,9 @@ export default function HomeScreen() {
       const firstEntryId =
         firstEntry.kind === "post"
           ? firstEntry.post.id
-          : `banner-${firstEntry.banner.id}`;
+          : firstEntry.kind === "banner"
+          ? `banner-${firstEntry.banner?.id ?? "unknown"}`
+          : `collection-${firstEntry.collection?.id ?? "unknown"}`;
 
       // Only initialize if this is a new feed (first entry changed or not initialized)
       if (lastFirstEntryId.current !== firstEntryId) {
@@ -185,7 +188,9 @@ export default function HomeScreen() {
           keyExtractor={(item, index) =>
             item.kind === "post"
               ? `post-${item.post.id}-${item.position}-${index}`
-              : `banner-${item.banner.id}-${item.position}-${index}`
+              : item.kind === "banner"
+              ? `banner-${item.banner.id}-${item.position}-${index}`
+              : `collection-${item.collection?.id}-${item.position}-${index}`
           }
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.5}
@@ -204,6 +209,8 @@ export default function HomeScreen() {
           // })}
           renderItem={({ item }) => {
             const entry = item as FeedEntry;
+            if (entry.kind === "banner" && !entry.banner) return null;
+            if (entry.kind === "collectionBanner" && !entry.collection) return null;
             return (
               <View
                 className=""
@@ -221,18 +228,30 @@ export default function HomeScreen() {
                     }
                     hideOverlay // Hide bottom content, it's rendered at screen level
                   />
-                ) : (
+                ) : entry.kind === "banner" ? (
                   // Banner card with grayscale background and colored overlay
                   <BannerCard
                     banner={entry.banner}
                     onPress={() => {
-                      const cleaned = entry.banner.redirectUrl.replace(
+                      const cleaned = entry.banner?.redirectUrl?.replace(
                         /^\/?/,
                         ""
                       );
                       const path = `/${cleaned}`;
                       router.push(path as any);
                     }}
+                  />
+                ) : (
+                  <CollectionBannerCard
+                    collection={entry.collection}
+                    onPress={() =>
+                      router.push({
+                        pathname: `/collections/${entry.collection?.id}`,
+                        params: {
+                          name: entry.collection?.name,
+                        },
+                      } as any)
+                    }
                   />
                 )}
               </View>
