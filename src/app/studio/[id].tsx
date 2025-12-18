@@ -181,6 +181,9 @@ export default function StudioScreen() {
           enableOnAndroid={true}
           enableAutomaticScroll={false}
           keyboardShouldPersistTaps="handled"
+          bounces={false}
+          alwaysBounceVertical={false}
+          overScrollMode="never"
         >
           {/* Back icon */}
           <TouchableOpacity

@@ -876,9 +876,9 @@ export async function updateStudioFAQs(
 }
 
 /**
- * Fetch public studio profile for display
+ * Internal helper: fetch core studio data shared by profile and summary
  */
-export async function fetchStudioPublicProfile(studioId: string) {
+async function fetchStudioBase(studioId: string) {
   try {
     // Get studio basic info
     const { data: studio, error: studioError } = await supabase
@@ -929,52 +929,43 @@ export async function fetchStudioPublicProfile(studioId: string) {
       .select(`
         id,
         userId,
-        user:users!artist_profiles_userId_fkey(id, firstName, lastName, avatar)
+        user:users!artist_profiles_userId_fkey(id, username, firstName, lastName, avatar)
       `)
       .eq('id', studio.ownerId)
       .single();
 
-    // Expose owner as the underlying user object (with id, firstName, lastName, avatar)
-    const owner = ownerProfile?.user || null;
+    // Normalize owner as a single user object (Supabase can return arrays)
+    const rawOwnerUser = ownerProfile?.user as
+      | { id: any; username?: any; firstName?: any; lastName?: any; avatar?: any }
+      | Array<{ id: any; username?: any; firstName?: any; lastName?: any; avatar?: any }>
+      | null
+      | undefined;
 
-    // Get banner media
-    const { data: bannerMedia } = await supabase
-      .from('studio_banner_media')
-      .select('mediaUrl, mediaType, order')
-      .eq('studioId', studioId)
-      .order('order');
+    const ownerNormalized = Array.isArray(rawOwnerUser)
+      ? rawOwnerUser[0]
+      : rawOwnerUser || null;
 
-    // Get styles with style details
-    const { data: styles } = await supabase
-      .from('studio_styles')
-      .select(`
-        styleId,
-        style:tattoo_styles(id, name, imageUrl)
-      `)
-      .eq('studioId', studioId);
-
-    // Get services with service details
-    const { data: services } = await supabase
-      .from('studio_services')
-      .select(`
-        serviceId,
-        service:services(id, name, category, imageUrl, description)
-      `)
-      .eq('studioId', studioId);
-
-    // Get studio photos
-    const { data: photos } = await supabase
-      .from('studio_photos')
-      .select('id, imageUrl, order')
-      .eq('studioId', studioId)
-      .order('order');
-
-    // Get FAQs
-    const { data: faqs } = await supabase
-      .from('studio_faqs')
-      .select('id, question, answer, order')
-      .eq('studioId', studioId)
-      .order('order');
+    const owner = ownerNormalized
+      ? {
+          id: String(ownerNormalized.id),
+          username:
+            ownerNormalized.username !== undefined
+              ? ownerNormalized.username
+              : null,
+          firstName:
+            ownerNormalized.firstName !== undefined
+              ? ownerNormalized.firstName
+              : null,
+          lastName:
+            ownerNormalized.lastName !== undefined
+              ? ownerNormalized.lastName
+              : null,
+          avatar:
+            ownerNormalized.avatar !== undefined
+              ? ownerNormalized.avatar
+              : null,
+        }
+      : null;
 
     return {
       ...studio,
@@ -983,15 +974,71 @@ export async function fetchStudioPublicProfile(studioId: string) {
       address: studioLocation?.address || null,
       country: 'Italy',
       owner: owner,
-      banner: bannerMedia?.map((m: any) => ({
-        mediaType: m.mediaType,
-        mediaUrl: m.mediaUrl,
-        order: m.order,
-      })) || [],
-      styles: styles?.map((s: any) => s.style).filter(Boolean) || [],
-      services: services?.map((s: any) => s.service).filter(Boolean) || [],
-      photos: photos || [],
-      faqs: faqs || [],
+    };
+  } catch (error: any) {
+    console.error('Error in fetchStudioBase:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch public studio profile for display
+ */
+export async function fetchStudioPublicProfile(studioId: string) {
+  try {
+    const base = await fetchStudioBase(studioId);
+
+    const [bannerMediaResult, stylesResult, servicesResult, photosResult, faqsResult] =
+      await Promise.all([
+        supabase
+          .from('studio_banner_media')
+          .select('mediaUrl, mediaType, order')
+          .eq('studioId', studioId)
+          .order('order'),
+        supabase
+          .from('studio_styles')
+          .select(`
+            styleId,
+            style:tattoo_styles(id, name, imageUrl)
+          `)
+          .eq('studioId', studioId),
+        supabase
+          .from('studio_services')
+          .select(`
+            serviceId,
+            service:services(id, name, category, imageUrl, description)
+          `)
+          .eq('studioId', studioId),
+        supabase
+          .from('studio_photos')
+          .select('id, imageUrl, order')
+          .eq('studioId', studioId)
+          .order('order'),
+        supabase
+          .from('studio_faqs')
+          .select('id, question, answer, order')
+          .eq('studioId', studioId)
+          .order('order'),
+      ]);
+
+    const bannerMedia = bannerMediaResult.data || [];
+    const styles = stylesResult.data || [];
+    const services = servicesResult.data || [];
+    const photos = photosResult.data || [];
+    const faqs = faqsResult.data || [];
+
+    return {
+      ...base,
+      banner:
+        bannerMedia.map((m: any) => ({
+          mediaType: m.mediaType,
+          mediaUrl: m.mediaUrl,
+          order: m.order,
+        })) || [],
+      styles: styles.map((s: any) => s.style).filter(Boolean) || [],
+      services: services.map((s: any) => s.service).filter(Boolean) || [],
+      photos,
+      faqs,
     };
   } catch (error: any) {
     console.error('Error in fetchStudioPublicProfile:', error);
@@ -1062,53 +1109,7 @@ export async function fetchStudioPublicProfileCached(
  */
 export async function fetchStudioSummary(studioId: string): Promise<StudioSummary | null> {
   try {
-    // Get studio basic info
-    const { data: studio, error: studioError } = await supabase
-      .from('studios')
-      .select(`
-        id,
-        name,
-        logo,
-        address,
-        website,
-        instagram,
-        tiktok,
-        description,
-        ownerId
-      `)
-      .eq('id', studioId)
-      .single();
-
-    if (studioError || !studio) {
-      return null;
-    }
-
-    // Get studio location
-    const { data: studioLocation } = await supabase
-      .from('studio_locations')
-      .select(`
-        provinceId,
-        municipalityId,
-        address,
-        province:provinces(id, name),
-        municipality:municipalities(id, name)
-      `)
-      .eq('studioId', studioId)
-      .eq('isPrimary', true)
-      .maybeSingle();
-
-    // Get owner details
-    const { data: ownerProfile } = await supabase
-      .from('artist_profiles')
-      .select(`
-        id,
-        userId,
-        user:users!artist_profiles_userId_fkey(id, firstName, lastName, avatar)
-      `)
-      .eq('id', studio.ownerId)
-      .single();
-
-    const owner = ownerProfile?.user || null;
+    const base = await fetchStudioBase(studioId);
 
     // Get banner media (limit to 1-2 items)
     const { data: bannerMedia } = await supabase
@@ -1139,13 +1140,13 @@ export async function fetchStudioSummary(studioId: string): Promise<StudioSummar
       .limit(5);
 
     return {
-      id: studio.id,
-      name: studio.name,
-      logo: studio.logo,
-      city: (studioLocation?.municipality as any)?.name || '',
-      province: (studioLocation?.province as any)?.name || '',
-      address: studioLocation?.address || null,
-      owner: owner,
+      id: base.id,
+      name: base.name,
+      logo: base.logo,
+      city: base.city,
+      province: base.province,
+      address: base.address,
+      owner: base.owner,
       banner: bannerMedia?.map((m: any) => ({
         mediaType: m.mediaType,
         mediaUrl: m.mediaUrl,
@@ -1153,10 +1154,10 @@ export async function fetchStudioSummary(studioId: string): Promise<StudioSummar
       })) || [],
       styles: styles?.map((s: any) => s.style).filter(Boolean) || [],
       services: services?.map((s: any) => s.service).filter(Boolean) || null,
-      instagram: studio.instagram,
-      tiktok: studio.tiktok,
-      website: studio.website,
-      description: studio.description,
+      instagram: base.instagram,
+      tiktok: base.tiktok,
+      website: base.website,
+      description: base.description,
     };
   } catch (error: any) {
     console.error('Error in fetchStudioSummary:', error);
@@ -1246,115 +1247,140 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
 
     console.log(`✅ Found ${members.length} active members`);
 
-    // For each member, fetch additional details (location, styles, banner, subscription)
-    const membersWithDetails = await Promise.all(
-      members.map(async (member: any) => {
-        if (!member.artist) return null;
+    // Collect artist and user IDs for batched queries
+    const artistIds = members
+      .map((m: any) => m.artist?.id)
+      .filter((id: any): id is string => !!id);
+    const userIds = members
+      .map((m: any) => m.artist?.user?.id)
+      .filter((id: any): id is string => !!id);
 
-        const artistId = member.artist.id;
-        const userId = member.artist.user?.id;
-        if (!userId) return null;
+    if (artistIds.length === 0 || userIds.length === 0) {
+      return [];
+    }
 
-        // Get primary user location including province name + code
-        const { data: userLocation } = await supabase
-          .from('user_locations')
-          .select(`
-            isPrimary,
-            municipality:municipalities(name),
-            province:provinces(name,code),
-            address
-          `)
-          .eq('userId', userId)
-          .eq('isPrimary', true)
-          .maybeSingle();
+    // Batch queries for locations, subscriptions, banner media, styles, and owned studios
+    const [
+      userLocationsResult,
+      subscriptionsResult,
+      bannerMediaResult,
+      artistStylesResult,
+      ownedStudiosResult,
+    ] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          userId,
+          isPrimary,
+          municipality:municipalities(name),
+          province:provinces(name,code),
+          address
+        `)
+        .in("userId", userIds)
+        .eq("isPrimary", true),
+      supabase
+        .from("user_subscriptions")
+        .select(`
+          userId,
+          status,
+          endDate,
+          plan:subscription_plans(type, name)
+        `)
+        .in("userId", userIds)
+        .eq("status", "ACTIVE")
+        .gte("endDate", new Date().toISOString()),
+      supabase
+        .from("artist_banner_media")
+        .select("artistId, mediaUrl, mediaType, order")
+        .in("artistId", artistIds)
+        .order("order"),
+      supabase
+        .from("artist_styles")
+        .select(`
+          artistId,
+          styleId,
+          style:tattoo_styles(id, name)
+        `)
+        .in("artistId", artistIds),
+      supabase
+        .from("studios")
+        .select("id, name, ownerId")
+        .in("ownerId", artistIds),
+    ]);
 
-        // Get active subscription
-        const { data: subscriptions } = await supabase
-          .from('user_subscriptions')
-          .select(`
-            status,
-            endDate,
-            plan:subscription_plans(type, name)
-          `)
-          .eq('userId', userId)
-          .eq('status', 'ACTIVE')
-          .gte('endDate', new Date().toISOString())
-          .order('endDate', { ascending: false })
-          .limit(1);
+    // Build lookup maps
+    const locationByUserId = new Map<string, any>();
+    (userLocationsResult.data || []).forEach((loc: any) => {
+      if (loc.userId) {
+        locationByUserId.set(loc.userId, loc);
+      }
+    });
 
-        const activeSubscription = subscriptions?.[0] || null;
+    const subscriptionByUserId = new Map<string, any>();
+    (subscriptionsResult.data || []).forEach((sub: any) => {
+      if (sub.userId) {
+        const existing = subscriptionByUserId.get(sub.userId);
+        // Keep the latest endDate (data was sorted descending by endDate)
+        if (!existing || new Date(sub.endDate) > new Date(existing.endDate)) {
+          subscriptionByUserId.set(sub.userId, sub);
+        }
+      }
+    });
 
-        // Get all artist banner media
-        const { data: bannerMedia } = await supabase
-          .from('artist_banner_media')
-          .select('mediaUrl, mediaType, order')
-          .eq('artistId', artistId)
-          .order('order');
+    const bannerByArtistId = new Map<string, any[]>();
+    (bannerMediaResult.data || []).forEach((b: any) => {
+      if (!b.artistId) return;
+      if (!bannerByArtistId.has(b.artistId)) {
+        bannerByArtistId.set(b.artistId, []);
+      }
+      bannerByArtistId.get(b.artistId)!.push(b);
+    });
 
-        // Get artist styles
-        const { data: artistStyles } = await supabase
-          .from('artist_styles')
-          .select(`
-            styleId,
-            style:tattoo_styles(id, name)
-          `)
-          .eq('artistId', artistId);
+    const stylesByArtistId = new Map<string, any[]>();
+    (artistStylesResult.data || []).forEach((s: any) => {
+      if (!s.artistId) return;
+      if (!stylesByArtistId.has(s.artistId)) {
+        stylesByArtistId.set(s.artistId, []);
+      }
+      stylesByArtistId.get(s.artistId)!.push(s);
+    });
+
+    const ownedStudioByArtistId = new Map<string, any>();
+    (ownedStudiosResult.data || []).forEach((studio: any) => {
+      if (studio.ownerId) {
+        ownedStudioByArtistId.set(studio.ownerId, studio);
+      }
+    });
+
+    // Helper to build province label
+    const resolveProvinceLabel = (loc: any | null | undefined): string => {
+      if (!loc?.province) return "";
+      const provName = loc.province?.name || "";
+      const provCode = (loc.province as any)?.code;
+      if (!provName && !provCode) return "";
+      return provCode ? `${provName} (${provCode})` : provName;
+    };
+
+    const membersWithDetails = members
+      .map((member: any) => {
+        if (!member.artist || !member.artist.user) return null;
+
+        const artistId = member.artist.id as string;
+        const userId = member.artist.user.id as string;
+
+        const userLocation = locationByUserId.get(userId) || null;
+        const activeSubscription = subscriptionByUserId.get(userId) || null;
+        const bannerMedia = bannerByArtistId.get(artistId) || [];
+        const artistStyles = stylesByArtistId.get(artistId) || [];
+        const ownedStudio = ownedStudioByArtistId.get(artistId) || null;
 
         // Use businessName and studioAddress from artist profile first
         let businessName = member.artist.businessName;
-        let studioAddress = member.artist.studioAddress;
+        const studioAddress = member.artist.studioAddress;
 
         // Fallback: If businessName is missing, check if artist owns a studio
-        let ownedStudio = null;
-        if (!businessName) {
-          const { data: ownedStudioData } = await supabase
-            .from('studios')
-            .select('id, name')
-            .eq('ownerId', artistId)
-            .maybeSingle();
-          ownedStudio = ownedStudioData;
-          if (ownedStudio?.name) {
-            businessName = ownedStudio.name;
-          }
-        } else {
-          // Still check if artist owns a studio for isStudioOwner flag
-          const { data: ownedStudioData } = await supabase
-            .from('studios')
-            .select('id, name')
-            .eq('ownerId', artistId)
-            .maybeSingle();
-          ownedStudio = ownedStudioData;
-        }
-
-        // Fallback: If studioAddress is missing, query studio membership for address
-        if (!studioAddress && userId) {
-          const { data: studioMembership } = await supabase
-            .from('studio_members')
-            .select(`
-              studio:studios(
-                id,
-                locations:studio_locations(
-                  address,
-                  isPrimary
-                )
-              )
-            `)
-            .eq('userId', userId)
-            .eq('status', 'ACCEPTED')
-            .eq('isActive', true)
-            .maybeSingle();
-
-          if (studioMembership?.studio) {
-            const studio = studioMembership.studio as any;
-            if (studio.locations) {
-              const primaryStudioLocation = studio.locations.find(
-                (loc: any) => loc.isPrimary
-              );
-              if (primaryStudioLocation?.address) {
-                studioAddress = primaryStudioLocation.address;
-              }
-            }
-          }
+        if (!businessName && ownedStudio?.name) {
+          businessName = ownedStudio.name;
         }
 
         // Prepare data for ArtistSearchResult
@@ -1362,28 +1388,19 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
         const municipality = userLocation?.municipality as any;
         const plan = activeSubscription?.plan as any;
 
-        // Build "Province (CODE)" label like in global artist search
-        const resolveProvinceLabel = (loc: any | null | undefined): string => {
-          if (!loc?.province) return '';
-          const provName = loc.province?.name || '';
-          const provCode = (loc.province as any)?.code;
-          if (!provName && !provCode) return '';
-          return provCode ? `${provName} (${provCode})` : provName;
-        };
-
         // Work arrangement: prefer explicit value from profile, otherwise infer
         let workArrangement =
           (member.artist.workArrangement as
-            | 'STUDIO_OWNER'
-            | 'STUDIO_EMPLOYEE'
-            | 'FREELANCE'
+            | "STUDIO_OWNER"
+            | "STUDIO_EMPLOYEE"
+            | "FREELANCE"
             | null) || null;
 
         if (!workArrangement) {
           if (ownedStudio) {
-            workArrangement = 'STUDIO_OWNER';
+            workArrangement = "STUDIO_OWNER";
           } else if (businessName) {
-            workArrangement = 'STUDIO_EMPLOYEE';
+            workArrangement = "STUDIO_EMPLOYEE";
           }
         }
 
@@ -1391,7 +1408,7 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           id: artistId,
           userId: userId,
           user: {
-            username: member.artist.user.username || '',
+            username: member.artist.user.username || "",
             avatar: member.artist.user.avatar || null,
             firstName: member.artist.user.firstName || null,
             lastName: member.artist.user.lastName || null,
@@ -1403,7 +1420,7 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           location: userLocation
             ? {
                 province: resolveProvinceLabel({ province }),
-                municipality: municipality?.name || '',
+                municipality: municipality?.name || "",
                 // Do not expose raw street address in artist cards – UI only shows province/municipality
                 address: null,
               }
@@ -1411,33 +1428,34 @@ export async function fetchStudioMembersForPublicProfile(studioId: string) {
           styles:
             artistStyles
               ?.map((s: any) => ({
-                id: s.style?.id || '',
-                name: s.style?.name || '',
+                id: s.style?.id || "",
+                name: s.style?.name || "",
               }))
               .filter((s: any) => s.id && s.name) || [],
           bannerMedia:
             bannerMedia?.map((b: any) => ({
               mediaUrl: b.mediaUrl,
-              mediaType: b.mediaType as 'IMAGE' | 'VIDEO',
+              mediaType: b.mediaType as "IMAGE" | "VIDEO",
               order: b.order,
             })) || [],
           subscription: activeSubscription
             ? {
                 plan: {
-                  name: plan?.name || '',
-                  type: plan?.type || '',
+                  name: plan?.name || "",
+                  type: plan?.type || "",
                 },
               }
             : null,
           isVerified: member.artist.user.isVerified || false,
         };
       })
+      .filter(Boolean);
+
+    console.log(
+      `✅ Successfully fetched details for ${membersWithDetails.length} members`
     );
 
-    const validMembers = membersWithDetails.filter(Boolean);
-    console.log(`✅ Successfully fetched details for ${validMembers.length} members`);
-    
-    return validMembers;
+    return membersWithDetails;
   } catch (error: any) {
     console.error('Error in fetchStudioMembersForPublicProfile:', error);
     throw error;

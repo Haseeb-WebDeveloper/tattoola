@@ -39,8 +39,7 @@ export default function SearchScreen() {
   useEffect(() => {
     // Initialize search and facets on mount
     const initialize = async () => {
-      await search();
-      await loadFacets();
+      await Promise.all([search(), loadFacets()]);
     };
     initialize();
   }, []);
