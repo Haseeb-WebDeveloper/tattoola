@@ -259,8 +259,9 @@ import HelpArticle from "@/assets/icons/help-article.svg";
 // @ts-ignore
 import HelpQuestion from "@/assets/icons/help-question.svg";
 // @ts-ignore
-
 import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
+// @ts-ignore
+import StudioPremium from "@/assets/icons/studio-premium.svg";
 
 export const SVGIcons = {
   Close,
@@ -394,6 +395,7 @@ export const SVGIcons = {
   HelpArticle,
   HelpQuestion,
   GuestUserProfile,
+  StudioPremium,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;

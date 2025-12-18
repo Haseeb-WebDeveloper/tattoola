@@ -18,6 +18,12 @@ type ArtistCardProps = {
 function ArtistCard({ artist }: ArtistCardProps) {
   const router = useRouter();
 
+  const subscriptionType = artist.subscription?.plan?.type;
+  const hasStudioPlan =
+    subscriptionType === "STUDIO" || subscriptionType === "PREMIUM";
+  const isStudioPremium = subscriptionType === "PREMIUM";
+  const badgeLabel = isStudioPremium ? "Studio Premium" : "Studio Profilo";
+
   const handlePress = () => {
     prefetchUserProfile(artist.userId).catch(() => {
       // Ignore prefetch errors – navigation should still work
@@ -142,25 +148,49 @@ function ArtistCard({ artist }: ArtistCardProps) {
       {/* Top Section - Avatar, Name, Experience, Location */}
       <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
         {/* Subscription Badge */}
-        <View
-          className="absolute top-0 right-0 flex-row items-center justify-center bg-gray"
-          style={{
-            paddingLeft: s(8),
-            paddingRight: s(25),
-            paddingVertical: mvs(5),
-            gap: s(4),
-            borderBottomLeftRadius: s(9),
-          }}
-        >
-          <SVGIcons.DimondRed width={s(12)} height={s(12)} />
-          <ScaledText
-            allowScaling={false}
-            variant="11"
-            className="text-primary font-neueMedium"
+        {hasStudioPlan && (
+          <View
+            className="absolute top-0 right-0 flex-row items-center justify-center"
+            style={{
+              width: s(120),
+              paddingLeft: s(8),
+              paddingRight: s(25),
+              paddingVertical: mvs(5),
+              gap: s(4),
+              borderBottomLeftRadius: s(12),
+              borderWidth: 0.5,
+              borderTopWidth: 0,
+              borderRightWidth: 0,
+              borderColor: "rgba(164, 154, 153, 1)",
+              backgroundColor: isStudioPremium
+                ? "rgba(20, 13, 4, 1)"
+                : "rgba(20, 4, 4, 1)",
+            }}
           >
-            Profilo artista
-          </ScaledText>
-        </View>
+            {isStudioPremium ? (
+              <SVGIcons.StudioPremium width={s(12)} height={s(12)} />
+            ) : (
+              <SVGIcons.DimondRed width={s(12)} height={s(12)} />
+            )}
+            <ScaledText
+              allowScaling={false}
+              variant="11"
+              className="text-error"
+              style={{
+                fontFamily: "NeueHaasDisplay",
+                fontWeight: "500",
+                fontSize: 11,
+                lineHeight: 11 * 1.3,
+                letterSpacing: 0,
+                ...(isStudioPremium
+                  ? { color: "rgba(244, 158, 0, 1)" }
+                  : {}),
+              }}
+            >
+              {badgeLabel}
+            </ScaledText>
+          </View>
+        )}
 
         {/* Avatar and Name Row */}
         <View
