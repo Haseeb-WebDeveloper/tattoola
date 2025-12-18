@@ -93,7 +93,7 @@ function StudioCard({ studio, onEditPress }: StudioCardProps) {
               gap: s(4),
             }}
           >
-            {studio.subscription && (
+            {/* {studio.subscription && (
               <View
                 className="flex-row items-center justify-center bg-gray"
                 style={{
@@ -114,7 +114,7 @@ function StudioCard({ studio, onEditPress }: StudioCardProps) {
                   Profilo studio
                 </ScaledText>
               </View>
-            )}
+            )} */}
 
             {onEditPress && (
               <TouchableOpacity
