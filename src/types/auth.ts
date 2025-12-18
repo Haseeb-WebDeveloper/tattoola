@@ -117,6 +117,21 @@ export enum WorkArrangement {
   FREELANCE = "FREELANCE",
 }
 
+/**
+ * Minimal user data needed for instant first paint
+ * Used when navigating from feed/search to user profile
+ */
+export type UserSummary = {
+  id: string;
+  username?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatar?: string | null;
+  role?: UserRole;
+  city?: string | null;
+  province?: string | null;
+};
+
 // Auth-specific types
 export interface AuthSession {
   user: User;

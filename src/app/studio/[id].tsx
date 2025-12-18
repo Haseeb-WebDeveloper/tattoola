@@ -11,10 +11,11 @@ import ArtistCard from "@/components/search/ArtistCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import {
-  fetchStudioMembersForPublicProfile,
-  fetchStudioPublicProfile,
+  fetchStudioMembersForPublicProfileCached,
+  fetchStudioPublicProfileCached,
+  fetchStudioSummaryCached,
 } from "@/services/studio.service";
-import type { ArtistSearchResult } from "@/types/search";
+import type { ArtistSearchResult, StudioSummary } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -24,7 +25,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function StudioScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, initialStudio: initialStudioParam } = useLocalSearchParams<{
+    id: string;
+    initialStudio?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
@@ -34,31 +38,105 @@ export default function StudioScreen() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+
+    const loadStudio = async () => {
+      const t0 = Date.now();
       try {
         if (!id) return;
-        // Fetch studio profile and members in parallel
-        const [profile, membersData] = await Promise.all([
-          fetchStudioPublicProfile(String(id)),
-          fetchStudioMembersForPublicProfile(String(id)),
-        ]);
-        if (mounted) {
-          setData(profile);
-          setMembers(membersData as ArtistSearchResult[]);
+        const idStr = String(id);
+
+        // 1) Try to get initialStudio from params or summary cache
+        let initialData: StudioSummary | null = null;
+        let summaryRenderTime = 0;
+
+        if (initialStudioParam) {
+          try {
+            initialData = JSON.parse(initialStudioParam) as StudioSummary;
+            summaryRenderTime = Date.now() - t0;
+            console.log(
+              `[Studio] summary render ready from params in ${summaryRenderTime}ms`
+            );
+          } catch (e) {
+            console.error("Failed to parse initialStudio param:", e);
+          }
         }
+
+        // If no initialStudio from params, try summary cache
+        if (!initialData) {
+          try {
+            const cachedSummary = await fetchStudioSummaryCached(idStr);
+            if (cachedSummary) {
+              initialData = cachedSummary;
+              summaryRenderTime = Date.now() - t0;
+              console.log(
+                `[Studio] summary render ready from cache in ${summaryRenderTime}ms`
+              );
+            }
+          } catch (e) {
+            // Cache is best-effort, ignore errors
+          }
+        }
+
+        // If we have initial data, render immediately
+        if (initialData && mounted) {
+          // Convert StudioSummary to full profile shape for rendering
+          setData({
+            ...initialData,
+            photos: [], // Will be loaded lazily
+            faqs: [], // Will be loaded lazily
+            services: initialData.services || [], // May be limited
+          });
+          setLoading(false);
+        }
+
+        // 2) Fetch full profile in background (cache-aware)
+        const fullProfile = await fetchStudioPublicProfileCached(idStr);
+        if (mounted) {
+          setData(fullProfile);
+          const fullHydrationTime = Date.now() - t0;
+          console.log(
+            `[Studio] full details hydrated in ${fullHydrationTime}ms`
+          );
+        }
+
+        // 3) Load members in background (also cache-aware, delayed)
+        // Delay member fetch slightly to prioritize profile data
+        setTimeout(() => {
+          fetchStudioMembersForPublicProfileCached(idStr)
+            .then((membersData) => {
+              if (mounted && membersData) {
+                setMembers(membersData as ArtistSearchResult[]);
+              }
+            })
+            .catch((err) =>
+              console.error("Failed to load studio members:", err)
+            );
+        }, 100);
       } catch (e: any) {
-        if (mounted)
+        if (mounted) {
           setError(
             e?.message || "Impossibile caricare il profilo dello studio"
           );
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          const total = Date.now() - t0;
+          console.log(
+            `[Studio] loadStudio completed for ${String(
+              id
+            )} in ${total}ms`
+          );
+        }
       }
-    })();
+    };
+
+    loadStudio();
+
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, initialStudioParam]);
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -66,7 +144,8 @@ export default function StudioScreen() {
     );
   };
 
-  if (loading) {
+  // Only show skeleton if we have no data at all (no initialStudio, no cache, and still loading)
+  if (loading && !data) {
     return <StudioSkeleton />;
   }
 
@@ -159,7 +238,11 @@ export default function StudioScreen() {
           <ServicesSection services={data?.services || []} />
 
           {/* Studio Photos Section */}
-          <StudioPhotos photos={data?.photos || []} studioName={data?.name} />
+          <StudioPhotos 
+            photos={data?.photos || []} 
+            studioName={data?.name}
+            studioId={id ? String(id) : undefined}
+          />
 
           {/* Studio Members Section */}
           {members.length > 0 && (

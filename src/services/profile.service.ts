@@ -1,12 +1,15 @@
 import { ArtistSelfProfileInterface } from "@/types/artist";
-import { StudioSearchResult } from "@/types/search";
+import { UserSummary, UserRole } from "@/types/auth";
+import { StudioSearchResult, ArtistProfileSummary } from "@/types/search";
 import {
-    getProfileFromCache,
-    saveProfileToCache,
-    shouldRefreshCache,
+  getProfileFromCache,
+  saveProfileToCache,
+  shouldRefreshCache,
 } from "@/utils/database";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
+
+const USER_SUMMARY_CACHE_PREFIX = "user-summary-";
 
 // Get current user's primary location for personalized search
 export async function getCurrentUserLocation(): Promise<{
@@ -99,21 +102,27 @@ export async function toggleFollow(
 
 export async function fetchArtistSelfProfile(
   userId: string,
-  forceRefresh = false
+  forceRefresh = false,
+  options?: { includeCollectionsAndBodyParts?: boolean }
 ): Promise<ArtistSelfProfileInterface> {
+  const includeCollectionsAndBodyParts =
+    options?.includeCollectionsAndBodyParts ?? true;
   // Step 1: Try cache first (unless forceRefresh is true)
   if (!forceRefresh) {
     const cached = await getProfileFromCache(userId);
     if (cached) {
       const cachedProfile = cached as ArtistSelfProfileInterface;
-      const cachedWorkArrangement = cachedProfile?.artistProfile?.workArrangement;
+      const cachedWorkArrangement =
+        cachedProfile?.artistProfile?.workArrangement;
       const cachedAddress = cachedProfile?.location?.address;
 
       // If cached profile is missing workArrangement or address, force refresh to get it
       // Address might be missing if cache was created before the new address priority logic
       if (cachedWorkArrangement === undefined || !cachedAddress) {
         // Force refresh to get workArrangement and address from database
-        console.log(`🔄 Cache missing workArrangement or address, forcing refresh for user: ${userId}`);
+        console.log(
+          `🔄 Cache missing workArrangement or address, forcing refresh for user: ${userId}`
+        );
         return await fetchArtistSelfProfile(userId, true);
       }
 
@@ -138,7 +147,7 @@ export async function fetchArtistSelfProfile(
     .select("id, workArrangement, businessName")
     .eq("userId", userId)
     .single();
-  
+
   const userQ = await supabase
     .from("users")
     .select(
@@ -152,13 +161,13 @@ export async function fetchArtistSelfProfile(
     console.error("❌ Error fetching user profile:", userQ.error);
     throw new Error(userQ.error.message);
   }
-  
+
   const userRow: any = userQ.data;
-  
+
   const artistProfile = Array.isArray(userRow?.artist_profiles)
     ? userRow.artist_profiles[0]
     : userRow?.artist_profiles;
-  
+
   if (!artistProfile?.workArrangement && directProfileCheck?.workArrangement) {
     artistProfile.workArrangement = directProfileCheck.workArrangement;
   }
@@ -220,21 +229,29 @@ export async function fetchArtistSelfProfile(
       .order("order", { ascending: true }),
     supabase
       .from("artist_services")
-      .select("serviceId,price,duration, services(id,name,description,imageUrl)")
+      .select(
+        "serviceId,price,duration, services(id,name,description,imageUrl)"
+      )
       .eq("artistId", artistId),
-    supabase
-      .from("collections")
-      .select("id,name,isPortfolioCollection")
-      .eq("ownerId", userId)
-      .order("createdAt", { ascending: false }),
-    supabase
-      .from("body_parts")
-      .select("id,name")
-      .order("name", { ascending: true }),
-    supabase
-      .from("artist_body_parts")
-      .select("bodyPartId")
-      .eq("artistId", artistId),
+    includeCollectionsAndBodyParts
+      ? supabase
+          .from("collections")
+          .select("id,name,isPortfolioCollection")
+          .eq("ownerId", userId)
+          .order("createdAt", { ascending: false })
+      : Promise.resolve({ data: [] as any[] }),
+    includeCollectionsAndBodyParts
+      ? supabase
+          .from("body_parts")
+          .select("id,name")
+          .order("name", { ascending: true })
+      : Promise.resolve({ data: [] as any[] }),
+    includeCollectionsAndBodyParts
+      ? supabase
+          .from("artist_body_parts")
+          .select("bodyPartId")
+          .eq("artistId", artistId)
+      : Promise.resolve({ data: [] as any[] }),
     supabase
       .from("user_locations")
       .select(
@@ -251,14 +268,14 @@ export async function fetchArtistSelfProfile(
       .maybeSingle(),
   ]);
 
-  // Build collections thumbnails (first 4 post media)
+  // Build collections thumbnails (first 4 post media) – optional
   const collections = (collectionsQ?.data || []) as {
     id: string;
     name: string;
     isPortfolioCollection: boolean;
   }[];
   const thumbsPerCollection: Record<string, string[]> = {};
-  if (collections.length > 0) {
+  if (includeCollectionsAndBodyParts && collections.length > 0) {
     const postsInCollections = await supabase
       .from("collection_posts")
       .select("collectionId, postId")
@@ -307,9 +324,12 @@ export async function fetchArtistSelfProfile(
   const workedIds = new Set(
     (artistBodyParts2?.data || []).map((r: any) => r.bodyPartId)
   );
-  const bodyPartsNotWorkedOn = (allBodyPartsQ?.data || [])
-    .filter((bp: any) => !workedIds.has(bp.id))
-    .map((bp: any) => ({ id: bp.id, name: bp.name }));
+  const bodyPartsNotWorkedOn =
+    includeCollectionsAndBodyParts && (allBodyPartsQ?.data || []).length
+      ? (allBodyPartsQ?.data || [])
+          .filter((bp: any) => !workedIds.has(bp.id))
+          .map((bp: any) => ({ id: bp.id, name: bp.name }))
+      : [];
 
   // Return all styles with isFavorite flag (not just favorites)
   const allStyles = (favStyles2?.data || []).map((r: any) => ({
@@ -345,7 +365,7 @@ export async function fetchArtistSelfProfile(
   // Process location data - PRIORITIZE studioAddress from artist profile first, then fallback to primary location, then studio address
   const locationData = locationQ?.data as any;
   const studioAddress = artistProfile.studioAddress;
-  
+
   // Query studio membership to get studio address as fallback
   let studioAddressFromStudio: string | null = null;
   let businessNameFromStudio: string | null = null;
@@ -368,52 +388,41 @@ export async function fetchArtistSelfProfile(
     .maybeSingle();
 
   // Handle studio as array (Supabase type inference) or single object
-  const studio = Array.isArray(studioMembership?.studio) 
-    ? studioMembership.studio[0] 
+  const studio = Array.isArray(studioMembership?.studio)
+    ? studioMembership.studio[0]
     : studioMembership?.studio;
-  
-  console.log("🔍 Studio Membership Debug:", {
-    hasMembership: !!studioMembership,
-    rawStudio: studioMembership?.studio,
-    isArray: Array.isArray(studioMembership?.studio),
-    processedStudio: studio,
-    studioName: studio?.name,
-  });
-  
+
   if (studio?.locations) {
-    const locations = Array.isArray(studio.locations) ? studio.locations : [studio.locations];
-    const primaryStudioLocation = locations.find(
-      (loc: any) => loc.isPrimary
-    );
+    const locations = Array.isArray(studio.locations)
+      ? studio.locations
+      : [studio.locations];
+    const primaryStudioLocation = locations.find((loc: any) => loc.isPrimary);
     if (primaryStudioLocation?.address) {
       studioAddressFromStudio = primaryStudioLocation.address;
     }
   }
-  
+
   // Also get businessName from studio if artist profile doesn't have it
   if (studio?.name) {
     businessNameFromStudio = studio.name;
-    console.log("✅ BusinessName set from studio:", businessNameFromStudio);
-  } else {
-    console.log("⚠️ No studio name found. Studio object:", studio);
   }
 
   // Infer workArrangement from studio membership if not explicitly set
-  let inferredWorkArrangement: "STUDIO_OWNER" | "STUDIO_EMPLOYEE" | "FREELANCE" | undefined = artistProfile.workArrangement as any;
-  
+  let inferredWorkArrangement:
+    | "STUDIO_OWNER"
+    | "STUDIO_EMPLOYEE"
+    | "FREELANCE"
+    | undefined = artistProfile.workArrangement as any;
+
   if (!inferredWorkArrangement && studioMembership) {
     // If there's an active studio membership but no workArrangement, assume STUDIO_EMPLOYEE
     // Note: STUDIO_OWNER should be explicitly set in the database
     inferredWorkArrangement = "STUDIO_EMPLOYEE";
-    console.log("🔧 Inferred workArrangement as STUDIO_EMPLOYEE from studio membership");
+    console.log(
+      "🔧 Inferred workArrangement as STUDIO_EMPLOYEE from studio membership"
+    );
   }
-  
-  console.log("📋 Work Arrangement Decision:", {
-    fromDatabase: artistProfile.workArrangement,
-    inferred: inferredWorkArrangement,
-    hasStudioMembership: !!studioMembership,
-  });
-  
+
   // Create location object - Priority: studioAddress (profile) > primaryLocation.address > studioAddress (from studio)
   let location = undefined;
   if (studioAddress) {
@@ -438,24 +447,26 @@ export async function fetchArtistSelfProfile(
       // If no primary location but we have studioAddress, try to get province/municipality from any location
       const { data: anyLocation } = await supabase
         .from("user_locations")
-        .select(`
+        .select(
+          `
           id,
           provinces(id,name,code),
           municipalities(id,name)
-        `)
+        `
+        )
         .eq("userId", userId)
         .limit(1)
         .maybeSingle();
-      
+
       if (anyLocation) {
         // Handle provinces and municipalities as array (Supabase type inference) or single object
-        const province = Array.isArray(anyLocation.provinces) 
-          ? anyLocation.provinces[0] 
+        const province = Array.isArray(anyLocation.provinces)
+          ? anyLocation.provinces[0]
           : anyLocation.provinces;
-        const municipality = Array.isArray(anyLocation.municipalities) 
-          ? anyLocation.municipalities[0] 
+        const municipality = Array.isArray(anyLocation.municipalities)
+          ? anyLocation.municipalities[0]
           : anyLocation.municipalities;
-        
+
         location = {
           id: anyLocation.id,
           address: studioAddress, // Always use studioAddress from profile when available
@@ -507,13 +518,13 @@ export async function fetchArtistSelfProfile(
     // PRIORITY 3: Use studio address from linked studio as fallback
     if (locationData) {
       // Handle provinces and municipalities as array (Supabase type inference) or single object
-      const province = Array.isArray(locationData.provinces) 
-        ? locationData.provinces[0] 
+      const province = Array.isArray(locationData.provinces)
+        ? locationData.provinces[0]
         : locationData.provinces;
-      const municipality = Array.isArray(locationData.municipalities) 
-        ? locationData.municipalities[0] 
+      const municipality = Array.isArray(locationData.municipalities)
+        ? locationData.municipalities[0]
         : locationData.municipalities;
-      
+
       location = {
         id: locationData.id,
         address: studioAddressFromStudio,
@@ -532,24 +543,26 @@ export async function fetchArtistSelfProfile(
       // If no primary location but we have studioAddress from studio, try to get province/municipality from any location
       const { data: anyLocation } = await supabase
         .from("user_locations")
-        .select(`
+        .select(
+          `
           id,
           provinces(id,name,code),
           municipalities(id,name)
-        `)
+        `
+        )
         .eq("userId", userId)
         .limit(1)
         .maybeSingle();
-      
+
       if (anyLocation) {
         // Handle provinces and municipalities as array (Supabase type inference) or single object
-        const province = Array.isArray(anyLocation.provinces) 
-          ? anyLocation.provinces[0] 
+        const province = Array.isArray(anyLocation.provinces)
+          ? anyLocation.provinces[0]
           : anyLocation.provinces;
-        const municipality = Array.isArray(anyLocation.municipalities) 
-          ? anyLocation.municipalities[0] 
+        const municipality = Array.isArray(anyLocation.municipalities)
+          ? anyLocation.municipalities[0]
           : anyLocation.municipalities;
-        
+
         location = {
           id: anyLocation.id,
           address: studioAddressFromStudio,
@@ -614,13 +627,8 @@ export async function fetchArtistSelfProfile(
     artistProfile: {
       id: artistId,
       businessName: (() => {
-        const finalBusinessName = artistProfile.businessName || businessNameFromStudio || undefined;
-        console.log("🏢 Final BusinessName Decision:", {
-          fromArtistProfile: artistProfile.businessName,
-          fromStudio: businessNameFromStudio,
-          final: finalBusinessName,
-          workArrangement: artistProfile.workArrangement,
-        });
+        const finalBusinessName =
+          artistProfile.businessName || businessNameFromStudio || undefined;
         return finalBusinessName;
       })(),
       bio: userRow.bio,
@@ -634,7 +642,7 @@ export async function fetchArtistSelfProfile(
     collections: collectionsOut,
     bodyPartsNotWorkedOn,
   };
-  
+
   // Step 3: Save to cache for next time
   saveProfileToCache(userId, profile).catch((err) =>
     console.error("Failed to cache profile:", err)
@@ -1124,6 +1132,21 @@ export async function fetchTattooLoverSelfProfile(
     console.error("Failed to cache tattoo lover profile:", err)
   );
 
+  // Also save summary for instant future loads
+  const summary: UserSummary = {
+    id: profileTL.user.id,
+    username: profileTL.user.username,
+    firstName: profileTL.user.firstName ?? null,
+    lastName: profileTL.user.lastName ?? null,
+    avatar: profileTL.user.avatar ?? null,
+    role: UserRole.TATTOO_LOVER,
+    city: profileTL.location?.municipality?.name ?? null,
+    province: profileTL.location?.province?.name ?? null,
+  };
+  saveProfileToCache(`${USER_SUMMARY_CACHE_PREFIX}${userId}`, summary).catch(
+    (err) => console.error("Failed to cache user summary from TL profile:", err)
+  );
+
   return profileTL;
 }
 
@@ -1193,7 +1216,31 @@ export async function fetchTattooLoverProfile(
     viewerId
   );
 
-  // Fetch basic user info including isPublic
+  const cacheKey = `other-${userId}`;
+
+  // 1) Try cache first (viewer-agnostic data only)
+  try {
+    const cached = await getProfileFromCache(cacheKey);
+    if (cached) {
+      console.log("📦 Using cached tattoo lover profile for:", userId);
+
+      // isFollowing is viewer-specific, recompute when we have a viewer
+      let isFollowingUser = (cached as TattooLoverProfile).isFollowing ?? false;
+      if (viewerId) {
+        isFollowingUser = await isFollowing(viewerId, userId);
+      }
+
+      return {
+        ...(cached as TattooLoverProfile),
+        isFollowing: isFollowingUser,
+      };
+    }
+  } catch (err) {
+    console.error("❌ Error reading tattoo lover profile cache:", err);
+    // Fall through to network fetch
+  }
+
+  // 2) Fetch basic user info including isPublic
   const userQ = await supabase
     .from("users")
     .select(
@@ -1253,7 +1300,7 @@ export async function fetchTattooLoverProfile(
 
   // If profile is private, return early with empty arrays for posts/liked/followed
   if (!userRow.isPublic) {
-    return {
+    const profileTL: TattooLoverProfile = {
       user: {
         id: userRow.id,
         username: userRow.username,
@@ -1272,6 +1319,14 @@ export async function fetchTattooLoverProfile(
       followedTattooLovers: [],
       isFollowing: isFollowingUser,
     };
+
+    // Cache viewer-agnostic portion (ignore isFollowing)
+    saveProfileToCache(cacheKey, { ...profileTL, isFollowing: false }).catch(
+      (err) =>
+        console.error("Failed to cache private tattoo lover profile:", err)
+    );
+
+    return profileTL;
   }
 
   // If public, fetch posts, liked posts, and followed users
@@ -1473,7 +1528,7 @@ export async function fetchTattooLoverProfile(
     }));
   }
 
-  return {
+  const profileTL: TattooLoverProfile = {
     user: {
       id: userRow.id,
       username: userRow.username,
@@ -1492,6 +1547,13 @@ export async function fetchTattooLoverProfile(
     followedTattooLovers,
     isFollowing: isFollowingUser,
   };
+
+  // Cache viewer-agnostic portion (ignore isFollowing)
+  saveProfileToCache(cacheKey, { ...profileTL, isFollowing: false }).catch(
+    (err) => console.error("Failed to cache public tattoo lover profile:", err)
+  );
+
+  return profileTL;
 }
 
 /**
@@ -1504,19 +1566,41 @@ export async function fetchArtistProfile(
 ): Promise<ArtistSelfProfileInterface & { isFollowing?: boolean }> {
   console.log("🌐 Fetching artist profile for:", userId, "viewer:", viewerId);
 
-  // Check if viewer is following this artist
-  let isFollowingArtist = false;
-  if (viewerId) {
-    isFollowingArtist = await isFollowing(viewerId, userId);
-  }
+  // Fetch profile (lite) + follow status in parallel to avoid extra latency
+  const profilePromise = fetchArtistSelfProfile(userId, false, {
+    includeCollectionsAndBodyParts: false,
+  });
+  const followPromise = viewerId
+    ? isFollowing(viewerId, userId)
+    : Promise.resolve(false);
 
-  // Reuse the existing fetchArtistSelfProfile function
-  const profile = await fetchArtistSelfProfile(userId, false);
+  const [profile, isFollowingArtist] = await Promise.all([
+    profilePromise,
+    followPromise,
+  ]);
 
-  return {
+  const result = {
     ...profile,
     isFollowing: isFollowingArtist,
   };
+
+  // Also save summary for instant future loads
+  const summary: UserSummary = {
+    id: profile.user.id,
+    username: profile.user.username,
+    firstName: profile.user.firstName ?? null,
+    lastName: profile.user.lastName ?? null,
+    avatar: profile.user.avatar ?? null,
+    role: UserRole.ARTIST,
+    city: profile.location?.municipality?.name ?? null,
+    province: profile.location?.province?.name ?? null,
+  };
+  saveProfileToCache(`${USER_SUMMARY_CACHE_PREFIX}${userId}`, summary).catch(
+    (err) =>
+      console.error("Failed to cache user summary from artist profile:", err)
+  );
+
+  return result;
 }
 
 /**
@@ -1636,6 +1720,229 @@ export async function fetchStudioForArtistProfile(
     return studioResult;
   } catch (error: any) {
     console.error("Error fetching studio for artist profile:", error);
+    return null;
+  }
+}
+
+/**
+ * Build UserSummary from TattooLoverProfile
+ */
+function buildUserSummaryFromTattooLoverProfile(
+  profile: TattooLoverProfile
+): UserSummary {
+  return {
+    id: profile.user.id,
+    username: profile.user.username,
+    firstName: profile.user.firstName ?? null,
+    lastName: profile.user.lastName ?? null,
+    avatar: profile.user.avatar ?? null,
+    role: UserRole.TATTOO_LOVER,
+    city: profile.location?.municipality?.name ?? null,
+    province: profile.location?.province?.name ?? null,
+  };
+}
+
+/**
+ * Build UserSummary from ArtistProfile
+ */
+function buildUserSummaryFromArtistProfile(
+  profile: ArtistSelfProfileInterface & { isFollowing?: boolean }
+): UserSummary {
+  return {
+    id: profile.user.id,
+    username: profile.user.username,
+    firstName: profile.user.firstName ?? null,
+    lastName: profile.user.lastName ?? null,
+    avatar: profile.user.avatar ?? null,
+    role: UserRole.ARTIST,
+    city: profile.location?.municipality?.name ?? null,
+    province: profile.location?.province?.name ?? null,
+  };
+}
+
+/**
+ * Fetch minimal user summary for instant first paint
+ */
+export async function fetchUserSummary(
+  userId: string
+): Promise<UserSummary | null> {
+  try {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("id, username, firstName, lastName, avatar, role")
+      .eq("id", userId)
+      .single();
+
+    if (error || !user) return null;
+
+    // Fetch location and banner in parallel for faster summary
+    const [locationResult, artistProfileResult] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          province:provinces(name),
+          municipality:municipalities(name)
+        `)
+        .eq("userId", userId)
+        .eq("isPrimary", true)
+        .maybeSingle(),
+      // For artists, fetch minimal banner (1-2 items) for instant display
+      user.role === "ARTIST"
+        ? supabase
+            .from("artist_profiles")
+            .select("id")
+            .eq("userId", userId)
+            .single()
+            .then(({ data: ap }) => {
+              if (!ap) return null;
+              return supabase
+                .from("artist_banner_media")
+                .select("mediaUrl, mediaType, order")
+                .eq("artistId", ap.id)
+                .order("order", { ascending: true })
+                .limit(2);
+            })
+        : Promise.resolve(null),
+    ]);
+
+    const location = locationResult.data;
+    const bannerData = artistProfileResult?.data;
+
+    return {
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
+      avatar: user.avatar ?? null,
+      role: user.role as UserRole,
+      city: (location?.municipality as any)?.name ?? null,
+      province: (location?.province as any)?.name ?? null,
+    };
+  } catch (e) {
+    console.error("Error in fetchUserSummary:", e);
+    return null;
+  }
+}
+
+/**
+ * Cached wrapper for user summary
+ */
+export async function fetchUserSummaryCached(
+  userId: string,
+  forceRefresh = false
+): Promise<UserSummary | null> {
+  const cacheKey = `${USER_SUMMARY_CACHE_PREFIX}${userId}`;
+
+  if (!forceRefresh) {
+    try {
+      const cached = await getProfileFromCache(cacheKey);
+      if (cached) {
+        shouldRefreshCache(cacheKey).then((should) => {
+          if (should) {
+            fetchUserSummaryCached(userId, true).catch((err) =>
+              console.error(
+                "Background user summary cache refresh failed:",
+                err
+              )
+            );
+          }
+        });
+        return cached as UserSummary;
+      }
+    } catch (err) {
+      console.error("Error reading user summary cache:", err);
+    }
+  }
+
+  const summary = await fetchUserSummary(userId);
+  if (summary) {
+    saveProfileToCache(cacheKey, summary).catch((err) =>
+      console.error("Failed to cache user summary:", err)
+    );
+  }
+  return summary;
+}
+
+/**
+ * Fetch minimal artist profile summary for instant first paint
+ * Returns ArtistProfileSummary with essential fields for navigation
+ */
+export async function fetchArtistProfileSummary(
+  userId: string
+): Promise<ArtistProfileSummary | null> {
+  try {
+    // Get artist profile basic info
+    const { data: artistProfile, error: artistError } = await supabase
+      .from("artist_profiles")
+      .select("id, businessName, yearsExperience, workArrangement, bio")
+      .eq("userId", userId)
+      .single();
+
+    if (artistError || !artistProfile) {
+      return null;
+    }
+
+    // Fetch location, styles, and banner in parallel
+    const [locationResult, stylesResult, bannerResult] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          province:provinces(name),
+          municipality:municipalities(name),
+          address
+        `)
+        .eq("userId", userId)
+        .eq("isPrimary", true)
+        .maybeSingle(),
+      supabase
+        .from("artist_styles")
+        .select(`
+          styleId,
+          style:tattoo_styles(id, name)
+        `)
+        .eq("artistId", artistProfile.id),
+      supabase
+        .from("artist_banner_media")
+        .select("mediaUrl, mediaType, order")
+        .eq("artistId", artistProfile.id)
+        .order("order", { ascending: true })
+        .limit(2),
+    ]);
+
+    const location = locationResult.data;
+    const styles = stylesResult.data;
+    const bannerMedia = bannerResult.data;
+
+    return {
+      businessName: artistProfile.businessName ?? null,
+      yearsExperience: artistProfile.yearsExperience ?? null,
+      workArrangement: artistProfile.workArrangement as
+        | "STUDIO_OWNER"
+        | "STUDIO_EMPLOYEE"
+        | "FREELANCE"
+        | null,
+      bio: artistProfile.bio ?? null,
+      location: location
+        ? {
+            province: (location.province as any)?.name || "",
+            municipality: (location.municipality as any)?.name || "",
+            address: location.address || null,
+          }
+        : null,
+      styles:
+        styles?.map((s: any) => ({
+          id: s.style?.id || "",
+          name: s.style?.name || "",
+        })) || [],
+      bannerMedia:
+        bannerMedia?.map((b: any) => ({
+          mediaUrl: b.mediaUrl,
+          mediaType: b.mediaType as "IMAGE" | "VIDEO",
+          order: b.order,
+        })) || [],
+    };
+  } catch (e) {
+    console.error("Error in fetchArtistProfileSummary:", e);
     return null;
   }
 }

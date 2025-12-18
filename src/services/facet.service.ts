@@ -381,8 +381,8 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "studios";
+    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
     
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
@@ -487,8 +487,8 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "studios";
+    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
     
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
@@ -582,7 +582,6 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
  */
 async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> {
   const { filters, activeTab } = params;
-  // console.log("📍 [LOCATION_FACETS] Starting calculation for tab:", activeTab);
 
   // Get filtered IDs excluding location filter (with caching)
   const cacheKey = getCacheKey(filters, activeTab, false, false, true);
@@ -596,8 +595,8 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
   } else {
     // If compression is "high", always fetch both artist and studio IDs regardless of tab
     // If compression is "medium", only fetch IDs for the current tab
-    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "artists";
-    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "all" || activeTab === "studios";
+    const shouldFetchArtists = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "artists";
+    const shouldFetchStudios = SEARCH_FILTER_COMPRESSION === "high" || activeTab === "studios";
     
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
@@ -612,19 +611,12 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     baseIdCache.set(cacheKey, { artistIds, studioIds });
   }
 
-  // console.log("📍 [LOCATION_FACETS] Base IDs:", {
-  //   artists: artistIds.length,
-  //   studios: studioIds.length,
-  // });
-
   if (artistIds.length === 0 && studioIds.length === 0) {
-    console.log("📍 [LOCATION_FACETS] No base IDs, returning empty");
     return [];
   }
 
   // If compression is "high", require both artists and studios to have results
   if (SEARCH_FILTER_COMPRESSION === "high" && (artistIds.length === 0 || studioIds.length === 0)) {
-    console.log("📍 [LOCATION_FACETS] High compression mode: missing artists or studios, returning empty");
     return [];
   }
 
@@ -691,10 +683,7 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     locationKeys = new Set([...artistLocationKeys, ...studioLocationKeys]);
   }
 
-  // console.log(`  📍 [LOCATION_FACETS] Collected ${locationKeys.size} unique location keys from ${userLocationsResult.data?.length || 0} user locations and ${studioLocationsResult.data?.length || 0} studio locations`);
-
   if (locationKeys.size === 0) {
-    console.log("📍 [LOCATION_FACETS] No locations found");
     return [];
   }
 
@@ -708,9 +697,6 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     allProvinceIds.add(String(provinceId));
     allMunicipalityIds.add(String(municipalityId));
   }
-
-  // console.log(`  📍 [LOCATION_FACETS] Found ${locationKeys.size} unique locations, fetching names...`);
-  // console.log(`  📍 [LOCATION_FACETS] Sample location keys:`, Array.from(locationKeys).slice(0, 5));
 
   // Batch fetch all provinces and municipalities
   const [provincesResult, municipalitiesResult] = await Promise.all([
@@ -735,22 +721,12 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     console.error(`  📍 [LOCATION_FACETS] Error fetching municipalities:`, municipalitiesResult.error);
   }
 
-  console.log(`  📍 [LOCATION_FACETS] Fetched ${provincesResult.data?.length || 0} provinces and ${municipalitiesResult.data?.length || 0} municipalities`);
-
   const provincesMap = new Map(
     (provincesResult.data || []).map((p) => [String(p.id), p.name])
   );
   const municipalitiesMap = new Map(
     (municipalitiesResult.data || []).map((m) => [String(m.id), m.name])
   );
-
-  console.log(`  📍 [LOCATION_FACETS] Created maps:`, {
-    provinces: provincesMap.size,
-    municipalities: municipalitiesMap.size,
-    sampleProvinceIds: Array.from(provincesMap.keys()).slice(0, 3),
-    sampleMunicipalityIds: Array.from(municipalitiesMap.keys()).slice(0, 3),
-    sampleLocationKeys: Array.from(locationKeys).slice(0, 3),
-  });
 
   // Build location facets
   let matchedCount = 0;
@@ -787,12 +763,6 @@ async function getLocationFacets(params: FacetParams): Promise<LocationFacet[]> 
     })
     .filter((facet): facet is LocationFacet => facet !== null);
 
-  console.log("📍 [LOCATION_FACETS] Results:", {
-    total: validFacets.length,
-    matched: matchedCount,
-    unmatched: unmatchedCount,
-    sample: validFacets.slice(0, 5).map(f => f.name),
-  });
   return validFacets;
 }
 

@@ -42,6 +42,7 @@ export async function searchArtists({
           id,
           username,
           avatar,
+          bio,
           isVerified,
           locations:user_locations(
             provinceId,
@@ -361,6 +362,7 @@ export async function searchArtists({
           yearsExperience: artist.yearsExperience,
           isStudioOwner: artist.isStudioOwner,
           workArrangement: workArrangement,
+          bio: artist.user?.bio ?? null,
           location: location,
           styles:
             artist.styles
@@ -397,9 +399,9 @@ export async function searchArtists({
       })
     );
 
-    const artists: ArtistSearchResult[] = artistsWithFallback.filter(
-      (artist): artist is ArtistSearchResult => artist !== null
-    );
+    const artists: ArtistSearchResult[] = (artistsWithFallback.filter(
+      (artist) => artist !== null
+    ) as unknown) as ArtistSearchResult[];
 
     return {
       data: artists,

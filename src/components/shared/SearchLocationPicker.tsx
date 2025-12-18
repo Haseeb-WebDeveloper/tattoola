@@ -4,7 +4,7 @@ import { SVGIcons } from "@/constants/svg";
 import type { LocationFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -72,9 +72,6 @@ export default function SearchLocationPicker({
   useEffect(() => {
     (async () => {
       try {
-        // console.log("📍 [LOCATION_PICKER] Loading provinces, facets count:", facets.length);
-        // console.log("📍 [LOCATION_PICKER] Sample facets:", facets.slice(0, 3).map(f => ({ id: f.id, name: f.name, provinceId: f.provinceId })));
-        
         const { data, error } = await supabase
           .from("provinces")
           .select("id, name, imageUrl")
@@ -85,14 +82,10 @@ export default function SearchLocationPicker({
           setProvinces([]);
         } else {
           const provincesData = data || [];
-          // console.log("📍 [LOCATION_PICKER] Loaded", provincesData.length, "provinces from DB");
-          
           // Filter to only show provinces that have facets (available locations)
           const provincesWithFacets = provincesData.filter((province) => {
             return facets.some((f) => f.provinceId === province.id);
           });
-          
-          // console.log("📍 [LOCATION_PICKER] Filtered to", provincesWithFacets.length, "provinces with facets");
           setProvinces(provincesWithFacets);
         }
       } catch (err) {

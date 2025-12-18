@@ -11,8 +11,13 @@ import {
   togglePostLike,
   updatePost,
 } from "@/services/post.service";
-import { toggleFollow } from "@/services/profile.service";
+import {
+  toggleFollow,
+  fetchUserSummaryCached,
+  fetchArtistProfileSummary,
+} from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
+import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -946,10 +951,53 @@ export default function PostDetailScreen() {
               >
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() =>
-                    post.author?.id &&
-                    router.push(`/user/${post.author.id}` as any)
-                  }
+                  onPress={async () => {
+                    if (!post.author?.id) return;
+                    const a = post.author;
+                    
+                    // Build initialUser from available data
+                    const initialUser: UserSummary = {
+                      id: a.id,
+                      username: a.username,
+                      firstName: a.firstName ?? null,
+                      lastName: a.lastName ?? null,
+                      avatar: a.avatar ?? null,
+                      city: a.municipality ?? null,
+                      province: a.province ?? null,
+                    };
+
+                    // Fetch user summary to get role (cached, fast)
+                    const userSummary = await fetchUserSummaryCached(a.id).catch(() => null);
+                    
+                    // If user is an artist, fetch artist profile summary
+                    let initialArtist = null;
+                    if (userSummary?.role === "ARTIST") {
+                      const artistSummary = await fetchArtistProfileSummary(a.id).catch(() => null);
+                      if (artistSummary) {
+                        initialArtist = artistSummary;
+                      }
+                      // Merge location data from summary if available and not already set
+                      if (!initialUser.city && userSummary.city) {
+                        initialUser.city = userSummary.city;
+                      }
+                      if (!initialUser.province && userSummary.province) {
+                        initialUser.province = userSummary.province;
+                      }
+                      if (userSummary.role) {
+                        initialUser.role = userSummary.role;
+                      }
+                    }
+
+                    router.push({
+                      pathname: `/user/${a.id}`,
+                      params: {
+                        initialUser: JSON.stringify(initialUser),
+                        ...(initialArtist && {
+                          initialArtist: JSON.stringify(initialArtist),
+                        }),
+                      },
+                    } as any);
+                  }}
                   className="flex-row items-center flex-1"
                 >
                   <Image
@@ -964,7 +1012,7 @@ export default function PostDetailScreen() {
                   <View className="justify-center flex-1">
                     <ScaledText
                       variant="md"
-                      className="text-foreground font-neueRegular"
+                      className="text-foreground font-neueMedium"
                     >
                       {(() => {
                         const name =
