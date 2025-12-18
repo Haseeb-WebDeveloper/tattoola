@@ -53,7 +53,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
               <ScaledText
                 allowScaling={false}
                 variant="md"
-                className="flex-1 text-foreground font-neueRegular"
+                className="flex-1 text-foreground font-neueMedium"
               >
                 ✅ {service.name}
               </ScaledText>

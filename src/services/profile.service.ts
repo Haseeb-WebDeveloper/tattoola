@@ -1,6 +1,6 @@
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { UserSummary, UserRole } from "@/types/auth";
-import { StudioSearchResult } from "@/types/search";
+import { StudioSearchResult, ArtistProfileSummary } from "@/types/search";
 import {
   getProfileFromCache,
   saveProfileToCache,
@@ -1861,4 +1861,88 @@ export async function fetchUserSummaryCached(
     );
   }
   return summary;
+}
+
+/**
+ * Fetch minimal artist profile summary for instant first paint
+ * Returns ArtistProfileSummary with essential fields for navigation
+ */
+export async function fetchArtistProfileSummary(
+  userId: string
+): Promise<ArtistProfileSummary | null> {
+  try {
+    // Get artist profile basic info
+    const { data: artistProfile, error: artistError } = await supabase
+      .from("artist_profiles")
+      .select("id, businessName, yearsExperience, workArrangement, bio")
+      .eq("userId", userId)
+      .single();
+
+    if (artistError || !artistProfile) {
+      return null;
+    }
+
+    // Fetch location, styles, and banner in parallel
+    const [locationResult, stylesResult, bannerResult] = await Promise.all([
+      supabase
+        .from("user_locations")
+        .select(`
+          province:provinces(name),
+          municipality:municipalities(name),
+          address
+        `)
+        .eq("userId", userId)
+        .eq("isPrimary", true)
+        .maybeSingle(),
+      supabase
+        .from("artist_styles")
+        .select(`
+          styleId,
+          style:tattoo_styles(id, name)
+        `)
+        .eq("artistId", artistProfile.id),
+      supabase
+        .from("artist_banner_media")
+        .select("mediaUrl, mediaType, order")
+        .eq("artistId", artistProfile.id)
+        .order("order", { ascending: true })
+        .limit(2),
+    ]);
+
+    const location = locationResult.data;
+    const styles = stylesResult.data;
+    const bannerMedia = bannerResult.data;
+
+    return {
+      businessName: artistProfile.businessName ?? null,
+      yearsExperience: artistProfile.yearsExperience ?? null,
+      workArrangement: artistProfile.workArrangement as
+        | "STUDIO_OWNER"
+        | "STUDIO_EMPLOYEE"
+        | "FREELANCE"
+        | null,
+      bio: artistProfile.bio ?? null,
+      location: location
+        ? {
+            province: (location.province as any)?.name || "",
+            municipality: (location.municipality as any)?.name || "",
+            address: location.address || null,
+          }
+        : null,
+      styles:
+        styles?.map((s: any) => ({
+          id: s.style?.id || "",
+          name: s.style?.name || "",
+        })) || [],
+      bannerMedia:
+        bannerMedia?.map((b: any) => ({
+          mediaUrl: b.mediaUrl,
+          mediaType: b.mediaType as "IMAGE" | "VIDEO",
+          order: b.order,
+        })) || [],
+    };
+  } catch (e) {
+    console.error("Error in fetchArtistProfileSummary:", e);
+    return null;
+  }
 }

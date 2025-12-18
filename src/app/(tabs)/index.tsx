@@ -4,6 +4,10 @@ import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { FeedEntry } from "@/services/feed.service";
 import { prefetchUserProfile } from "@/services/prefetch.service";
+import {
+  fetchUserSummaryCached,
+  fetchArtistProfileSummary,
+} from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
 import { useFeedStore } from "@/stores/feedStore";
@@ -289,8 +293,10 @@ export default function HomeScreen() {
       {currentPost && !isCurrentBanner && (
         <FeedPostOverlay
           post={currentPost}
-          onAuthorPress={() => {
+          onAuthorPress={async () => {
             const author = currentPost.author;
+            
+            // Build initialUser from available data
             const initialUser: UserSummary = {
               id: author.id,
               username: author.username,
@@ -299,13 +305,39 @@ export default function HomeScreen() {
               avatar: author.avatar ?? null,
             };
 
+            // Fetch user summary to get role (cached, fast)
+            const userSummary = await fetchUserSummaryCached(author.id).catch(() => null);
+            
+            // If user is an artist, fetch artist profile summary
+            let initialArtist = null;
+            if (userSummary?.role === "ARTIST") {
+              const artistSummary = await fetchArtistProfileSummary(author.id).catch(() => null);
+              if (artistSummary) {
+                initialArtist = artistSummary;
+              }
+              // Merge location data from summary if available
+              if (userSummary.city || userSummary.province) {
+                initialUser.city = userSummary.city;
+                initialUser.province = userSummary.province;
+              }
+              if (userSummary.role) {
+                initialUser.role = userSummary.role;
+              }
+            }
+
+            // Prefetch full profile in background
             prefetchUserProfile(author.id).catch(() => {
               // Ignore prefetch errors
             });
+
+            // Navigate with initial params for instant rendering
             router.push({
               pathname: `/user/${author.id}`,
               params: {
                 initialUser: JSON.stringify(initialUser),
+                ...(initialArtist && {
+                  initialArtist: JSON.stringify(initialArtist),
+                }),
               },
             } as any);
           }}

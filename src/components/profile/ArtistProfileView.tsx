@@ -9,7 +9,7 @@ import { prefetchStudioProfile } from "@/services/studio.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { ArtistSelfProfileInterface } from "@/types/artist";
 import { WorkArrangement } from "@/types/auth";
-import { StudioSearchResult } from "@/types/search";
+import { StudioSearchResult, StudioSummary } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
@@ -227,7 +227,36 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
                   prefetchStudioProfile(studio.id).catch(() => {
                     // Ignore prefetch errors
                   });
-                  router.push(`/studio/${studio.id}` as any);
+
+                  // Convert StudioSearchResult to StudioSummary for instant render
+                  const initialStudio: StudioSummary = {
+                    id: studio.id,
+                    name: studio.name,
+                    logo: studio.logo,
+                    city: studio.locations[0]?.municipality,
+                    province: studio.locations[0]?.province,
+                    address: studio.locations[0]?.address || null,
+                    owner: studio.ownerName
+                      ? {
+                          id: "", // Will be filled by full fetch
+                          firstName: studio.ownerName.split(" ")[0] || null,
+                          lastName:
+                            studio.ownerName.split(" ").slice(1).join(" ") || null,
+                          avatar: null,
+                        }
+                      : null,
+                    banner: studio.bannerMedia.slice(0, 2), // Limit to 1-2 items for first paint
+                    styles: studio.styles.slice(0, 3), // Top 2-3 styles
+                    services: null, // Will be loaded later
+                    description: studio.description,
+                  };
+
+                  router.push({
+                    pathname: `/studio/${studio.id}`,
+                    params: {
+                      initialStudio: JSON.stringify(initialStudio),
+                    },
+                  } as any);
                 }
               : undefined
           }
