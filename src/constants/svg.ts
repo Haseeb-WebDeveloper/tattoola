@@ -9,7 +9,11 @@ import CloseGray from "@/assets/icons/close-gray.svg";
 // @ts-ignore
 import LogoLight from "@/assets/icons/logo-light.svg";
 // @ts-ignore
+import LogoDark from "@/assets/icons/logo-dark.svg";
+// @ts-ignore
 import Logo from "@/assets/icons/logo.svg";
+// @ts-ignore
+import LogoPro from "@/assets/icons/logo-pro.svg";
 // @ts-ignore
 import Person from "@/assets/icons/person.svg";
 // @ts-ignore
@@ -268,6 +272,8 @@ export const SVGIcons = {
   CloseGray,
   CloseRedBold,
   LogoLight,
+  LogoDark,
+  LogoPro,
   Logo,
   Person,
   SecurePerson,

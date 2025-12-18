@@ -5,6 +5,7 @@ import StudioCard from "@/components/search/StudioCard";
 import StudioCardSkeleton from "@/components/search/StudioCardSkeleton";
 import SearchLocationPicker from "@/components/shared/SearchLocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
+import { MOST_POPULAR_PROVINCES_IDS } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useSearchStore } from "@/stores/searchStore";
 import type { SearchTab } from "@/types/search";
@@ -39,6 +40,16 @@ export default function SearchScreen() {
   useEffect(() => {
     // Initialize search and facets on mount
     const initialize = async () => {
+      const { filters: currentFilters, updateFilters, setLocation } =
+        useSearchStore.getState();
+
+      // Set Milano as default province if no province filter is set
+      if (!currentFilters.provinceId && MOST_POPULAR_PROVINCES_IDS.length > 0) {
+        const milano = MOST_POPULAR_PROVINCES_IDS[0];
+        updateFilters({ provinceId: milano.id });
+        setLocation(milano.name, "");
+      }
+
       await Promise.all([search(), loadFacets()]);
     };
     initialize();
@@ -116,7 +127,9 @@ export default function SearchScreen() {
   };
 
   const renderEmpty = () => {
-    if (isLoading) return null;
+    // Only show empty state when not loading/initializing and results are actually zero
+    if (isLoading || isInitializing) return null;
+    if (combinedResults.length > 0) return null;
 
     return (
       <View
@@ -197,9 +210,25 @@ export default function SearchScreen() {
   const totalResults =
     activeTab === "artists" ? results.artists.length : results.studios.length;
 
-  const locationText = locationDisplay
-    ? `${totalResults} ${activeTab === "studios" ? "studi" : "artisti"} in Provincia di`
-    : `${totalResults} ${activeTab === "studios" ? "studi" : "artisti"}`;
+  // Show count immediately if data exists, regardless of loading state
+  // Only hide count if no data AND we're loading/initializing
+  const hasData = totalResults > 0;
+  const shouldShowCount = hasData || (!isLoading && !isInitializing);
+
+  // If not showing count (loading/initializing with no data), use "Artisti"/"Studi" (capitalized)
+  // If showing count, use "artisti"/"studi" (lowercase)
+  const typeLabel =
+    activeTab === "studios"
+      ? shouldShowCount
+        ? "studi"
+        : "Studi"
+      : shouldShowCount
+        ? "artisti"
+        : "Artisti";
+
+  const locationText = shouldShowCount
+    ? `${totalResults} ${typeLabel}` + (locationDisplay ? " in Provincia di" : "")
+    : typeLabel + (locationDisplay ? " in Provincia di" : "");
 
   return (
     <View className="flex-1 bg-background">
@@ -342,54 +371,63 @@ export default function SearchScreen() {
           )}
 
           {/* Results List */}
-          {isInitializing || (isLoading && combinedResults.length === 0) ? (
-            <View className="flex-1">
-              {/* Show skeletons based on active tab */}
-              {activeTab === "artists" ? (
-                <>
-                  <ArtistCardSkeleton />
-                  <ArtistCardSkeleton />
-                  <ArtistCardSkeleton />
-                </>
-              ) : null}
-              {activeTab === "studios" ? (
-                <>
-                  <StudioCardSkeleton />
-                  <StudioCardSkeleton />
-                  <StudioCardSkeleton />
-                </>
-              ) : null}
-            </View>
-          ) : (
-            <>
-              <FlatList
-                data={combinedResults}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-                contentContainerStyle={{
-                  // Add more space at the end, e.g. s(80) instead of s(40)
-                  marginBottom: s(80),
-                }}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={handleRefresh}
-                    tintColor="#AE0E0E"
-                  />
-                }
-                onEndReached={handleLoadMore}
-                onEndReachedThreshold={0.5}
-                ListFooterComponent={renderFooter}
-                ListEmptyComponent={renderEmpty}
-                removeClippedSubviews={true}
-                maxToRenderPerBatch={10}
-                updateCellsBatchingPeriod={50}
-                windowSize={10}
-                initialNumToRender={10}
-              />
-            </>
-          )}
+          {(() => {
+            // Show skeleton only during initial load (first mount)
+            // After initialization, always show FlatList so users see existing data
+            // or empty state, not skeleton when switching tabs
+            if (isInitializing) {
+              return (
+                <View className="flex-1">
+                  {/* Show skeletons based on active tab */}
+                  {activeTab === "artists" ? (
+                    <>
+                      <ArtistCardSkeleton />
+                      <ArtistCardSkeleton />
+                      <ArtistCardSkeleton />
+                    </>
+                  ) : null}
+                  {activeTab === "studios" ? (
+                    <>
+                      <StudioCardSkeleton />
+                      <StudioCardSkeleton />
+                      <StudioCardSkeleton />
+                    </>
+                  ) : null}
+                </View>
+              );
+            }
+
+            return (
+              <>
+                <FlatList
+                  data={combinedResults}
+                  renderItem={renderItem}
+                  keyExtractor={keyExtractor}
+                  contentContainerStyle={{
+                    // Add more space at the end, e.g. s(80) instead of s(40)
+                    marginBottom: s(80),
+                  }}
+                  showsVerticalScrollIndicator={false}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={handleRefresh}
+                      tintColor="#AE0E0E"
+                    />
+                  }
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={renderFooter}
+                  ListEmptyComponent={renderEmpty}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={10}
+                  updateCellsBatchingPeriod={50}
+                  windowSize={10}
+                  initialNumToRender={10}
+                />
+              </>
+            );
+          })()}
         </View>
       </LinearGradient>
 
