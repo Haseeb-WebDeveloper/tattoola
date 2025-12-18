@@ -72,8 +72,8 @@ export default function SearchLocationPicker({
   useEffect(() => {
     (async () => {
       try {
-        console.log("📍 [LOCATION_PICKER] Loading provinces, facets count:", facets.length);
-        console.log("📍 [LOCATION_PICKER] Sample facets:", facets.slice(0, 3).map(f => ({ id: f.id, name: f.name, provinceId: f.provinceId })));
+        // console.log("📍 [LOCATION_PICKER] Loading provinces, facets count:", facets.length);
+        // console.log("📍 [LOCATION_PICKER] Sample facets:", facets.slice(0, 3).map(f => ({ id: f.id, name: f.name, provinceId: f.provinceId })));
         
         const { data, error } = await supabase
           .from("provinces")
@@ -85,14 +85,14 @@ export default function SearchLocationPicker({
           setProvinces([]);
         } else {
           const provincesData = data || [];
-          console.log("📍 [LOCATION_PICKER] Loaded", provincesData.length, "provinces from DB");
+          // console.log("📍 [LOCATION_PICKER] Loaded", provincesData.length, "provinces from DB");
           
           // Filter to only show provinces that have facets (available locations)
           const provincesWithFacets = provincesData.filter((province) => {
             return facets.some((f) => f.provinceId === province.id);
           });
           
-          console.log("📍 [LOCATION_PICKER] Filtered to", provincesWithFacets.length, "provinces with facets");
+          // console.log("📍 [LOCATION_PICKER] Filtered to", provincesWithFacets.length, "provinces with facets");
           setProvinces(provincesWithFacets);
         }
       } catch (err) {
@@ -209,7 +209,7 @@ export default function SearchLocationPicker({
             className="relative flex-row items-center justify-between border-b border-gray bg-primary/30"
             style={{
               paddingBottom: mvs(15),
-              paddingTop: mvs(50),
+              // paddingTop: mvs(50),
               paddingHorizontal: s(20),
             }}
           >
