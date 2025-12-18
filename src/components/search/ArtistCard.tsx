@@ -175,12 +175,17 @@ function ArtistCard({ artist }: ArtistCardProps) {
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="font-neueMedium text-error"
-              style={
-                isStudioPremium
+              className="text-error"
+              style={{
+                fontFamily: "NeueHaasDisplay",
+                fontWeight: "500",
+                fontSize: 11,
+                lineHeight: 11 * 1.3,
+                letterSpacing: 0,
+                ...(isStudioPremium
                   ? { color: "rgba(244, 158, 0, 1)" }
-                  : undefined
-              }
+                  : {}),
+              }}
             >
               {badgeLabel}
             </ScaledText>
