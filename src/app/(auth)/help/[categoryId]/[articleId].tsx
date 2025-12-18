@@ -1,14 +1,19 @@
 import { HelpHeader } from "@/components/help/HelpHeader";
+import ScaledText from "@/components/ui/ScaledText";
 import { getHelpArticle } from "@/services/help.service";
 import type { HelpArticle } from "@/types/help";
 import { mvs, s } from "@/utils/scale";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, View, useWindowDimensions, StyleSheet } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import ScaledText from "@/components/ui/ScaledText";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import RenderHTML from "react-native-render-html";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Shared cache across instances
 const articleCache = new Map<string, HelpArticle>();
@@ -160,54 +165,54 @@ export default function HelpArticleDetailScreen() {
         pointerEvents="none"
       />
 
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <HelpHeader />
+      {/* <SafeAreaView style={{ flex: 1 }} edges={["top"]}> */}
+      <HelpHeader />
 
-        <View
-          style={{
-            height: 0.5,
-            backgroundColor: "#A49A99",
-            marginHorizontal: s(20),
-            marginBottom: mvs(16),
-          }}
-        />
+      <View
+        style={{
+          height: 0.5,
+          backgroundColor: "#A49A99",
+          marginHorizontal: s(20),
+          marginBottom: mvs(16),
+        }}
+      />
 
-        <ScrollView
-          showsVerticalScrollIndicator
-          contentContainerStyle={{
-            paddingHorizontal: s(20),
-            paddingBottom: mvs(32) + insets.bottom,
-          }}
-        >
-          {article && (
-            <>
-              <ScaledText
-                allowScaling={false}
-                variant="2xl"
-                style={{
-                  fontSize: s(24),
-                  lineHeight: s(31),
-                  fontFamily: "ProductSans",
-                  fontWeight: "bold",
-                  paddingVertical: mvs(28),
-                  color: "#FFFFFF",
-                }}
-              >
-                {article.title}
-              </ScaledText>
+      <ScrollView
+        showsVerticalScrollIndicator
+        contentContainerStyle={{
+          paddingHorizontal: s(20),
+          paddingBottom: mvs(32) + insets.bottom,
+        }}
+      >
+        {article && (
+          <>
+            <ScaledText
+              allowScaling={false}
+              variant="2xl"
+              style={{
+                fontSize: s(24),
+                lineHeight: s(31),
+                fontFamily: "ProductSans",
+                fontWeight: "bold",
+                paddingVertical: mvs(28),
+                color: "#FFFFFF",
+              }}
+            >
+              {article.title}
+            </ScaledText>
 
-              {article.description && (
-                <RenderHTML
-                  contentWidth={contentWidth}
-                  source={{ html: article.description }}
-                  tagsStyles={tagsStyles}
-                  baseStyle={htmlStyles.body}
-                />
-              )}
-            </>
-          )}
-        </ScrollView>
-      </SafeAreaView>
+            {article.description && (
+              <RenderHTML
+                contentWidth={contentWidth}
+                source={{ html: article.description }}
+                tagsStyles={tagsStyles}
+                baseStyle={htmlStyles.body}
+              />
+            )}
+          </>
+        )}
+      </ScrollView>
+      {/* </SafeAreaView> */}
     </View>
   );
 }

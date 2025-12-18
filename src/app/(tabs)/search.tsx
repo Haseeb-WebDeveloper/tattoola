@@ -82,12 +82,7 @@ export default function SearchScreen() {
 
   // Combine results based on active tab
   const combinedResults = useMemo(
-    () =>
-      activeTab === "all"
-        ? [...results.artists, ...results.studios]
-        : activeTab === "artists"
-          ? results.artists
-          : results.studios,
+    () => (activeTab === "artists" ? results.artists : results.studios),
     [activeTab, results.artists, results.studios]
   );
 
@@ -189,7 +184,7 @@ export default function SearchScreen() {
     return (
       <>
         {isLoadingMore ? (
-          activeTab === "artists" || activeTab === "all" ? (
+          activeTab === "artists" ? (
             <ArtistCardSkeleton />
           ) : (
             <StudioCardSkeleton />
@@ -201,15 +196,11 @@ export default function SearchScreen() {
   };
 
   const totalResults =
-    activeTab === "all"
-      ? results.artists.length + results.studios.length
-      : activeTab === "artists"
-        ? results.artists.length
-        : results.studios.length;
+    activeTab === "artists" ? results.artists.length : results.studios.length;
 
   const locationText = locationDisplay
-    ? `${totalResults} ${activeTab === "studios" ? "studi" : activeTab === "artists" ? "artisti" : "risultati"} in Provincia di`
-    : `${totalResults} ${activeTab === "studios" ? "studi" : activeTab === "artists" ? "artisti" : "risultati"}`;
+    ? `${totalResults} ${activeTab === "studios" ? "studi" : "artisti"} in Provincia di`
+    : `${totalResults} ${activeTab === "studios" ? "studi" : "artisti"}`;
 
   return (
     <View className="flex-1 bg-background">
@@ -259,28 +250,10 @@ export default function SearchScreen() {
           }}
         >
           <TouchableOpacity
-            onPress={() => handleTabPress("all")}
-            className={`rounded-full items-center justify-center border border-gray ${activeTab === "all" ? "bg-primary border-primary" : ""
-              }`}
-            style={{
-              paddingVertical: mvs(3),
-              paddingHorizontal: s(18),
-            }}
-          >
-            <ScaledText
-              allowScaling={false}
-              variant="sm"
-              className={`font-neueLight ${activeTab === "all" ? "text-white" : "text-gray"
-                }`}
-            >
-              Tutto
-            </ScaledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             onPress={() => handleTabPress("artists")}
-            className={`rounded-full items-center justify-center border border-gray ${activeTab === "artists" ? "bg-primary border-primary" : ""
-              }`}
+            className={`rounded-full items-center justify-center border border-gray ${
+              activeTab === "artists" ? "bg-primary border-primary" : ""
+            }`}
             style={{
               paddingVertical: mvs(3),
               paddingHorizontal: s(18),
@@ -289,8 +262,9 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className={`font-neueLight ${activeTab === "artists" ? "text-white" : "text-gray"
-                }`}
+              className={`font-neueLight ${
+                activeTab === "artists" ? "text-white" : "text-gray"
+              }`}
             >
               Artisti
             </ScaledText>
@@ -298,8 +272,9 @@ export default function SearchScreen() {
 
           <TouchableOpacity
             onPress={() => handleTabPress("studios")}
-            className={`rounded-full items-center justify-center border border-gray ${activeTab === "studios" ? "bg-primary border-primary" : ""
-              }`}
+            className={`rounded-full items-center justify-center border border-gray ${
+              activeTab === "studios" ? "bg-primary border-primary" : ""
+            }`}
             style={{
               paddingVertical: mvs(3),
               paddingHorizontal: s(18),
@@ -308,16 +283,16 @@ export default function SearchScreen() {
             <ScaledText
               allowScaling={false}
               variant="sm"
-              className={`font-neueLight ${activeTab === "studios" ? "text-white" : "text-gray"
-                }`}
+              className={`font-neueLight ${
+                activeTab === "studios" ? "text-white" : "text-gray"
+              }`}
             >
               Studi
             </ScaledText>
           </TouchableOpacity>
         </View>
 
-        <View className="min-h-screen"
-        >
+        <View className="min-h-screen">
           {/* Location Display */}
           {locationText && !isInitializing && (
             <View
@@ -371,14 +346,14 @@ export default function SearchScreen() {
           {isInitializing || (isLoading && combinedResults.length === 0) ? (
             <View className="flex-1">
               {/* Show skeletons based on active tab */}
-              {activeTab === "artists" || activeTab === "all" ? (
+              {activeTab === "artists" ? (
                 <>
                   <ArtistCardSkeleton />
                   <ArtistCardSkeleton />
                   <ArtistCardSkeleton />
                 </>
               ) : null}
-              {activeTab === "studios" || activeTab === "all" ? (
+              {activeTab === "studios" ? (
                 <>
                   <StudioCardSkeleton />
                   <StudioCardSkeleton />

@@ -282,8 +282,10 @@ export default function CustomTabBar({
                   <View
                     key={route.key}
                     style={{
-                      width: s(56),
-                      height: s(24),
+                      flex: 1,
+                      minWidth: s(72),
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   />
                 );
@@ -306,28 +308,22 @@ export default function CustomTabBar({
                     alignItems: "center",
                     justifyContent: "center",
                     flex: 1,
-                    ...(showAccediLabel
-                      ? {
-                          backgroundColor: "#AE0E0E",
-                          borderTopRightRadius: 9999,
-                          borderBottomRightRadius: 9999,
-                          marginVertical: mvs(-16),
-                          marginRight: s(-16),
-                          paddingVertical: mvs(16),
-                          paddingRight: s(16),
-                        }
-                      : {}),
+                    minWidth: s(44),
+                    // ...(showAccediLabel
+                    //   ? {
+                    //       backgroundColor: "#AE0E0E",
+                    //       borderTopRightRadius: 9999,
+                    //       borderBottomRightRadius: 9999,
+                    //       marginVertical: mvs(-16),
+                    //       marginRight: s(-16),
+                    //       paddingVertical: mvs(16),
+                    //       paddingRight: s(16),
+                    //       paddingLeft: s(8),
+                    //     }
+                    //   : {}),
                   }}
                 >
-                  {showAccediLabel ? (
-                    <SVGIcons.Accedi
-                      width={s(24)}
-                      height={s(24)}
-                      color={isFocused ? "#ffffff" : "#A49A99"}
-                    />
-                  ) : (
-                    getIcon(route.name, isFocused)
-                  )}
+                  {getIcon(route.name, isFocused)}
                 </TouchableOpacity>
               );
             })}

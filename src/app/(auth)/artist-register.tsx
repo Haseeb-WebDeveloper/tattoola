@@ -171,8 +171,8 @@ export default function ArtistRegisterScreen() {
 
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
+      enableOnAndroid={false}
+      enableAutomaticScroll={false}
       extraScrollHeight={150}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
