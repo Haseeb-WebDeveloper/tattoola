@@ -5,6 +5,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { getHelpCategories } from "@/services/help.service";
 import type { HelpCategory, HelpTab } from "@/types/help";
 import { mvs, s } from "@/utils/scale";
+import { LinearGradient } from "expo-linear-gradient";
 import React, {
   useCallback,
   useEffect,
@@ -12,18 +13,16 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ScrollView, View } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HelpScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<HelpTab>("artisiti");
+  // Set default tab based on user role: artists see artist tab, users see user tab
+  const [activeTab, setActiveTab] = useState<HelpTab>(
+    user?.role === "TATTOO_LOVER" ? "utenti" : "artisiti"
+  );
 
   // Cache categories for both tabs
   const [cachedCategories, setCachedCategories] = useState<{
@@ -49,7 +48,7 @@ export default function HelpScreen() {
     return tab === "artisiti" ? "ARTIST" : "USER";
   }, []);
 
-  // Get current category type
+  // Get current category type based on active tab
   const currentCategoryType = useMemo(
     () => getCategoryType(activeTab),
     [activeTab, getCategoryType]
@@ -65,10 +64,26 @@ export default function HelpScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       const type = getCategoryType(activeTab);
-      // If user is logged in (coming from feed/app), show only loginRequired=true.
-      // If not logged in (e.g. from sign-in), show only loginRequired=false.
-      const loginRequiredFilter = !!user;
-      
+      const isLoggedIn = !!user;
+
+      // Check if logged in user's role matches the current tab
+      let shouldShowCategories = true;
+      if (isLoggedIn && user.role) {
+        const userType = user.role === "ARTIST" ? "ARTIST" : "USER";
+        // Only show categories if tab matches user's role
+        shouldShowCategories = type === userType;
+      }
+
+      // If shouldn't show categories (wrong tab for logged in user), set empty and return
+      if (!shouldShowCategories) {
+        setCachedCategories((prev) => ({
+          ...prev,
+          [type]: [],
+        }));
+        setLoading(false);
+        return;
+      }
+
       // Check if we have cached data for this tab using ref
       const hasCachedData = cacheRef.current[type].length > 0;
 
@@ -78,7 +93,11 @@ export default function HelpScreen() {
       }
 
       try {
-        const categories = await getHelpCategories(type, loginRequiredFilter);
+        // Pass isLoggedIn to get appropriate categories:
+        // - If logged in: get ALL categories (public + auth-required)
+        // - If not logged in: get only public categories (loginRequired: false)
+        const categories = await getHelpCategories(type, isLoggedIn);
+
         // Update cache for this tab type (this will show new categories if added)
         setCachedCategories((prev) => ({
           ...prev,
@@ -100,7 +119,7 @@ export default function HelpScreen() {
 
     fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, user]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>

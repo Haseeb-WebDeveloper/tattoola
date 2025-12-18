@@ -134,11 +134,15 @@ function LoginScreenContent() {
         contentContainerStyle={{ flexGrow: 1 }}
         style={{ zIndex: 1 }}
       >
-        {/* Back Button */}
-        <View className="px-6" style={{ marginTop: mvs(15) }}>
+        {/* Header with Back Button, Logo, and Help Icon */}
+        <View
+          className="w-full flex-row justify-between items-center px-6"
+          style={{ marginTop: mvs(15), marginBottom: mvs(40) }}
+        >
+          {/* Back Button */}
           <TouchableOpacity
             onPress={handleBackToWelcome}
-            className="rounded-full items-center justify-center self-start"
+            className="rounded-full items-center justify-center"
             style={{
               width: s(36),
               height: s(36),
@@ -151,15 +155,11 @@ function LoginScreenContent() {
               color="#FFFFFF"
             />
           </TouchableOpacity>
-        </View>
 
-        {/* Header with Logo and Help Icon */}
-        <View
-          className="grid w-full flex-row justify-between items-center px-6"
-          style={{ marginTop: mvs(20), marginBottom: mvs(40) }}
-        >
-          <View style={{ width: s(24) }} />
-          <SVGIcons.LogoLight style={{ height: s(50) }}  />
+          {/* Logo */}
+          <SVGIcons.LogoLight style={{ height: s(50) }} />
+
+          {/* Help Icon */}
           <TouchableOpacity
             className="items-center justify-center"
             onPress={() => router.push("/(auth)/help")}
@@ -183,7 +183,7 @@ function LoginScreenContent() {
         {/* New registration button */}
         <View className="px-6" style={{ marginBottom: mvs(32) }}>
           <TouchableOpacity
-           activeOpacity={0.8}
+            activeOpacity={0.8}
             accessibilityRole="button"
             onPress={handleRegister}
             className="bg-primary rounded-full items-center justify-center w-full flex-row"
