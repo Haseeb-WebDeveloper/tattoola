@@ -935,7 +935,9 @@ export default function PostDetailScreen() {
 
             {/* Author info (clickable -> navigate to user profile) */}
             {post.author && (
-              <View className="z-10 flex-row items-center justify-between mb-8">
+              <View
+                className={`z-10 flex-row justify-between mb-8 ${post.caption ? "items-center" : "items-end"}`}
+              >
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() =>
@@ -1169,7 +1171,7 @@ export default function PostDetailScreen() {
               className="text-center text-background font-neueBold"
               style={{ marginBottom: mvs(6) }}
             >
-              Eliminare il post?
+              Eliminare il tatuaggio?
             </ScaledText>
             <ScaledText
               allowScaling={false}
@@ -1177,8 +1179,8 @@ export default function PostDetailScreen() {
               className="text-center text-background font-montserratSemibold"
               style={{ marginBottom: mvs(20) }}
             >
-              Questa azione non può essere annullata. Il post verrà eliminato
-              definitivamente.
+              Questa azione non può essere annullata. Il tatuaggio verrà
+              eliminato definitivamente.
             </ScaledText>
             <View
               className="flex-row justify-center"

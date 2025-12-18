@@ -1,11 +1,7 @@
-import { searchAll, searchArtists, searchStudios } from "@/services/search.service";
 import { getFacets } from "@/services/facet.service";
-import type {
-  SearchFilters,
-  SearchResults,
-  SearchTab
-} from "@/types/search";
+import { searchArtists, searchStudios } from "@/services/search.service";
 import type { Facets } from "@/types/facets";
+import type { SearchFilters, SearchResults, SearchTab } from "@/types/search";
 import { create } from "zustand";
 
 type SearchState = {
@@ -46,7 +42,7 @@ const initialFilters: SearchFilters = {
 };
 
 export const useSearchStore = create<SearchState>((set, get) => ({
-  activeTab: "all",
+  activeTab: "artists",
   filters: initialFilters,
   results: {
     artists: [],
@@ -108,19 +104,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     set({ isLoading: true, error: null, page: 0 });
 
     try {
-      if (activeTab === "all") {
-        const result = await searchAll({ filters, page: 0 });
-        set({
-          results: {
-            artists: result.artists,
-            studios: result.studios,
-          },
-          hasMore: result.hasMore,
-          error: result.error || null,
-          isLoading: false,
-          isInitializing: false,
-        });
-      } else if (activeTab === "artists") {
+      if (activeTab === "artists") {
         const result = await searchArtists({ filters, page: 0 });
         set({
           results: {
@@ -165,18 +149,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     const nextPage = page + 1;
 
     try {
-      if (activeTab === "all") {
-        const result = await searchAll({ filters, page: nextPage });
-        set({
-          results: {
-            artists: [...results.artists, ...result.artists],
-            studios: [...results.studios, ...result.studios],
-          },
-          page: nextPage,
-          hasMore: result.hasMore,
-          isLoadingMore: false,
-        });
-      } else if (activeTab === "artists") {
+      if (activeTab === "artists") {
         const result = await searchArtists({ filters, page: nextPage });
         set({
           results: {
@@ -221,7 +194,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   resetSearch: () => {
     set({
-      activeTab: "all",
+      activeTab: "artists",
       filters: initialFilters,
       results: {
         artists: [],
@@ -243,4 +216,3 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     get().loadFacets();
   },
 }));
-

@@ -30,20 +30,24 @@ export default function PrivacyPolicyScreen() {
       >
         <TouchableOpacity
           onPress={handleBack}
-          className="absolute items-center justify-center rounded-full bg-foreground/20"
+          className="absolute items-center justify-center "
           style={{
             width: s(34),
             height: s(34),
             left: s(16),
             padding: s(8),
+            borderRadius: s(17),
+            backgroundColor: "rgba(255,255,255,0.2)",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <SVGIcons.ChevronLeft style={{ width: s(12), height: s(16) }} />
+          <SVGIcons.ChevronLeft style={{ width: s(13), height: s(13) }} />
         </TouchableOpacity>
         <ScaledText
           allowScaling={false}
-          variant="xl"
-          style={{ color: "#FFFFFF" }}
+          variant="lg"
+          className="text-white font-neueSemibold"
         >
           Privacy Policy
         </ScaledText>

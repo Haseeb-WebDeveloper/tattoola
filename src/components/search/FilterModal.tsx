@@ -1,16 +1,22 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { useSearchStore } from "@/stores/searchStore";
 import { getFacets } from "@/services/facet.service";
+import { useSearchStore } from "@/stores/searchStore";
 import type { Facets } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import {
-  BottomSheetModal,
   BottomSheetBackdrop,
+  BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TouchableOpacity, View, ActivityIndicator } from "react-native";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SearchLocationPicker from "../shared/SearchLocationPicker";
 import ServiceFilter from "./ServiceFilter";
@@ -23,7 +29,8 @@ type FilterModalProps = {
 
 export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const insets = useSafeAreaInsets();
-  const { filters, updateFilters, search, activeTab, facets } = useSearchStore();
+  const { filters, updateFilters, search, activeTab, facets } =
+    useSearchStore();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const [tempFilters, setTempFilters] = useState(filters);
@@ -39,7 +46,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const isShowingLocationPickerRef = useRef(false);
   // Track pending filter changes for rapid selections
-  const pendingFilterChangeRef = useRef<"style" | "service" | "location" | null>(null);
+  const pendingFilterChangeRef = useRef<
+    "style" | "service" | "location" | null
+  >(null);
   const isLoadingRef = useRef(false);
 
   // Snap points for the bottom sheet (90% of screen height)
@@ -84,12 +93,14 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   // Reload facets immediately when activeTab changes (no debounce)
   useEffect(() => {
     if (!visible) return;
-    
+
     // Check if tab actually changed
     if (prevActiveTabRef.current !== activeTab) {
       prevActiveTabRef.current = activeTab;
       // Load facets immediately for new tab (no changedFilterType = all loading)
-      console.log(`🔄 [FILTER_MODAL] Tab changed to ${activeTab}, reloading facets immediately`);
+      console.log(
+        `🔄 [FILTER_MODAL] Tab changed to ${activeTab}, reloading facets immediately`
+      );
       loadFacetsForFilters(tempFilters);
     }
   }, [activeTab, visible]);
@@ -121,9 +132,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         const styleIdsSet = new Set(newFacets.styles.map((s) => s.id));
         const serviceIdsSet = new Set(newFacets.services.map((s) => s.id));
         const locationKeySet = new Set(
-          newFacets.locations.map(
-            (l) => `${l.provinceId}::${l.municipalityId}`
-          )
+          newFacets.locations.map((l) => `${l.provinceId}::${l.municipalityId}`)
         );
 
         const next = {
@@ -166,7 +175,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   };
 
   // Helper function to update loading states based on changed filter type
-  const updateLoadingStates = (changedFilterType?: "style" | "service" | "location") => {
+  const updateLoadingStates = (
+    changedFilterType?: "style" | "service" | "location"
+  ) => {
     if (changedFilterType === "style") {
       setIsLoadingServices(true);
       setIsLoadingLocations(true);
@@ -296,7 +307,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
     // Trigger search
     search();
-    
+
     // Close bottom sheet modal
     // handleSheetDismiss will call onClose() to sync parent state
     bottomSheetRef.current?.dismiss();
@@ -313,7 +324,10 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       <BottomSheetModal
         ref={bottomSheetRef}
         snapPoints={snapPoints}
-        enablePanDownToClose
+        enablePanDownToClose={true}
+        enableDismissOnClose={true}
+        enableContentPanningGesture={true}
+        enableHandlePanningGesture={true}
         onDismiss={handleSheetDismiss}
         onChange={handleSheetChange}
         backdropComponent={renderBackdrop}
@@ -340,185 +354,182 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
           }}
           keyboardShouldPersistTaps="handled"
         >
-              {/* Style Filter Section */}
-              <View style={{ marginBottom: mvs(18) }}>
-                <View
-                  className="flex-row items-center justify-between"
-                  style={{ marginBottom: mvs(10) }}
+          {/* Style Filter Section */}
+          <View style={{ marginBottom: mvs(18) }}>
+            <View
+              className="flex-row items-center justify-between"
+              style={{ marginBottom: mvs(10) }}
+            >
+              <View className="flex-row items-center gap-2">
+                <SVGIcons.EditBrush width={s(14)} height={s(14)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-montserratSemibold"
                 >
-                  <View className="flex-row items-center gap-2">
-                    <SVGIcons.EditBrush width={s(14)} height={s(14)} />
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className="text-foreground font-montserratSemibold"
-                    >
-                      Filtra per stile
-                    </ScaledText>
-                  </View>
-                  <TouchableOpacity onPress={handleResetStyle}>
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className="text-gray font-neueLight"
-                    >
-                      Reimposta
-                    </ScaledText>
-                  </TouchableOpacity>
-                </View>
-                <StyleFilter
-                  selectedIds={tempFilters.styleIds}
-                  onSelectionChange={handleStyleChange}
-                  facets={tempFacets?.styles || []}
-                  isLoading={isLoadingStyles}
-                  onConfirm={handleStyleConfirm}
-                />
+                  Filtra per stile
+                </ScaledText>
               </View>
-
-              {/* Divider */}
-              <View
-                className="bg-gray"
-                style={{ height: s(0.5), marginBottom: mvs(24) }}
-              />
-
-              {/* Service Filter Section */}
-              <View style={{ marginBottom: mvs(18) }}>
-                <View
-                  className="flex-row items-center justify-between"
-                  style={{ marginBottom: mvs(10) }}
+              <TouchableOpacity onPress={handleResetStyle}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-neueLight"
                 >
-                  <View className="flex-row items-center gap-2">
-                    <SVGIcons.MagicStick width={s(14)} height={s(14)} />
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className="text-foreground font-montserratSemibold"
-                    >
-                      Filtra per servizio
-                    </ScaledText>
-                  </View>
-                  <TouchableOpacity
-                    activeOpacity={1}
-                    onPress={handleResetService}
-                  >
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className="text-gray font-neueLight"
-                    >
-                      Reimposta
-                    </ScaledText>
-                  </TouchableOpacity>
-                </View>
-                <ServiceFilter
-                  selectedIds={tempFilters.serviceIds}
-                  onSelectionChange={handleServiceChange}
-                  facets={tempFacets?.services || []}
-                  isLoading={isLoadingServices}
-                  onConfirm={handleServiceConfirm}
-                />
+                  Reimposta
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+            <StyleFilter
+              selectedIds={tempFilters.styleIds}
+              onSelectionChange={handleStyleChange}
+              facets={tempFacets?.styles || []}
+              isLoading={isLoadingStyles}
+              onConfirm={handleStyleConfirm}
+            />
+          </View>
+
+          {/* Divider */}
+          <View
+            className="bg-gray"
+            style={{ height: s(0.5), marginBottom: mvs(24) }}
+          />
+
+          {/* Service Filter Section */}
+          <View style={{ marginBottom: mvs(18) }}>
+            <View
+              className="flex-row items-center justify-between"
+              style={{ marginBottom: mvs(10) }}
+            >
+              <View className="flex-row items-center gap-2">
+                <SVGIcons.MagicStick width={s(14)} height={s(14)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-montserratSemibold"
+                >
+                  Filtra per servizio
+                </ScaledText>
               </View>
-
-              {/* Divider */}
-              <View
-                className="bg-gray"
-                style={{ height: s(0.5), marginBottom: mvs(20) }}
-              />
-
-              {/* Location Filter Section */}
-              <View style={{ marginBottom: mvs(18) }}>
-                <View
-                  className="flex-row items-center justify-between"
-                  style={{ marginBottom: mvs(10) }}
+              <TouchableOpacity activeOpacity={1} onPress={handleResetService}>
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-gray font-neueLight"
                 >
-                  <View className="flex-row items-center gap-2">
-                    <SVGIcons.Location width={s(14)} height={s(14)} />
-                    <ScaledText
-                      allowScaling={false}
-                      variant="md"
-                      className="text-foreground font-montserratSemibold"
-                    >
-                      Filtra per provincia
-                    </ScaledText>
-                  </View>
-                  {(tempFilters.provinceId || tempFilters.municipalityId) && (
-                    <TouchableOpacity onPress={handleResetLocation}>
-                      <ScaledText
-                        allowScaling={false}
-                        variant="md"
-                        className="text-gray font-neueLight"
-                      >
-                        Reimposta
-                      </ScaledText>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={() => {
-                    // Set flag before dismissing to prevent onClose from being called
-                    isShowingLocationPickerRef.current = true;
-                    // Dismiss bottom sheet first to avoid modal conflicts
-                    bottomSheetRef.current?.dismiss();
-                    // Show location picker after a short delay
-                    setTimeout(() => {
-                      setShowLocationPicker(true);
-                    }, 300);
-                  }}
-                  className="flex-row items-center justify-between bg-tat-foreground border-gray"
-                  style={{
-                    paddingVertical: mvs(10),
-                    paddingHorizontal: s(16),
-                    borderWidth: s(1),
-                    borderRadius: s(8),
-                  }}
+                  Reimposta
+                </ScaledText>
+              </TouchableOpacity>
+            </View>
+            <ServiceFilter
+              selectedIds={tempFilters.serviceIds}
+              onSelectionChange={handleServiceChange}
+              facets={tempFacets?.services || []}
+              isLoading={isLoadingServices}
+              onConfirm={handleServiceConfirm}
+            />
+          </View>
+
+          {/* Divider */}
+          <View
+            className="bg-gray"
+            style={{ height: s(0.5), marginBottom: mvs(20) }}
+          />
+
+          {/* Location Filter Section */}
+          <View style={{ marginBottom: mvs(18) }}>
+            <View
+              className="flex-row items-center justify-between"
+              style={{ marginBottom: mvs(10) }}
+            >
+              <View className="flex-row items-center gap-2">
+                <SVGIcons.Location width={s(14)} height={s(14)} />
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-montserratSemibold"
                 >
+                  Filtra per provincia
+                </ScaledText>
+              </View>
+              {(tempFilters.provinceId || tempFilters.municipalityId) && (
+                <TouchableOpacity onPress={handleResetLocation}>
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-gray font-montserratMedium"
-                  >
-                    {locationNames &&
-                    tempFilters.provinceId &&
-                    tempFilters.municipalityId
-                      ? `${locationNames.municipality}, ${locationNames.province}`
-                      : "Seleziona posizione"}
-                  </ScaledText>
-                  <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Action Buttons */}
-              <View className="flex-row gap-4" style={{ marginTop: mvs(12) }}>
-                <TouchableOpacity
-                  onPress={handleResetAll}
-                  className="items-center justify-center flex-1 border rounded-full border-gray"
-                  style={{ paddingVertical: mvs(12) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-foreground font-neueSemibold"
+                    className="text-gray font-neueLight"
                   >
                     Reimposta
                   </ScaledText>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleApply}
-                  className={`flex-1 rounded-full items-center justify-center ${
-                    hasActiveFilters ? "bg-primary" : "bg-primary/50"
-                  }`}
-                  style={{ paddingVertical: mvs(12) }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-white font-neueSemibold"
-                  >
-                    Applica filtri
-                  </ScaledText>
-                </TouchableOpacity>
-              </View>
+              )}
+            </View>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => {
+                // Set flag before dismissing to prevent onClose from being called
+                isShowingLocationPickerRef.current = true;
+                // Dismiss bottom sheet first to avoid modal conflicts
+                bottomSheetRef.current?.dismiss();
+                // Show location picker after a short delay
+                setTimeout(() => {
+                  setShowLocationPicker(true);
+                }, 300);
+              }}
+              className="flex-row items-center justify-between bg-tat-foreground border-gray"
+              style={{
+                paddingVertical: mvs(10),
+                paddingHorizontal: s(16),
+                borderWidth: s(1),
+                borderRadius: s(8),
+              }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-gray font-montserratMedium"
+              >
+                {locationNames &&
+                tempFilters.provinceId &&
+                tempFilters.municipalityId
+                  ? `${locationNames.municipality}, ${locationNames.province}`
+                  : "Seleziona posizione"}
+              </ScaledText>
+              <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Action Buttons */}
+          <View className="flex-row gap-4" style={{ marginTop: mvs(12) }}>
+            <TouchableOpacity
+              onPress={handleResetAll}
+              className="items-center justify-center flex-1 border rounded-full border-gray"
+              style={{ paddingVertical: mvs(12) }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-foreground font-neueSemibold"
+              >
+                Reimposta
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleApply}
+              className={`flex-1 rounded-full items-center justify-center ${
+                hasActiveFilters ? "bg-primary" : "bg-primary/50"
+              }`}
+              style={{ paddingVertical: mvs(12) }}
+            >
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-white font-neueSemibold"
+              >
+                Applica filtri
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
         </BottomSheetScrollView>
       </BottomSheetModal>
       <SearchLocationPicker

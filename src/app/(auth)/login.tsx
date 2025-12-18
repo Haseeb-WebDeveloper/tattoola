@@ -91,6 +91,10 @@ function LoginScreenContent() {
     router.push("/(auth)/artist-registration/tattoola-pro");
   };
 
+  const handleBackToWelcome = () => {
+    router.replace("/(auth)/welcome");
+  };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background">
@@ -126,6 +130,25 @@ function LoginScreenContent() {
         contentContainerStyle={{ flexGrow: 1 }}
         style={{ zIndex: 1 }}
       >
+        {/* Back Button */}
+        <View className="px-6" style={{ marginTop: mvs(15) }}>
+          <TouchableOpacity
+            onPress={handleBackToWelcome}
+            className="rounded-full items-center justify-center self-start"
+            style={{
+              width: s(36),
+              height: s(36),
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+            }}
+          >
+            <SVGIcons.ChevronLeft
+              width={s(16)}
+              height={s(16)}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Header with Logo and Help Icon */}
         <View
           className="w-full flex-row justify-between items-center px-6"
@@ -182,11 +205,11 @@ function LoginScreenContent() {
             allowScaling={false}
             variant="md"
             className="text-gray font-montserratLight"
-            style={{ 
+            style={{
               marginHorizontal: s(16),
               fontSize: s(14),
               lineHeight: 23,
-              color: '#A49A99'
+              color: "#A49A99",
             }}
           >
             Oppure
@@ -287,7 +310,10 @@ function LoginScreenContent() {
         </View>
 
         {/* Bottom image with artist text overlay */}
-        <View className="w-full relative" style={{ marginTop: 'auto', flex: 1, minHeight: scaledVSize(200) }}>
+        <View
+          className="w-full relative"
+          style={{ marginTop: "auto", flex: 1, minHeight: scaledVSize(200) }}
+        >
           <Image
             source={require("@/assets/auth/login-2.png")}
             className="w-full h-full"
@@ -300,7 +326,7 @@ function LoginScreenContent() {
             style={StyleSheet.absoluteFillObject}
             pointerEvents="none"
           />
-          
+
           {/* Artist text overlay */}
           <TouchableOpacity
             onPress={handleArtistLogin}
