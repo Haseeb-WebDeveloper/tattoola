@@ -85,17 +85,17 @@ export default function StudioCardSkeleton() {
         >
           <Animated.View
             className="bg-gray/30 rounded-full"
-            style={{ width: s(90), height: mvs(26), opacity }}
+            style={{ width: s(90), height: mvs(29), opacity }}
           />
           <Animated.View
             className="bg-gray/30 rounded-full"
-            style={{ width: s(110), height: mvs(26), opacity }}
+            style={{ width: s(110), height: mvs(29), opacity }}
           />
         </View>
       </View>
 
       {/* Banner Skeleton */}
-      <Animated.View className="bg-gray/30" style={{ height: mvs(226), opacity }} />
+      <Animated.View className="bg-gray/30" style={{ height: mvs(180), opacity }} />
     </View>
   );
 }

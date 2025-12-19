@@ -103,17 +103,17 @@ export default function ArtistCardSkeleton() {
         >
           <Animated.View
             className="bg-gray/30 rounded-full"
-            style={{ width: s(80), height: mvs(26), opacity }}
+            style={{ width: s(80), height: mvs(29), opacity }}
           />
           <Animated.View
             className="bg-gray/30 rounded-full"
-            style={{ width: s(100), height: mvs(26), opacity }}
+            style={{ width: s(100), height: mvs(29), opacity }}
           />
         </View>
       </View>
 
       {/* Banner Skeleton */}
-      <Animated.View className="bg-gray/30" style={{ height: mvs(226), opacity }} />
+      <Animated.View className="bg-gray/30" style={{ height: mvs(180), opacity }} />
     </View>
   );
 }

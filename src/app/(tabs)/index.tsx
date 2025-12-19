@@ -1,5 +1,8 @@
 import { BannerCard } from "@/components/BannerCard";
-import { CollectionBannerCard } from "@/components/CollectionBannerCard";
+import {
+  CollectionBannerCard,
+  CollectionBannerOverlay,
+} from "@/components/CollectionBannerCard";
 import { FeedPostCard, FeedPostOverlay } from "@/components/FeedPostCard";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
@@ -64,8 +67,17 @@ export default function HomeScreen() {
 
   // Track currently visible post ID for overlay
   const [currentPostId, setCurrentPostId] = useState<string | null>(null);
-  // Track if current visible item is a banner (to hide overlay)
+  // Track currently visible collection banner ID for overlay
+  const [currentCollectionId, setCurrentCollectionId] = useState<
+    string | null
+  >(null);
+  // Track if current visible item is a banner/collection (to hide post overlay)
   const [isCurrentBanner, setIsCurrentBanner] = useState(false);
+  
+  // Store last known IDs to restore when screen regains focus
+  const lastPostIdRef = useRef<string | null>(null);
+  const lastCollectionIdRef = useRef<string | null>(null);
+  const lastIsBannerRef = useRef<boolean>(false);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -76,11 +88,31 @@ export default function HomeScreen() {
       if (viewableItems.length > 0 && viewableItems[0].item) {
         const entry = viewableItems[0].item as FeedEntry;
         if (entry.kind === "post") {
-          setCurrentPostId(entry.post.id);
+          const postId = entry.post.id;
+          setCurrentPostId(postId);
+          setCurrentCollectionId(null);
           setIsCurrentBanner(false);
+          // Store for restoration
+          lastPostIdRef.current = postId;
+          lastCollectionIdRef.current = null;
+          lastIsBannerRef.current = false;
+        } else if (entry.kind === "collectionBanner") {
+          const collectionId = entry.collection?.id ?? null;
+          setCurrentPostId(null);
+          setCurrentCollectionId(collectionId);
+          setIsCurrentBanner(true);
+          // Store for restoration
+          lastPostIdRef.current = null;
+          lastCollectionIdRef.current = collectionId;
+          lastIsBannerRef.current = true;
         } else {
           setCurrentPostId(null);
+          setCurrentCollectionId(null);
           setIsCurrentBanner(true);
+          // Store for restoration
+          lastPostIdRef.current = null;
+          lastCollectionIdRef.current = null;
+          lastIsBannerRef.current = true;
         }
       }
     }
@@ -101,11 +133,31 @@ export default function HomeScreen() {
       // Only initialize if this is a new feed (first entry changed or not initialized)
       if (lastFirstEntryId.current !== firstEntryId) {
         if (firstEntry.kind === "post") {
-          setCurrentPostId(firstEntry.post.id);
+          const postId = firstEntry.post.id;
+          setCurrentPostId(postId);
+          setCurrentCollectionId(null);
           setIsCurrentBanner(false);
+          // Store for restoration
+          lastPostIdRef.current = postId;
+          lastCollectionIdRef.current = null;
+          lastIsBannerRef.current = false;
+        } else if (firstEntry.kind === "collectionBanner") {
+          const collectionId = firstEntry.collection?.id ?? null;
+          setCurrentPostId(null);
+          setCurrentCollectionId(collectionId);
+          setIsCurrentBanner(true);
+          // Store for restoration
+          lastPostIdRef.current = null;
+          lastCollectionIdRef.current = collectionId;
+          lastIsBannerRef.current = true;
         } else {
           setCurrentPostId(null);
+          setCurrentCollectionId(null);
           setIsCurrentBanner(true);
+          // Store for restoration
+          lastPostIdRef.current = null;
+          lastCollectionIdRef.current = null;
+          lastIsBannerRef.current = true;
         }
         lastFirstEntryId.current = firstEntryId;
       }
@@ -115,14 +167,30 @@ export default function HomeScreen() {
   // Pause all videos when screen loses focus (navigating away)
   useFocusEffect(
     useCallback(() => {
-      // Screen is focused - onViewableItemsChanged will handle setting currentPostId
+      // Screen is focused - restore last known state immediately (if any)
+      if (lastPostIdRef.current !== null) {
+        setCurrentPostId(lastPostIdRef.current);
+        setCurrentCollectionId(null);
+        setIsCurrentBanner(false);
+      } else if (lastCollectionIdRef.current !== null) {
+        setCurrentPostId(null);
+        setCurrentCollectionId(lastCollectionIdRef.current);
+        setIsCurrentBanner(true);
+      } else if (lastIsBannerRef.current) {
+        setCurrentPostId(null);
+        setCurrentCollectionId(null);
+        setIsCurrentBanner(true);
+      }
+
       return () => {
         // Screen is blurred - pause all videos by setting currentPostId to null
         // This makes all FeedPostCards have isVisible=false, pausing their videos
+        // Don't clear the refs - we'll restore from them when screen regains focus
         setCurrentPostId(null);
+        setCurrentCollectionId(null);
         setIsCurrentBanner(false);
       };
-    }, [])
+    }, [feedEntries])
   );
 
   // Get current post from store (always up-to-date)
@@ -133,6 +201,19 @@ export default function HomeScreen() {
             (e) => e.kind === "post" && e.post.id === currentPostId
           ) as Extract<FeedEntry, { kind: "post" }> | undefined;
           return entry ? entry.post : null;
+        })()
+      : null;
+
+  // Get current collection from store (always up-to-date)
+  const currentCollection =
+    currentCollectionId != null
+      ? (() => {
+          const entry = feedEntries.find(
+            (e) =>
+              e.kind === "collectionBanner" &&
+              e.collection?.id === currentCollectionId
+          ) as Extract<FeedEntry, { kind: "collectionBanner" }> | undefined;
+          return entry ? entry.collection : null;
         })()
       : null;
 
@@ -368,6 +449,21 @@ export default function HomeScreen() {
             }
             toggleLikeOptimistic(currentPost.id, user.id);
           }}
+        />
+      )}
+
+      {/* Collection banner overlay - above gradients, at screen level */}
+      {currentCollection && isCurrentBanner && (
+        <CollectionBannerOverlay
+          collection={currentCollection}
+          onPress={() =>
+            router.push({
+              pathname: `/collections/${currentCollection.id}`,
+              params: {
+                name: currentCollection.name,
+              },
+            } as any)
+          }
         />
       )}
 
