@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
 
 function CollectionScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
@@ -27,8 +28,7 @@ function CollectionScreen() {
   const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 
-  const title =
-    typeof name === "string" && name.length > 0 ? name : "";
+  const title = typeof name === "string" && name.length > 0 ? name : "";
 
   /* ---------------- FACETS ---------------- */
   const styleFacets = useMemo<StyleFacet[]>(() => {
@@ -88,15 +88,10 @@ function CollectionScreen() {
   }, [artists, selectedStyleIds, selectedServiceIds]);
 
   /* ---------------- LIST ---------------- */
-  const keyExtractor = useCallback(
-    (item: ArtistSearchResult) => item.id,
-    []
-  );
+  const keyExtractor = useCallback((item: ArtistSearchResult) => item.id, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: ArtistSearchResult }) => (
-      <ArtistCard artist={item} />
-    ),
+    ({ item }: { item: ArtistSearchResult }) => <ArtistCard artist={item} />,
     []
   );
 
@@ -139,7 +134,6 @@ function CollectionScreen() {
         {/* ================= HEADER (NORMAL LAYOUT) ================= */}
         <View
           style={{
-            paddingTop: mvs(40),
             paddingBottom: mvs(16),
             paddingHorizontal: s(16),
             flexDirection: "row",
@@ -180,9 +174,10 @@ function CollectionScreen() {
 
         {/* ================= LIST (SCROLLS ONLY) ================= */}
         {loading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#fff" />
-          </View>
+          <>
+            <ArtistCardSkeleton />
+            <ArtistCardSkeleton />
+          </>
         ) : error ? (
           <View className="flex-1 items-center justify-center px-6">
             <ScaledText variant="md" className="text-foreground">
