@@ -12,13 +12,15 @@ import {
 } from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
-import { ms, mvs, s } from "@/utils/scale";
+import { usePresenceStore } from "@/stores/presenceStore";
+import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -26,7 +28,6 @@ import {
   Platform,
   TouchableOpacity,
   View,
-  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -65,6 +66,9 @@ export default function ChatThreadScreen() {
 
   const rotationAnim = useRef(new Animated.Value(0)).current;
 
+  // Get online status from presence store
+  const onlineUserIds = usePresenceStore((s) => s.onlineUserIds);
+
   useEffect(() => {
     if (isLoadingOlder) {
       rotationAnim.setValue(0);
@@ -87,6 +91,26 @@ export default function ChatThreadScreen() {
   const peerUsername = React.useMemo(() => {
     return peer?.username || `${peer?.name || ""}`.trim() || "User";
   }, [peer?.username, peer?.name]);
+
+  // Check if conversation is blocked
+  const isConversationBlocked = React.useMemo(() => {
+    return conv?.status === "BLOCKED";
+  }, [conv?.status]);
+
+  // Check if input should be disabled
+  const isInputDisabled = React.useMemo(() => {
+    return (
+      uploading ||
+      isConversationBlocked ||
+      (conv?.status === "REQUESTED" && user?.id !== conv?.artistId)
+    );
+  }, [
+    uploading,
+    isConversationBlocked,
+    conv?.status,
+    conv?.artistId,
+    user?.id,
+  ]);
 
   // Deduplicate messages by ID (safety check)
   // Reverse array for inverted FlatList (newest at index 0 = bottom of screen)
@@ -269,21 +293,42 @@ export default function ChatThreadScreen() {
 
   const handlePickFile = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
-        copyToCacheDirectory: true,
+      // Request permission to access media library
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        toast.error("Autorizzazione negata per accedere alla galleria");
+        return;
+      }
+
+      // Launch image picker to select from gallery
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images", "videos"],
+        allowsEditing: false,
+        quality: 1,
       });
 
       if (result.canceled) return;
 
-      const file = result.assets[0];
+      const asset = result.assets[0];
 
       // Check file size (100MB limit)
       const maxSize = 100 * 1024 * 1024; // 100MB in bytes
-      if (file.size && file.size > maxSize) {
+      if (asset.fileSize && asset.fileSize > maxSize) {
         toast.error("File troppo grande");
         return;
       }
+
+      // Transform ImagePicker asset to match DocumentPicker format
+      const file = {
+        uri: asset.uri,
+        name:
+          asset.fileName ||
+          `media_${Date.now()}.${asset.type === "video" ? "mp4" : "jpg"}`,
+        size: asset.fileSize,
+        mimeType: asset.type === "video" ? "video/mp4" : "image/jpeg",
+      };
 
       setSelectedFile(file);
     } catch (error) {
@@ -308,12 +353,35 @@ export default function ChatThreadScreen() {
 
   const handleBlock = React.useCallback(async () => {
     if (!user?.id || !peer?.id || !conversationId) return;
+
+    // Optimistically update UI
+    setConv((prev: any) => ({ ...prev, status: "BLOCKED" }));
+
     try {
       await blockUser(user.id, peer.id, conversationId);
       toast.success("Utente bloccato");
+
+      // Reload conversation to ensure we have the latest server state
+      // This also updates blockedAt, blockedBy fields
+      const updatedConv = await fetchConversationByIdWithPeer(
+        user.id,
+        conversationId
+      );
+      if (updatedConv) {
+        setConv(updatedConv);
+      }
     } catch (error) {
       console.error("Error blocking user:", error);
       toast.error("Blocco dell'utente non riuscito");
+
+      // Revert optimistic update on error
+      const originalConv = await fetchConversationByIdWithPeer(
+        user.id,
+        conversationId
+      );
+      if (originalConv) {
+        setConv(originalConv);
+      }
     }
   }, [user?.id, peer?.id, conversationId]);
 
@@ -336,7 +404,7 @@ export default function ChatThreadScreen() {
 
   const handleInputPress = React.useCallback(() => {
     // Check if conversation is blocked
-    if (conv?.status === "BLOCKED") {
+    if (isConversationBlocked) {
       setShowMessageRestrictionModal(true);
       return;
     }
@@ -345,7 +413,7 @@ export default function ChatThreadScreen() {
       setShowMessageRestrictionModal(true);
       return;
     }
-  }, [conv?.status, conv?.artistId, user?.id]);
+  }, [isConversationBlocked, conv?.status, conv?.artistId, user?.id]);
 
   const handleCloseRestrictionModal = React.useCallback(() => {
     setShowMessageRestrictionModal(false);
@@ -414,10 +482,15 @@ export default function ChatThreadScreen() {
               />
             </View>
           ) : (
-            <View
+            <TouchableOpacity
               className="flex-row items-center"
               style={{
                 gap: s(12),
+              }}
+              onPress={() => {
+                if (peer?.id) {
+                  router.push(`/user/${peer.id}` as any);
+                }
               }}
             >
               <View className="relative">
@@ -433,14 +506,24 @@ export default function ChatThreadScreen() {
                     height: s(36),
                   }}
                 />
-                {conv?.status === "BLOCKED" && (
+                {/* Online status indicator */}
+                {peer?.id && (
+                  <View
+                    className={`rounded-full absolute right-0 top-0 ${onlineUserIds?.[peer.id] ? "bg-success" : "bg-error"}`}
+                    style={{
+                      width: s(10),
+                      height: s(10),
+                      borderWidth: s(1),
+                      borderColor: "#0F0202",
+                    }}
+                  />
+                )}
+                {isConversationBlocked && (
                   <View
                     className="absolute top-0 left-0 rounded-full bg-black/50 items-center justify-center"
                     style={{
                       width: s(36),
                       height: s(36),
-                      top: 0,
-                      left: 0,
                     }}
                   >
                     <SVGIcons.Locked width={s(16)} height={s(16)} />
@@ -454,7 +537,7 @@ export default function ChatThreadScreen() {
               >
                 {TrimText(peer?.name || "Utente", 18)}
               </ScaledText>
-            </View>
+            </TouchableOpacity>
           )}
           <TouchableOpacity
             onPress={() => setMenuModalVisible(true)}
@@ -685,22 +768,11 @@ export default function ChatThreadScreen() {
             >
               <TouchableOpacity
                 onPress={handlePickFile}
-                disabled={
-                  uploading ||
-                  (conv?.status === "REQUESTED" &&
-                    user?.id !== conv?.artistId) ||
-                  conv?.status === "BLOCKED"
-                }
+                disabled={isInputDisabled}
                 style={{
                   marginRight: s(4),
                   paddingBottom: mvs(10),
-                  opacity:
-                    uploading ||
-                    (conv?.status === "REQUESTED" &&
-                      user?.id !== conv?.artistId) ||
-                    conv?.status === "BLOCKED"
-                      ? 0.4
-                      : 1,
+                  opacity: isInputDisabled ? 0.4 : 1,
                 }}
               >
                 <SVGIcons.Attachment width={s(20)} height={s(20)} />
@@ -709,49 +781,32 @@ export default function ChatThreadScreen() {
                 style={{ flex: 1 }}
                 activeOpacity={1}
                 onPress={handleInputPress}
-                disabled={
-                  !uploading &&
-                  !(
-                    conv?.status === "REQUESTED" && user?.id !== conv?.artistId
-                  ) &&
-                  conv?.status !== "BLOCKED"
-                }
+                disabled={!isInputDisabled}
               >
-                <ScaledTextInput
-                  value={text}
-                  onChangeText={setText}
-                  placeholder="Scrivi il tuo messaggio qui..."
-                  className="text-foreground"
-                  containerClassName="bg-transparent"
-                  multiline={true}
-                  textAlignVertical="top"
-                  containerStyle={{
-                    width: "100%",
-                  }}
-                  style={{
-                    maxHeight: mvs(110),
-                    minHeight: mvs(20),
-                    backgroundColor: "#140404",
-                  }}
-                  editable={
-                    !uploading &&
-                    !(
-                      conv?.status === "REQUESTED" &&
-                      user?.id !== conv?.artistId
-                    ) &&
-                    conv?.status !== "BLOCKED"
-                  }
-                  scrollEnabled={true}
-                  // Ensure the placeholder is one line
-                />
+                <View pointerEvents={isInputDisabled ? "none" : "auto"}>
+                  <ScaledTextInput
+                    value={text}
+                    onChangeText={setText}
+                    placeholder="Scrivi il tuo messaggio qui..."
+                    className="text-foreground"
+                    containerClassName="bg-transparent"
+                    multiline={true}
+                    textAlignVertical="top"
+                    containerStyle={{
+                      width: "100%",
+                    }}
+                    style={{
+                      maxHeight: mvs(110),
+                      minHeight: mvs(20),
+                      backgroundColor: "#140404",
+                    }}
+                    editable={!isInputDisabled}
+                    scrollEnabled={true}
+                  />
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
-                disabled={
-                  uploading ||
-                  (conv?.status === "REQUESTED" &&
-                    user?.id !== conv?.artistId) ||
-                  conv?.status === "BLOCKED"
-                }
+                disabled={isInputDisabled}
                 onPress={handleSend}
                 className="items-center justify-center rounded-full"
                 style={{
@@ -824,7 +879,7 @@ export default function ChatThreadScreen() {
               className="text-background font-neueBold text-center"
               style={{ marginBottom: mvs(4) }}
             >
-              {conv?.status === "BLOCKED"
+              {isConversationBlocked
                 ? "La conversazione è bloccata"
                 : "Richiesta in sospeso"}
             </ScaledText>
@@ -836,7 +891,7 @@ export default function ChatThreadScreen() {
               className="text-background font-montserratMedium text-center"
               style={{ marginBottom: mvs(18) }}
             >
-              {conv?.status === "BLOCKED"
+              {isConversationBlocked
                 ? "Non puoi inviare messaggi in una conversazione bloccata."
                 : "Non puoi inviare messaggi finché l'artista non accetta la tua richiesta."}
             </ScaledText>

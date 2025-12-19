@@ -27,4 +27,4 @@ export const ageOptions = [
 ] as const;
 
 // Constants
-export const MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST = 5;
+export const MAX_IMAGES_PER_REFERENCE_FOR_PRIVATE_REQUEST = 2;

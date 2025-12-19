@@ -4,9 +4,12 @@ import { mvs, s } from "@/utils/scale";
 import { TouchableOpacity, View } from "react-native";
 import { ScaledText } from "./ScaledText";
 
+type StylePillSize = "small" | "medium";
+
 export const StylePills = ({
   styles,
   onStylePress,
+  size = "medium",
 }: {
   styles: {
     id: string;
@@ -21,6 +24,7 @@ export const StylePills = ({
     imageUrl?: string | null;
     description?: string | null;
   }) => void;
+  size?: StylePillSize;
 }) => {
   // Filter out invalid styles (where id or name is missing)
   const validStyles = styles.filter((style) => style.id && style.name);
@@ -29,6 +33,30 @@ export const StylePills = ({
     return null;
   }
 
+  // Size-specific styling
+  const sizeStyles = {
+    small: {
+      paddingHorizontal: s(8),
+      paddingVertical: mvs(3),
+      borderWidth: s(0.5),
+      textVariant: "xs" as const,
+      iconSize: s(11),
+      iconTop: s(-7),
+      iconRight: s(0),
+    },
+    medium: {
+      paddingHorizontal: s(12),
+      paddingVertical: mvs(4),
+      borderWidth: s(1),
+      textVariant: "md" as const,
+      iconSize: s(14),
+      iconTop: s(-9),
+      iconRight: s(1),
+    },
+  };
+
+  const currentSize = sizeStyles[size];
+
   return (
     <View className="flex-row flex-wrap gap-2" style={{ marginTop: mvs(8) }}>
       {validStyles.map((style) => {
@@ -36,17 +64,16 @@ export const StylePills = ({
           <View
             className="relative rounded-full "
             style={{
-              paddingHorizontal: s(12),
-              paddingVertical: mvs(4),
+              paddingHorizontal: currentSize.paddingHorizontal,
+              paddingVertical: currentSize.paddingVertical,
               justifyContent: "center",
-              borderWidth: s(1),
+              borderWidth: currentSize.borderWidth,
               borderColor: "#fff",
-              // borderColor: style.isFavorite ? "#AE0E0E" : "#fff",
             }}
           >
             <ScaledText
               allowScaling={false}
-              variant="md"
+              variant={currentSize.textVariant}
               className="text-white font-neueMedium"
             >
               {addEmojiWithStyle(style.name)}
@@ -55,9 +82,13 @@ export const StylePills = ({
             {/* For fav we show icon */}
             {style.isFavorite && (
               <SVGIcons.King
-                width={s(14)}
-                height={s(14)}
-                style={{ position: "absolute", right: s(1), top: s(-9) }}
+                width={currentSize.iconSize}
+                height={currentSize.iconSize}
+                style={{
+                  position: "absolute",
+                  right: currentSize.iconRight,
+                  top: currentSize.iconTop,
+                }}
               />
             )}
           </View>
