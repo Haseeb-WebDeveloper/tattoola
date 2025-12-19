@@ -1,3 +1,6 @@
+import { CollectionHeader } from "@/components/collection/CollectionHeader";
+import { CollectionModals } from "@/components/collection/CollectionModals";
+import { CollectionPostsGrid } from "@/components/collection/CollectionPostsGrid";
 import AddPostsModal from "@/components/collection/AddPostsModal";
 import CollectionPostCard from "@/components/collection/CollectionPostCard";
 import DeleteCollectionModal from "@/components/collection/DeleteCollectionModal";
@@ -9,7 +12,7 @@ import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   addPostsToCollection,
-  deleteCollection,
+  deleteCollection as deleteCollectionApi,
   fetchCollectionDetails,
   fetchUserPosts,
   removePostFromCollection,
@@ -17,7 +20,7 @@ import {
   updateCollectionName,
 } from "@/services/collection.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
-import { isSystemCollection } from "@/utils/collection.utils";
+import { CollectionPostInterface } from "@/types/collection";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
@@ -38,33 +41,270 @@ const REF_WIDTH = 375;
 const GAP = Math.max(6, Math.round((8 * screenWidth) / REF_WIDTH));
 const H_PADDING = Math.max(24, Math.round((32 * screenWidth) / REF_WIDTH));
 
-interface CollectionPost {
-  id: string;
-  postId: string;
-  caption?: string;
-  thumbnailUrl?: string;
-  likesCount: number;
-  commentsCount: number;
-  createdAt: string;
-  media: {
-    id: string;
-    mediaType: "IMAGE" | "VIDEO";
-    mediaUrl: string;
-    order: number;
-  }[];
-  style?: {
-    id: string;
-    name: string;
-    imageUrl?: string;
-  };
-  author: {
-    id: string;
-    username: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    municipality?: string;
-    province?: string;
+
+function useCollectionDetail(
+  collectionId?: string,
+  viewerId?: string | null
+) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [collection, setCollection] = useState<any>(null);
+  const [posts, setPosts] = useState<CollectionPostInterface[]>([]);
+  const [editName, setEditName] = useState("");
+  const previousNameRef = useRef<string>("");
+  const previousPostsRef = useRef<CollectionPostInterface[] | null>(null);
+
+  const loadCollection = useCallback(async () => {
+    if (!collectionId) return;
+
+    try {
+      setLoading(true);
+      const data = await fetchCollectionDetails(collectionId);
+      setCollection(data);
+      setPosts(data.posts);
+      setEditName(data.name);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Impossibile caricare la collezione");
+    } finally {
+      setLoading(false);
+    }
+  }, [collectionId]);
+
+  const handleSaveName = useCallback(async () => {
+    if (!collection || !editName.trim()) return;
+    // Optimistic update
+    const newName = editName.trim();
+    previousNameRef.current = collection.name;
+    setCollection((prev: any) => ({ ...prev, name: newName }));
+
+    try {
+      await updateCollectionName(collection.id, newName);
+
+      if (viewerId) {
+        await clearProfileCache(viewerId);
+      }
+    } catch (err: any) {
+      setCollection((prev: any) => ({
+        ...prev,
+        name: previousNameRef.current,
+      }));
+      const toastId = toast.custom(
+        <CustomToast
+          message={
+            err.message || "Impossibile aggiornare il nome della collezione"
+          }
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+    }
+  }, [collection, editName, viewerId]);
+
+  const confirmDeleteCollection = useCallback(async () => {
+    if (!collection) return;
+    try {
+      await deleteCollectionApi(collection.id);
+
+      if (viewerId) {
+        await clearProfileCache(viewerId);
+      }
+    } catch (err: any) {
+      const toastId = toast.custom(
+        <CustomToast
+          message={err.message || "Impossibile eliminare la collezione"}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      throw err;
+    }
+  }, [collection, viewerId]);
+
+  const deletePost = useCallback(
+    async (postId: string) => {
+      if (!collection) return;
+
+      try {
+        await removePostFromCollection(collection.id, postId);
+        setPosts((prev) => prev.filter((p) => p.postId !== postId));
+        setCollection((prev: any) => ({
+          ...prev,
+          postsCount: prev.postsCount - 1,
+        }));
+        if (viewerId) {
+          await clearProfileCache(viewerId);
+        }
+      } catch (err: any) {
+        const toastId = toast.custom(
+          <CustomToast
+            message={err.message || "Impossibile rimuovere il post"}
+            iconType="error"
+            onClose={() => toast.dismiss(toastId)}
+          />,
+          { duration: 4000 }
+        );
+        throw err;
+      }
+    },
+    [collection, viewerId]
+  );
+
+  const reorderPosts = useCallback(
+    async (data: CollectionPostInterface[]) => {
+      if (!collection) return;
+
+      const validPosts = data.filter(
+        (item: any) =>
+          item &&
+          !item.isAddButton &&
+          item.postId &&
+          typeof item.postId === "string" &&
+          item.postId !== "add-button"
+      ) as CollectionPostInterface[];
+
+      const postIds = validPosts.map((p) => p.postId);
+      const uniquePostIds = Array.from(new Set(postIds));
+
+      if (postIds.length !== uniquePostIds.length) {
+        console.error("Duplicate posts detected in reorder, removing duplicates");
+        const seen = new Set<string>();
+        const deduplicatedPosts = validPosts.filter((post) => {
+          if (seen.has(post.postId)) {
+            return false;
+          }
+          seen.add(post.postId);
+          return true;
+        });
+
+        if (deduplicatedPosts.length !== posts.length) {
+          console.error("Deduplication resulted in different count, reverting");
+          if (previousPostsRef.current) {
+            setPosts(previousPostsRef.current);
+          }
+          return;
+        }
+
+        previousPostsRef.current = posts;
+        setPosts(deduplicatedPosts);
+
+        try {
+          await reorderCollectionPosts(
+            collection.id,
+            deduplicatedPosts.map((p) => p.postId)
+          );
+          if (viewerId) {
+            await clearProfileCache(viewerId);
+          }
+        } catch (err: any) {
+          console.error("Failed to reorder posts:", err);
+          if (previousPostsRef.current) {
+            setPosts(previousPostsRef.current);
+          } else {
+            loadCollection();
+          }
+        }
+        return;
+      }
+
+      if (validPosts.length === 0 || validPosts.length !== posts.length) {
+        console.warn("Invalid reorder data, reverting");
+        if (previousPostsRef.current) {
+          setPosts(previousPostsRef.current);
+        }
+        return;
+      }
+
+      previousPostsRef.current = posts;
+      setPosts(validPosts);
+
+      try {
+        await reorderCollectionPosts(collection.id, uniquePostIds);
+
+        if (viewerId) {
+          await clearProfileCache(viewerId);
+        }
+      } catch (err: any) {
+        console.error("Failed to reorder posts:", err);
+        if (previousPostsRef.current) {
+          setPosts(previousPostsRef.current);
+        } else {
+          loadCollection();
+        }
+      }
+    },
+    [collection, loadCollection, posts, viewerId]
+  );
+
+  const addPosts = useCallback(
+    async (toAdd: string[], optimistic: CollectionPostInterface[]) => {
+      if (!collection || !toAdd.length) return;
+
+      const prevPostsSnapshot = posts;
+      setPosts((prev) => [...optimistic, ...prev]);
+      setCollection((prev: any) => ({
+        ...prev,
+        postsCount: (prev?.postsCount || 0) + optimistic.length,
+      }));
+
+      try {
+        await addPostsToCollection(collection.id, toAdd);
+        await loadCollection();
+
+        if (viewerId) {
+          await clearProfileCache(viewerId);
+        }
+
+        const toastId = toast.custom(
+          <CustomToast
+            message={`${toAdd.length} ${
+              toAdd.length === 1 ? "tatuaggio" : "tatuaggi"
+            } aggiunti alla collezione`}
+            iconType="success"
+            onClose={() => toast.dismiss(toastId)}
+          />,
+          { duration: 4000 }
+        );
+      } catch (err: any) {
+        setPosts(prevPostsSnapshot);
+        setCollection((prev: any) => ({
+          ...prev,
+          postsCount: Math.max(
+            (prev?.postsCount || 0) - optimistic.length,
+            0
+          ),
+        }));
+        const toastId = toast.custom(
+          <CustomToast
+            message={
+              err.message || "Impossibile aggiungere i post alla collezione"
+            }
+            iconType="error"
+            onClose={() => toast.dismiss(toastId)}
+          />,
+          { duration: 4000 }
+        );
+        throw err;
+      }
+    },
+    [collection, loadCollection, posts, viewerId]
+  );
+
+  return {
+    loading,
+    error,
+    collection,
+    posts,
+    editName,
+    setEditName,
+    reload: loadCollection,
+    saveName: handleSaveName,
+    deleteCollection: confirmDeleteCollection,
+    deletePost,
+    reorderPosts,
+    addPosts,
   };
 }
 
@@ -75,15 +315,8 @@ export default function CollectionDetailsScreen() {
   const insets = useSafeAreaInsets();
   const { show } = useAuthRequiredStore();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [collection, setCollection] = useState<any>(null);
-  const [posts, setPosts] = useState<CollectionPost[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState("");
-  const previousNameRef = useRef<string>("");
-  const previousPostsRef = useRef<CollectionPost[] | null>(null);
   const [selectModalVisible, setSelectModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -101,57 +334,41 @@ export default function CollectionDetailsScreen() {
     useState(false);
   const [deletingCollection, setDeletingCollection] = useState(false);
 
+  const {
+    loading,
+    error,
+    collection,
+    posts,
+    editName,
+    setEditName,
+    reload,
+    saveName,
+    deleteCollection,
+    deletePost,
+    reorderPosts,
+    addPosts,
+  } = useCollectionDetail(id, user?.id || null);
+
   // Layout depends on edit mode: 1 column while editing for reliable DnD
   const NUM_COLUMNS = editMode ? 1 : 2;
   const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
 
-  // Check if this is a system collection (Tutti, preferiti, prefretti)
-  const isSystemColl = React.useMemo(() => {
-    if (!collection?.name) return false;
-    const normalized = collection.name.toLowerCase().trim();
-    return (
-      normalized === "tutti" ||
-      normalized === "preferiti" ||
-      normalized === "prefretti"
-    );
-  }, [collection?.name]);
-
-  // For system collections: can manage posts but cannot edit name or delete collection
-  const canEditCollectionName = isOwner && !isSystemColl;
-  const canDeleteCollection = isOwner && !isSystemColl;
-
-  const loadCollection = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      setLoading(true);
-      const data = await fetchCollectionDetails(id);
-      setCollection(data);
-      setPosts(data.posts);
-      setEditName(data.name);
-    } catch (err: any) {
-      setError(err.message || "Impossibile caricare la collezione");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
   useEffect(() => {
     // Show auth modal for anonymous users when opening collection (dismissible so they can view)
     if (!user) {
       show("Sign in to view and manage collections", true);
     }
-    loadCollection();
-  }, [loadCollection]);
+    reload();
+  }, [reload, show, user]);
 
   // Ensure fresh data whenever screen gains focus
   useFocusEffect(
     React.useCallback(() => {
-      loadCollection();
+      reload();
       return () => {};
-    }, [loadCollection])
+    }, [reload])
   );
 
   const handleBack = () => {
@@ -159,57 +376,8 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleEditName = () => {
-    if (!canEditCollectionName) return;
+    if (!isOwner) return;
     setShowEditModal(true);
-  };
-
-  const handleSaveName = async () => {
-    if (!collection || !editName.trim()) return;
-
-    // Prevent editing system collections
-    if (isSystemCollection(collection.name)) {
-      setShowEditModal(false);
-      const toastId = toast.custom(
-        <CustomToast
-          message="Non puoi modificare il nome di questa collezione di sistema"
-          iconType="error"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
-      return;
-    }
-
-    // Optimistic update
-    const newName = editName.trim();
-    previousNameRef.current = collection.name;
-    setCollection((prev: any) => ({ ...prev, name: newName }));
-    setShowEditModal(false);
-
-    try {
-      await updateCollectionName(collection.id, newName);
-
-      // Clear profile cache to refresh collections on profile screen
-      if (user?.id) {
-        await clearProfileCache(user.id);
-      }
-    } catch (err: any) {
-      // Revert on error
-      setCollection((prev: any) => ({
-        ...prev,
-        name: previousNameRef.current,
-      }));
-      const toastId = toast.custom(
-        <CustomToast
-          message={
-            err.message || "Impossibile aggiornare il nome della collezione"
-          }
-          iconType="error"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
-    }
   };
 
   const handleToggleEditMode = () => {
@@ -218,47 +386,18 @@ export default function CollectionDetailsScreen() {
   };
 
   const handleDeleteCollection = () => {
-    if (!canDeleteCollection) return;
+    if (!isOwner) return;
     setDeleteCollectionModalVisible(true);
   };
 
   const confirmDeleteCollection = async () => {
     if (!isOwner || !collection) return;
-
-    // Prevent deleting system collections
-    if (isSystemCollection(collection.name)) {
-      setDeleteCollectionModalVisible(false);
-      const toastId = toast.custom(
-        <CustomToast
-          message="Non puoi eliminare questa collezione di sistema"
-          iconType="error"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
-      return;
-    }
-
     setDeletingCollection(true);
     try {
-      await deleteCollection(collection.id);
-
-      // Clear profile cache to refresh collections on profile screen
-      if (user?.id) {
-        await clearProfileCache(user.id);
-      }
-
-      // Navigate back after successful deletion
+      await deleteCollection();
       router.back();
-    } catch (err: any) {
-      const toastId = toast.custom(
-        <CustomToast
-          message={err.message || "Impossibile eliminare la collezione"}
-          iconType="error"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
+    } catch (err) {
+      // Error toast is handled inside the hook
     } finally {
       setDeletingCollection(false);
       setDeleteCollectionModalVisible(false);
@@ -276,23 +415,11 @@ export default function CollectionDetailsScreen() {
     if (!postToDelete || !collection) return;
     setDeleting(true);
     try {
-      await removePostFromCollection(collection.id, postToDelete.id);
-      setPosts((prev) => prev.filter((p) => p.postId !== postToDelete.id));
-      setCollection((prev) => ({ ...prev, postsCount: prev.postsCount - 1 }));
-      if (user?.id) {
-        await clearProfileCache(user.id);
-      }
+      await deletePost(postToDelete.id);
       setDeleteModalVisible(false);
       setPostToDelete(null);
-    } catch (err: any) {
-      const toastId = toast.custom(
-        <CustomToast
-          message={err.message || "Impossibile rimuovere il post"}
-          iconType="error"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
+    } catch (err) {
+      // Error toast is handled inside the hook
     } finally {
       setDeleting(false);
       setDeleteModalVisible(false);
@@ -300,95 +427,9 @@ export default function CollectionDetailsScreen() {
     }
   };
 
-  const handleDragEnd = async (data: CollectionPost[]) => {
+  const handleDragEnd = async (data: CollectionPostInterface[]) => {
     if (!isOwner || !collection) return;
-
-    // Filter out any non-post items and ensure we only have valid posts
-    const validPosts = data.filter(
-      (item: any) =>
-        item &&
-        !item.isAddButton &&
-        item.postId &&
-        typeof item.postId === "string" &&
-        item.postId !== "add-button"
-    ) as CollectionPost[];
-
-    // Extract postIds and remove duplicates
-    const postIds = validPosts.map((p) => p.postId);
-    const uniquePostIds = Array.from(new Set(postIds));
-
-    // Check for duplicates
-    if (postIds.length !== uniquePostIds.length) {
-      console.error("Duplicate posts detected in reorder, removing duplicates");
-      // Remove duplicates by keeping first occurrence
-      const seen = new Set<string>();
-      const deduplicatedPosts = validPosts.filter((post) => {
-        if (seen.has(post.postId)) {
-          return false;
-        }
-        seen.add(post.postId);
-        return true;
-      });
-
-      if (deduplicatedPosts.length !== posts.length) {
-        console.error("Deduplication resulted in different count, reverting");
-        if (previousPostsRef.current) {
-          setPosts(previousPostsRef.current);
-        }
-        return;
-      }
-
-      // Use deduplicated posts
-      previousPostsRef.current = posts;
-      setPosts(deduplicatedPosts);
-
-      try {
-        await reorderCollectionPosts(
-          collection.id,
-          deduplicatedPosts.map((p) => p.postId)
-        );
-        if (user?.id) {
-          await clearProfileCache(user.id);
-        }
-      } catch (err: any) {
-        console.error("Failed to reorder posts:", err);
-        if (previousPostsRef.current) {
-          setPosts(previousPostsRef.current);
-        } else {
-          loadCollection();
-        }
-      }
-      return;
-    }
-
-    if (validPosts.length === 0 || validPosts.length !== posts.length) {
-      console.warn("Invalid reorder data, reverting");
-      if (previousPostsRef.current) {
-        setPosts(previousPostsRef.current);
-      }
-      return;
-    }
-
-    // Optimistic reorder
-    previousPostsRef.current = posts;
-    setPosts(validPosts);
-
-    try {
-      await reorderCollectionPosts(collection.id, uniquePostIds);
-
-      // Clear profile cache to refresh collections on profile screen
-      if (user?.id) {
-        await clearProfileCache(user.id);
-      }
-    } catch (err: any) {
-      console.error("Failed to reorder posts:", err);
-      // Revert on error to previous order
-      if (previousPostsRef.current) {
-        setPosts(previousPostsRef.current);
-      } else {
-        loadCollection();
-      }
-    }
+    await reorderPosts(data);
   };
 
   const openAddModal = async () => {
@@ -421,7 +462,7 @@ export default function CollectionDetailsScreen() {
     }
     // Optimistic add to top
     const addedSimple = allUserPosts.filter((p) => toAdd.includes(p.id));
-    const optimistic: CollectionPost[] = addedSimple.map((p, idx) => ({
+    const optimistic: CollectionPostInterface[] = addedSimple.map((p, idx) => ({
       id: `temp-${Date.now()}-${idx}`,
       postId: p.id,
       caption: p.caption,
@@ -433,51 +474,13 @@ export default function CollectionDetailsScreen() {
       style: undefined,
       author: collection.author,
     }));
-    const prevPostsSnapshot = posts;
-    setPosts((prev) => [...optimistic, ...prev]);
-    setCollection((prev: any) => ({
-      ...prev,
-      postsCount: (prev?.postsCount || 0) + optimistic.length,
-    }));
     setSelectedPostIds(new Set());
     setSelectModalVisible(false);
 
     try {
-      await addPostsToCollection(collection.id, toAdd);
-      await loadCollection();
-
-      // Clear profile cache to refresh collections on profile screen
-      if (user?.id) {
-        await clearProfileCache(user.id);
-      }
-
-      // Show success toast
-      const toastId = toast.custom(
-        <CustomToast
-          message={`${toAdd.length} ${
-            toAdd.length === 1 ? "tatuaggio" : "tatuaggi"
-          } aggiunti alla collezione`}
-          iconType="success"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
-    } catch (err: any) {
-      setPosts(prevPostsSnapshot);
-      setCollection((prev: any) => ({
-        ...prev,
-        postsCount: Math.max((prev?.postsCount || 0) - optimistic.length, 0),
-      }));
-      const toastId = toast.custom(
-        <CustomToast
-          message={
-            err.message || "Impossibile aggiungere i post alla collezione"
-          }
-          iconType="error"
-          onClose={() => toast.dismiss(toastId)}
-        />,
-        { duration: 4000 }
-      );
+      await addPosts(toAdd, optimistic);
+    } catch (err) {
+      // Error toast and revert handled in hook
     }
   };
 
@@ -492,7 +495,7 @@ export default function CollectionDetailsScreen() {
     drag,
     isActive,
     getIndex,
-  }: RenderItemParams<CollectionPost>) => {
+  }: RenderItemParams<CollectionPostInterface>) => {
     const index = getIndex();
     const col = index !== undefined ? index % NUM_COLUMNS : 0;
     const row = index !== undefined ? Math.floor(index / NUM_COLUMNS) : 0;
@@ -624,7 +627,7 @@ export default function CollectionDetailsScreen() {
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
-              {canEditCollectionName && editMode && (
+              {isOwner && editMode && (
                 <TouchableOpacity
                   onPress={handleEditName}
                   style={{ marginLeft: s(8) }}
@@ -646,11 +649,7 @@ export default function CollectionDetailsScreen() {
               }}
             >
               {editMode ? (
-                canDeleteCollection ? (
-                  <SVGIcons.Trash width={20} height={20} />
-                ) : (
-                  <View style={{ width: 32, height: 32 }} />
-                )
+                <SVGIcons.Trash width={20} height={20} />
               ) : (
                 <SVGIcons.Edit width={20} height={20} />
               )}
@@ -744,50 +743,41 @@ export default function CollectionDetailsScreen() {
           autoscrollThreshold={24}
         />
 
-        {/* Edit Name Modal */}
-        <EditCollectionNameModal
-          visible={showEditModal}
-          value={editName}
-          onChangeValue={setEditName}
-          onCancel={() => setShowEditModal(false)}
-          onSave={handleSaveName}
-        />
-
-        {/* Add Posts Modal */}
-        <AddPostsModal
-          visible={selectModalVisible}
-          items={allUserPosts as any}
-          selectedIds={selectedPostIds}
-          onToggle={toggleSelect}
-          onClose={() => setSelectModalVisible(false)}
-          onConfirm={confirmAdd}
+        <CollectionModals
+          showEditName={showEditModal}
+          editName={editName}
+          onEditNameChange={setEditName}
+          onEditNameClose={() => setShowEditModal(false)}
+          onEditNameSave={async () => {
+            await saveName();
+            setShowEditModal(false);
+          }}
+          showSelectPosts={selectModalVisible}
+          allUserPosts={allUserPosts}
+          selectedPostIds={selectedPostIds}
+          onTogglePostSelect={toggleSelect}
+          onCloseSelect={() => setSelectModalVisible(false)}
+          onConfirmAdd={confirmAdd}
           collectionId={id}
-        />
-
-        {/* Delete Post Confirm Modal */}
-        <DeleteConfirmModal
-          visible={deleteModalVisible}
-          caption={postToDelete?.caption}
-          onCancel={() => {
+          showDeletePost={deleteModalVisible}
+          deletingPost={deleting}
+          postToDelete={postToDelete}
+          onCancelDeletePost={() => {
             if (!deleting) {
               setDeleteModalVisible(false);
               setPostToDelete(null);
             }
           }}
-          onConfirm={confirmDeletePost}
-        />
-
-        {/* Delete Collection Confirm Modal */}
-        <DeleteCollectionModal
-          visible={deleteCollectionModalVisible}
+          onConfirmDeletePost={confirmDeletePost}
+          showDeleteCollection={deleteCollectionModalVisible}
+          deletingCollection={deletingCollection}
           collectionName={collection?.name}
-          onCancel={() => {
+          onCancelDeleteCollection={() => {
             if (!deletingCollection) {
               setDeleteCollectionModalVisible(false);
             }
           }}
-          onConfirm={confirmDeleteCollection}
-          deleting={deletingCollection}
+          onConfirmDeleteCollection={confirmDeleteCollection}
         />
       </View>
     </GestureHandlerRootView>

@@ -702,6 +702,9 @@ export default function PostDetailScreen() {
         contentContainerStyle={{ paddingBottom: 32 }}
         enableOnAndroid={true}
         enableAutomaticScroll={false}
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
         keyboardShouldPersistTaps="handled"
       >
         {/* Media Carousel */}

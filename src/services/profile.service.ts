@@ -140,14 +140,7 @@ export async function fetchArtistSelfProfile(
     }
   }
 
-  // Step 2: fetch user + artist profile from Supabase
-  // First, let's verify workArrangement exists by querying artist_profiles directly
-  const { data: directProfileCheck, error: directError } = await supabase
-    .from("artist_profiles")
-    .select("id, workArrangement, businessName")
-    .eq("userId", userId)
-    .single();
-
+  // Step 2: fetch user + artist profile from Supabase (single roundtrip)
   const userQ = await supabase
     .from("users")
     .select(
@@ -167,10 +160,6 @@ export async function fetchArtistSelfProfile(
   const artistProfile = Array.isArray(userRow?.artist_profiles)
     ? userRow.artist_profiles[0]
     : userRow?.artist_profiles;
-
-  if (!artistProfile?.workArrangement && directProfileCheck?.workArrangement) {
-    artistProfile.workArrangement = directProfileCheck.workArrangement;
-  }
 
   if (!artistProfile) {
     // Return a safe empty profile instead of throwing so UI can render gracefully
@@ -362,23 +351,17 @@ export async function fetchArtistSelfProfile(
           : 1
     );
 
-  // Process location data - PRIORITIZE studioAddress from artist profile first, then fallback to primary location, then studio address
+  // Process location data - single source of truth: user_locations
   const locationData = locationQ?.data as any;
-  const studioAddress = artistProfile.studioAddress;
 
-  // Query studio membership to get studio address as fallback
-  let studioAddressFromStudio: string | null = null;
+  // Query studio membership only to infer businessName/workArrangement; do NOT use for location
   let businessNameFromStudio: string | null = null;
   const { data: studioMembership } = await supabase
     .from("studio_members")
     .select(
       `
       studio:studios(
-        name,
-        locations:studio_locations(
-          address,
-          isPrimary
-        )
+        name
       )
     `
     )
@@ -391,16 +374,6 @@ export async function fetchArtistSelfProfile(
   const studio = Array.isArray(studioMembership?.studio)
     ? studioMembership.studio[0]
     : studioMembership?.studio;
-
-  if (studio?.locations) {
-    const locations = Array.isArray(studio.locations)
-      ? studio.locations
-      : [studio.locations];
-    const primaryStudioLocation = locations.find((loc: any) => loc.isPrimary);
-    if (primaryStudioLocation?.address) {
-      studioAddressFromStudio = primaryStudioLocation.address;
-    }
-  }
 
   // Also get businessName from studio if artist profile doesn't have it
   if (studio?.name) {
@@ -423,190 +396,28 @@ export async function fetchArtistSelfProfile(
     );
   }
 
-  // Create location object - Priority: studioAddress (profile) > primaryLocation.address > studioAddress (from studio)
+  // Create location object - ONLY from user_locations (single source of truth)
   let location = undefined;
-  if (studioAddress) {
-    // PRIORITY 1: Use studioAddress from artist profile as primary source
-    // Get province/municipality from primaryLocation if available, otherwise from any location
-    if (locationData) {
-      location = {
-        id: locationData.id,
-        address: studioAddress, // Always use studioAddress from profile when available
-        province: {
-          id: locationData.provinces?.id,
-          name: locationData.provinces?.name || "",
-          code: locationData.provinces?.code,
-        },
-        municipality: {
-          id: locationData.municipalities?.id,
-          name: locationData.municipalities?.name || "",
-        },
-        isPrimary: locationData.isPrimary,
-      };
-    } else {
-      // If no primary location but we have studioAddress, try to get province/municipality from any location
-      const { data: anyLocation } = await supabase
-        .from("user_locations")
-        .select(
-          `
-          id,
-          provinces(id,name,code),
-          municipalities(id,name)
-        `
-        )
-        .eq("userId", userId)
-        .limit(1)
-        .maybeSingle();
+  if (locationData) {
+    // Handle provinces and municipalities as array (Supabase type inference) or single object
+    const province = Array.isArray(locationData.provinces)
+      ? locationData.provinces[0]
+      : locationData.provinces;
+    const municipality = Array.isArray(locationData.municipalities)
+      ? locationData.municipalities[0]
+      : locationData.municipalities;
 
-      if (anyLocation) {
-        // Handle provinces and municipalities as array (Supabase type inference) or single object
-        const province = Array.isArray(anyLocation.provinces)
-          ? anyLocation.provinces[0]
-          : anyLocation.provinces;
-        const municipality = Array.isArray(anyLocation.municipalities)
-          ? anyLocation.municipalities[0]
-          : anyLocation.municipalities;
-
-        location = {
-          id: anyLocation.id,
-          address: studioAddress, // Always use studioAddress from profile when available
-          province: {
-            id: province?.id,
-            name: province?.name || "",
-            code: province?.code,
-          },
-          municipality: {
-            id: municipality?.id,
-            name: municipality?.name || "",
-          },
-          isPrimary: false,
-        };
-      } else {
-        // Create location with just address if no location data available
-        location = {
-          id: "",
-          address: studioAddress, // Always use studioAddress from profile when available
-          province: {
-            id: "",
-            name: "",
-          },
-          municipality: {
-            id: "",
-            name: "",
-          },
-          isPrimary: false,
-        };
-      }
-    }
-  } else if (locationData?.address) {
-    // PRIORITY 2: Use primaryLocation address if studioAddress from profile is not available
     location = {
       id: locationData.id,
-      address: locationData.address,
+      address: locationData.address ?? undefined,
       province: {
-        id: locationData.provinces?.id,
-        name: locationData.provinces?.name,
-        code: locationData.provinces?.code,
+        id: province?.id,
+        name: province?.name || "",
+        code: province?.code,
       },
       municipality: {
-        id: locationData.municipalities?.id,
-        name: locationData.municipalities?.name,
-      },
-      isPrimary: locationData.isPrimary,
-    };
-  } else if (studioAddressFromStudio) {
-    // PRIORITY 3: Use studio address from linked studio as fallback
-    if (locationData) {
-      // Handle provinces and municipalities as array (Supabase type inference) or single object
-      const province = Array.isArray(locationData.provinces)
-        ? locationData.provinces[0]
-        : locationData.provinces;
-      const municipality = Array.isArray(locationData.municipalities)
-        ? locationData.municipalities[0]
-        : locationData.municipalities;
-
-      location = {
-        id: locationData.id,
-        address: studioAddressFromStudio,
-        province: {
-          id: province?.id,
-          name: province?.name || "",
-          code: province?.code,
-        },
-        municipality: {
-          id: municipality?.id,
-          name: municipality?.name || "",
-        },
-        isPrimary: locationData.isPrimary,
-      };
-    } else {
-      // If no primary location but we have studioAddress from studio, try to get province/municipality from any location
-      const { data: anyLocation } = await supabase
-        .from("user_locations")
-        .select(
-          `
-          id,
-          provinces(id,name,code),
-          municipalities(id,name)
-        `
-        )
-        .eq("userId", userId)
-        .limit(1)
-        .maybeSingle();
-
-      if (anyLocation) {
-        // Handle provinces and municipalities as array (Supabase type inference) or single object
-        const province = Array.isArray(anyLocation.provinces)
-          ? anyLocation.provinces[0]
-          : anyLocation.provinces;
-        const municipality = Array.isArray(anyLocation.municipalities)
-          ? anyLocation.municipalities[0]
-          : anyLocation.municipalities;
-
-        location = {
-          id: anyLocation.id,
-          address: studioAddressFromStudio,
-          province: {
-            id: province?.id,
-            name: province?.name || "",
-            code: province?.code,
-          },
-          municipality: {
-            id: municipality?.id,
-            name: municipality?.name || "",
-          },
-          isPrimary: false,
-        };
-      } else {
-        // Create location with just address if no location data available
-        location = {
-          id: "",
-          address: studioAddressFromStudio,
-          province: {
-            id: "",
-            name: "",
-          },
-          municipality: {
-            id: "",
-            name: "",
-          },
-          isPrimary: false,
-        };
-      }
-    }
-  } else if (locationData) {
-    // Fallback: Use primaryLocation even without address (for province/municipality only)
-    location = {
-      id: locationData.id,
-      address: undefined,
-      province: {
-        id: locationData.provinces?.id,
-        name: locationData.provinces?.name,
-        code: locationData.provinces?.code,
-      },
-      municipality: {
-        id: locationData.municipalities?.id,
-        name: locationData.municipalities?.name,
+        id: municipality?.id,
+        name: municipality?.name || "",
       },
       isPrimary: locationData.isPrimary,
     };

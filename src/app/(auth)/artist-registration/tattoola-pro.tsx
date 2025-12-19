@@ -19,6 +19,7 @@ import {
 } from "@/services/subscription.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { toast } from "sonner-native";
+import { SVGIcons } from "@/constants/svg";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -157,21 +158,7 @@ export default function TattoolaProScreen() {
 
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={require("@/assets/logo/tattoola-dark.png")}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-            <ScaledText
-              variant="lg"
-              allowScaling={false}
-              className="text-primary font-neueMedium"
-              style={styles.proText}
-            >
-              pro.
-            </ScaledText>
-          </View>
+        <SVGIcons.LogoPro width={s(150)} />
         </View>
 
         {/* Hero Section */}
