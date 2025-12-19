@@ -1,14 +1,22 @@
+import {
+  ageOptions,
+  colorOptions,
+  sizeOptions,
+} from "@/constants/request-questions";
+import {
+  ConversationRole,
+  ConversationStatus,
+  MessageType,
+} from "@/types/chat";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
-import { MessageType, ConversationStatus, ConversationRole } from "@/types/chat";
-import { sizeOptions, colorOptions, ageOptions } from "@/constants/request-questions";
 
 /**
  * Determines a user's conversation role based on their actual user type
  * - If user has artist_profile → ARTIST role
  * - If user is normal user (TATTOO_LOVER) → LOVER role
  * - If user is ADMIN → ARTIST role (for consistency)
- * 
+ *
  * @param userId - User ID to check
  * @returns Promise<ConversationRole> - ARTIST or LOVER
  */
@@ -21,23 +29,23 @@ async function determineUserConversationRole(
     .select("id")
     .eq("userId", userId)
     .maybeSingle();
-  
+
   if (artistProfile) {
     return "ARTIST";
   }
-  
+
   // Check user role from users table
   const { data: user } = await supabase
     .from("users")
     .select("role")
     .eq("id", userId)
     .maybeSingle();
-  
+
   // If user is ADMIN, treat as ARTIST for conversation purposes
   if (user?.role === "ADMIN") {
     return "ARTIST";
   }
-  
+
   // Default to LOVER for normal users
   return "LOVER";
 }
@@ -45,7 +53,7 @@ async function determineUserConversationRole(
 /**
  * Determines conversation roles for both participants
  * Properly tracks sender and receiver roles based on their actual user types
- * 
+ *
  * @param senderId - User ID of the sender
  * @param receiverId - User ID of the receiver
  * @param isSelfRequest - Whether this is a self-request
@@ -67,13 +75,13 @@ async function determineConversationRoles(
       receiverRole: userRole, // Same role for both
     };
   }
-  
+
   // For normal requests, determine each user's actual role
   const [senderRole, receiverRole] = await Promise.all([
     determineUserConversationRole(senderId),
     determineUserConversationRole(receiverId),
   ]);
-  
+
   return {
     senderRole,
     receiverRole,
@@ -83,7 +91,7 @@ async function determineConversationRoles(
 /**
  * Checks if a conversation already exists between two users
  * Checks both directions (userId1→userId2 and userId2→userId1)
- * 
+ *
  * @param userId1 - First user ID
  * @param userId2 - Second user ID
  * @returns Promise with conversation data or null
@@ -96,34 +104,39 @@ async function checkExistingConversation(
   const { data: conv } = await supabase
     .from("conversations")
     .select("id, status")
-    .or(`and(artistId.eq.${userId1},loverId.eq.${userId2}),and(artistId.eq.${userId2},loverId.eq.${userId1})`)
+    .or(
+      `and(artistId.eq.${userId1},loverId.eq.${userId2}),and(artistId.eq.${userId2},loverId.eq.${userId1})`
+    )
     .in("status", ["REQUESTED", "ACTIVE", "REJECTED", "CLOSED"])
     .maybeSingle();
-  
+
   return conv || null;
 }
 
 /**
  * Gets artist profile for a user if they have one
- * 
+ *
  * @param userId - User ID to check
  * @returns Promise with artist profile data or null
  */
 async function getArtistProfile(
   userId: string
-): Promise<{ acceptPrivateRequests: boolean; rejectionMessage?: string } | null> {
+): Promise<{
+  acceptPrivateRequests: boolean;
+  rejectionMessage?: string;
+} | null> {
   const { data: profile } = await supabase
     .from("artist_profiles")
     .select("acceptPrivateRequests, rejectionMessage")
     .eq("userId", userId)
     .maybeSingle();
-  
+
   return profile || null;
 }
 
 /**
  * Auto-accepts a conversation (used for self-requests)
- * 
+ *
  * @param conversationId - Conversation ID to accept
  * @param userId - User ID (same for sender and receiver in self-requests)
  */
@@ -132,36 +145,36 @@ async function autoAcceptConversation(
   userId: string
 ): Promise<void> {
   const now = new Date().toISOString();
-  
+
   // Update conversation status
   const { error: statusErr } = await supabase
     .from("conversations")
-    .update({ 
+    .update({
       status: "ACTIVE",
       acceptedAt: now,
-      updatedAt: now 
+      updatedAt: now,
     })
     .eq("id", conversationId);
-  
+
   if (statusErr) {
     console.error("Auto-accept conversation update error:", statusErr);
     throw new Error(statusErr.message);
   }
-  
+
   // Update private request status
   const { error: prUpdateErr } = await supabase
     .from("private_requests")
-    .update({ 
+    .update({
       status: "ACCEPTED",
-      updatedAt: now 
+      updatedAt: now,
     })
     .eq("conversationId", conversationId);
-  
+
   if (prUpdateErr) {
     console.error("Auto-accept private request update error:", prUpdateErr);
     // Don't throw, just log - this is not critical for conversation flow
   }
-  
+
   // Insert system message
   const { error: sysMsgErr } = await supabase.from("messages").insert({
     id: uuidv4(),
@@ -173,7 +186,7 @@ async function autoAcceptConversation(
     createdAt: now,
     updatedAt: now,
   });
-  
+
   if (sysMsgErr) {
     console.error("Auto-accept system message insert error:", sysMsgErr);
     // Don't throw, just log - this is not critical for conversation flow
@@ -207,7 +220,7 @@ export async function createPrivateRequestConversation(
 
   // Step 2: Check for existing conversation
   const existingConv = await checkExistingConversation(senderId, receiverId);
-  
+
   // Step 3: Determine if self-request
   const isSelfRequest = senderId === receiverId;
 
@@ -238,7 +251,7 @@ export async function createPrivateRequestConversation(
 
   if (existingConv) {
     conversationId = existingConv.id;
-    
+
     // Reactivate if conversation is closed/rejected
     if (!["REQUESTED", "ACTIVE"].includes(existingConv.status)) {
       const { error: updateErr } = await supabase
@@ -249,7 +262,7 @@ export async function createPrivateRequestConversation(
           updatedAt: now,
         })
         .eq("id", conversationId);
-      
+
       if (updateErr) {
         throw new Error(updateErr.message);
       }
@@ -257,13 +270,13 @@ export async function createPrivateRequestConversation(
   } else {
     // Create new conversation
     conversationId = uuidv4();
-    
+
     // Determine which user should be artistId and which should be loverId
     // For backward compatibility, we'll use the roles to determine this
     // If sender is ARTIST, use sender as artistId; otherwise use receiver as artistId
     const artistId = senderRole === "ARTIST" ? senderId : receiverId;
     const loverId = senderRole === "ARTIST" ? receiverId : senderId;
-    
+
     const { error: convErr } = await supabase.from("conversations").insert({
       id: conversationId,
       artistId,
@@ -273,7 +286,7 @@ export async function createPrivateRequestConversation(
       createdAt: now,
       updatedAt: now,
     });
-    
+
     if (convErr) {
       console.error("Conversation insert error:", convErr);
       throw new Error(convErr.message);
@@ -285,19 +298,21 @@ export async function createPrivateRequestConversation(
     .from("conversation_users")
     .select("userId")
     .eq("conversationId", conversationId);
-  
+
   const existingUserIds = (existingCu || []).map((cu: any) => cu.userId);
 
   // Step 8: Create conversation_users with proper roles
   if (isSelfRequest) {
     if (!existingUserIds.includes(senderId)) {
-      const { error: cuErr } = await supabase.from("conversation_users").insert({
-        id: uuidv4(),
-        conversationId,
-        userId: senderId,
-        role: senderRole, // Use actual user role
-        canSend: true, // Auto-enabled for self-requests
-      });
+      const { error: cuErr } = await supabase
+        .from("conversation_users")
+        .insert({
+          id: uuidv4(),
+          conversationId,
+          userId: senderId,
+          role: senderRole, // Use actual user role
+          canSend: true, // Auto-enabled for self-requests
+        });
       if (cuErr) throw new Error(cuErr.message);
     }
   } else {
@@ -321,7 +336,9 @@ export async function createPrivateRequestConversation(
       });
     }
     if (usersToInsert.length > 0) {
-      const { error: cuErr } = await supabase.from("conversation_users").insert(usersToInsert);
+      const { error: cuErr } = await supabase
+        .from("conversation_users")
+        .insert(usersToInsert);
       if (cuErr) throw new Error(cuErr.message);
     }
   }
@@ -332,7 +349,7 @@ export async function createPrivateRequestConversation(
     .select("id")
     .eq("conversationId", conversationId)
     .maybeSingle();
-  
+
   if (!existingPr) {
     const { error: prErr } = await supabase.from("private_requests").insert({
       id: uuidv4(),
@@ -393,25 +410,28 @@ export async function createPrivateRequestConversation(
     const getSizeLabel = (key: string) => {
       return sizeOptions.find((opt) => opt.key === key)?.label || key;
     };
-    
+
     const getColorLabel = (key: string) => {
       return colorOptions.find((opt) => opt.key === key)?.label || key;
     };
-    
+
     const getAgeLabel = (isAdult: boolean) => {
-      return ageOptions.find((opt) => opt.key === isAdult)?.label || (isAdult ? "+18" : "-18");
+      return (
+        ageOptions.find((opt) => opt.key === isAdult)?.label ||
+        (isAdult ? "+18" : "-18")
+      );
     };
 
     // Synthesize intake messages for continuity with proper ordering
     const msgs: any[] = [];
     let messageOrder = 0; // Sequence counter for guaranteed order
-    
+
     const getTimestamp = () => {
       // Add milliseconds offset to ensure proper ordering
       const baseTime = new Date(now).getTime();
       return new Date(baseTime + messageOrder++).toISOString();
     };
-    
+
     const pushQA = (qKey: string, qText: string, aText?: string) => {
       const qTimestamp = getTimestamp();
       msgs.push({
@@ -439,14 +459,14 @@ export async function createPrivateRequestConversation(
         });
       }
     };
-    
+
     // 1. Size question and answer
     pushQA(
       "size",
       "Approximately what size would you like the tattoo to be?",
       intake.size ? getSizeLabel(intake.size) : undefined
     );
-    
+
     // 2. References question and answers (with images)
     const qTimestamp = getTimestamp();
     msgs.push({
@@ -475,17 +495,17 @@ export async function createPrivateRequestConversation(
         intakeFieldKey: "references",
       });
     }
-    
+
     // 3. Color question and answer
     pushQA(
       "color",
       "Would you like a color or black and white tattoo?",
       intake.color ? getColorLabel(intake.color) : undefined
     );
-    
+
     // 4. Description question and answer
     pushQA("description", "Describe your tattoo design in brief", intake.desc);
-    
+
     // 5. Age question and answer
     pushQA(
       "age",
@@ -653,17 +673,24 @@ export async function fetchConversationsPage(
   // Note: We don't filter out conversations with deletedAt here
   // Conversations always appear in inbox; deletedAt only filters messages in chat thread
 
-  // Fetch receipt status for last messages sent by current user
+  // Fetch receipt status for last messages
   const conversationsWithReceipts = await Promise.all(
     (data || []).map(async (conv: any) => {
-      // Only check receipt if the last message was sent by current user
-      if (conv.lastMessage && conv.lastMessage.senderId === userId) {
-        // Receipt belongs to the receiver, so query by receiverId (handles self-messages)
+      // Check receipt for the last message
+      if (conv.lastMessage) {
+        // Receipt belongs to the receiver
+        // If current user sent the message, fetch receipt for the receiver
+        // If current user received the message, fetch receipt for current user
+        const receiptUserId =
+          conv.lastMessage.senderId === userId
+            ? conv.lastMessage.receiverId
+            : userId;
+
         const { data: receipt } = await supabase
           .from("message_receipts")
           .select("status")
           .eq("messageId", conv.lastMessageId)
-          .eq("userId", conv.lastMessage.receiverId) // Receipt belongs to the receiver
+          .eq("userId", receiptUserId)
           .maybeSingle();
 
         return { ...conv, lastMessageReceipt: receipt };
@@ -817,7 +844,7 @@ export async function markReadUpTo(
     .update({ unreadCount: 0, lastReadAt: now })
     .eq("conversationId", conversationId)
     .eq("userId", userId);
-   // console.log("🔵 [markReadUpTo] Updated conversation_users, error:", error);
+  // console.log("🔵 [markReadUpTo] Updated conversation_users, error:", error);
   if (error) {
     console.error("[markReadUpTo] Error:", error);
     throw new Error(error.message);
@@ -830,14 +857,14 @@ export async function markReadUpTo(
     .eq("conversationId", conversationId)
     .eq("receiverId", userId)
     .eq("isRead", false);
-  
-    // console.log("🔵 [markReadUpTo] Found", messages?.length || 0, "unread messages for userId:", userId);
-  
+
+  // console.log("🔵 [markReadUpTo] Found", messages?.length || 0, "unread messages for userId:", userId);
+
   if (messagesError) {
     console.error("[markReadUpTo] Error fetching messages:", messagesError);
   }
-  
-  const messageIds = messages?.map(m => m.id) || [];
+
+  const messageIds = messages?.map((m) => m.id) || [];
 
   // SECOND: Update messages.isRead for all messages in this conversation that the user received
   if (messageIds.length > 0) {
@@ -992,14 +1019,16 @@ export function enrichConversationForUser(row: any, userId: string) {
   const lastMessageSentByMe = lastMessage?.senderId === userId;
 
   // Single source of truth for read status:
-  // - If message was sent BY me: use receipt status (shows if OTHER person read it)
-  // - If message was sent TO me: use isRead field (shows if I read it)
+  // Use receipt status for both sent and received messages
+  // Receipt always belongs to the receiver, so:
+  // - If message was sent BY me: receipt shows if OTHER person read it
+  // - If message was sent TO me: receipt shows if I read it
   let lastMessageIsRead = false;
-  if (lastMessageSentByMe) {
-    // I sent it - check if receiver read it via receipt
-    lastMessageIsRead = row.lastMessageReceipt?.status === "READ";
-  } else {
-    // I received it - check if I read it
+  if (row.lastMessageReceipt) {
+    // Use receipt status if available (most reliable)
+    lastMessageIsRead = row.lastMessageReceipt.status === "READ";
+  } else if (!lastMessageSentByMe) {
+    // Fallback to isRead field for received messages if no receipt
     lastMessageIsRead = lastMessage?.isRead === true;
   }
 
@@ -1078,14 +1107,19 @@ async function enrichConversationRow(row: any, userId: string) {
       } else {
         lastMessage = msg;
 
-        // Fetch receipt if message was sent by current user
-        // Receipt belongs to the receiver, so query by receiverId (handles self-messages)
-        if (msg && msg.senderId === userId) {
+        // Fetch receipt for the last message
+        // Receipt belongs to the receiver, so we need to determine who received this message
+        if (msg) {
+          // If current user sent the message, fetch receipt for the receiver
+          // If current user received the message, fetch receipt for current user
+          const receiptUserId =
+            msg.senderId === userId ? msg.receiverId : userId;
+
           const { data: receipt } = await supabase
             .from("message_receipts")
             .select("status")
             .eq("messageId", row.lastMessageId)
-            .eq("userId", msg.receiverId) // Receipt belongs to the receiver
+            .eq("userId", receiptUserId)
             .maybeSingle();
           lastMessageReceipt = receipt;
         }
