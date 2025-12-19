@@ -1,4 +1,5 @@
 import { supabase } from "@/utils/supabase";
+import { COLLECTION_NAME } from "@/constants/limits";
 import { v4 as uuidv4 } from "uuid";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import {
@@ -496,6 +497,33 @@ export async function addPostToCollection(
   postId: string,
   collectionId: string
 ): Promise<void> {
+  // Check if this is a "Preferiti" collection and enforce 4-post limit
+  const { data: collection, error: collectionError } = await supabase
+    .from("collections")
+    .select("name, id")
+    .eq("id", collectionId)
+    .single();
+
+  if (collectionError) throw new Error(collectionError.message);
+
+  // Check if collection is the artist favorite work ("Preferiti") (case-insensitive)
+  const collectionNameLower = collection?.name?.toLowerCase() || "";
+  const isPreferiti = collectionNameLower === "preferiti";
+  
+  if (isPreferiti) {
+    // Count existing posts in Preferiti collection
+    const { count, error: countError } = await supabase
+      .from("collection_posts")
+      .select("*", { count: "exact", head: true })
+      .eq("collectionId", collectionId);
+
+    if (countError) throw new Error(countError.message);
+
+    if ((count || 0) >= 4) {
+      throw new Error("Puoi salvare massimo 4 post nei Preferiti");
+    }
+  }
+
   const { error } = await supabase.from("collection_posts").insert({
     id: uuidv4(),
     collectionId,
