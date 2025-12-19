@@ -332,7 +332,6 @@ function ArtistCard({ artist }: ArtistCardProps) {
             </View>
           )}
 
-          {/* Studio Profile Label */}
           {/* {artist.isStudioOwner && (
           <ScaledText
             allowScaling={false}
