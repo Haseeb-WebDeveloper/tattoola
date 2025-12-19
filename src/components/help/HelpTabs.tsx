@@ -8,9 +8,19 @@ import { TouchableOpacity, View } from "react-native";
 interface HelpTabsProps {
   activeTab: HelpTab;
   onTabChange: (tab: HelpTab) => void;
+  isLoggedIn: boolean;
 }
 
-export function HelpTabs({ activeTab, onTabChange }: HelpTabsProps) {
+export function HelpTabs({
+  activeTab,
+  onTabChange,
+  isLoggedIn,
+}: HelpTabsProps) {
+  // Hide tabs when user is logged in
+  if (isLoggedIn) {
+    return null;
+  }
+
   return (
     <View
       style={{
@@ -28,9 +38,11 @@ export function HelpTabs({ activeTab, onTabChange }: HelpTabsProps) {
           flex: 1,
           height: mvs(25),
           borderRadius: s(17.747),
-          backgroundColor: activeTab === "artisiti" ? "rgba(179, 29, 29, 1)" : "transparent",
+          backgroundColor:
+            activeTab === "artisiti" ? "rgba(179, 29, 29, 1)" : "transparent",
           borderWidth: 1,
-          borderColor: activeTab === "artisiti" ? "rgba(179, 29, 29, 1)" : "#A49A99",
+          borderColor:
+            activeTab === "artisiti" ? "rgba(179, 29, 29, 1)" : "#A49A99",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
@@ -60,9 +72,11 @@ export function HelpTabs({ activeTab, onTabChange }: HelpTabsProps) {
           flex: 1,
           height: mvs(25),
           borderRadius: s(17.747),
-          backgroundColor: activeTab === "utenti" ? "rgba(179, 29, 29, 1)" : "transparent",
+          backgroundColor:
+            activeTab === "utenti" ? "rgba(179, 29, 29, 1)" : "transparent",
           borderWidth: 1,
-          borderColor: activeTab === "utenti" ? "rgba(179, 29, 29, 1)" : "#A49A99",
+          borderColor:
+            activeTab === "utenti" ? "rgba(179, 29, 29, 1)" : "#A49A99",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
@@ -86,4 +100,3 @@ export function HelpTabs({ activeTab, onTabChange }: HelpTabsProps) {
     </View>
   );
 }
-
