@@ -32,6 +32,10 @@ export const COLLECTION_NAME = {
 export const BANNER_SMALL_CARD_HEIGHT = s(294);
 export const BANNER_LARGE_CARD_HEIGHT = s(300);
 
+// File upload size limits (in bytes)
+export const UPLOAD_MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for JPG/PNG
+export const UPLOAD_MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB for MP4/MOV/AVI
+
 export const MOST_POPULAR_PROVINCES_IDS = [
   {
     id: "3a2cd93b-dec9-4a52-9a28-9d0f54468ad0",

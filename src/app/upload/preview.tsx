@@ -570,8 +570,7 @@ export default function UploadPreviewStep() {
           !media.length ||
           !caption ||
           !styleIds ||
-          styleIds.length === 0 ||
-          (user?.role === "ARTIST" && !collectionId)
+          styleIds.length === 0
         }
         nextLabel="Pubblica"
         backLabel="Indietro"

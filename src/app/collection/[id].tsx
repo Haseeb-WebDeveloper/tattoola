@@ -22,6 +22,7 @@ import {
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { CollectionPostInterface } from "@/types/collection";
 import { clearProfileCache } from "@/utils/database";
+import { isSystemCollection } from "@/utils/collection.utils";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -33,6 +34,7 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COLLECTION_NAME } from "@/constants/limits";
 import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -354,6 +356,22 @@ export default function CollectionDetailsScreen() {
   const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
+  // Check if this is the "Preferiti" collection (case-insensitive)
+  const collectionNameLower = collection?.name?.toLowerCase() || "";
+  const isArtistFavCollection =
+    !!collection && collectionNameLower === "preferiti";
+  // Check if this is "Tutti" collection - completely non-editable
+  const isTuttiCollection =
+    !!collection && collectionNameLower === "tutti";
+  // Check if this is a system collection (Tutti or Preferiti)
+  const isSystemCol = !!collection && isSystemCollection(collection.name);
+  // Preferiti can edit posts but not name/delete. Tutti cannot edit at all.
+  const canEditPosts = isOwner && !isTuttiCollection; // Allow edit mode for Preferiti
+  const canEditName = isOwner && !isSystemCol; // Cannot edit name for any system collection
+  const canDeleteCollection = isOwner && !isSystemCol; // Cannot delete any system collection
+  const currentPostCount = collection?.postsCount ?? posts.length;
+  const isArtistFavFull =
+    isArtistFavCollection && currentPostCount >= 4;
 
   useEffect(() => {
     // Show auth modal for anonymous users when opening collection (dismissible so they can view)
@@ -435,6 +453,20 @@ export default function CollectionDetailsScreen() {
   const openAddModal = async () => {
     try {
       if (!isOwner || !user || !collection) return;
+
+      // Prevent adding more posts if this is the artist's "Preferiti" collection and it's full
+      if (isArtistFavCollection && isArtistFavFull) {
+        const toastId = toast.custom(
+          <CustomToast
+            message="Puoi salvare massimo 4 post nei Preferiti"
+            iconType="error"
+            onClose={() => toast.dismiss(toastId)}
+          />,
+          { duration: 4000 }
+        );
+        return;
+      }
+
       const userPosts = await fetchUserPosts(user.id);
       setAllUserPosts(userPosts);
       setSelectModalVisible(true);
@@ -455,6 +487,21 @@ export default function CollectionDetailsScreen() {
   const confirmAdd = async () => {
     if (!isOwner) return;
     if (!collection) return;
+    
+    // Prevent adding more posts if this is the artist's "Preferiti" collection and it's full
+    if (isArtistFavCollection && isArtistFavFull) {
+      const toastId = toast.custom(
+        <CustomToast
+          message="Puoi salvare massimo 4 post nei Preferiti"
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      setSelectModalVisible(false);
+      return;
+    }
+    
     const toAdd = Array.from(selectedPostIds);
     if (!toAdd.length) {
       setSelectModalVisible(false);
@@ -627,18 +674,18 @@ export default function CollectionDetailsScreen() {
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
-              {isOwner && editMode && (
-                <TouchableOpacity
-                  onPress={handleEditName}
-                  style={{ marginLeft: s(8) }}
-                >
-                  <SVGIcons.Edit width={16} height={16} />
-                </TouchableOpacity>
-              )}
+            {isOwner && editMode && !isSystemCol && (
+              <TouchableOpacity
+                onPress={handleEditName}
+                style={{ marginLeft: s(8) }}
+              >
+                <SVGIcons.Edit width={16} height={16} />
+              </TouchableOpacity>
+            )}
             </View>
           </View>
 
-          {isOwner && (
+          {canEditPosts && !(editMode && isArtistFavCollection) && (
             <TouchableOpacity
               onPress={editMode ? handleDeleteCollection : handleToggleEditMode}
               style={{
@@ -649,7 +696,11 @@ export default function CollectionDetailsScreen() {
               }}
             >
               {editMode ? (
-                <SVGIcons.Trash width={20} height={20} />
+                canDeleteCollection ? (
+                  <SVGIcons.Trash width={20} height={20} />
+                ) : (
+                  <SVGIcons.Edit width={20} height={20} />
+                )
               ) : (
                 <SVGIcons.Edit width={20} height={20} />
               )}
@@ -711,12 +762,15 @@ export default function CollectionDetailsScreen() {
                 }}
               >
                 <TouchableOpacity
-                  onPress={openAddModal}
-                  activeOpacity={0.8}
+                  onPress={isArtistFavFull ? undefined : openAddModal}
+                  disabled={isArtistFavFull}
+                  activeOpacity={isArtistFavFull ? 1 : 0.8}
                   className="items-center justify-center border-2 border-dashed rounded-xl border-primary bg-primary/10"
                   style={{
                     width: POST_WIDTH,
                     height: mvs(253),
+                    opacity: isArtistFavFull ? 0.5 : 1,
+                    pointerEvents: isArtistFavFull ? "none" : "auto",
                   }}
                 >
                   <SVGIcons.AddRed width={s(32)} height={s(32)} />
@@ -727,6 +781,16 @@ export default function CollectionDetailsScreen() {
                   >
                     Aggiungi nuovo tatuaggio
                   </ScaledText>
+                  {isArtistFavFull && (
+                    <ScaledText
+                      allowScaling={false}
+                      variant="xs"
+                      className="mt-2 text-center text-gray font-neueLight"
+                      style={{ paddingHorizontal: s(8) }}
+                    >
+                      Limite 4 post raggiunto
+                    </ScaledText>
+                  )}
                 </TouchableOpacity>
               </View>
             ) : null

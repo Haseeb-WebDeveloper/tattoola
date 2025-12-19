@@ -32,30 +32,53 @@ export const useFileUpload = () => {
   /**
    * Request media library permissions
    */
-  const requestPermissions = async (): Promise<boolean> => {
+  const requestMediaLibraryPermissions = async (): Promise<boolean> => {
     try {
       if (Platform.OS === "web") {
         return true;
       }
 
-      // 1) Check current permission without triggering any system dialog
+      // Always check fresh permission status (don't rely on cache)
       const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+      
+      console.log("[Permissions] Media Library Status (fresh check):", {
+        granted: current.granted,
+        canAskAgain: current.canAskAgain,
+        status: current.status,
+      });
 
+      // For Play Store/App Store compliance:
+      // - If permission is already granted, that's fine (user granted it before)
+      // - If permission is not granted, we MUST request it before accessing gallery
+      // - The system will show the dialog automatically when we call requestMediaLibraryPermissionsAsync()
+      
       if (current.granted) {
-        // Already granted -> don't ask again
+        // Already granted -> permission was given previously (compliance requirement met)
+        console.log("[Permissions] Media library permission already granted");
         return true;
       }
 
+      // Permission is NOT granted - we MUST request it
+      console.log("[Permissions] Permission NOT granted, requesting...");
+      
       // 2) If we can still ask, request once -> OS shows native dialog
       if (current.canAskAgain) {
-        const { status } =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        console.log("[Permissions] Calling requestMediaLibraryPermissionsAsync() - system dialog should appear now");
+        const requestResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        console.log("[Permissions] Permission request result:", {
+          status: requestResult.status,
+          granted: requestResult.granted,
+          canAskAgain: requestResult.canAskAgain,
+        });
 
-        if (status === "granted") {
+        if (requestResult.status === "granted" || requestResult.granted) {
+          console.log("[Permissions] Permission granted by user");
           return true;
         }
 
         // User just denied
+        console.log("[Permissions] Permission denied by user");
         toast.error(
           "Autorizzazione alle foto necessaria per caricare immagini."
         );
@@ -63,8 +86,9 @@ export const useFileUpload = () => {
       }
 
       // 3) Permission is denied and we cannot ask again -> guide to settings
+      console.log("[Permissions] Permission denied and cannot ask again - guiding to settings");
       toast.error(
-        "Per continuare abilita l’accesso alle foto dalle impostazioni."
+        "Per continuare abilita l'accesso alle foto dalle impostazioni."
       );
       if (typeof Linking.openSettings === "function") {
         Linking.openSettings().catch((err) => {
@@ -73,7 +97,65 @@ export const useFileUpload = () => {
       }
       return false;
     } catch (error) {
-      console.error("Permission request error:", error);
+      console.error("[Permissions] Permission request error:", error);
+      return false;
+    }
+  };
+
+  /**
+   * Request camera permissions
+   */
+  const requestCameraPermissions = async (): Promise<boolean> => {
+    try {
+      if (Platform.OS === "web") {
+        return true;
+      }
+
+      // 1) Check current permission without triggering any system dialog
+      const current = await ImagePicker.getCameraPermissionsAsync();
+      
+      console.log("[Permissions] Camera Status:", {
+        granted: current.granted,
+        canAskAgain: current.canAskAgain,
+        status: current.status,
+      });
+
+      if (current.granted) {
+        // Already granted -> don't ask again
+        console.log("[Permissions] Camera permission already granted");
+        return true;
+      }
+
+      // 2) If we can still ask, request once -> OS shows native dialog
+      if (current.canAskAgain) {
+        console.log("[Permissions] Requesting camera permission...");
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        
+        console.log("[Permissions] Camera permission request result:", status);
+
+        if (status === "granted") {
+          return true;
+        }
+
+        // User just denied
+        toast.error(
+          "Autorizzazione alla fotocamera necessaria per scattare foto."
+        );
+        return false;
+      }
+
+      // 3) Permission is denied and we cannot ask again -> guide to settings
+      toast.error(
+        "Per continuare abilita l'accesso alla fotocamera dalle impostazioni."
+      );
+      if (typeof Linking.openSettings === "function") {
+        Linking.openSettings().catch((err) => {
+          console.error("Error opening settings:", err);
+        });
+      }
+      return false;
+    } catch (error) {
+      console.error("Camera permission request error:", error);
       return false;
     }
   };
@@ -85,8 +167,16 @@ export const useFileUpload = () => {
     options: FileUploadOptions = {}
   ): Promise<UploadedFile[]> => {
     try {
-      const hasPermission = await requestPermissions();
-      if (!hasPermission) return [];
+      // Always request permissions before opening picker (required for Play Store/App Store compliance)
+      console.log("[Permissions] Starting pickFiles - checking permissions...");
+      const hasPermission = await requestMediaLibraryPermissions();
+      
+      if (!hasPermission) {
+        console.log("[Permissions] Permission denied - cannot open gallery");
+        return [];
+      }
+      
+      console.log("[Permissions] Permission granted - opening gallery picker");
 
       const {
         mediaType = "image",
@@ -146,7 +236,8 @@ export const useFileUpload = () => {
     options: FileUploadOptions = {}
   ): Promise<UploadedFile[]> => {
     try {
-      const hasPermission = await requestPermissions();
+      // Always request camera permissions before opening camera (required for Play Store/App Store compliance)
+      const hasPermission = await requestCameraPermissions();
       if (!hasPermission) return [];
 
       const { quality = 0.8 } = options;

@@ -28,7 +28,10 @@ type SimpleCollection = {
   name: string;
   isPortfolioCollection?: boolean;
 };
-type RichCollection = SimpleCollection & { thumbnails: string[] };
+type RichCollection = SimpleCollection & {
+  thumbnails: string[];
+  postsCount: number;
+};
 
 export default function UploadCollectionStep() {
   const collectionId = usePostUploadStore((s) => s.collectionId);
@@ -43,7 +46,13 @@ export default function UploadCollectionStep() {
   const [styleNames, setStyleNames] = useState<{ id: string; name: string }[]>(
     []
   );
-  const canProceed = !!collectionId;
+  // Allow proceeding without selecting a collection since posts are automatically added to "Tutti"
+  const canProceed = true;
+  
+  // Debug: Log to verify canProceed value
+  useEffect(() => {
+    console.log("[UploadCollection] canProceed:", canProceed, "nextDisabled will be:", !canProceed);
+  }, [canProceed]);
   const redirectToCollectionId = usePostUploadStore(
     (s) => s.redirectToCollectionId
   );
@@ -120,6 +129,7 @@ export default function UploadCollectionStep() {
           .filter((c: any) => c.name !== COLLECTION_NAME.ALL_POSTS)
           .map((c: any) => {
             const medias: string[] = [];
+            const postCount = (c.collection_posts || []).length;
             (c.collection_posts || []).forEach((cp: any) => {
               (cp.posts?.post_media || [])
                 .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
@@ -130,6 +140,7 @@ export default function UploadCollectionStep() {
               name: c.name,
               isPortfolioCollection: c.isPortfolioCollection,
               thumbnails: medias.slice(0, 4),
+              postsCount: postCount,
             };
           });
         if (mounted) {
@@ -195,6 +206,7 @@ export default function UploadCollectionStep() {
           name: trimmed,
           thumbnails: [],
           isPortfolioCollection: false,
+          postsCount: 0,
         },
         ...prev,
       ]);
@@ -514,16 +526,28 @@ export default function UploadCollectionStep() {
                           : 0,
                     }}
                   >
-                    {row.map((c, colIdx) => (
-                      <TouchableOpacity
-                        key={c.id}
-                        onPress={() => setCollectionId(c.id)}
-                        activeOpacity={0.9}
-                        style={{
-                          width: itemWidth,
-                          marginRight: colIdx === 0 ? gap : 0,
-                        }}
-                      >
+                    {row.map((c, colIdx) => {
+                      // Check if this is the "Preferiti" collection (case-insensitive)
+                      const isArtistFav =
+                        c.name?.toLowerCase() === "preferiti";
+                      const isFullPreferiti =
+                        isArtistFav && c.postsCount >= 4;
+
+                      return (
+                        <TouchableOpacity
+                          key={c.id}
+                          onPress={
+                            isFullPreferiti ? undefined : () => setCollectionId(c.id)
+                          }
+                          disabled={isFullPreferiti}
+                          activeOpacity={isFullPreferiti ? 1 : 0.9}
+                          style={{
+                            width: itemWidth,
+                            marginRight: colIdx === 0 ? gap : 0,
+                            opacity: 1, // Keep full opacity, overlay will handle visibility
+                            pointerEvents: isFullPreferiti ? "none" : "auto",
+                          }}
+                        >
                         <View
                           style={{
                             borderRadius: 16,
@@ -532,32 +556,85 @@ export default function UploadCollectionStep() {
                             borderColor: "#fff",
                             padding: 8,
                             overflow: "hidden",
+                            position: "relative",
+                            opacity: isFullPreferiti ? 0.4 : 1, // Dim the thumbnails when full
                           }}
                         >
                           <GridThumbs thumbnails={c.thumbnails} />
                           {/* selection dot */}
-                          <View
-                            style={{
-                              position: "absolute",
-                              top: 6,
-                              right: 6,
-                              width: 24,
-                              height: 24,
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {collectionId === c.id ? (
-                              <SVGIcons.UploadCollectionSelected />
-                            ) : (
-                              <SVGIcons.UploadCollectionSelection />
-                            )}
-                          </View>
+                          {!isFullPreferiti && (
+                            <View
+                              style={{
+                                position: "absolute",
+                                top: 6,
+                                right: 6,
+                                width: 24,
+                                height: 24,
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {collectionId === c.id ? (
+                                <SVGIcons.UploadCollectionSelected />
+                              ) : (
+                                <SVGIcons.UploadCollectionSelection />
+                              )}
+                            </View>
+                          )}
+                          {/* Limit message overlay in center */}
+                          {isFullPreferiti && (
+                            <View
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: "rgba(0, 0, 0, 0.9)",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 16,
+                                zIndex: 10,
+                              }}
+                            >
+                              <View
+                                style={{
+                                  backgroundColor: "rgba(20, 4, 4, 1)",
+                                  paddingHorizontal: s(12),
+                                  paddingVertical: s(10),
+                                  borderRadius: s(8),
+                                  borderWidth: 1,
+                                  borderColor: "#FF4C4C", 
+                                  shadowColor: "#000",
+                                  shadowOffset: { width: 0, height: 2 },
+                                  shadowOpacity: 0.2,
+                                  shadowRadius: 4,
+                                  elevation: 5,
+                                  maxWidth: "80%", 
+                                  alignSelf: "center",
+                                }}
+                              >
+                                <ScaledText
+                                  allowScaling={false}
+                                  variant="md"
+                                  className="text-white font-neueSemibold text-center"
+                                  style={{
+                                    fontSize: s(14),
+                                    lineHeight: s(18),
+                                    color: "#FFFFFF",
+                                  }}
+                                  numberOfLines={2}
+                                >
+                                  Limite 4 post raggiunto
+                                </ScaledText>
+                              </View>
+                            </View>
+                          )}
                         </View>
                         <ScaledText
                           allowScaling={false}
                           variant="sm"
-                          className="text-foreground font-neueMedium"
+                          className={isFullPreferiti ? "text-gray font-neueMedium" : "text-foreground font-neueMedium"}
                           style={{
                             marginTop: mvs(8),
                           }}
@@ -566,7 +643,8 @@ export default function UploadCollectionStep() {
                           {c.name}
                         </ScaledText>
                       </TouchableOpacity>
-                    ))}
+                    );
+                  })}
                     {row.length < 2 ? (
                       <View style={{ width: itemWidth }} />
                     ) : null}
