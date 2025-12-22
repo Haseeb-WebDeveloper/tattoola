@@ -3,14 +3,14 @@ import NextBackFooter from "@/components/ui/NextBackFooter";
 import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { useSignupPermissions } from "@/hooks/useSignupPermissions";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step6Schema } from "@/utils/artistRegistrationValidation";
 import { mvs, s } from "@/utils/scale";
-import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 
 export default function ArtistStep6V2() {
@@ -22,6 +22,7 @@ export default function ArtistStep6V2() {
     currentStepDisplay,
     step13,
   } = useArtistRegistrationV2Store();
+  const { pickCertificateFile, isLoadingFile } = useSignupPermissions();
   const [uploading, setUploading] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{
     name: string;
@@ -44,56 +45,48 @@ export default function ArtistStep6V2() {
   const handlePickCertificate = async () => {
     try {
       setUploading(true);
-      
-      // Pick document (PDF, DOC, DOCX, etc.)
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ],
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
 
-      if (result.canceled) {
-        setUploading(false);
+      // Pick certificate file with permission handling (only asks once)
+      const fileResult = await pickCertificateFile();
+      if (!fileResult) {
+        // User cancelled or permission denied
         return;
       }
 
-      const file = result.assets[0];
-      
       // Check file size (10MB limit for documents)
       const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size && file.size > maxSize) {
-        toast.error("La dimensione del file deve essere inferiore a 10MB");
+      if (fileResult.size && fileResult.size > maxSize) {
+        Alert.alert(
+          "File troppo grande",
+          "La dimensione del file deve essere inferiore a 10MB"
+        );
         setUploading(false);
         return;
       }
 
       // Set selected document for preview
       setSelectedDocument({
-        name: file.name || "Document",
-        size: file.size || 0,
-        uri: file.uri,
+        name: fileResult.name || "Document",
+        size: fileResult.size || 0,
+        uri: fileResult.uri,
       });
 
       // Upload to Cloudinary using the service method
       const uploadOptions = cloudinaryService.getCertificateUploadOptions();
       const uploadResult = await cloudinaryService.uploadFile(
         {
-          uri: file.uri,
-          type: file.mimeType || "application/pdf",
-          fileName: file.name || "certificate.pdf",
+          uri: fileResult.uri,
+          type: "application/pdf",
+          fileName: fileResult.name || "certificate.pdf",
         },
         uploadOptions
       );
-      
+
       const certificateUrl = uploadResult.secureUrl;
 
       // Update store with certificate URL
       updateStep4({ certificateUrl });
-      
+
       toast.success("Certificato caricato con successo");
     } catch (error: any) {
       console.error("Error uploading certificate:", error);
@@ -146,12 +139,13 @@ export default function ArtistStep6V2() {
               paddingVertical: mvs(24),
               paddingHorizontal: s(16),
               borderWidth: s(1),
+              opacity: uploading || isLoadingFile ? 0.5 : 1,
             }}
           >
             <SVGIcons.Upload width={s(42)} height={s(42)} />
             <TouchableOpacity
               onPress={handlePickCertificate}
-              disabled={uploading}
+              disabled={uploading || isLoadingFile}
               className="bg-primary text-background rounded-full"
               style={{
                 paddingVertical: mvs(8),
@@ -165,7 +159,7 @@ export default function ArtistStep6V2() {
                 variant="md"
                 className="text-foreground font-neueSemibold"
               >
-                {uploading ? "Caricamento..." : "Carica Certificato"}
+                {uploading || isLoadingFile ? "Caricamento..." : "Carica Certificato"}
               </ScaledText>
             </TouchableOpacity>
             <ScaledText

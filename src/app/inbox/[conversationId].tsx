@@ -13,11 +13,11 @@ import {
   unblockUser,
 } from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
+import { PermissionsService } from "@/services/permissions.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
 import { usePresenceStore } from "@/stores/presenceStore";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -314,23 +314,16 @@ export default function ChatThreadScreen() {
 
   const handlePickFile = async () => {
     try {
-      // Request permission to access media library
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permissionResult.granted) {
-        toast.error("Autorizzazione negata per accedere alla galleria");
-        return;
-      }
-
-      // Launch image picker to select from gallery
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images", "videos"],
-        allowsEditing: false,
+      // Use permissions service - will only ask for permission once
+      const result = await PermissionsService.pickMediaFromGallery({
+        allowsMultipleSelection: false,
         quality: 1,
+        allowsEditing: false,
       });
 
-      if (result.canceled) return;
+      if (!result || result.canceled) {
+        return;
+      }
 
       const asset = result.assets[0];
 

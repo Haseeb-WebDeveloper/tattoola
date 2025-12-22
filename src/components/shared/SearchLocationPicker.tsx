@@ -6,14 +6,13 @@ import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Image,
+  ActivityIndicator,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   TouchableOpacity,
-  View,
-  ActivityIndicator,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -42,6 +41,7 @@ type SearchLocationPickerProps = {
   initialMunicipalityId?: string | null;
   facets?: LocationFacet[];
   isLoading?: boolean;
+  entityType?: "artists" | "studios"; // determines how to compute top 6 provinces
 };
 
 export default function SearchLocationPicker({
@@ -52,6 +52,7 @@ export default function SearchLocationPicker({
   initialMunicipalityId,
   facets = [],
   isLoading = false,
+  entityType = "artists",
 }: SearchLocationPickerProps) {
   const insets = useSafeAreaInsets();
 
@@ -74,7 +75,7 @@ export default function SearchLocationPicker({
     return new Set(facets.map((f) => f.provinceId));
   }, [facets]);
 
-  // Load provinces with artist count-based sorting
+  // Load provinces with count-based sorting depending on entityType (artists or studios)
   useEffect(() => {
     let isMounted = true;
 
@@ -87,26 +88,49 @@ export default function SearchLocationPicker({
       setIsLoadingProvinces(true);
 
       try {
-        // Optimized query: Join user_locations with users to get artist locations in one query
-        const { data: artistLocations, error: locError } = await supabase
-          .from("user_locations")
-          .select(`
-            provinceId,
-            userId,
-            users!inner(role)
-          `)
-          .eq("isPrimary", true)
-          .eq("users.role", "ARTIST");
+        // Count entities per province based on entityType
+        let provinceEntityCount: Record<string, number> = {};
 
-        if (locError) {
-          console.error("📍 [LOCATION_PICKER] Error loading artist locations:", locError);
+        if (entityType === "artists") {
+          // Optimized query: Join user_locations with users to get artist locations in one query
+          const { data: artistLocations, error: locError } = await supabase
+            .from("user_locations")
+            .select(`
+              provinceId,
+              userId,
+              users!inner(role)
+            `)
+            .eq("isPrimary", true)
+            .eq("users.role", "ARTIST");
+
+          if (locError) {
+            console.error("📍 [LOCATION_PICKER] Error loading artist locations:", locError);
+          }
+
+          (artistLocations || []).forEach((loc: any) => {
+            provinceEntityCount[loc.provinceId] = (provinceEntityCount[loc.provinceId] || 0) + 1;
+          });
+        } else {
+          // Studios: join studio_locations with studios to filter active/completed studios
+          const { data: studioLocations, error: studioLocError } = await supabase
+            .from("studio_locations")
+            .select(`
+              provinceId,
+              studioId,
+              studios!inner(isActive, isCompleted)
+            `)
+            .eq("isPrimary", true)
+            .eq("studios.isActive", true)
+            .eq("studios.isCompleted", true);
+
+          if (studioLocError) {
+            console.error("📍 [LOCATION_PICKER] Error loading studio locations:", studioLocError);
+          }
+
+          (studioLocations || []).forEach((loc: any) => {
+            provinceEntityCount[loc.provinceId] = (provinceEntityCount[loc.provinceId] || 0) + 1;
+          });
         }
-
-        // Count artists per province
-        const provinceArtistCount: Record<string, number> = {};
-        (artistLocations || []).forEach((loc) => {
-          provinceArtistCount[loc.provinceId] = (provinceArtistCount[loc.provinceId] || 0) + 1;
-        });
 
         // Fetch provinces
         const { data: allProvinces, error: provError } = await supabase
@@ -122,12 +146,12 @@ export default function SearchLocationPicker({
 
         if (!isMounted) return;
 
-        // Filter to provinces with facets and sort by artist count
+        // Filter to provinces with facets and sort by entity count
         const provincesWithFacets = (allProvinces || [])
           .filter((province) => facetProvinceIds.has(province.id))
           .sort((a, b) => {
-            const countA = provinceArtistCount[a.id] || 0;
-            const countB = provinceArtistCount[b.id] || 0;
+            const countA = provinceEntityCount[a.id] || 0;
+            const countB = provinceEntityCount[b.id] || 0;
             if (countB !== countA) {
               return countB - countA; // Higher count first
             }
@@ -148,7 +172,7 @@ export default function SearchLocationPicker({
     return () => {
       isMounted = false;
     };
-  }, [facetProvinceIds]);
+  }, [facetProvinceIds, entityType]);
 
   // Load municipalities when a province is selected and enrich with facet counts
   useEffect(() => {

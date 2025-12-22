@@ -1,11 +1,12 @@
 import {
-  cloudinaryService,
-  UploadOptions,
-  UploadResult,
+    cloudinaryService,
+    UploadOptions,
+    UploadResult,
 } from "@/services/cloudinary.service";
+import { PermissionsService } from "@/services/permissions.service";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Linking, Platform } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import { toast } from "sonner-native";
 
 export interface FileUploadOptions {
@@ -30,7 +31,8 @@ export const useFileUpload = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   /**
-   * Request media library permissions
+   * Request media library permissions using centralized service
+   * This ensures permission is only asked once
    */
   const requestMediaLibraryPermissions = async (): Promise<boolean> => {
     try {
@@ -38,64 +40,31 @@ export const useFileUpload = () => {
         return true;
       }
 
-      // Always check fresh permission status (don't rely on cache)
-      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-      
-      console.log("[Permissions] Media Library Status (fresh check):", {
-        granted: current.granted,
-        canAskAgain: current.canAskAgain,
-        status: current.status,
-      });
+      // Use PermissionsService which handles caching and "ask once" behavior
+      const result = await PermissionsService.ensureGalleryPermission();
 
-      // For Play Store/App Store compliance:
-      // - If permission is already granted, that's fine (user granted it before)
-      // - If permission is not granted, we MUST request it before accessing gallery
-      // - The system will show the dialog automatically when we call requestMediaLibraryPermissionsAsync()
-      
-      if (current.granted) {
-        // Already granted -> permission was given previously (compliance requirement met)
-        console.log("[Permissions] Media library permission already granted");
-        return true;
-      }
-
-      // Permission is NOT granted - we MUST request it
-      console.log("[Permissions] Permission NOT granted, requesting...");
-      
-      // 2) If we can still ask, request once -> OS shows native dialog
-      if (current.canAskAgain) {
-        console.log("[Permissions] Calling requestMediaLibraryPermissionsAsync() - system dialog should appear now");
-        const requestResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        
-        console.log("[Permissions] Permission request result:", {
-          status: requestResult.status,
-          granted: requestResult.granted,
-          canAskAgain: requestResult.canAskAgain,
-        });
-
-        if (requestResult.status === "granted" || requestResult.granted) {
-          console.log("[Permissions] Permission granted by user");
-          return true;
-        }
-
-        // User just denied
-        console.log("[Permissions] Permission denied by user");
-        toast.error(
-          "Autorizzazione alle foto necessaria per caricare immagini."
+      if (!result.granted) {
+        // Show appropriate message based on whether we can ask again
+        const message = PermissionsService.getPermissionDeniedMessage(
+          "gallery",
+          result.canAskAgain
         );
+
+        if (message.showSettings) {
+          Alert.alert(message.title, message.message, [
+            { text: "Annulla", style: "cancel" },
+            {
+              text: "Apri Impostazioni",
+              onPress: () => PermissionsService.openSettings(),
+            },
+          ]);
+        } else {
+          toast.error(message.message);
+        }
         return false;
       }
 
-      // 3) Permission is denied and we cannot ask again -> guide to settings
-      console.log("[Permissions] Permission denied and cannot ask again - guiding to settings");
-      toast.error(
-        "Per continuare abilita l'accesso alle foto dalle impostazioni."
-      );
-      if (typeof Linking.openSettings === "function") {
-        Linking.openSettings().catch((err) => {
-          console.error("Error opening settings:", err);
-        });
-      }
-      return false;
+      return true;
     } catch (error) {
       console.error("[Permissions] Permission request error:", error);
       return false;
