@@ -8,7 +8,9 @@ import {
   blockUser,
   deleteConversation,
   fetchConversationByIdWithPeer,
+  isUserBlocked,
   reportUser,
+  unblockUser,
 } from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
@@ -59,6 +61,7 @@ export default function ChatThreadScreen() {
   const [menuModalVisible, setMenuModalVisible] = useState(false);
   const [showMessageRestrictionModal, setShowMessageRestrictionModal] =
     useState(false);
+  const [isBlockedByMe, setIsBlockedByMe] = useState(false);
   const listRef = useRef<FlatList>(null);
   const newestMessageIdRef = useRef<string | null>(null);
   const isLoadingOlderRef = useRef<boolean>(false);
@@ -96,6 +99,24 @@ export default function ChatThreadScreen() {
   const isConversationBlocked = React.useMemo(() => {
     return conv?.status === "BLOCKED";
   }, [conv?.status]);
+
+  // Determine if current user has blocked the peer (controls menu label)
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        if (user?.id && peer?.id) {
+          const blocked = await isUserBlocked(user.id, peer.id);
+          if (active) setIsBlockedByMe(!!blocked);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user?.id, peer?.id, isConversationBlocked]);
 
   // Check if input should be disabled
   const isInputDisabled = React.useMemo(() => {
@@ -360,6 +381,7 @@ export default function ChatThreadScreen() {
     try {
       await blockUser(user.id, peer.id, conversationId);
       toast.success("Utente bloccato");
+      setIsBlockedByMe(true);
 
       // Reload conversation to ensure we have the latest server state
       // This also updates blockedAt, blockedBy fields
@@ -382,6 +404,46 @@ export default function ChatThreadScreen() {
       if (originalConv) {
         setConv(originalConv);
       }
+      try {
+        const blocked = await isUserBlocked(user.id, peer.id);
+        setIsBlockedByMe(!!blocked);
+      } catch {}
+    }
+  }, [user?.id, peer?.id, conversationId]);
+
+  const handleUnblock = React.useCallback(async () => {
+    if (!user?.id || !peer?.id || !conversationId) return;
+
+    // Optimistically update UI
+    setConv((prev: any) => ({ ...prev, status: "ACTIVE" }));
+
+    try {
+      await unblockUser(user.id, peer.id, conversationId);
+      toast.success("Utente sbloccato");
+      setIsBlockedByMe(false);
+
+      const updatedConv = await fetchConversationByIdWithPeer(
+        user.id,
+        conversationId
+      );
+      if (updatedConv) {
+        setConv(updatedConv);
+      }
+    } catch (error) {
+      console.error("Error unblocking user:", error);
+      toast.error("Sblocco dell'utente non riuscito");
+
+      const originalConv = await fetchConversationByIdWithPeer(
+        user.id,
+        conversationId
+      );
+      if (originalConv) {
+        setConv(originalConv);
+      }
+      try {
+        const blocked = await isUserBlocked(user.id, peer.id);
+        setIsBlockedByMe(!!blocked);
+      } catch {}
     }
   }, [user?.id, peer?.id, conversationId]);
 
@@ -506,8 +568,8 @@ export default function ChatThreadScreen() {
                     height: s(36),
                   }}
                 />
-                {/* Online status indicator */}
-                {peer?.id && (
+                {/* Online status indicator (hidden for blocked conversations) */}
+                {peer?.id && !isConversationBlocked && (
                   <View
                     className={`rounded-full absolute right-0 top-0 ${onlineUserIds?.[peer.id] ? "bg-success" : "bg-error"}`}
                     style={{
@@ -845,7 +907,9 @@ export default function ChatThreadScreen() {
         peerUsername={peerUsername}
         onReport={handleReport}
         onBlock={handleBlock}
+        onUnblock={handleUnblock}
         onDelete={handleDelete}
+        isBlocked={isBlockedByMe}
       />
 
       {/* Message Restriction Modal */}
