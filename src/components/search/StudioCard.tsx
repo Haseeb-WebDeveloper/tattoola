@@ -285,7 +285,7 @@ function StudioCard({ studio, onEditPress }: StudioCardProps) {
         )}
 
         {/* Styles Pills */}
-        {studio.styles.length > 0 && <StylePills styles={studio.styles} />}
+        {studio.styles.length > 0 && <StylePills styles={studio.styles} size="small" />}
       </View>
 
       {/* Banner - Video or Images */}

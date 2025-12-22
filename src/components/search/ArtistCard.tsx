@@ -135,62 +135,62 @@ function ArtistCard({ artist }: ArtistCardProps) {
   }, [videoUrl, videoPlayer]);
 
   return (
-    <View style={{ marginHorizontal: s(16), marginBottom: mvs(16) }}>
+    <View style={{ marginHorizontal: s(16), marginBottom: mvs(16), position: "relative" }}>
+      {/* Subscription Badge over the top edge of the card */}
+      {hasStudioPlan && (
+        <View
+          className="absolute flex-row items-center justify-center z-10"
+          pointerEvents="none"
+          style={{
+            top: s(0),
+            right: s(2),
+            paddingLeft: s(8),
+            paddingRight: s(8),
+            paddingVertical: mvs(5),
+            gap: s(4),
+            borderBottomLeftRadius: s(12),
+            borderTopRightRadius: s(12),
+            borderTopWidth: 0.5,
+            borderRightWidth: 0.5,
+            borderBottomWidth: 0.5,
+            borderLeftWidth: 0.5,
+            borderColor: "rgba(164, 154, 153, 0.7)",
+            backgroundColor: isStudioPremium
+              ? "rgba(20, 13, 4, 1)"
+              : "rgba(20, 4, 4, 1)",
+          }}
+        >
+          {isStudioPremium ? (
+            <SVGIcons.StudioPremium width={s(12)} height={s(12)} />
+          ) : (
+            <SVGIcons.DimondRed width={s(12)} height={s(12)} />
+          )}
+          <ScaledText
+            allowScaling={false}
+            variant="11"
+            className="text-error font-neueMedium"
+            style={{
+              fontFamily: "NeueHaasDisplay",
+              fontWeight: "500",
+              fontSize: 11,
+              lineHeight: 11 * 1.3,
+              letterSpacing: 0,
+              ...(isStudioPremium ? { color: "rgba(244, 158, 0, 1)" } : {}),
+            }}
+          >
+            {badgeLabel}
+          </ScaledText>
+        </View>
+      )}
       <TouchableOpacity
         activeOpacity={1}
         onPress={handlePress}
         className="overflow-hidden border bg-background border-gray/50"
         style={{
           borderRadius: s(35),
+          borderWidth: s(0.5),
         }}
       >
-        {/* Subscription Badge  */}
-        {hasStudioPlan && (
-          <View
-            className="absolute flex-row items-center justify-center z-10"
-            style={{
-              top: s(0),
-              right: s(0),
-              width: s(120),
-              paddingLeft: s(8),
-              paddingRight: s(8),
-              paddingVertical: mvs(5),
-              gap: s(4),
-              borderBottomLeftRadius: s(12),
-              borderTopRightRadius: s(35), 
-              borderTopWidth: 0,
-              borderRightWidth: 0, 
-              borderBottomWidth: 0.5, 
-              borderLeftWidth: 0.5,   
-              borderBottomEndRadius: 0.5,
-              borderColor: "rgba(164, 154, 153, 1)",
-              backgroundColor: isStudioPremium
-                ? "rgba(20, 13, 4, 1)"
-                : "rgba(20, 4, 4, 1)",
-            }}
-          >
-            {isStudioPremium ? (
-              <SVGIcons.StudioPremium width={s(12)} height={s(12)} />
-            ) : (
-              <SVGIcons.DimondRed width={s(12)} height={s(12)} />
-            )}
-            <ScaledText
-              allowScaling={false}
-              variant="11"
-              className="text-error font-neueMedium"
-              style={{
-                fontFamily: "NeueHaasDisplay",
-                fontWeight: "500",
-                fontSize: 11,
-                lineHeight: 11 * 1.3,
-                letterSpacing: 0,
-                ...(isStudioPremium ? { color: "rgba(244, 158, 0, 1)" } : {}),
-              }}
-            >
-              {badgeLabel}
-            </ScaledText>
-          </View>
-        )}
         {/* Top Section - Avatar, Name, Experience, Location */}
         <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
           {/* Avatar and Name Row */}
@@ -268,15 +268,15 @@ function ArtistCard({ artist }: ArtistCardProps) {
                       variant="md"
                       className="text-white font-neueLight"
                     >
-                      Titolare di{" "}
-                    </ScaledText>
-                    <ScaledText
+                      Titolare di{" "} <ScaledText
                       allowScaling={false}
                       variant="md"
                       className="text-white font-neueBold"
                     >
                       {artist.businessName}
                     </ScaledText>
+                    </ScaledText>
+                   
                   </>
                 ) : artist.workArrangement === "STUDIO_EMPLOYEE" &&
                   artist.businessName ? (

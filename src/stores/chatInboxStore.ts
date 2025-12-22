@@ -197,10 +197,11 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
               if (data) {
                 // Fetch receipt for the last message
                 let lastMessageReceipt = null;
-                if (data.lastMessage) {
+                const lastMessage = (data as any).lastMessage as any;
+                if (lastMessage) {
                   const receiptUserId =
-                    data.lastMessage.senderId === userId
-                      ? data.lastMessage.receiverId
+                    lastMessage.senderId === userId
+                      ? lastMessage.receiverId
                       : userId;
 
                   const { data: receipt } = await supabase
@@ -246,10 +247,11 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
               if (data) {
                 // Fetch receipt for the last message
                 let lastMessageReceipt = null;
-                if (data.lastMessage) {
+                const lastMessage = (data as any).lastMessage as any;
+                if (lastMessage) {
                   const receiptUserId =
-                    data.lastMessage.senderId === userId
-                      ? data.lastMessage.receiverId
+                    lastMessage.senderId === userId
+                      ? lastMessage.receiverId
                       : userId;
 
                   const { data: receipt } = await supabase

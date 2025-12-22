@@ -3,12 +3,12 @@ import { SVGIcons } from "@/constants/svg";
 import { ms, mvs, s } from "@/utils/scale";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 type ConversationMenuModalsProps = {
@@ -17,10 +17,12 @@ type ConversationMenuModalsProps = {
   peerUsername: string;
   onReport: (reason: string) => void;
   onBlock: () => void;
+  onUnblock: () => void;
   onDelete: () => void;
+  isBlocked: boolean;
 };
 
-type ModalState = "menu" | "report" | "block" | "delete" | null;
+type ModalState = "menu" | "report" | "block" | "unblock" | "delete" | null;
 
 const ConversationMenuModals = React.memo(function ConversationMenuModals({
   visible,
@@ -28,7 +30,9 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
   peerUsername,
   onReport,
   onBlock,
+  onUnblock,
   onDelete,
+  isBlocked,
 }: ConversationMenuModalsProps) {
   const [modalState, setModalState] = useState<ModalState>("menu");
   const [reportReason, setReportReason] = useState("");
@@ -51,6 +55,11 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
     onBlock();
     handleClose();
   }, [onBlock, handleClose]);
+
+  const handleUnblockConfirm = useCallback(() => {
+    onUnblock();
+    handleClose();
+  }, [onUnblock, handleClose]);
 
   const handleDeleteConfirm = useCallback(() => {
     onDelete();
@@ -111,9 +120,9 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
         </TouchableOpacity>
 
-        {/* Block Option */}
+        {/* Block/Unblock Option */}
         <TouchableOpacity
-          onPress={() => setModalState("block")}
+          onPress={() => setModalState(isBlocked ? "unblock" : "block")}
           className="flex-row items-center justify-between"
           style={{
             paddingHorizontal: s(24),
@@ -127,7 +136,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               <SVGIcons.Stop width={s(14)} height={s(14)} />
             </View>
             <ScaledText variant="md" className="text-foreground font-[600]">
-              Blocca
+              {isBlocked ? "Sbloccare" : "Blocca"}
             </ScaledText>
           </View>
           <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
@@ -157,7 +166,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
         <View style={{ height: mvs(40) }} />
       </View>
     ),
-    []
+    [isBlocked]
   );
 
   // Render report form
@@ -324,7 +333,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
             className="font-neueBold text-center"
             style={{ color: "#000000", marginBottom: mvs(4) }}
           >
-            Do you really want to block this person?
+            Vuoi davvero bloccare questa persona?
           </ScaledText>
 
           <ScaledText
@@ -335,7 +344,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               color: "#000000",
             }}
           >
-            Once blocked, you will not be able to receive or send messages.
+            Una volta bloccata, non potrai inviare o ricevere messaggi.
           </ScaledText>
 
           <View className="flex-row" style={{ gap: s(12) }}>
@@ -349,7 +358,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               }}
             >
               <ScaledText variant="md" className="font-neueBold text-[#AE0E0E]">
-                Yes
+                Sì
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -369,6 +378,99 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
       </View>
     ),
     [handleClose, handleBlockConfirm]
+  );
+
+  // Render unblock confirmation
+  const renderUnblockContent = useMemo(
+    () => (
+      <View
+        style={{
+          backgroundColor: "#FFF",
+          borderTopLeftRadius: s(20),
+          borderTopRightRadius: s(20),
+          width: "100%",
+          paddingBottom: mvs(32),
+        }}
+      >
+        {/* Handle Indicator */}
+        <View
+          className="items-center"
+          style={{ paddingTop: mvs(12), paddingBottom: mvs(16) }}
+        >
+          <View
+            style={{
+              width: s(40),
+              height: mvs(4),
+              backgroundColor: "#CCCCCC",
+              borderRadius: s(2),
+            }}
+          />
+        </View>
+
+        <View style={{ paddingHorizontal: s(24) }}>
+          {/* Title with Icon */}
+          <View
+            className="flex-row items-center justify-center self-center"
+            style={{
+              marginBottom: mvs(24),
+              gap: s(8),
+            }}
+          >
+            <SVGIcons.Warning width={s(32)} height={s(32)} />
+          </View>
+          <ScaledText
+            variant="lg"
+            className="font-neueBold text-center"
+            style={{ color: "#000000", marginBottom: mvs(4) }}
+          >
+            Vuoi sbloccare questa persona?
+          </ScaledText>
+
+          <ScaledText
+            variant="md"
+            className="font-montserratMedium text-center"
+            style={{
+              marginBottom: mvs(32),
+              color: "#000000",
+            }}
+          >
+            Dopo lo sblocco potrai tornare a inviare e ricevere messaggi.
+          </ScaledText>
+
+          <View className="flex-row" style={{ gap: s(12) }}>
+            <TouchableOpacity
+              onPress={handleUnblockConfirm}
+              className="flex-1 items-center justify-center bg-primary rounded-full"
+              style={{
+                paddingVertical: mvs(10),
+                borderWidth: mvs(2),
+                borderColor: "#AE0E0E",
+              }}
+            >
+              <ScaledText
+                variant="md"
+                className="font-neueBold text-foreground"
+              >
+                Sì
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleClose}
+              className="flex-1 items-center justify-center"
+              style={{
+                borderRadius: s(100),
+                paddingVertical: mvs(10),
+              }}
+            >
+              <ScaledText variant="md" className="font-neueBold opacity-70">
+                No
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    ),
+    [handleClose, handleUnblockConfirm]
   );
 
   // Render delete confirmation
@@ -494,9 +596,11 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
                 ? renderReportContent
                 : modalState === "block"
                   ? renderBlockContent
-                  : modalState === "delete"
-                    ? renderDeleteContent
-                    : null}
+                  : modalState === "unblock"
+                    ? renderUnblockContent
+                    : modalState === "delete"
+                      ? renderDeleteContent
+                      : null}
           </TouchableOpacity>
         </TouchableOpacity>
       </KeyboardAvoidingView>

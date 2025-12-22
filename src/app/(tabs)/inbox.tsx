@@ -104,7 +104,9 @@ export default function InboxScreen() {
   // Memoized conversation item component for better performance
   const ConversationItem = memo(
     ({ item, onlineUserIds, router }: any) => {
-      const isOnline = onlineUserIds?.[item.peerId];
+      // Do not reveal presence when the conversation is blocked
+      const showPresence = item.status !== "BLOCKED" && !!item.peerId;
+      const isOnline = showPresence && onlineUserIds?.[item.peerId];
 
       return (
         <TouchableOpacity
@@ -136,15 +138,17 @@ export default function InboxScreen() {
                   height: s(40),
                 }}
               />
-              <View
-                className={`rounded-full absolute right-0 top-0 ${isOnline ? "bg-success" : "bg-error"}`}
-                style={{
-                  width: s(10),
-                  height: s(10),
-                  borderWidth: s(1),
-                  borderColor: "#0F0202",
-                }}
-              />
+              {showPresence && (
+                <View
+                  className={`rounded-full absolute right-0 top-0 ${isOnline ? "bg-success" : "bg-error"}`}
+                  style={{
+                    width: s(10),
+                    height: s(10),
+                    borderWidth: s(1),
+                    borderColor: "#0F0202",
+                  }}
+                />
+              )}
               {/* Lock icon overlay for blocked conversations */}
               {item.status === "BLOCKED" && (
                 <View
