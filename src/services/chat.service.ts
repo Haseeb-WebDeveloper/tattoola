@@ -1228,7 +1228,27 @@ export async function fetchConversationByIdWithPeer(
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return enrichConversationForUser(data as any, userId);
+  const enriched = enrichConversationForUser(data as any, userId);
+
+  // Keep conversation status in sync with actual block records
+  if (enriched && enriched.peerId) {
+    const isBlocked = await isUserBlocked(userId, enriched.peerId);
+    if (isBlocked && enriched.status !== "BLOCKED") {
+      await supabase
+        .from("conversations")
+        .update({ status: "BLOCKED", updatedAt: new Date().toISOString() })
+        .eq("id", conversationId);
+      enriched.status = "BLOCKED";
+    } else if (!isBlocked && enriched.status === "BLOCKED") {
+      await supabase
+        .from("conversations")
+        .update({ status: "ACTIVE", updatedAt: new Date().toISOString() })
+        .eq("id", conversationId);
+      enriched.status = "ACTIVE";
+    }
+  }
+
+  return enriched;
 }
 
 // Report user
@@ -1252,32 +1272,73 @@ export async function reportUser(
   if (error) throw new Error(error.message);
 }
 
+// Check if a specific blocker has blocked a user
+export async function isUserBlocked(
+  blockerId: string,
+  blockedId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("blocked_users")
+    .select("id")
+    .eq("blockerId", blockerId)
+    .eq("blockedId", blockedId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error checking block status:", error);
+    return false;
+  }
+
+  return !!data;
+}
+
 // Block user
 export async function blockUser(
   blockerId: string,
   blockedId: string,
   conversationId: string
 ) {
-  // console.log("Starting blockUser", blockerId, blockedId, conversationId);
-  // Create blocked_users record
-  const { error: blockError } = await supabase.from("blocked_users").insert({
-    id: uuidv4(),
-    blockerId,
-    blockedId,
-    createdAt: new Date().toISOString(),
-  });
+  const alreadyBlocked = await isUserBlocked(blockerId, blockedId);
 
-  // console.log("blockError", blockError);
-  if (blockError) throw new Error(blockError.message);
+  if (!alreadyBlocked) {
+    const { error: blockError } = await supabase.from("blocked_users").insert({
+      id: uuidv4(),
+      blockerId,
+      blockedId,
+      createdAt: new Date().toISOString(),
+    });
 
-  //  console.log("starting to update conversation status to BLOCKED", conversationId);
-  // Update conversation status to BLOCKED
+    if (blockError) throw new Error(blockError.message);
+  }
+
+  // Update conversation status to BLOCKED (ensure sync)
   const { error: convError } = await supabase
     .from("conversations")
     .update({ status: "BLOCKED", updatedAt: new Date().toISOString() })
     .eq("id", conversationId);
 
-  // console.log("convError", convError);
+  if (convError) throw new Error(convError.message);
+}
+
+// Unblock user
+export async function unblockUser(
+  unblockerId: string,
+  unblockedId: string,
+  conversationId: string
+) {
+  const { error: unblockError } = await supabase
+    .from("blocked_users")
+    .delete()
+    .eq("blockerId", unblockerId)
+    .eq("blockedId", unblockedId);
+
+  if (unblockError) throw new Error(unblockError.message);
+
+  const { error: convError } = await supabase
+    .from("conversations")
+    .update({ status: "ACTIVE", updatedAt: new Date().toISOString() })
+    .eq("id", conversationId);
+
   if (convError) throw new Error(convError.message);
 }
 
