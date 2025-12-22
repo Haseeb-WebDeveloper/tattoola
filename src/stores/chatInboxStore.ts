@@ -135,8 +135,15 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
     }
 
     const byId = { ...get().conversationsById, [c.id]: merged };
-    let order = get().order.filter((id) => id !== c.id);
-    order = [c.id, ...order];
+    let order = get().order;
+
+    // Only reorder if lastMessageAt has changed (new message) or it's a new conversation
+    const hasNewMessage = !existing || (c.lastMessageAt && existing.lastMessageAt !== c.lastMessageAt);
+    
+    if (hasNewMessage) {
+      order = order.filter((id) => id !== c.id);
+      order = [c.id, ...order];
+    }
 
     set({ conversationsById: byId, order });
     saveJSON(KEY, { conversationsById: byId, order });
@@ -197,10 +204,11 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
               if (data) {
                 // Fetch receipt for the last message
                 let lastMessageReceipt = null;
-                if (data.lastMessage) {
+                const lastMsg = Array.isArray(data.lastMessage) ? data.lastMessage[0] : data.lastMessage;
+                if (lastMsg) {
                   const receiptUserId =
-                    data.lastMessage.senderId === userId
-                      ? data.lastMessage.receiverId
+                    lastMsg.senderId === userId
+                      ? lastMsg.receiverId
                       : userId;
 
                   const { data: receipt } = await supabase
@@ -246,10 +254,11 @@ export const useChatInboxStore = create<InboxState>((set, get) => ({
               if (data) {
                 // Fetch receipt for the last message
                 let lastMessageReceipt = null;
-                if (data.lastMessage) {
+                const lastMsg = Array.isArray(data.lastMessage) ? data.lastMessage[0] : data.lastMessage;
+                if (lastMsg) {
                   const receiptUserId =
-                    data.lastMessage.senderId === userId
-                      ? data.lastMessage.receiverId
+                    lastMsg.senderId === userId
+                      ? lastMsg.receiverId
                       : userId;
 
                   const { data: receipt } = await supabase

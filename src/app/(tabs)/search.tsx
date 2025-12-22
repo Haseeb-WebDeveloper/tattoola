@@ -446,6 +446,7 @@ export default function SearchScreen() {
         initialMunicipalityId={filters.municipalityId}
         facets={facets?.locations || []}
         isLoading={isLoadingFacets}
+        entityType={activeTab}
       />
     </View>
   );

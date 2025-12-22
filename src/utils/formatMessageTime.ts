@@ -8,15 +8,27 @@ function parseTimestamp(timestamp: string | Date): Date {
 
   let raw = String(timestamp).trim();
 
-  // Already ISO parseable?
-  if (!isNaN(Date.parse(raw))) {
+  // If already has timezone info (+00:00, Z, etc.), parse as-is
+  if (raw.match(/[+-]\d{2}:\d{2}$/) || raw.endsWith('Z')) {
     return new Date(raw);
   }
 
-  // Supabase format: "2025-12-09 14:15:34.361"
+  // Supabase format: "2025-12-09 14:15:34.361" - replace space with T and add Z for UTC
   if (raw.match(/^\d{4}-\d{2}-\d{2} \d/)) {
-    raw = raw.replace(" ", "T") + "Z"; 
+    raw = raw.replace(" ", "T") + "Z";
     return new Date(raw);
+  }
+
+  // ISO format without timezone: "2025-12-09T14:15:34.361" - add Z for UTC
+  if (raw.match(/^\d{4}-\d{2}-\d{2}T\d/) && !raw.endsWith('Z')) {
+    raw = raw + "Z";
+    return new Date(raw);
+  }
+
+  // Try parsing as-is
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    return parsed;
   }
 
   return new Date(NaN);
@@ -32,17 +44,13 @@ function parseTimestamp(timestamp: string | Date): Date {
 export function formatMessageTime(timestamp: string | null | undefined): string {
   if (!timestamp) return "";
 
-  // 1Parse safely
-  const utcDate = parseTimestamp(timestamp);
+  // Parse safely - Date constructor already handles UTC to local conversion
+  const localDate = parseTimestamp(timestamp);
 
-  if (isNaN(utcDate.getTime())) {
+  if (isNaN(localDate.getTime())) {
     console.log("❌ Invalid timestamp received:", timestamp);
     return "";
   }
-
-  // Manual UTC → Local timezone conversion (React Native safe)
-  const tzOffsetMinutes = -utcDate.getTimezoneOffset(); 
-  const localDate = new Date(utcDate.getTime() + tzOffsetMinutes * 60000);
 
   const now = new Date();
   const diff = now.getTime() - localDate.getTime();

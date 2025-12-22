@@ -5,16 +5,16 @@ import { useSearchStore } from "@/stores/searchStore";
 import type { Facets } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
+    BottomSheetBackdrop,
+    BottomSheetModal,
+    BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -550,6 +550,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         initialMunicipalityId={tempFilters.municipalityId}
         facets={tempFacets?.locations || []}
         isLoading={isLoadingLocations}
+        entityType={activeTab}
       />
     </>
   );
