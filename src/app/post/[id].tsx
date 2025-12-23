@@ -12,9 +12,9 @@ import {
   updatePost,
 } from "@/services/post.service";
 import {
-  toggleFollow,
-  fetchUserSummaryCached,
   fetchArtistProfileSummary,
+  fetchUserSummaryCached,
+  toggleFollow,
 } from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { UserSummary } from "@/types/auth";
@@ -699,7 +699,7 @@ export default function PostDetailScreen() {
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: isOwnPost ? mvs(80) : 32 }}
         enableOnAndroid={true}
         enableAutomaticScroll={false}
         bounces={false}
@@ -1084,13 +1084,11 @@ export default function PostDetailScreen() {
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
                   style={{
-                    maxHeight: mvs(160),
-                    height: isOwnPost ? mvs(160) : undefined,
+                    maxHeight: mvs(200),
                     flex: 1,
                   }}
                   contentContainerStyle={{ paddingRight: s(16) }}
                   scrollEnabled={true}
-                  // className="bg-red-500"
                 >
                   <View
                     className="flex-col items-start justify-star"
@@ -1135,68 +1133,65 @@ export default function PostDetailScreen() {
                       : null}
                   </View>
                 </KeyboardAwareScrollView>
-
-                {/* Fixed Edit/Delete buttons positioned 120px from top of likes section */}
-                {isOwnPost && (
-                  <View
-                    className="absolute flex-row items-center justify-between gap-2"
-                    style={{
-                      top: mvs(120),
-                      right: 0,
-                      left: 0,
-                      zIndex: 10,
-                    }}
-                    pointerEvents="box-none"
-                  >
-                    <TouchableOpacity
-                      onPress={handleEdit}
-                      className="flex-row items-center justify-center border rounded-full bg-background"
-                      style={{
-                        borderColor: "#D9D9D9",
-                        paddingVertical: mvs(5.919),
-                        paddingHorizontal: s(18),
-                        gap: s(5),
-                      }}
-                    >
-                      <SVGIcons.Edit width={s(14)} height={s(14)} />
-                      <ScaledText
-                        allowScaling={false}
-                        variant="sm"
-                        className="text-white font-montserratSemibold"
-                        style={{ fontSize: s(12) }}
-                      >
-                        Edit
-                      </ScaledText>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setShowDeleteModal(true)}
-                      className="flex-row items-center justify-center rounded-full"
-                      style={{
-                        paddingVertical: mvs(5.919),
-                        paddingHorizontal: s(18),
-                        gap: s(5),
-                      }}
-                    >
-                      <SVGIcons.Trash width={s(14)} height={s(14)} />
-                      <ScaledText
-                        allowScaling={false}
-                        variant="sm"
-                        className="font-montserratSemibold"
-                        style={{
-                          fontSize: s(12),
-                          color: "#AE0E0E",
-                        }}
-                      >
-                        Delete
-                      </ScaledText>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
             </View>
           </View>
         </LinearGradient>
       </KeyboardAwareScrollView>
+
+      {/* Fixed Edit/Delete buttons at bottom */}
+      {isOwnPost && !showEditModal && (
+        <View
+          className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between px-4"
+          style={{
+            paddingTop: mvs(12),
+            paddingBottom: mvs(24),
+            zIndex: 20,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleEdit}
+            className="flex-row items-center justify-center border rounded-full bg-background"
+            style={{
+              borderColor: "#d9d9d9bb",
+              paddingVertical: mvs(6),
+              paddingHorizontal: s(20),
+              gap: s(5),
+              borderWidth: s(0.7),
+            }}
+          >
+            <SVGIcons.Edit width={s(14)} height={s(14)} />
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-white font-montserratSemibold"
+            >
+              Edit
+            </ScaledText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowDeleteModal(true)}
+            className="flex-row items-center justify-center rounded-full"
+            style={{
+              paddingVertical: mvs(10.5),
+              paddingHorizontal: s(20),
+              gap: s(5),
+            }}
+          >
+            <SVGIcons.Trash width={s(14)} height={s(14)} />
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="font-montserratSemibold"
+              style={{
+                color: "#AE0E0E",
+              }}
+            >
+              Delete
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal

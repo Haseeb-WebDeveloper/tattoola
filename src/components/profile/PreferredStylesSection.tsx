@@ -1,7 +1,7 @@
-import ScaledText from "@/components/ui/ScaledText";
 import StyleInfoModal from "@/components/shared/StyleInfoModal";
-import { addEmojiWithStyle } from "@/utils/content/add-emoji-with-style";
+import ScaledText from "@/components/ui/ScaledText";
 import { fetchTattooStyles } from "@/services/style.service";
+import { addEmojiWithStyle } from "@/utils/content/add-emoji-with-style";
 import { mvs, s } from "@/utils/scale";
 import React, { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
@@ -80,7 +80,7 @@ export const PreferredStylesSection: React.FC<PreferredStylesSectionProps> = ({
                 style={{
                   paddingHorizontal: s(10),
                   paddingVertical: mvs(5),
-                  height: s(22),
+                  height: s(28  ),
                   justifyContent: "center",
                 }}
               >

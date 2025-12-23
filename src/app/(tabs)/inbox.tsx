@@ -332,7 +332,7 @@ export default function InboxScreen() {
         >
           {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
         </View>
-        <SVGIcons.LogoLight />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
         <View className="items-center justify-center rounded-full">
           <View style={{ width: s(20), height: s(20) }} />
           {/* <SVGIcons.Menu width={s(20)} height={s(20)} /> */}

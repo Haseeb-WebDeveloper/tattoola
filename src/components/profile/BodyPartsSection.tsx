@@ -62,7 +62,7 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-foreground font-neueBold"
+              className="text-foreground/85 font-neueBold"
             >
               {bodyPart.name}
             </ScaledText>
@@ -71,16 +71,19 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
         {hasMore && (
           <TouchableOpacity
             onPress={() => setExpanded((prev) => !prev)}
-            className="border rounded-xl bg-black/40 border-error"
+            className="border rounded-xl border-error bg-error/20"
             style={{
               paddingHorizontal: s(10),
               paddingVertical: mvs(6),
+              flexDirection: "row",
+              alignItems: "center",
+              gap: s(6),
             }}
           >
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-foreground font-neueBold"
+              className="text-foreground/70 font-neueSemibold"
             >
               {expanded
                 ? "Mostra meno"
@@ -88,6 +91,14 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
                 ? "+ 1 altra"
                 : `+ ${remainingCount} altre`}
             </ScaledText>
+            <SVGIcons.ChevronDown
+              width={s(10)}
+              height={s(10)}
+              style={{
+                transform: [{ rotate: expanded ? "180deg" : "0deg" }],
+                opacity: 0.85,
+              }}
+            />
           </TouchableOpacity>
         )}
       </View>

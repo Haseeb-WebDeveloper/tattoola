@@ -5,20 +5,19 @@ import { useSearchStore } from "@/stores/searchStore";
 import type { Facets } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import {
-    BottomSheetBackdrop,
-    BottomSheetModal,
-    BottomSheetScrollView,
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import SearchLocationPicker from "../shared/SearchLocationPicker";
 import ServiceFilter from "./ServiceFilter";
 import StyleFilter from "./StyleFilter";
 
@@ -34,21 +33,12 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const [tempFilters, setTempFilters] = useState(filters);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [locationNames, setLocationNames] = useState<{
-    province: string;
-    municipality: string;
-  } | null>(null);
   const [tempFacets, setTempFacets] = useState<Facets | null>(null);
   // Separate loading states for each filter type
   const [isLoadingStyles, setIsLoadingStyles] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
-  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
-  const isShowingLocationPickerRef = useRef(false);
   // Track pending filter changes for rapid selections
-  const pendingFilterChangeRef = useRef<
-    "style" | "service" | "location" | null
-  >(null);
+  const pendingFilterChangeRef = useRef<"style" | "service" | null>(null);
   const isLoadingRef = useRef(false);
 
   // Snap points for the bottom sheet (90% of screen height)
@@ -59,13 +49,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     if (visible) {
       setTempFilters(filters);
       setTempFacets(facets);
-      // Get location names from store if they exist
-      const { locationDisplay } = useSearchStore.getState();
-      if (locationDisplay && filters.provinceId && filters.municipalityId) {
-        setLocationNames(locationDisplay);
-      } else {
-        setLocationNames(null);
-      }
       // Load initial facets (no changedFilterType = all loading)
       loadFacetsForFilters(filters);
       // Open bottom sheet modal
@@ -76,12 +59,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       // Close bottom sheet modal
       bottomSheetRef.current?.dismiss();
       // Reset state when parent closes modal
-      setShowLocationPicker(false);
-      isShowingLocationPickerRef.current = false;
       // Reset loading states
       setIsLoadingStyles(false);
       setIsLoadingServices(false);
-      setIsLoadingLocations(false);
       isLoadingRef.current = false;
       pendingFilterChangeRef.current = null;
     }
@@ -107,7 +87,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   const loadFacetsForFilters = async (
     filterToUse: typeof filters,
-    changedFilterType?: "style" | "service" | "location"
+    changedFilterType?: "style" | "service"
   ) => {
     // If already loading and a new change comes in, update pending
     if (isLoadingRef.current && changedFilterType) {
@@ -131,25 +111,12 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
         const styleIdsSet = new Set(newFacets.styles.map((s) => s.id));
         const serviceIdsSet = new Set(newFacets.services.map((s) => s.id));
-        const locationKeySet = new Set(
-          newFacets.locations.map((l) => `${l.provinceId}::${l.municipalityId}`)
-        );
 
         const next = {
           ...prev,
           styleIds: prev.styleIds.filter((id) => styleIdsSet.has(id)),
           serviceIds: prev.serviceIds.filter((id) => serviceIdsSet.has(id)),
         };
-
-        // If current location is no longer valid for the new facets, clear it
-        if (next.provinceId && next.municipalityId) {
-          const key = `${next.provinceId}::${next.municipalityId}`;
-          if (!locationKeySet.has(key)) {
-            next.provinceId = null;
-            next.municipalityId = null;
-            setLocationNames(null);
-          }
-        }
 
         return next;
       });
@@ -169,42 +136,28 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       if (!pendingFilterChangeRef.current) {
         setIsLoadingStyles(false);
         setIsLoadingServices(false);
-        setIsLoadingLocations(false);
       }
     }
   };
 
   // Helper function to update loading states based on changed filter type
-  const updateLoadingStates = (
-    changedFilterType?: "style" | "service" | "location"
-  ) => {
+  const updateLoadingStates = (changedFilterType?: "style" | "service") => {
     if (changedFilterType === "style") {
       setIsLoadingServices(true);
-      setIsLoadingLocations(true);
       setIsLoadingStyles(false);
     } else if (changedFilterType === "service") {
       setIsLoadingStyles(true);
-      setIsLoadingLocations(true);
       setIsLoadingServices(false);
-    } else if (changedFilterType === "location") {
-      setIsLoadingStyles(true);
-      setIsLoadingServices(true);
-      setIsLoadingLocations(false);
     } else {
       // Default: all loading (for initial load or tab change)
       setIsLoadingStyles(true);
       setIsLoadingServices(true);
-      setIsLoadingLocations(true);
     }
   };
 
   // Handle bottom sheet dismiss (called when modal is fully dismissed)
   const handleSheetDismiss = useCallback(() => {
-    // Don't call onClose if we're showing location picker
-    // The location picker will handle reopening the sheet
-    if (!isShowingLocationPickerRef.current) {
-      onClose();
-    }
+    onClose();
   }, [onClose]);
 
   // Handle sheet changes
@@ -234,28 +187,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const handleServiceChange = (serviceIds: string[]) => {
     setTempFilters((prev) => ({ ...prev, serviceIds }));
   };
-  const handleLocationSelect = (data: {
-    province: string;
-    provinceId: string;
-    municipality: string;
-    municipalityId: string;
-  }) => {
-    const newFilters = {
-      ...tempFilters,
-      provinceId: data.provinceId,
-      municipalityId: data.municipalityId,
-    };
-
-    setTempFilters(newFilters);
-    setLocationNames({
-      province: data.province,
-      municipality: data.municipality,
-    });
-    setShowLocationPicker(false);
-
-    // User finished choosing location -> update facets for other filters
-    loadFacetsForFilters(newFilters, "location");
-  };
   const handleResetAll = () => {
     setTempFilters({
       styleIds: [],
@@ -263,7 +194,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
       provinceId: null,
       municipalityId: null,
     });
-    setLocationNames(null);
   };
 
   const handleResetStyle = () => {
@@ -272,15 +202,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   const handleResetService = () => {
     setTempFilters((prev) => ({ ...prev, serviceIds: [] }));
-  };
-
-  const handleResetLocation = () => {
-    setTempFilters((prev) => ({
-      ...prev,
-      provinceId: null,
-      municipalityId: null,
-    }));
-    setLocationNames(null);
   };
 
   // Confirm handlers: user finished choosing styles/services
@@ -296,15 +217,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     // Update filters and location display
     updateFilters(tempFilters);
 
-    // Update location display in search store (without triggering search)
-    if (locationNames && tempFilters.provinceId && tempFilters.municipalityId) {
-      // Set location display without triggering search
-      useSearchStore.setState({ locationDisplay: locationNames });
-    } else {
-      // Clear location display without triggering search
-      useSearchStore.setState({ locationDisplay: null });
-    }
-
     // Trigger search
     search();
 
@@ -314,10 +226,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   };
 
   const hasActiveFilters =
-    tempFilters.styleIds.length > 0 ||
-    tempFilters.serviceIds.length > 0 ||
-    tempFilters.provinceId !== null ||
-    tempFilters.municipalityId !== null;
+    tempFilters.styleIds.length > 0 || tempFilters.serviceIds.length > 0;
 
   return (
     <>
@@ -430,75 +339,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
             />
           </View>
 
-          {/* Divider */}
-          <View
-            className="bg-gray"
-            style={{ height: s(0.5), marginBottom: mvs(20) }}
-          />
-
-          {/* Location Filter Section */}
-          <View style={{ marginBottom: mvs(18) }}>
-            <View
-              className="flex-row items-center justify-between"
-              style={{ marginBottom: mvs(10) }}
-            >
-              <View className="flex-row items-center gap-2">
-                <SVGIcons.Location width={s(14)} height={s(14)} />
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-foreground font-montserratSemibold"
-                >
-                  Filtra per provincia
-                </ScaledText>
-              </View>
-              {(tempFilters.provinceId || tempFilters.municipalityId) && (
-                <TouchableOpacity onPress={handleResetLocation}>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-gray font-neueLight"
-                  >
-                    Reimposta
-                  </ScaledText>
-                </TouchableOpacity>
-              )}
-            </View>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => {
-                // Set flag before dismissing to prevent onClose from being called
-                isShowingLocationPickerRef.current = true;
-                // Dismiss bottom sheet first to avoid modal conflicts
-                bottomSheetRef.current?.dismiss();
-                // Show location picker after a short delay
-                setTimeout(() => {
-                  setShowLocationPicker(true);
-                }, 300);
-              }}
-              className="flex-row items-center justify-between bg-tat-foreground border-gray"
-              style={{
-                paddingVertical: mvs(10),
-                paddingHorizontal: s(16),
-                borderWidth: s(1),
-                borderRadius: s(8),
-              }}
-            >
-              <ScaledText
-                allowScaling={false}
-                variant="md"
-                className="text-gray font-montserratMedium"
-              >
-                {locationNames &&
-                tempFilters.provinceId &&
-                tempFilters.municipalityId
-                  ? `${locationNames.municipality}, ${locationNames.province}`
-                  : "Seleziona posizione"}
-              </ScaledText>
-              <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
-            </TouchableOpacity>
-          </View>
-
           {/* Action Buttons */}
           <View className="flex-row gap-4" style={{ marginTop: mvs(12) }}>
             <TouchableOpacity
@@ -532,26 +372,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
           </View>
         </BottomSheetScrollView>
       </BottomSheetModal>
-      <SearchLocationPicker
-        visible={showLocationPicker}
-        onClose={() => {
-          setShowLocationPicker(false);
-          // Reset flag
-          isShowingLocationPickerRef.current = false;
-          // Reopen filter modal if it should still be visible
-          if (visible) {
-            setTimeout(() => {
-              bottomSheetRef.current?.present();
-            }, 100);
-          }
-        }}
-        onSelect={handleLocationSelect}
-        initialProvinceId={tempFilters.provinceId}
-        initialMunicipalityId={tempFilters.municipalityId}
-        facets={tempFacets?.locations || []}
-        isLoading={isLoadingLocations}
-        entityType={activeTab}
-      />
     </>
   );
 }
