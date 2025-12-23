@@ -1,11 +1,5 @@
-import { CollectionHeader } from "@/components/collection/CollectionHeader";
 import { CollectionModals } from "@/components/collection/CollectionModals";
-import { CollectionPostsGrid } from "@/components/collection/CollectionPostsGrid";
-import AddPostsModal from "@/components/collection/AddPostsModal";
 import CollectionPostCard from "@/components/collection/CollectionPostCard";
-import DeleteCollectionModal from "@/components/collection/DeleteCollectionModal";
-import DeleteConfirmModal from "@/components/collection/DeleteConfirmModal";
-import EditCollectionNameModal from "@/components/collection/EditCollectionNameModal";
 import { CustomToast } from "@/components/ui/CustomToast";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -21,6 +15,7 @@ import {
 } from "@/services/collection.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { CollectionPostInterface } from "@/types/collection";
+import { isSystemCollection } from "@/utils/collection.utils";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
@@ -38,7 +33,8 @@ import { toast } from "sonner-native";
 const { width: screenWidth } = Dimensions.get("window");
 // Responsive spacing based on screen width (reference width 375)
 const REF_WIDTH = 375;
-const GAP = Math.max(6, Math.round((8 * screenWidth) / REF_WIDTH));
+// Increase base gaps for clearer visual spacing and center alignment
+const GAP = Math.max(10, Math.round((14 * screenWidth) / REF_WIDTH));
 const H_PADDING = Math.max(24, Math.round((32 * screenWidth) / REF_WIDTH));
 
 
@@ -351,9 +347,27 @@ export default function CollectionDetailsScreen() {
 
   // Layout depends on edit mode: 1 column while editing for reliable DnD
   const NUM_COLUMNS = editMode ? 1 : 2;
-  const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
+  const POST_WIDTH = NUM_COLUMNS === 1
+    ? (screenWidth - H_PADDING)
+    : ((screenWidth - H_PADDING - GAP) / NUM_COLUMNS);
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
+  // Check if this is the "Preferiti" collection (case-insensitive)
+  const collectionNameLower = collection?.name?.toLowerCase() || "";
+  const isArtistFavCollection =
+    !!collection && collectionNameLower === "preferiti";
+  // Check if this is "Tutti" collection - completely non-editable
+  const isTuttiCollection =
+    !!collection && collectionNameLower === "tutti";
+  // Check if this is a system collection (Tutti or Preferiti)
+  const isSystemCol = !!collection && isSystemCollection(collection.name);
+  // Preferiti can edit posts but not name/delete. Tutti cannot edit at all.
+  const canEditPosts = isOwner && !isTuttiCollection; // Allow edit mode for Preferiti
+  const canEditName = isOwner && !isSystemCol; // Cannot edit name for any system collection
+  const canDeleteCollection = isOwner && !isSystemCol; // Cannot delete any system collection
+  const currentPostCount = collection?.postsCount ?? posts.length;
+  const isArtistFavFull =
+    isArtistFavCollection && currentPostCount >= 4;
 
   useEffect(() => {
     // Show auth modal for anonymous users when opening collection (dismissible so they can view)
@@ -435,6 +449,20 @@ export default function CollectionDetailsScreen() {
   const openAddModal = async () => {
     try {
       if (!isOwner || !user || !collection) return;
+
+      // Prevent adding more posts if this is the artist's "Preferiti" collection and it's full
+      if (isArtistFavCollection && isArtistFavFull) {
+        const toastId = toast.custom(
+          <CustomToast
+            message="Puoi salvare massimo 4 post nei Preferiti"
+            iconType="error"
+            onClose={() => toast.dismiss(toastId)}
+          />,
+          { duration: 4000 }
+        );
+        return;
+      }
+
       const userPosts = await fetchUserPosts(user.id);
       setAllUserPosts(userPosts);
       setSelectModalVisible(true);
@@ -455,6 +483,21 @@ export default function CollectionDetailsScreen() {
   const confirmAdd = async () => {
     if (!isOwner) return;
     if (!collection) return;
+    
+    // Prevent adding more posts if this is the artist's "Preferiti" collection and it's full
+    if (isArtistFavCollection && isArtistFavFull) {
+      const toastId = toast.custom(
+        <CustomToast
+          message="Puoi salvare massimo 4 post nei Preferiti"
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      setSelectModalVisible(false);
+      return;
+    }
+    
     const toAdd = Array.from(selectedPostIds);
     if (!toAdd.length) {
       setSelectModalVisible(false);
@@ -627,18 +670,18 @@ export default function CollectionDetailsScreen() {
               >
                 {TrimText(collection.name, 15)}
               </ScaledText>
-              {isOwner && editMode && (
-                <TouchableOpacity
-                  onPress={handleEditName}
-                  style={{ marginLeft: s(8) }}
-                >
-                  <SVGIcons.Edit width={16} height={16} />
-                </TouchableOpacity>
-              )}
+            {isOwner && editMode && !isSystemCol && (
+              <TouchableOpacity
+                onPress={handleEditName}
+                style={{ marginLeft: s(8) }}
+              >
+                <SVGIcons.Edit width={16} height={16} />
+              </TouchableOpacity>
+            )}
             </View>
           </View>
 
-          {isOwner && (
+          {canEditPosts && !(editMode && isArtistFavCollection) && (
             <TouchableOpacity
               onPress={editMode ? handleDeleteCollection : handleToggleEditMode}
               style={{
@@ -649,7 +692,11 @@ export default function CollectionDetailsScreen() {
               }}
             >
               {editMode ? (
-                <SVGIcons.Trash width={20} height={20} />
+                canDeleteCollection ? (
+                  <SVGIcons.Trash width={20} height={20} />
+                ) : (
+                  <SVGIcons.Edit width={20} height={20} />
+                )
               ) : (
                 <SVGIcons.Edit width={20} height={20} />
               )}
@@ -706,17 +753,21 @@ export default function CollectionDetailsScreen() {
               <View
                 style={{
                   marginTop: GAP,
-                  marginBottom: GAP,
+                  marginBottom: GAP * 2,
                   alignItems: "center",
                 }}
               >
                 <TouchableOpacity
-                  onPress={openAddModal}
-                  activeOpacity={0.8}
+                  onPress={isArtistFavFull ? undefined : openAddModal}
+                  disabled={isArtistFavFull}
+                  activeOpacity={isArtistFavFull ? 1 : 0.8}
                   className="items-center justify-center border-2 border-dashed rounded-xl border-primary bg-primary/10"
                   style={{
                     width: POST_WIDTH,
                     height: mvs(253),
+                    opacity: isArtistFavFull ? 0.5 : 1,
+                    pointerEvents: isArtistFavFull ? "none" : "auto",
+
                   }}
                 >
                   <SVGIcons.AddRed width={s(32)} height={s(32)} />
@@ -727,6 +778,16 @@ export default function CollectionDetailsScreen() {
                   >
                     Aggiungi nuovo tatuaggio
                   </ScaledText>
+                  {isArtistFavFull && (
+                    <ScaledText
+                      allowScaling={false}
+                      variant="xs"
+                      className="mt-2 text-center text-gray font-neueLight"
+                      style={{ paddingHorizontal: s(8) }}
+                    >
+                      Limite 4 post raggiunto
+                    </ScaledText>
+                  )}
                 </TouchableOpacity>
               </View>
             ) : null
@@ -737,6 +798,7 @@ export default function CollectionDetailsScreen() {
           contentContainerStyle={{
             paddingHorizontal: H_PADDING / 2,
             paddingBottom: 20,
+            alignItems: NUM_COLUMNS === 1 ? "center" : undefined,
           }}
           dragItemOverflow={true}
           activationDistance={editMode ? 0 : 999999}

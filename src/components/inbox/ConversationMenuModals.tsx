@@ -1,20 +1,15 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { ms, mvs, s } from "@/utils/scale";
-import BottomSheet, {
-    BottomSheetBackdrop,
-    BottomSheetScrollView,
-    BottomSheetTextInput,
-    BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
-import { TouchableOpacity, View } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type ConversationMenuModalsProps = {
   visible: boolean;
@@ -22,10 +17,12 @@ type ConversationMenuModalsProps = {
   peerUsername: string;
   onReport: (reason: string) => void;
   onBlock: () => void;
+  onUnblock: () => void;
   onDelete: () => void;
+  isBlocked: boolean;
 };
 
-type ModalState = "menu" | "report" | "block" | "delete" | null;
+type ModalState = "menu" | "report" | "block" | "unblock" | "delete" | null;
 
 const ConversationMenuModals = React.memo(function ConversationMenuModals({
   visible,
@@ -33,49 +30,17 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
   peerUsername,
   onReport,
   onBlock,
+  onUnblock,
   onDelete,
+  isBlocked,
 }: ConversationMenuModalsProps) {
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const [modalState, setModalState] = useState<ModalState>("menu");
   const [reportReason, setReportReason] = useState("");
 
-  // Static snap points for better performance
-  const snapPoints = useMemo(() => ["35%", "40%", "95%"], []);
-
-  // Calculate index based on modal state
-  const snapIndex = useMemo(() => {
-    switch (modalState) {
-      case "menu":
-        return 1; // 35%
-      case "block":
-      case "delete":
-        return 1; // 40%
-      case "report":
-        return 2; // 95%
-      default:
-        return 0;
-    }
-  }, [modalState]);
-
-  // Open/close bottom sheet based on visible prop
-  useEffect(() => {
-    if (visible) {
-      // Use timeout to ensure smooth animation
-      requestAnimationFrame(() => {
-        bottomSheetRef.current?.snapToIndex(snapIndex);
-      });
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [visible, snapIndex]);
-
   const handleClose = useCallback(() => {
-    bottomSheetRef.current?.close();
-    // Reset state after animation
-    setTimeout(() => {
-      setModalState("menu");
-      setReportReason("");
-    }, 200);
+    // Reset state
+    setModalState("menu");
+    setReportReason("");
     onClose();
   }, [onClose]);
 
@@ -91,33 +56,48 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
     handleClose();
   }, [onBlock, handleClose]);
 
+  const handleUnblockConfirm = useCallback(() => {
+    onUnblock();
+    handleClose();
+  }, [onUnblock, handleClose]);
+
   const handleDeleteConfirm = useCallback(() => {
     onDelete();
     handleClose();
   }, [onDelete, handleClose]);
 
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.7}
-        pressBehavior="close"
-        enableTouchThrough={false}
-      />
-    ),
-    []
-  );
-
   // Render menu options
   const renderMenuContent = useMemo(
     () => (
-      <BottomSheetView
+      <View
         style={{
-          flex: 1,
+          backgroundColor: "#000000",
+          borderTopLeftRadius: s(20),
+          borderTopRightRadius: s(20),
+          width: s(342),
+          overflow: "hidden",
+          borderTopWidth: 1,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderBottomWidth: 0,
+          borderColor: "#FFFFFF",
         }}
       >
+        {/* Handle Indicator */}
+        <View
+          className="items-center"
+          style={{ paddingTop: mvs(12), paddingBottom: mvs(16) }}
+        >
+          <View
+            style={{
+              width: s(40),
+              height: mvs(4),
+              backgroundColor: "#FFFFFF",
+              borderRadius: s(2),
+            }}
+          />
+        </View>
+
         {/* Report Option */}
         <TouchableOpacity
           onPress={() => setModalState("report")}
@@ -140,9 +120,9 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
         </TouchableOpacity>
 
-        {/* Block Option */}
+        {/* Block/Unblock Option */}
         <TouchableOpacity
-          onPress={() => setModalState("block")}
+          onPress={() => setModalState(isBlocked ? "unblock" : "block")}
           className="flex-row items-center justify-between"
           style={{
             paddingHorizontal: s(24),
@@ -156,7 +136,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               <SVGIcons.Stop width={s(14)} height={s(14)} />
             </View>
             <ScaledText variant="md" className="text-foreground font-[600]">
-              Blocca
+              {isBlocked ? "Sbloccare" : "Blocca"}
             </ScaledText>
           </View>
           <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
@@ -181,100 +161,131 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           </View>
           <SVGIcons.ChevronRight width={s(12)} height={s(12)} />
         </TouchableOpacity>
-      </BottomSheetView>
+
+        {/* Bottom Padding */}
+        <View style={{ height: mvs(40) }} />
+      </View>
     ),
-    []
+    [isBlocked]
   );
 
   // Render report form
   const renderReportContent = useMemo(
     () => (
-      <BottomSheetScrollView
-        style={{ flex: 1 }}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          paddingHorizontal: s(24),
-          paddingTop: mvs(32),
-          paddingBottom: mvs(24),
+      <View
+        style={{
+          backgroundColor: "#000000",
+          borderTopLeftRadius: s(20),
+          borderTopRightRadius: s(20),
+          width: s(342),
+          // maxHeight: "90%",
+          borderTopWidth: 1,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderBottomWidth: 0,
+          borderColor: "#FFFFFF",
         }}
       >
-        {/* Warning Icon */}
+        {/* Handle Indicator */}
         <View
-          className="flex-row items-center justify-center self-center"
-          style={{
-            marginBottom: mvs(24),
-            gap: s(8),
-          }}
+          className="items-center"
+          style={{ paddingTop: mvs(12), paddingBottom: mvs(16) }}
         >
-          <SVGIcons.Error width={s(14)} height={s(14)} />
-          <ScaledText
-            variant="lg"
-            className="text-foreground font-neueBold text-center"
-          >
-            Segnala
-          </ScaledText>
+          <View
+            style={{
+              width: s(40),
+              height: mvs(4),
+              backgroundColor: "#FFFFFF",
+              borderRadius: s(2),
+            }}
+          />
         </View>
 
-        <ScaledText
-          variant="md"
-          className="text-foreground font-montserratMedium text-center"
+        <View
           style={{
-            marginBottom: mvs(6),
+            paddingHorizontal: s(24),
+            paddingTop: mvs(8),
+            paddingBottom: mvs(40),
           }}
         >
-          Vuoi segnalare @{peerUsername}?
-        </ScaledText>
+          {/* Warning Icon */}
+          <View
+            className="flex-row items-center justify-center self-center"
+            style={{
+              marginBottom: mvs(24),
+              gap: s(8),
+            }}
+          >
+            <SVGIcons.Error width={s(14)} height={s(14)} />
+            <ScaledText
+              variant="lg"
+              className="text-foreground font-neueBold text-center"
+            >
+              Yes
+            </ScaledText>
+          </View>
 
-        <ScaledText
-          variant="11"
-          className="text-gray font-neueMedium text-center"
-          style={{
-            marginBottom: mvs(24),
-          }}
-        >
-          Il tuo messaggio verrà ricevuto e letto solo dallo staff di Tattoola
-          che analizzerà la tua segnalazione in base al regolamento
-        </ScaledText>
-
-        <BottomSheetTextInput
-          value={reportReason}
-          onChangeText={setReportReason}
-          placeholder="Descrivi qui il problema..."
-            
-          multiline
-          textAlignVertical="top"
-          style={{
-            fontSize: ms(14),
-            lineHeight: mvs(20),
-            minHeight: mvs(140),
-            paddingHorizontal: s(14),
-            paddingTop: mvs(10),
-            paddingBottom: mvs(14),
-            borderRadius: s(12),
-            marginBottom: mvs(100),
-            backgroundColor: "#100C0C",
-            borderWidth: s(0.5),
-            borderColor: "rgba(164, 154, 153, 0.4)",
-            color: "#fff",
-            fontFamily: "montserratMedium",
-          }}
-        />
-
-        <TouchableOpacity
-          onPress={handleReportSubmit}
-          disabled={!reportReason.trim()}
-          className="bg-primary rounded-full items-center w-full"
-          style={{
-            paddingVertical: mvs(10),
-            paddingHorizontal: s(32),
-            opacity: reportReason.trim() ? 1 : 0.5,
-          }}
-        >
-          <ScaledText variant="md" className="font-neueBold text-foreground">
-            Invia la tua segnalazione
+          <ScaledText
+            variant="md"
+            className="text-foreground font-montserratMedium text-center"
+            style={{
+              marginBottom: mvs(6),
+            }}
+          >
+            Vuoi segnalare @{peerUsername}?
           </ScaledText>
-        </TouchableOpacity>
-      </BottomSheetScrollView>
+
+          <ScaledText
+            variant="11"
+            className="text-gray font-neueMedium text-center"
+            style={{
+              marginBottom: mvs(24),
+            }}
+          >
+            Il tuo messaggio verrà ricevuto e letto solo dallo staff di Tattoola
+            che analizzerà la tua segnalazione in base al regolamento
+          </ScaledText>
+
+          <TextInput
+            value={reportReason}
+            onChangeText={setReportReason}
+            placeholder="Descrivi qui il problema..."
+            placeholderTextColor="rgba(164, 154, 153, 0.6)"
+            multiline
+            textAlignVertical="top"
+            style={{
+              fontSize: ms(14),
+              lineHeight: mvs(20),
+              minHeight: mvs(140),
+              paddingHorizontal: s(14),
+              paddingTop: mvs(10),
+              paddingBottom: mvs(14),
+              borderRadius: s(12),
+              marginBottom: mvs(24),
+              backgroundColor: "#100C0C",
+              borderWidth: s(0.5),
+              borderColor: "rgba(164, 154, 153, 0.4)",
+              color: "#fff",
+              fontFamily: "montserratMedium",
+            }}
+          />
+
+          <TouchableOpacity
+            onPress={handleReportSubmit}
+            disabled={!reportReason.trim()}
+            className="bg-primary rounded-full items-center w-full"
+            style={{
+              paddingVertical: mvs(10),
+              paddingHorizontal: s(32),
+              opacity: reportReason.trim() ? 1 : 0.5,
+            }}
+          >
+            <ScaledText variant="md" className="font-neueBold text-foreground">
+              Invia la tua segnalazione
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
+      </View>
     ),
     [reportReason, peerUsername, handleReportSubmit]
   );
@@ -282,204 +293,320 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
   // Render block confirmation
   const renderBlockContent = useMemo(
     () => (
-      <BottomSheetView
+      <View
         style={{
-          flex: 1,
-          paddingHorizontal: s(24),
-          paddingTop: mvs(32),
-          paddingBottom: mvs(32),
           backgroundColor: "#FFF",
+          borderTopLeftRadius: s(20),
+          borderTopRightRadius: s(20),
+          width: s(342),
+          marginHorizontal: s(16),
+          paddingBottom: mvs(32),
         }}
       >
-        {/* Title with Icon */}
+        {/* Handle Indicator */}
         <View
-          className="flex-row items-center justify-center self-center"
-          style={{
-            marginBottom: mvs(24),
-            gap: s(8),
-          }}
+          className="items-center"
+          style={{ paddingTop: mvs(12), paddingBottom: mvs(16) }}
         >
-          <SVGIcons.Warning width={s(32)} height={s(32)} />
-        </View>
-        <ScaledText
-          variant="lg"
-          className="font-neueBold text-center"
-          style={{ color: "#000000", marginBottom: mvs(4) }}
-        >
-          Do you really want to block this person?
-        </ScaledText>
-
-        <ScaledText
-          variant="md"
-          className="font-montserratMedium text-center"
-          style={{
-            marginBottom: mvs(32),
-            color: "#000000",
-          }}
-        >
-          Once blocked, you will not be able to receive or send messages.
-        </ScaledText>
-
-        <View className="flex-row" style={{ gap: s(12) }}>
-          <TouchableOpacity
-            onPress={handleBlockConfirm}
-            className="flex-1 items-center justify-center  rounded-full"
+          <View
             style={{
-              paddingVertical: mvs(10),
-              borderWidth: mvs(2),
-              borderColor: "#AE0E0E",
+              width: s(40),
+              height: mvs(4),
+              backgroundColor: "#CCCCCC",
+              borderRadius: s(2),
+            }}
+          />
+        </View>
+
+        <View style={{ paddingHorizontal: s(24) }}>
+          {/* Title with Icon */}
+          <View
+            className="flex-row items-center justify-center self-center"
+            style={{
+              marginBottom: mvs(24),
+              gap: s(8),
             }}
           >
-            <ScaledText variant="md" className="font-neueBold text-[#AE0E0E]">
-              Yes
-            </ScaledText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleClose}
-            className="flex-1 items-center justify-center"
+            <SVGIcons.Warning width={s(32)} height={s(32)} />
+          </View>
+          <ScaledText
+            variant="lg"
+            className="font-neueBold text-center"
+            style={{ color: "#000000", marginBottom: mvs(4) }}
+          >
+            Vuoi davvero bloccare questa persona?
+          </ScaledText>
+
+          <ScaledText
+            variant="md"
+            className="font-montserratMedium text-center"
             style={{
-              borderRadius: s(100),
-              paddingVertical: mvs(10),
+              marginBottom: mvs(32),
+              color: "#000000",
             }}
           >
-            <ScaledText variant="md" className="font-neueBold opacity-70">
-              No
-            </ScaledText>
-          </TouchableOpacity>
+            Una volta bloccato, non potrai ricevere o inviare messaggi.
+          </ScaledText>
+
+          <View className="flex-row" style={{ gap: s(12) }}>
+            <TouchableOpacity
+              onPress={handleBlockConfirm}
+              className="flex-1 items-center justify-center  rounded-full"
+              style={{
+                paddingVertical: mvs(10),
+                borderWidth: mvs(2),
+                borderColor: "#AE0E0E",
+              }}
+            >
+              <ScaledText variant="md" className="font-neueBold text-[#AE0E0E]">
+                Sì
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleClose}
+              className="flex-1 items-center justify-center"
+              style={{
+                borderRadius: s(100),
+                paddingVertical: mvs(10),
+              }}
+            >
+              <ScaledText variant="md" className="font-neueBold opacity-70">
+                No
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
         </View>
-      </BottomSheetView>
+      </View>
     ),
     [handleClose, handleBlockConfirm]
+  );
+
+  // Render unblock confirmation
+  const renderUnblockContent = useMemo(
+    () => (
+      <View
+        style={{
+          backgroundColor: "#FFF",
+          borderTopLeftRadius: s(20),
+          borderTopRightRadius: s(20),
+          width: s(342),
+          marginHorizontal: s(16),
+          paddingBottom: mvs(32),
+        }}
+      >
+        {/* Handle Indicator */}
+        <View
+          className="items-center"
+          style={{ paddingTop: mvs(12), paddingBottom: mvs(16) }}
+        >
+          <View
+            style={{
+              width: s(40),
+              height: mvs(4),
+              backgroundColor: "#CCCCCC",
+              borderRadius: s(2),
+            }}
+          />
+        </View>
+
+        <View style={{ paddingHorizontal: s(24) }}>
+          <View
+            className="flex-row items-center justify-center self-center"
+            style={{
+              marginBottom: mvs(24),
+              gap: s(8),
+            }}
+          >
+            <SVGIcons.Warning width={s(32)} height={s(32)} />
+          </View>
+          <ScaledText
+            variant="lg"
+            className="font-neueBold text-center"
+            style={{ color: "#000000", marginBottom: mvs(4) }}
+          >
+            Vuoi sbloccare questa persona?
+          </ScaledText>
+
+          <ScaledText
+            variant="md"
+            className="font-montserratMedium text-center"
+            style={{
+              marginBottom: mvs(32),
+              color: "#000000",
+            }}
+          >
+            Dopo lo sblocco potrai tornare a inviare e ricevere messaggi.
+          </ScaledText>
+
+          <View className="flex-row" style={{ gap: s(12) }}>
+            <TouchableOpacity
+              onPress={handleUnblockConfirm}
+              className="flex-1 items-center justify-center bg-primary rounded-full"
+              style={{
+                paddingVertical: mvs(10),
+                borderWidth: mvs(2),
+                borderColor: "#AE0E0E",
+              }}
+            >
+              <ScaledText
+                variant="md"
+                className="font-neueBold text-foreground"
+              >
+                Sì
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleClose}
+              className="flex-1 items-center justify-center"
+              style={{
+                borderRadius: s(100),
+                paddingVertical: mvs(10),
+              }}
+            >
+              <ScaledText variant="md" className="font-neueBold opacity-70">
+                No
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    ),
+    [handleClose, handleUnblockConfirm]
   );
 
   // Render delete confirmation
   const renderDeleteContent = useMemo(
     () => (
-      <BottomSheetView
+      <View
         style={{
-          flex: 1,
-          paddingHorizontal: s(24),
-          paddingTop: mvs(32),
-          paddingBottom: mvs(32),
           backgroundColor: "#FFF",
+          borderTopLeftRadius: s(20),
+          borderTopRightRadius: s(20),
+          width: s(342),
+          marginHorizontal: s(16),
+          paddingBottom: mvs(32),
         }}
       >
-        {/* Title with Icon */}
+        {/* Handle Indicator */}
         <View
-          className="flex-row items-center justify-center self-center "
-          style={{
-            marginBottom: mvs(16),
-            gap: s(8),
-          }}
+          className="items-center"
+          style={{ paddingTop: mvs(12), paddingBottom: mvs(16) }}
         >
-          <SVGIcons.Warning width={s(32)} height={s(32)} />
+          <View
+            style={{
+              width: s(40),
+              height: mvs(4),
+              backgroundColor: "#CCCCCC",
+              borderRadius: s(2),
+            }}
+          />
         </View>
-        <ScaledText
-          variant="lg"
-          className="font-neueBold text-center"
-          style={{ color: "#000000", marginBottom: mvs(4) }}
-        >
-          Are you sure you want to delete this chat?
-        </ScaledText>
 
-        <ScaledText
-          variant="md"
-          className="font-montserratMedium text-center"
-          style={{
-            marginBottom: mvs(32),
-            color: "#000000",
-          }}
-        >
-          Once deleted, the chat won’t be available
-        </ScaledText>
-
-        <View className="flex-row" style={{ gap: s(12) }}>
-          <TouchableOpacity
-            onPress={handleDeleteConfirm}
-            className="flex-1 items-center justify-center bg-primary rounded-full"
+        <View style={{ paddingHorizontal: s(24) }}>
+          {/* Title with Icon */}
+          <View
+            className="flex-row items-center justify-center self-center "
             style={{
-              paddingVertical: mvs(10),
-              borderWidth: mvs(2),
-              borderColor: "#AE0E0E",
+              marginBottom: mvs(16),
+              gap: s(8),
             }}
           >
-            <ScaledText variant="md" className="font-neueBold text-foreground">
-              Yes
-            </ScaledText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleClose}
-            className="flex-1 items-center justify-center border-tat"
+            <SVGIcons.Warning width={s(32)} height={s(32)} />
+          </View>
+          <ScaledText
+            variant="lg"
+            className="font-neueBold text-center"
+            style={{ color: "#000000", marginBottom: mvs(4) }}
+          >
+            Sei sicuro di voler eliminare questa chat?
+          </ScaledText>
+
+          <ScaledText
+            variant="md"
+            className="font-montserratMedium text-center"
             style={{
-              borderRadius: s(100),
-              paddingVertical: mvs(10),
-              borderWidth: s(1),
+              marginBottom: mvs(32),
+              color: "#000000",
             }}
           >
-            <ScaledText
-              variant="md"
-              className="font-neueBold opacity-70"
+            Una volta eliminata, la chat non sarà più disponibile
+          </ScaledText>
+
+          <View className="flex-row" style={{ gap: s(12) }}>
+            <TouchableOpacity
+              onPress={handleDeleteConfirm}
+              className="flex-1 items-center justify-center bg-primary rounded-full"
+              style={{
+                paddingVertical: mvs(10),
+                borderWidth: mvs(2),
+                borderColor: "#AE0E0E",
+              }}
             >
-              No
-            </ScaledText>
-          </TouchableOpacity>
+              <ScaledText
+                variant="md"
+                className="font-neueBold text-foreground"
+              >
+                Sì
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleClose}
+              className="flex-1 items-center justify-center border-tat"
+              style={{
+                borderRadius: s(100),
+                paddingVertical: mvs(10),
+                borderWidth: s(1),
+              }}
+            >
+              <ScaledText variant="md" className="font-neueBold opacity-70">
+                No
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
         </View>
-      </BottomSheetView>
+      </View>
     ),
     [handleClose, handleDeleteConfirm]
   );
 
-  // Determine background style based on modal state
-  const backgroundStyle = useMemo(() => {
-    const isLightModal = modalState === "block" || modalState === "delete";
-    return {
-      backgroundColor: isLightModal ? "#FFFFFF" : "#000000",
-      borderTopLeftRadius: s(20),
-      borderTopRightRadius: s(20),
-      borderWidth: s(0.5),
-      borderColor: "#FFFFFF",
-    };
-  }, [modalState]);
-
   return (
-    <BottomSheet
-      style={{
-        margin: s(4),
-        borderRadius: s(20),
-      }}
-      ref={bottomSheetRef}
-      index={-1}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      backdropComponent={renderBackdrop}
-      backgroundStyle={backgroundStyle}
-      handleIndicatorStyle={{
-        backgroundColor:
-          modalState === "block" || modalState === "delete"
-            ? "#CCCCCC"
-            : "#333",
-        width: s(40),
-        height: mvs(4),
-      }}
-      onChange={(index) => {
-        if (index === -1) {
-          handleClose();
-        }
-      }}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={handleClose}
+      statusBarTranslucent
     >
-      {modalState === "menu"
-        ? renderMenuContent
-        : modalState === "report"
-          ? renderReportContent
-          : modalState === "block"
-            ? renderBlockContent
-            : modalState === "delete"
-              ? renderDeleteContent
-              : null}
-    </BottomSheet>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={0}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleClose}
+          className="flex-1 justify-end items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {modalState === "menu"
+              ? renderMenuContent
+              : modalState === "report"
+                ? renderReportContent
+                : modalState === "block"
+                  ? renderBlockContent
+                  : modalState === "unblock"
+                    ? renderUnblockContent
+                  : modalState === "delete"
+                    ? renderDeleteContent
+                    : null}
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 });
 

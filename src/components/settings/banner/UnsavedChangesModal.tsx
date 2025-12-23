@@ -29,7 +29,7 @@ export function UnsavedChangesModal({
         <View
           className="bg-[#fff] rounded-xl"
           style={{
-            width: s(342),
+            width: s(320),
             paddingHorizontal: s(24),
             paddingVertical: mvs(32),
           }}
@@ -67,10 +67,11 @@ export function UnsavedChangesModal({
               className="rounded-full border-2 items-center justify-center flex-row"
               style={{
                 borderColor: "#AD2E2E",
+                width: s(160),
                 paddingVertical: mvs(10.5),
-                paddingLeft: s(18),
-                paddingRight: s(20),
-                gap: s(8),
+                paddingLeft: s(14),
+                paddingRight: s(14),
+                gap: s(4),
               }}
             >
               <SVGIcons.PenRed
@@ -79,7 +80,7 @@ export function UnsavedChangesModal({
               />
               <ScaledText
                 allowScaling={false}
-                variant="md"
+                variant="sm"
                 className="font-montserratMedium"
                 style={{ color: "#AD2E2E" }}
               >
@@ -93,13 +94,13 @@ export function UnsavedChangesModal({
               className="rounded-full items-center justify-center"
               style={{
                 paddingVertical: mvs(10.5),
-                paddingLeft: s(18),
-                paddingRight: s(20),
+                paddingLeft: s(14),
+                paddingRight: s(14),
               }}
             >
               <ScaledText
                 allowScaling={false}
-                variant="md"
+                variant="sm"
                 className="text-gray font-montserratMedium"
               >
                 Elimina modifiche

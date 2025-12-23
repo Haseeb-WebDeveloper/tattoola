@@ -157,7 +157,7 @@ export default function StudioOverview({
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueBold"
+                    className="text-foreground font-neueSemibold"
                     onPress={() => {
                       if (ownerId) {
                         router.push(`/user/${ownerId}` as any);
@@ -180,7 +180,7 @@ export default function StudioOverview({
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueBold"
+                    className="text-foreground font-neueSemibold"
                     style={{ marginTop: mvs(2) }}
                     onPress={() => {
                       if (ownerId) {

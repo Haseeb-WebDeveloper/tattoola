@@ -2,7 +2,8 @@ import DeleteImageConfirmModal from "@/components/ui/DeleteImageConfirmModal";
 import DiscardPostConfirmModal from "@/components/ui/DiscardPostConfirmModal";
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
-import { COLLECTION_NAME } from "@/constants/limits";
+import { CustomToast } from "@/components/ui/CustomToast";
+import { COLLECTION_NAME, UPLOAD_MAX_IMAGE_SIZE, UPLOAD_MAX_VIDEO_SIZE } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAuth } from "@/providers/AuthProvider";
@@ -17,6 +18,7 @@ import { supabase } from "@/utils/supabase";
 import { TrimText } from "@/utils/text-trim";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { toast } from "sonner-native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BackHandler,
@@ -138,14 +140,51 @@ export default function UploadMediaStep() {
     });
     if (!files || files.length === 0) return;
 
-    const locals = files.slice(0, remainingSlots).map((f) => ({
+    // Validate file sizes: Images (JPG/PNG) max 5MB, Videos (MP4/MOV/AVI) max 10MB
+    const invalidFiles: string[] = [];
+    const validFiles: typeof files = [];
+    
+    for (const file of files) {
+      const maxSize = file.type === "video" ? UPLOAD_MAX_VIDEO_SIZE : UPLOAD_MAX_IMAGE_SIZE;
+      const fileTypeLabel = file.type === "video" ? "video" : "immagine";
+      const maxSizeLabel = file.type === "video" ? "10MB" : "5MB";
+      
+      if (file.fileSize && file.fileSize > maxSize) {
+        invalidFiles.push(`${file.fileName || fileTypeLabel} (${(file.fileSize / (1024 * 1024)).toFixed(2)}MB > ${maxSizeLabel})`);
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    // Show error for invalid files
+    if (invalidFiles.length > 0) {
+      const errorMessage =
+        invalidFiles.length === 1
+          ? `Il file "${invalidFiles[0]}" supera il limite di dimensione.`
+          : `${invalidFiles.length} file superano il limite di dimensione.`;
+      
+      const toastId = toast.custom(
+        <CustomToast
+          message={`${errorMessage} JPG/PNG: max 5MB. MP4/MOV/AVI: max 10MB.`}
+          iconType="error"
+          onClose={() => toast.dismiss(toastId)}
+        />,
+        { duration: 4000 }
+      );
+      // Remove invalid files from the list
+      if (validFiles.length === 0) return;
+    }
+
+    if (validFiles.length === 0) return;
+
+    const locals = validFiles.slice(0, remainingSlots).map((f) => ({
       uri: f.uri,
       type: f.type === "video" ? "video" : ("image" as const),
     }));
     addMedia(locals as any);
 
     const uploaded = await uploadToCloudinary(
-      files,
+      validFiles,
       cloudinaryService.getPortfolioUploadOptions("image")
     );
 

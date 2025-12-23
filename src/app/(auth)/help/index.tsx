@@ -146,7 +146,11 @@ export default function HelpScreen() {
       />
 
       {/* Tabs */}
-      <HelpTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <HelpTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isLoggedIn={!!user}
+      />
 
       {/* Scrollable Content */}
       <ScrollView

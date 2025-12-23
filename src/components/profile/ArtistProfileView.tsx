@@ -17,12 +17,11 @@ import React, { useEffect, useState } from "react";
 import {
   Linking,
   Modal,
-  ScrollView,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Banner } from "./Banner";
 import { BodyPartsSection } from "./BodyPartsSection";
 import { CollectionsSection } from "./CollectionsSection";
@@ -180,7 +179,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           zIndex: 10,
           paddingHorizontal: s(12),
           paddingVertical: mvs(12),
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backgroundColor: "rgba(0,0,0, 0.6)",
           borderRadius: s(100),
         }}
       >
@@ -211,7 +210,6 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           avatar={profileData?.user?.avatar}
           businessName={profileData?.artistProfile?.businessName}
           // For artist profiles: show only "Province (CODE)" or municipality label,
-          // never the raw street address.
           municipality={undefined}
           province={
             profileData?.location?.province

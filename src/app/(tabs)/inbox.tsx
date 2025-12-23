@@ -104,7 +104,8 @@ export default function InboxScreen() {
   // Memoized conversation item component for better performance
   const ConversationItem = memo(
     ({ item, onlineUserIds, router }: any) => {
-      const isOnline = onlineUserIds?.[item.peerId];
+      const showPresence = item.status !== "BLOCKED";
+      const isOnline = showPresence ? onlineUserIds?.[item.peerId] : false;
 
       return (
         <TouchableOpacity
@@ -136,15 +137,17 @@ export default function InboxScreen() {
                   height: s(40),
                 }}
               />
-              <View
-                className={`rounded-full absolute right-0 top-0 ${isOnline ? "bg-success" : "bg-error"}`}
-                style={{
-                  width: s(10),
-                  height: s(10),
-                  borderWidth: s(1),
-                  borderColor: "#0F0202",
-                }}
-              />
+              {showPresence && (
+                <View
+                  className={`rounded-full absolute right-0 top-0 ${isOnline ? "bg-success" : "bg-error"}`}
+                  style={{
+                    width: s(10),
+                    height: s(10),
+                    borderWidth: s(1),
+                    borderColor: "#0F0202",
+                  }}
+                />
+              )}
               {/* Lock icon overlay for blocked conversations */}
               {item.status === "BLOCKED" && (
                 <View
@@ -329,7 +332,7 @@ export default function InboxScreen() {
         >
           {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
         </View>
-        <SVGIcons.LogoLight />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
         <View className="items-center justify-center rounded-full">
           <View style={{ width: s(20), height: s(20) }} />
           {/* <SVGIcons.Menu width={s(20)} height={s(20)} /> */}

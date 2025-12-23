@@ -74,7 +74,7 @@ export const TattooLoverProfileHeader: React.FC<
       }}
       className="bg-background"
     >
-      <View className="" style={{ gap: s(12), marginTop: mvs(8) }}>
+      <View className="" style={{ gap: s(12) }}>
         {/* Avatar and Name Section */}
         <View className="flex-row items-center" style={{ gap: s(12) }}>
           {/* Avatar */}

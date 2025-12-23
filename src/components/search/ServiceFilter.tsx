@@ -4,6 +4,7 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchServices } from "@/services/services.service";
 import type { ServiceFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
+import { toast } from "sonner-native";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +20,8 @@ type ServiceFilterProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   facets: ServiceFacet[];
+  allServices: ServiceFacet[];
+  availableServiceIds: Set<string>;
   isLoading?: boolean;
   onConfirm?: () => void;
 };
@@ -27,6 +30,8 @@ export default function ServiceFilter({
   selectedIds,
   onSelectionChange,
   facets,
+  allServices,
+  availableServiceIds,
   isLoading = false,
   onConfirm,
 }: ServiceFilterProps) {
@@ -43,6 +48,14 @@ export default function ServiceFilter({
   } | null>(null);
 
   const toggleService = (serviceId: string) => {
+    // Check if service is available
+    if (!availableServiceIds.has(serviceId)) {
+      toast.error(
+        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+      );
+      return;
+    }
+
     const newSelectedIds = selectedIds.includes(serviceId)
       ? selectedIds.filter((id) => id !== serviceId)
       : [...selectedIds, serviceId];
@@ -54,8 +67,8 @@ export default function ServiceFilter({
     e.stopPropagation();
     // Try to fetch full service data with description
     try {
-      const allServices = await fetchServices();
-      const fullService = allServices.find((s) => s.id === service.id);
+      const fetchedServices = await fetchServices();
+      const fullService = fetchedServices.find((s) => s.id === service.id);
       if (fullService) {
         setSelectedServiceInfo(fullService);
       } else {
@@ -85,11 +98,13 @@ export default function ServiceFilter({
     selectedIds.length === 0
       ? "Tutti"
       : selectedIds.length === 1
-        ? facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        ? allServices.find((s) => s.id === selectedIds[0])?.name ||
+          facets.find((s) => s.id === selectedIds[0])?.name ||
+          "1 selezionato"
         : `${selectedIds.length} selezionati`;
 
-  // Show all available facets
-  const availableFacets = facets;
+  // Show all services, not just available facets
+  const servicesToShow = allServices.length > 0 ? allServices : facets;
 
   return (
     <>
@@ -207,7 +222,7 @@ export default function ServiceFilter({
             >
               <ActivityIndicator size="small" color="#AE0E0E" />
             </View>
-          ) : availableFacets.length === 0 ? (
+          ) : servicesToShow.length === 0 ? (
             <View
               className="items-center justify-center"
               style={{ paddingVertical: mvs(40) }}
@@ -221,40 +236,69 @@ export default function ServiceFilter({
               </ScaledText>
             </View>
           ) : (
-            availableFacets.map((facet) => {
-              const isSelected = selectedIds.includes(facet.id);
+            servicesToShow.map((service) => {
+              const isSelected = selectedIds.includes(service.id);
+              const isAvailable = availableServiceIds.has(service.id);
               return (
                 <Pressable
-                  key={facet.id}
-                  onPress={() => toggleService(facet.id)}
+                  key={service.id}
+                  onPress={() => {
+                    if (isAvailable) {
+                      toggleService(service.id);
+                    } else {
+                      toast.error(
+                        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                      );
+                    }
+                  }}
                   className="border-b border-gray/20"
                   style={{
                     paddingVertical: mvs(14),
                     paddingHorizontal: s(20),
+                    opacity: isAvailable ? 1 : 0.5,
                   }}
                 >
                   <View className="flex-row items-center justify-between">
                     <TouchableOpacity
                       className="flex-1"
-                      onPress={(e) => handleServiceInfoPress(facet, e)}
-                      activeOpacity={0.7}
+                      onPress={(e) => {
+                        if (isAvailable) {
+                          handleServiceInfoPress(service, e);
+                        } else {
+                          e.stopPropagation();
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
+                        }
+                      }}
+                      activeOpacity={isAvailable ? 0.7 : 1}
+                      disabled={!isAvailable}
                     >
                       <ScaledText
                         allowScaling={false}
                         variant="sm"
                         className="text-gray font-montserratMedium"
                       >
-                        {facet.name}
+                        {service.name}
                       </ScaledText>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => toggleService(facet.id)}
+                      onPress={() => {
+                        if (isAvailable) {
+                          toggleService(service.id);
+                        } else {
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
+                        }
+                      }}
                       hitSlop={{
                         top: 10,
                         bottom: 10,
                         left: 10,
                         right: 10,
                       }}
+                      disabled={!isAvailable}
                     >
                       {isSelected ? (
                         <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />

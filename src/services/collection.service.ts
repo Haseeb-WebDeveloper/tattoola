@@ -537,6 +537,38 @@ export async function addPostsToCollection(
   collectionId: string,
   postIds: string[]
 ): Promise<void> {
+  // Check if this is a "Preferiti" collection and enforce 4-post limit
+  const { data: collection, error: collectionError } = await supabase
+    .from("collections")
+    .select("name, id")
+    .eq("id", collectionId)
+    .single();
+
+  if (collectionError) throw new Error(collectionError.message);
+
+  // Check if collection name is "Preferiti" (case-insensitive)
+  const collectionNameLower = collection?.name?.toLowerCase() || "";
+  const isPreferiti = collectionNameLower === "preferiti";
+  
+  if (isPreferiti) {
+    // Count existing posts in Preferiti collection
+    const { count, error: countError } = await supabase
+      .from("collection_posts")
+      .select("*", { count: "exact", head: true })
+      .eq("collectionId", collectionId);
+
+    if (countError) throw new Error(countError.message);
+
+    const currentCount = count || 0;
+    const toAddCount = postIds.length;
+    
+    if (currentCount + toAddCount > 4) {
+      throw new Error(
+        `Puoi salvare massimo 4 post nei Preferiti. Hai già ${currentCount} post${currentCount !== 1 ? 'i' : ''} e stai cercando di aggiungerne ${toAddCount}.`
+      );
+    }
+  }
+
   const { error } = await supabase.from("collection_posts").insert(
     postIds.map((postId) => ({
       id: uuidv4(), // Generate UUID for the id field

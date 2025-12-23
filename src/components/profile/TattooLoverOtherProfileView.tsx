@@ -5,10 +5,10 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { FollowedArtistsList } from "./FollowedArtistsList";
 import { FollowedTattooLoversList } from "./FollowedTattooLoversList";
@@ -62,7 +62,7 @@ export const TattooLoverOtherProfileView: React.FC<
           style={{
             width: s(32),
             height: s(32),
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
           }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />

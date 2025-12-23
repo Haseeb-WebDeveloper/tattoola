@@ -1,13 +1,13 @@
+import NextBackFooter from "@/components/ui/NextBackFooter";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
+import { descriptionQuestion } from "@/constants/request-questions";
 import { usePrivateRequestStore } from "@/stores/privateRequestStore";
 import { mvs, s } from "@/utils/scale";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import NextBackFooter from "@/components/ui/NextBackFooter";
-import { descriptionQuestion } from "@/constants/request-questions";
 
 export default function DescriptionStep() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,9 +21,10 @@ export default function DescriptionStep() {
       <KeyboardAwareScrollView
         enableOnAndroid={true}
         enableAutomaticScroll={true}
-        extraScrollHeight={150}
+        // extraScrollHeight={150}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: mvs(100) }}
       >
         <View style={{ paddingHorizontal: s(16) }}>
           <ScaledText
@@ -33,10 +34,13 @@ export default function DescriptionStep() {
             style={{
               marginTop: mvs(8),
               marginBottom: mvs(24),
-              paddingHorizontal: s(16),
+              paddingHorizontal: s(32),
             }}
           >
-            {descriptionQuestion}
+            {descriptionQuestion}{" "}
+            <ScaledText variant="md" className="text-primary">
+              *
+            </ScaledText>
           </ScaledText>
           <ScaledTextInput
             containerClassName="rounded-2xl border border-gray text-foreground"
@@ -57,12 +61,23 @@ export default function DescriptionStep() {
         </View>
       </KeyboardAwareScrollView>
 
-      <NextBackFooter
-        onBack={() => router.back()}
-        onNext={() => router.push(`/user/${id}/request/age`)}
-        nextLabel="Avanti"
-        backLabel="Indietro"
-      />
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: "#000000",
+        }}
+      >
+        <NextBackFooter
+          onBack={() => router.back()}
+          onNext={() => router.push(`/user/${id}/request/age`)}
+          nextLabel="Avanti"
+          backLabel="Indietro"
+          nextDisabled={!description.trim()}
+        />
+      </View>
     </View>
   );
 }

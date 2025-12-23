@@ -1,11 +1,12 @@
 import {
-  cloudinaryService,
-  UploadOptions,
-  UploadResult,
+    cloudinaryService,
+    UploadOptions,
+    UploadResult,
 } from "@/services/cloudinary.service";
+import { PermissionsService } from "@/services/permissions.service";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Linking, Platform } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import { toast } from "sonner-native";
 
 export interface FileUploadOptions {
@@ -30,26 +31,76 @@ export const useFileUpload = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   /**
-   * Request media library permissions
+   * Request media library permissions using centralized service
+   * This ensures permission is only asked once
    */
-  const requestPermissions = async (): Promise<boolean> => {
+  const requestMediaLibraryPermissions = async (): Promise<boolean> => {
+    try {
+      if (Platform.OS === "web") {
+        return true;
+      }
+
+      // Use PermissionsService which handles caching and "ask once" behavior
+      const result = await PermissionsService.ensureGalleryPermission();
+
+      if (!result.granted) {
+        // Show appropriate message based on whether we can ask again
+        const message = PermissionsService.getPermissionDeniedMessage(
+          "gallery",
+          result.canAskAgain
+        );
+
+        if (message.showSettings) {
+          Alert.alert(message.title, message.message, [
+            { text: "Annulla", style: "cancel" },
+            {
+              text: "Apri Impostazioni",
+              onPress: () => PermissionsService.openSettings(),
+            },
+          ]);
+        } else {
+          toast.error(message.message);
+        }
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("[Permissions] Permission request error:", error);
+      return false;
+    }
+  };
+
+  /**
+   * Request camera permissions
+   */
+  const requestCameraPermissions = async (): Promise<boolean> => {
     try {
       if (Platform.OS === "web") {
         return true;
       }
 
       // 1) Check current permission without triggering any system dialog
-      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+      const current = await ImagePicker.getCameraPermissionsAsync();
+      
+      console.log("[Permissions] Camera Status:", {
+        granted: current.granted,
+        canAskAgain: current.canAskAgain,
+        status: current.status,
+      });
 
       if (current.granted) {
         // Already granted -> don't ask again
+        console.log("[Permissions] Camera permission already granted");
         return true;
       }
 
       // 2) If we can still ask, request once -> OS shows native dialog
       if (current.canAskAgain) {
-        const { status } =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        console.log("[Permissions] Requesting camera permission...");
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        
+        console.log("[Permissions] Camera permission request result:", status);
 
         if (status === "granted") {
           return true;
@@ -57,14 +108,14 @@ export const useFileUpload = () => {
 
         // User just denied
         toast.error(
-          "Autorizzazione alle foto necessaria per caricare immagini."
+          "Autorizzazione alla fotocamera necessaria per scattare foto."
         );
         return false;
       }
 
       // 3) Permission is denied and we cannot ask again -> guide to settings
       toast.error(
-        "Per continuare abilita l’accesso alle foto dalle impostazioni."
+        "Per continuare abilita l'accesso alla fotocamera dalle impostazioni."
       );
       if (typeof Linking.openSettings === "function") {
         Linking.openSettings().catch((err) => {
@@ -73,7 +124,7 @@ export const useFileUpload = () => {
       }
       return false;
     } catch (error) {
-      console.error("Permission request error:", error);
+      console.error("Camera permission request error:", error);
       return false;
     }
   };
@@ -85,8 +136,16 @@ export const useFileUpload = () => {
     options: FileUploadOptions = {}
   ): Promise<UploadedFile[]> => {
     try {
-      const hasPermission = await requestPermissions();
-      if (!hasPermission) return [];
+      // Always request permissions before opening picker (required for Play Store/App Store compliance)
+      console.log("[Permissions] Starting pickFiles - checking permissions...");
+      const hasPermission = await requestMediaLibraryPermissions();
+      
+      if (!hasPermission) {
+        console.log("[Permissions] Permission denied - cannot open gallery");
+        return [];
+      }
+      
+      console.log("[Permissions] Permission granted - opening gallery picker");
 
       const {
         mediaType = "image",
@@ -146,7 +205,8 @@ export const useFileUpload = () => {
     options: FileUploadOptions = {}
   ): Promise<UploadedFile[]> => {
     try {
-      const hasPermission = await requestPermissions();
+      // Always request camera permissions before opening camera (required for Play Store/App Store compliance)
+      const hasPermission = await requestCameraPermissions();
       if (!hasPermission) return [];
 
       const { quality = 0.8 } = options;

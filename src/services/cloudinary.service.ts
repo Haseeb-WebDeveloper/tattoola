@@ -1,5 +1,6 @@
 import { CLOUDINARY_CONFIG } from '@/config/cloudinary';
 import { Cloudinary } from '@cloudinary/url-gen';
+import { UPLOAD_MAX_IMAGE_SIZE, UPLOAD_MAX_VIDEO_SIZE } from '@/constants/limits';
 
 // Cloudinary configuration
 const cloudinary = new Cloudinary({
@@ -23,6 +24,7 @@ export interface UploadOptions {
   resourceType?: 'image' | 'video' | 'raw' | 'auto';
   quality?: 'auto' | number;
   format?: 'auto' | 'jpg' | 'png' | 'webp' | 'mp4' | 'webm';
+  maxFileSize?: number; // Maximum file size in bytes (server-side safeguard)
 }
 
 class CloudinaryService {
@@ -58,6 +60,11 @@ class CloudinaryService {
         formData.append('resource_type', options.resourceType);
       }
       
+      // Add max_file_size as server-side safeguard (Cloudinary will reject if exceeded)
+      if (options.maxFileSize) {
+        formData.append('max_file_size', options.maxFileSize.toString());
+      }
+      
       // Note: For unsigned uploads, we can only use basic parameters
       // Transformations will be applied when retrieving the image
 
@@ -72,12 +79,31 @@ class CloudinaryService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        let errorMessage = `Upload failed: ${response.status} - ${response.statusText}`;
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          // Check if error is due to file size limit
+          if (errorData.error?.message?.includes('exceeds') || 
+              errorData.error?.message?.includes('size') ||
+              errorData.error?.message?.includes('too large')) {
+            errorMessage = `File size exceeds the allowed limit. Images: max 5MB, Videos: max 10MB.`;
+          } else if (errorData.error?.message) {
+            errorMessage = errorData.error.message;
+          }
+        } catch {
+          // If parsing fails, use the original error text
+          if (errorText.includes('exceeds') || errorText.includes('size') || errorText.includes('too large')) {
+            errorMessage = `File size exceeds the allowed limit. Images: max 5MB, Videos: max 10MB.`;
+          }
+        }
+        
         console.error('Cloudinary upload failed:', {
           status: response.status,
           statusText: response.statusText,
           error: errorText,
         });
-        throw new Error(`Upload failed: ${response.status} - ${response.statusText}`);
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -304,6 +330,8 @@ class CloudinaryService {
     return {
       folder: 'tattoola/portfolio',
       resourceType: type === 'video' ? 'video' : 'image',
+      // Server-side safeguard: Cloudinary will reject files exceeding these limits
+      maxFileSize: type === 'video' ? UPLOAD_MAX_VIDEO_SIZE : UPLOAD_MAX_IMAGE_SIZE,
       // Transformations will be applied when retrieving the image
     };
   }

@@ -1,7 +1,6 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s, scaledFont } from "@/utils/scale";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -57,7 +56,7 @@ export default function WelcomeScreen() {
         {/* Dark background overlay for bottom section and cards area */}
         <LinearGradient
           colors={["#0A020200", "#0A0101", "#0A0101"]}
-          locations={[0.1, 0.5, 1]}
+          locations={[0.1, 0.6, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={{
@@ -65,7 +64,7 @@ export default function WelcomeScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            height: "100%",
+            height: "30%",
           }}
           pointerEvents="none"
         />
@@ -73,201 +72,46 @@ export default function WelcomeScreen() {
         <View
           style={{
             flex: 1,
-            justifyContent: "flex-end",
+            justifyContent: "center",
+            alignItems: "center",
             paddingHorizontal: s(24),
-            paddingBottom: mvs(40),
+            paddingTop: mvs(300),
           }}
         >
-          {/* Bottom Section */}
-          <View>
-            {/* Logo and tagline */}
-            <View style={{ alignItems: "center", marginBottom: mvs(32) }}>
-              {/* Logo */}
-              <View
-                style={{
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: mvs(8),
-                }}
-              >
-                <SVGIcons.Logo height={s(50)} />
-              </View>
-              {/* Tagline */}
-              <ScaledText
-                variant="lg"
-                allowScaling={false}
-                className="text-center text-white font-neueLight"
-              >
-                Dove i tatuaggi incontrano le loro storie.
-              </ScaledText>
-            </View>
-
-            {/* Two Cards in a Row */}
-            <View
-              style={{
-                flexDirection: "row",
-                gap: s(14),
-                marginBottom: mvs(24),
-              }}
-            >
-              {/* Discover tattoos card */}
-              <Pressable
-                onPress={() => router.push("/(tabs)" as any)}
-                style={{
-                  width: s(147),
-                  height: mvs(153),
-                  borderRadius: s(8),
-                  overflow: "hidden",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.1)",
-                }}
-              >
-                <BlurView
-                  intensity={10}
-                  tint="dark"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                  }}
-                />
-                <LinearGradient
-                  colors={["rgba(58, 0, 0, 0.50)", "rgba(25, 10, 10, 0.50)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0.34, y: 1 }}
-                  style={{
-                    flex: 1,
-                    padding: mvs(8),
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                <View style={{ marginBottom: mvs(12) }}>
-                  <SVGIcons.DiscoverTattoo width={s(56)} height={s(38)} />
-                </View>
-                <ScaledText
-                  allowScaling={false}
-                  className="text-white font-neueSemibold"
-                  style={{
-                    fontSize: scaledFont(16),
-                    marginBottom: mvs(4),
-                    textAlign: "center",
-                  }}
-                >
-                  Discover tattoos
-                </ScaledText>
-                <ScaledText
-                  allowScaling={false}
-                  className="text-gray font-montserratRegular"
-                  style={{
-                    fontSize: scaledFont(12),
-                    color: "#A49A99",
-                    textAlign: "center",
-                  }}
-                >
-                  Discover styles that match your identity
-                </ScaledText>
-                </LinearGradient>
-              </Pressable>
-
-              {/* Explore artists card */}
-              <Pressable
-                onPress={() => router.push("/(tabs)/search" as any)}
-                style={{
-                  width: s(147),
-                  height: mvs(153),
-                  borderRadius: s(8),
-                  overflow: "hidden",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.1)",
-                }}
-              >
-                <BlurView
-                  intensity={10}
-                  tint="dark"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                  }}
-                />
-                <LinearGradient
-                  colors={["rgba(58, 0, 0, 0.50)", "rgba(25, 10, 10, 0.50)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0.34, y: 1 }}
-                  style={{
-                    flex: 1,
-                    padding: mvs(8),
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                <View style={{ marginBottom: mvs(12) }}>
-                  <SVGIcons.ExploreArtist width={s(32)} height={s(32)} />
-                </View>
-                <ScaledText
-                  allowScaling={false}
-                  className="text-white font-neueSemibold"
-                  style={{
-                    fontSize: scaledFont(16),
-                    marginBottom: mvs(4),
-                    textAlign: "center",
-                  }}
-                >
-                  Explore artists
-                </ScaledText>
-                <ScaledText
-                  allowScaling={false}
-                  className="text-gray font-montserratRegular"
-                  style={{
-                    fontSize: scaledFont(12),
-                    color: "#A49A99",
-                    textAlign: "center",
-                  }}
-                >
-                  Meet talented tattoo artists near you
-                </ScaledText>
-                </LinearGradient>
-              </Pressable>
-            </View>
-
-            {/* Bottom text links in corners */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Pressable onPress={() => router.push("/(tabs)")}>
-                <ScaledText
-                  allowScaling={false}
-                  className="text-white font-montserratRegular"
-                  style={{
-                    fontSize: scaledFont(18),
-                  }}
-                >
-                  Salta
-                </ScaledText>
-              </Pressable>
-
-              <Pressable onPress={() => router.push("/(auth)/login")}>
-                <ScaledText
-                  allowScaling={false}
-                  className="text-white font-montserratRegular"
-                  style={{
-                    fontSize: scaledFont(18),
-                  }}
-                >
-                  Accedi
-                </ScaledText>
-              </Pressable>
-            </View>
+          {/* Logo in the middle */}
+          <View style={{ alignItems: "center" }}>
+            <SVGIcons.LogoLight  width={s(150)}  height={s(70)} />
           </View>
+        </View>
+
+        {/* Start button at the bottom */}
+        <View
+          style={{
+            paddingHorizontal: s(24),
+            paddingBottom: mvs(70),
+          }}
+        >
+          <Pressable
+            onPress={() => router.push("/(tabs)" as any)}
+            style={{
+              width: "100%",
+              height: mvs(48),
+              backgroundColor: "#AE0E0E",
+              borderRadius: 90,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ScaledText
+              allowScaling={false}
+              className="text-white font-neueSemibold"
+              style={{
+                fontSize: scaledFont(18),
+              }}
+            >
+              Start
+            </ScaledText>
+          </Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>

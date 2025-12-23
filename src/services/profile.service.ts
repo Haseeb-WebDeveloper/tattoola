@@ -1,6 +1,6 @@
 import { ArtistSelfProfileInterface } from "@/types/artist";
-import { UserSummary, UserRole } from "@/types/auth";
-import { StudioSearchResult, ArtistProfileSummary } from "@/types/search";
+import { UserRole, UserSummary } from "@/types/auth";
+import { ArtistProfileSummary, StudioSearchResult } from "@/types/search";
 import {
   getProfileFromCache,
   saveProfileToCache,
@@ -97,6 +97,38 @@ export async function toggleFollow(
     .from("follows")
     .insert({ id: uuidv4(), followerId: userId, followingId: targetUserId });
   if (error) throw new Error(error.message);
+
+  // Send notification to the followed user
+  try {
+    // Get follower's name for the notification
+    const { data: followerData } = await supabase
+      .from("users")
+      .select("firstName, lastName, username")
+      .eq("id", userId)
+      .single();
+
+    if (followerData) {
+      const followerName =
+        `${followerData.firstName || ""} ${followerData.lastName || ""}`.trim() ||
+        followerData.username ||
+        "Un utente";
+
+      // Send notification to target user
+      await supabase.from("notifications").insert({
+        id: uuidv4(),
+        userId: targetUserId,
+        type: "NEW_FOLLOWER",
+        title: "Nuovo follower",
+        message: `${followerName} ha iniziato a seguirti`,
+        relatedUserId: userId,
+        createdAt: new Date().toISOString(),
+      });
+    }
+  } catch (notificationError) {
+    // Don't fail the follow if notification fails
+    console.error("Failed to send follow notification:", notificationError);
+  }
+
   return { isFollowing: true };
 }
 

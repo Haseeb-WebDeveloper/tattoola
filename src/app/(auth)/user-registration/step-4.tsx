@@ -4,19 +4,20 @@ import RegistrationProgress from "@/components/ui/RegistrationProgress";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useSignupPermissions } from "@/hooks/useSignupPermissions";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { useUserRegistrationV2Store } from "@/stores/userRegistrationV2Store";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { toast } from "sonner-native";
 
 export default function UserRegistrationStep4() {
   const { step4, updateStep4, setCurrentStepDisplay } =
     useUserRegistrationV2Store();
-  const { pickFiles, uploadToCloudinary } = useFileUpload();
+  const { uploadToCloudinary } = useFileUpload();
+  const { pickProfileImage, isLoadingGallery } = useSignupPermissions();
 
   const [newAvatar, setNewAvatar] = useState<string | null>(null);
   const [initialAvatar, setInitialAvatar] = useState("");
@@ -43,34 +44,31 @@ export default function UserRegistrationStep4() {
     try {
       setIsUploading(true);
 
-      const files = await pickFiles({
-        mediaType: "image",
-        allowsMultipleSelection: false,
-        maxFiles: 1,
-        cloudinaryOptions: cloudinaryService.getPortfolioUploadOptions("image"),
-      });
-
-      if (!files || files.length === 0) {
-        setIsUploading(false);
+      // Pick image with permission handling (only asks once)
+      const imageResult = await pickProfileImage();
+      if (!imageResult) {
+        // User cancelled or permission denied
         return;
       }
 
-      const file = files[0];
-
       // Check file size (5MB max)
       const maxSize = 5 * 1024 * 1024;
-      if (file.fileSize && file.fileSize > maxSize) {
-        toast.error("La dimensione dell'immagine deve essere inferiore a 5MB");
+      if (imageResult.size && imageResult.size > maxSize) {
+        Alert.alert(
+          "File troppo grande",
+          "La dimensione dell'immagine deve essere inferiore a 5MB"
+        );
         setIsUploading(false);
         return;
       }
 
       // Show local image immediately
-      setNewAvatar(file.uri);
+      setNewAvatar(imageResult.uri);
 
       // Upload to Cloudinary
+      const files = [{ uri: imageResult.uri, type: "image" }];
       const uploaded = await uploadToCloudinary(
-        [file],
+        files as any,
         cloudinaryService.getPortfolioUploadOptions("image")
       );
 
@@ -79,7 +77,7 @@ export default function UserRegistrationStep4() {
       }
     } catch (error: any) {
       console.error("Error picking avatar:", error);
-      toast.error(error.message || "Caricamento immagine fallito");
+      Alert.alert("Errore", error.message || "Caricamento immagine fallito");
       setNewAvatar(null);
     } finally {
       setIsUploading(false);
@@ -170,10 +168,11 @@ export default function UserRegistrationStep4() {
                 >
                   <TouchableOpacity
                     onPress={handlePickAvatar}
-                    disabled={isUploading}
+                    disabled={isUploading || isLoadingGallery}
                     className="bg-foreground rounded-full items-center justify-center"
                     style={{
                       padding: s(6),
+                      opacity: isUploading || isLoadingGallery ? 0.5 : 1,
                     }}
                   >
                     <SVGIcons.EditRed width={s(16)} height={s(16)} />
@@ -183,16 +182,16 @@ export default function UserRegistrationStep4() {
             ) : (
               <TouchableOpacity
                 onPress={handlePickAvatar}
-                disabled={isUploading}
+                disabled={isUploading || isLoadingGallery}
                 className="border-2 border-dashed items-center justify-center  bg-tat-darkMaroon border-primary"
                 style={{
                   width: s(200),
                   height: s(200),
                   borderRadius: s(100),
-                  opacity: isUploading ? 0.5 : 1,
+                  opacity: isUploading || isLoadingGallery ? 0.5 : 1,
                 }}
               >
-                {isUploading ? (
+                {isUploading || isLoadingGallery ? (
                   <ActivityIndicator size="large" color="#E80D0D" />
                 ) : (
                   <SVGIcons.User width={s(48)} height={s(48)} />
@@ -254,7 +253,7 @@ export default function UserRegistrationStep4() {
         nextLabel="Avanti"
         backLabel="Indietro"
         onBack={handleBack}
-        nextDisabled={isUploading}
+        nextDisabled={isUploading || isLoadingGallery}
       />
     </View>
   );

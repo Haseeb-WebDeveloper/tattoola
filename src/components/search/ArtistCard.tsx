@@ -2,8 +2,8 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { prefetchUserProfile } from "@/services/prefetch.service";
-import type { ArtistProfileSummary, ArtistSearchResult } from "@/types/search";
 import { UserRole, UserSummary } from "@/types/auth";
+import type { ArtistProfileSummary, ArtistSearchResult } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -66,7 +66,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
     artist.user.username;
 
   const videoMedia = artist.bannerMedia.find((b) => b.mediaType === "VIDEO");
-  
+
   // Transform video URL to MP4/H.264/AAC for iOS compatibility
   const videoUrl = useMemo(() => {
     if (videoMedia?.mediaUrl) {
@@ -135,32 +135,34 @@ function ArtistCard({ artist }: ArtistCardProps) {
   }, [videoUrl, videoPlayer]);
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPress={handlePress}
-      className="overflow-hidden border bg-background border-gray/50"
-      style={{
-        marginHorizontal: s(16),
-        marginBottom: mvs(16),
-        borderRadius: s(20),
-      }}
-    >
-      {/* Top Section - Avatar, Name, Experience, Location */}
-      <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
-        {/* Subscription Badge */}
+    <View style={{ marginHorizontal: s(16), marginBottom: mvs(16) }}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={handlePress}
+        className="overflow-hidden border bg-background border-gray/50"
+        style={{
+          borderRadius: s(35),
+        }}
+      >
+        {/* Subscription Badge  */}
         {hasStudioPlan && (
           <View
-            className="absolute top-0 right-0 flex-row items-center justify-center"
+            className="absolute flex-row items-center justify-center z-10"
             style={{
+              top: s(0),
+              right: s(0),
               width: s(120),
               paddingLeft: s(8),
-              paddingRight: s(25),
+              paddingRight: s(8),
               paddingVertical: mvs(5),
               gap: s(4),
               borderBottomLeftRadius: s(12),
-              borderWidth: 0.5,
+              borderTopRightRadius: s(35), 
               borderTopWidth: 0,
-              borderRightWidth: 0,
+              borderRightWidth: 0, 
+              borderBottomWidth: 0.5, 
+              borderLeftWidth: 0.5,   
+              borderBottomEndRadius: 0.5,
               borderColor: "rgba(164, 154, 153, 1)",
               backgroundColor: isStudioPremium
                 ? "rgba(20, 13, 4, 1)"
@@ -175,164 +177,165 @@ function ArtistCard({ artist }: ArtistCardProps) {
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-error"
+              className="text-error font-neueMedium"
               style={{
                 fontFamily: "NeueHaasDisplay",
                 fontWeight: "500",
                 fontSize: 11,
                 lineHeight: 11 * 1.3,
                 letterSpacing: 0,
-                ...(isStudioPremium
-                  ? { color: "rgba(244, 158, 0, 1)" }
-                  : {}),
+                ...(isStudioPremium ? { color: "rgba(244, 158, 0, 1)" } : {}),
               }}
             >
               {badgeLabel}
             </ScaledText>
           </View>
         )}
-
-        {/* Avatar and Name Row */}
-        <View
-          className="flex-row items-center"
-          style={{ marginBottom: mvs(8) }}
-        >
+        {/* Top Section - Avatar, Name, Experience, Location */}
+        <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
+          {/* Avatar and Name Row */}
           <View
-            className="overflow-hidden border border-black rounded-full"
-            style={{ width: s(61), height: s(61), marginRight: s(12) }}
+            className="flex-row items-center"
+            style={{ marginBottom: mvs(8) }}
           >
-            {artist.user.avatar ? (
-              <Image
-                source={{ uri: artist.user.avatar }}
-                style={{ width: "100%", height: "100%" }}
-                resizeMode="cover"
-              />
-            ) : (
-              <View className="w-full h-full bg-gray/30" />
-            )}
-          </View>
-
-          <View className="flex-1">
-            <View className="flex-row items-center gap-1">
-              <ScaledText
-                allowScaling={false}
-                variant="lg"
-                className="leading-none text-foreground font-neueBold "
-              >
-                {displayName}
-              </ScaledText>
-              {artist.isVerified && (
-                <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} />
+            <View
+              className="overflow-hidden border border-black rounded-full"
+              style={{ width: s(61), height: s(61), marginRight: s(12) }}
+            >
+              {artist.user.avatar ? (
+                <Image
+                  source={{ uri: artist.user.avatar }}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View className="w-full h-full bg-gray/30" />
               )}
             </View>
-          </View>
-        </View>
 
-        {/* Years of Experience */}
-        {artist.yearsExperience && (
-          <View
-            className="flex-row items-center"
-            style={{ marginBottom: mvs(4) }}
-          >
-            <SVGIcons.StarRounded width={s(14)} height={s(14)} />
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-white font-neueLight"
-              style={{ marginLeft: s(4) }}
-            >
-              {artist.yearsExperience} anni di esperienza
-            </ScaledText>
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1">
+                <ScaledText
+                  allowScaling={false}
+                  variant="lg"
+                  className="leading-none text-foreground font-neueBold "
+                >
+                  {displayName}
+                </ScaledText>
+                {artist.isVerified && (
+                  <SVGIcons.VarifiedGreen width={s(16)} height={s(16)} />
+                )}
+              </View>
+            </View>
           </View>
-        )}
 
-        {/* Business Name (Studio Owner, Employee, or Freelancer) */}
-        {artist.workArrangement && (
-          <View
-            className="flex-row items-center"
-            style={{ marginBottom: mvs(4) }}
-          >
-            <SVGIcons.Studio width={s(14)} height={s(14)} />
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-white font-neueLight"
-              style={{ marginLeft: s(4) }}
+          {/* Years of Experience */}
+          {artist.yearsExperience && (
+            <View
+              className="flex-row items-center"
+              style={{ marginBottom: mvs(4) }}
             >
-              {artist.workArrangement === "STUDIO_OWNER" && artist.businessName ? (
-                <>
+              <SVGIcons.StarRounded width={s(14)} height={s(14)} />
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-white font-neueLight"
+                style={{ marginLeft: s(4) }}
+              >
+                {artist.yearsExperience} anni di esperienza
+              </ScaledText>
+            </View>
+          )}
+
+          {/* Business Name (Studio Owner, Employee, or Freelancer) */}
+          {artist.workArrangement && (
+            <View
+              className="flex-row items-center"
+              style={{ marginBottom: mvs(4) }}
+            >
+              <SVGIcons.Studio width={s(14)} height={s(14)} />
+              <ScaledText
+                allowScaling={false}
+                variant="md"
+                className="text-white font-neueLight"
+                style={{ marginLeft: s(4) }}
+              >
+                {artist.workArrangement === "STUDIO_OWNER" &&
+                artist.businessName ? (
+                  <>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-white font-neueLight"
+                    >
+                      Titolare di{" "}
+                    </ScaledText>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-white font-neueBold"
+                    >
+                      {artist.businessName}
+                    </ScaledText>
+                  </>
+                ) : artist.workArrangement === "STUDIO_EMPLOYEE" &&
+                  artist.businessName ? (
+                  <>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-white font-neueLight"
+                    >
+                      Tattoo Artist residente in{" "}
+                    </ScaledText>
+                    <ScaledText
+                      allowScaling={false}
+                      variant="md"
+                      className="text-white font-neueBold"
+                    >
+                      {artist.businessName}
+                    </ScaledText>
+                  </>
+                ) : artist.workArrangement === "FREELANCE" ? (
                   <ScaledText
                     allowScaling={false}
                     variant="md"
                     className="text-white font-neueLight"
                   >
-                    Titolare di{" "}
+                    Freelance
                   </ScaledText>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-white font-neueBold"
-                  >
-                    {artist.businessName}
-                  </ScaledText>
-                </>
-              ) : artist.workArrangement === "STUDIO_EMPLOYEE" && artist.businessName ? (
-                <>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-white font-neueLight"
-                  >
-                    Tattoo Artist residente in{" "}
-                  </ScaledText>
-                  <ScaledText
-                    allowScaling={false}
-                    variant="md"
-                    className="text-white font-neueBold"
-                  >
-                    {artist.businessName}
-                  </ScaledText>
-                </>
-              ) : artist.workArrangement === "FREELANCE" ? (
+                ) : null}
+              </ScaledText>
+            </View>
+          )}
+
+          {/* Location - show only "Province (CODE)" or municipality (no street address) */}
+          {artist.location &&
+            (artist.location.province || artist.location.municipality) && (
+              <View className="flex-row items-center">
+                <SVGIcons.Location width={s(14)} height={s(14)} />
                 <ScaledText
                   allowScaling={false}
                   variant="md"
                   className="text-white font-neueLight"
+                  style={{ marginLeft: s(4) }}
+                  numberOfLines={1}
                 >
-                  Freelance
+                  {artist.location.province ||
+                    artist.location.municipality ||
+                    ""}
                 </ScaledText>
-              ) : null}
-            </ScaledText>
-          </View>
-        )}
+              </View>
+            )}
 
-        {/* Location - show only "Province (CODE)" or municipality (no street address) */}
-        {artist.location && (artist.location.province || artist.location.municipality) && (
-          <View className="flex-row items-center">
-            <SVGIcons.Location width={s(14)} height={s(14)} />
-            <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-white font-neueLight"
-              style={{ marginLeft: s(4) }}
-              numberOfLines={1}
-            >
-              {artist.location.province ||
-                artist.location.municipality ||
-                ""}
-            </ScaledText>
-          </View>
-        )}
+          {/* Styles Pills */}
+          {artist.styles.length > 0 && (
+            <View style={{ marginTop: mvs(4) }}>
+              <StylePills styles={artist.styles} size="small" />
+            </View>
+          )}
 
-        {/* Styles Pills */}
-        {artist.styles.length > 0 && (
-          <View style={{ marginTop: mvs(4) }}>
-            <StylePills styles={artist.styles} />
-          </View>
-        )}
-
-        {/* Studio Profile Label */}
-        {/* {artist.isStudioOwner && (
+          {/* {artist.isStudioOwner && (
           <ScaledText
             allowScaling={false}
             variant="body4"
@@ -342,58 +345,59 @@ function ArtistCard({ artist }: ArtistCardProps) {
             Profilo studio
           </ScaledText>
         )} */}
-      </View>
+        </View>
 
-      {/* Banner - Video or Images */}
-      {(() => {
-        const imageMedia = artist.bannerMedia.filter(
-          (b) => b.mediaType === "IMAGE"
-        );
-
-        // Video banner - autoplay, looping, no controls
-        if (videoUrl && videoPlayer) {
-          return (
-            <VideoView
-              player={videoPlayer}
-              style={{ width: "100%", height: mvs(180) }}
-              contentFit="cover"
-              nativeControls={false}
-            />
+        {/* Banner - Video or Images */}
+        {(() => {
+          const imageMedia = artist.bannerMedia.filter(
+            (b) => b.mediaType === "IMAGE"
           );
-        }
 
-        // Single image banner
-        if (imageMedia.length === 1) {
-          return (
-            <Image
-              source={{ uri: imageMedia[0].mediaUrl }}
-              style={{ width: "100%", height: mvs(180) }}
-              resizeMode="cover"
-            />
-          );
-        }
+          // Video banner - autoplay, looping, no controls
+          if (videoUrl && videoPlayer) {
+            return (
+              <VideoView
+                player={videoPlayer}
+                style={{ width: "100%", height: mvs(200) }}
+                contentFit="cover"
+                nativeControls={false}
+              />
+            );
+          }
 
-        // Multiple images banner (all in a row)
-        if (imageMedia.length > 1) {
-          return (
-            <View className="flex-row" style={{ height: mvs(180) }}>
-              {imageMedia.slice(0, 4).map((img, idx) => (
-                <Image
-                  key={idx}
-                  source={{ uri: img.mediaUrl }}
-                  className="flex-1"
-                  style={{ height: mvs(180) }}
-                  resizeMode="cover"
-                />
-              ))}
-            </View>
-          );
-        }
+          // Single image banner
+          if (imageMedia.length === 1) {
+            return (
+              <Image
+                source={{ uri: imageMedia[0].mediaUrl }}
+                style={{ width: "100%", height: mvs(200) }}
+                resizeMode="cover"
+              />
+            );
+          }
 
-        // No banner media
-        return null;
-      })()}
-    </TouchableOpacity>
+          // Multiple images banner (all in a row)
+          if (imageMedia.length > 1) {
+            return (
+              <View className="flex-row" style={{ height: mvs(200) }}>
+                {imageMedia.slice(0, 4).map((img, idx) => (
+                  <Image
+                    key={idx}
+                    source={{ uri: img.mediaUrl }}
+                    className="flex-1"
+                    style={{ height: mvs(200) }}
+                    resizeMode="cover"
+                  />
+                ))}
+              </View>
+            );
+          }
+
+          // No banner media
+          return null;
+        })()}
+      </TouchableOpacity>
+    </View>
   );
 }
 

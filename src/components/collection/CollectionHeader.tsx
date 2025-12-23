@@ -2,6 +2,7 @@ import React from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
+import { isSystemCollection } from "@/utils/collection.utils";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 
@@ -42,6 +43,15 @@ const CollectionHeaderComponent: React.FC<CollectionHeaderProps> = ({
     `https://api.dicebear.com/7.x/initials/png?seed=${
       effectiveAuthor.firstName?.split(" ")[0] || "A"
     }`;
+  
+  // Check collection type
+  const collectionNameLower = collectionName?.toLowerCase() || "";
+  const isTuttiCollection = collectionNameLower === "tutti";
+  const isSystemCol = isSystemCollection(collectionName);
+  // Preferiti can edit posts but not name/delete. Tutti cannot edit at all.
+  const canEditPosts = isOwner && !isTuttiCollection; // Allow edit mode for Preferiti
+  const canEditName = isOwner && !isSystemCol; // Cannot edit name for any system collection
+  const canDeleteCollection = isOwner && !isSystemCol; // Cannot delete any system collection
 
   return (
     <>
@@ -67,7 +77,7 @@ const CollectionHeaderComponent: React.FC<CollectionHeaderProps> = ({
             >
               {TrimText(collectionName, 15)}
             </ScaledText>
-            {isOwner && editMode && (
+            {isOwner && editMode && !isSystemCol && (
               <TouchableOpacity
                 onPress={onEditName}
                 style={{ marginLeft: s(8) }}
@@ -78,7 +88,7 @@ const CollectionHeaderComponent: React.FC<CollectionHeaderProps> = ({
           </View>
         </View>
 
-        {isOwner && (
+        {canEditPosts && !(editMode && collectionNameLower === "preferiti") && (
           <TouchableOpacity
             onPress={editMode ? onDeleteCollection : onToggleEditMode}
             style={{
@@ -89,7 +99,11 @@ const CollectionHeaderComponent: React.FC<CollectionHeaderProps> = ({
             }}
           >
             {editMode ? (
-              <SVGIcons.Trash width={20} height={20} />
+              canDeleteCollection ? (
+                <SVGIcons.Trash width={20} height={20} />
+              ) : (
+                <SVGIcons.Edit width={20} height={20} />
+              )
             ) : (
               <SVGIcons.Edit width={20} height={20} />
             )}
