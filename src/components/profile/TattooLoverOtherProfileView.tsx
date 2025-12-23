@@ -62,7 +62,7 @@ export const TattooLoverOtherProfileView: React.FC<
           style={{
             width: s(32),
             height: s(32),
-            backgroundColor: "rgba(255, 255, 255, 0.3)",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
           }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />
