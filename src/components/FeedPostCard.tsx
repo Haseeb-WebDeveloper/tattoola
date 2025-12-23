@@ -1,13 +1,13 @@
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
-import { FeedPost } from "@/services/post.service";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { FeedPost } from "@/services/post.service";
 import { prefetchUserProfile } from "@/services/prefetch.service";
-import { UserSummary } from "@/types/auth";
 import { useTabBarStore } from "@/stores/tabBarStore";
+import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
-import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React, { memo, useEffect, useMemo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 
@@ -61,7 +61,10 @@ function FeedPostOverlayComponent({
   };
 
   const handlePostPress = () => {
-    router.push(`/post/${post.id}` as any);
+    router.push({
+      pathname: `/post/${post.id}`,
+      params: { initialData: JSON.stringify(post) },
+    } as any);
   };
 
   return (
@@ -273,6 +276,17 @@ function FeedPostCardComponent({
     }
   };
 
+  const handleOpenPost = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      router.push({
+        pathname: `/post/${post.id}`,
+        params: { initialData: JSON.stringify(post) },
+      } as any);
+    }
+  };
+
 
   return (
     <View className="w-full h-[100svh] ">
@@ -280,7 +294,7 @@ function FeedPostCardComponent({
         {/* Background media press area (post open) */}
         <TouchableOpacity
           activeOpacity={1}
-          onPress={onPress}
+          onPress={handleOpenPost}
           style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
         >
           {!!cover && (
@@ -338,7 +352,7 @@ function FeedPostCardComponent({
                   )}
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={onPress}
+                    onPress={handleOpenPost}
                     className="flex items-center justify-center"
                     style={{
                       width: s(24),

@@ -1,21 +1,20 @@
-import ArtistCard from "@/components/search/ArtistCard";
-import ScaledText from "@/components/ui/ScaledText";
 import CollectionFilterModal from "@/components/collections/CollectionFilterModal";
+import ArtistCard from "@/components/search/ArtistCard";
+import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
+import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { fetchCollectionArtists } from "@/services/collection.service";
+import type { ServiceFacet, StyleFacet } from "@/types/facets";
 import type { ArtistSearchResult } from "@/types/search";
-import type { StyleFacet, ServiceFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import ArtistCardSkeleton from "@/components/search/ArtistCardSkeleton";
 
 function CollectionScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
