@@ -1,5 +1,5 @@
-import ScaledText from "@/components/ui/ScaledText";
 import StyleInfoModal from "@/components/shared/StyleInfoModal";
+import ScaledText from "@/components/ui/ScaledText";
 import { AR_MAX_FAVORITE_STYLES, AR_MAX_STYLES, TL_MAX_FAVORITE_STYLES } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
@@ -569,7 +569,7 @@ export default function StylesSettingsScreen() {
             </ScaledText>
 
             {/* Action Buttons */}
-            <View style={{ gap: mvs(4) }} className="flex-col justify-center">
+            <View style={{ gap: mvs(12) }} className="flex-col justify-center">
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}

@@ -199,6 +199,8 @@ import Unseen from "@/assets/icons/unseen.svg";
 // @ts-ignore
 import Menu from "@/assets/icons/menu.svg";
 // @ts-ignore
+import FilterListRed from "@/assets/icons/filter-list-red.svg";
+// @ts-ignore
 import CircleMenu from "@/assets/icons/circle-menu.svg";
 // @ts-ignore
 import CircleChevronRIght from "@/assets/icons/circle-chevron-right.svg";
@@ -363,6 +365,7 @@ export const SVGIcons = {
   Seen,
   Unseen,
   Menu,
+  FilterListRed,
   CircleMenu,
   CircleChevronRIght,
   BubbleMe,

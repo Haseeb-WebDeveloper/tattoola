@@ -124,7 +124,7 @@ export default function ProfileSettingsScreen() {
     { title: "La tua attività", onPress: handleBusinessInfoPress },
     { title: "Bio", onPress: handleBioPress },
     { title: "Stili preferiti", onPress: handleStylesPress },
-    { title: "Services offered", onPress: handleServicesPress },
+    { title: "Servizi offerti", onPress: handleServicesPress },
     { title: "Parti del corpo su cui lavori", onPress: handleBodyPartsPress },
     { title: "Tariffa minima", onPress: handleRatesPress },
     { title: "Modalita di lavoro", onPress: handleWorkModalityPress },

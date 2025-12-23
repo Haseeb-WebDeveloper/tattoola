@@ -288,7 +288,7 @@ export default function SearchLocationPicker({
         >
           {/* Header */}
           <View
-            className="relative flex-row items-center justify-between border-b border-gray bg-primary/30"
+            className="relative flex-row items-center justify-between border-b border-gray bg-[#140404]"
             style={{
               paddingBottom: mvs(15),
               paddingTop: mvs(50),

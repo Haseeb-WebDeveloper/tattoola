@@ -295,7 +295,11 @@ export default function SearchScreen() {
 
             {/* Filter Button */}
             <TouchableOpacity onPress={() => setShowFilterModal(true)}>
-              <SVGIcons.Menu width={s(20)} height={s(20)} />
+              {areFiltersActive() ? (
+                <SVGIcons.FilterListRed width={s(20)} height={s(20)} />
+              ) : (
+                <SVGIcons.Menu width={s(20)} height={s(20)} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
