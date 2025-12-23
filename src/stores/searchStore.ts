@@ -27,7 +27,7 @@ type SearchState = {
   clearFilters: () => void;
   setLocation: (province: string, municipality: string) => void;
   clearLocation: () => void;
-  search: () => Promise<void>;
+  search: (tab?: SearchTab, defaultProvinceId?: string | null) => Promise<void>;
   loadMore: () => Promise<void>;
   loadFacets: () => Promise<void>;
   resetSearch: () => void;
@@ -60,17 +60,17 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   setActiveTab: (tab: SearchTab) => {
     set({ activeTab: tab });
-    // Re-search with new tab and reload facets
-    get().search();
-    get().loadFacets();
+    // Re-search with new tab (search will reload facets at the end)
+    // Pass tab explicitly to ensure correct tab is used
+    get().search(tab);
   },
 
   updateFilters: (newFilters: Partial<SearchFilters>) => {
     set((state) => ({
       filters: { ...state.filters, ...newFilters },
     }));
-    // Reload facets when filters change
-    get().loadFacets();
+    // Note: Don't call loadFacets() here automatically
+    // Let the caller decide when to reload facets (usually after search completes)
   },
 
   clearFilters: () => {
@@ -99,13 +99,16 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     get().search();
   },
 
-  search: async () => {
-    const { activeTab, filters, isInitializing, results } = get();
+  search: async (tab?: SearchTab, defaultProvinceId?: string | null) => {
+    const state = get();
+    // Use provided tab or fall back to current activeTab
+    const activeTab = tab ?? state.activeTab;
+    const { filters, isInitializing, results } = state;
     set({ isLoading: true, error: null, page: 0 });
 
     try {
       if (activeTab === "artists") {
-        const result = await searchArtists({ filters, page: 0 });
+        const result = await searchArtists({ filters, page: 0, defaultProvinceId });
         set({
           results: {
             artists: result.data,
@@ -117,7 +120,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           isInitializing: false,
         });
       } else if (activeTab === "studios") {
-        const result = await searchStudios({ filters, page: 0 });
+        const result = await searchStudios({ filters, page: 0, defaultProvinceId });
         set({
           results: {
             artists: results.artists, // Preserve existing artists data
@@ -130,7 +133,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         });
       }
       // Load facets after search completes
-      get().loadFacets();
+      // activeTab should already be set correctly by setActiveTab
+      await get().loadFacets();
     } catch (error: any) {
       set({
         error: error.message || "An error occurred while searching",
@@ -212,7 +216,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   resetFilters: () => {
     set({ filters: initialFilters, locationDisplay: null });
+    // search() will reload facets at the end
     get().search();
-    get().loadFacets();
   },
 }));

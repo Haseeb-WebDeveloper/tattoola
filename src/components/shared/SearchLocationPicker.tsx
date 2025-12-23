@@ -4,6 +4,7 @@ import { SVGIcons } from "@/constants/svg";
 import type { LocationFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
+import { toast } from "sonner-native";
 import React, { useEffect, useState } from "react";
 import {
   Image,
@@ -41,6 +42,10 @@ type SearchLocationPickerProps = {
   initialProvinceId?: string | null;
   initialMunicipalityId?: string | null;
   facets?: LocationFacet[];
+  allProvinces?: Array<{ id: string; name: string; imageUrl?: string | null }>;
+  allMunicipalities?: Array<{ id: string; name: string; provinceId: string; imageUrl?: string | null }>;
+  enabledLocationKeys?: Set<string>;
+  onDisabledFilterPress?: () => void;
   isLoading?: boolean;
 };
 
@@ -51,6 +56,10 @@ export default function SearchLocationPicker({
   initialProvinceId,
   initialMunicipalityId,
   facets = [],
+  allProvinces = [],
+  allMunicipalities = [],
+  enabledLocationKeys = new Set(),
+  onDisabledFilterPress,
   isLoading = false,
 }: SearchLocationPickerProps) {
   const insets = useSafeAreaInsets();
@@ -68,64 +77,89 @@ export default function SearchLocationPicker({
     string | null
   >(null);
 
-  // Load provinces on mount and enrich with facet counts
+  // Load provinces - use allProvinces if provided, otherwise fetch from DB
   useEffect(() => {
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from("provinces")
-          .select("id, name, imageUrl")
-          .eq("isActive", true)
-          .order("name");
-        if (error) {
-          console.error("📍 [LOCATION_PICKER] Error loading provinces:", error);
-          setProvinces([]);
-        } else {
-          const provincesData = data || [];
-          // Filter to only show provinces that have facets (available locations)
-          const provincesWithFacets = provincesData.filter((province) => {
-            return facets.some((f) => f.provinceId === province.id);
-          });
-          setProvinces(provincesWithFacets);
-        }
-      } catch (err) {
-        console.error("📍 [LOCATION_PICKER] Exception loading provinces:", err);
-        setProvinces([]);
-      }
-    })();
-  }, [facets]);
-
-  // Load municipalities when a province is selected and enrich with facet counts
-  useEffect(() => {
-    (async () => {
-      if (modalStep === "municipality" && selectedProvince) {
+    if (allProvinces.length > 0) {
+      // Use provided all provinces (show all, not just data-driven)
+      setProvinces(allProvinces);
+    } else {
+      // Fallback: fetch from DB if not provided
+      (async () => {
         try {
           const { data, error } = await supabase
-            .from("municipalities")
+            .from("provinces")
             .select("id, name, imageUrl")
-            .eq("provinceId", selectedProvince.id)
             .eq("isActive", true)
             .order("name");
           if (error) {
-            setMunicipalities([]);
+            console.error("📍 [LOCATION_PICKER] Error loading provinces:", error);
+            setProvinces([]);
           } else {
-            const municipalitiesData = data || [];
-            // Filter to only show municipalities that have facets (available locations)
-            const municipalitiesWithFacets = municipalitiesData.filter((municipality) => {
-              return facets.some(
-                (f) =>
-                  f.provinceId === selectedProvince.id &&
-                  f.municipalityId === municipality.id
-              );
-            });
-            setMunicipalities(municipalitiesWithFacets);
+            const provincesData = data || [];
+            // If facets provided, filter to only show provinces that have facets
+            // Otherwise show all provinces
+            if (facets.length > 0) {
+              const provincesWithFacets = provincesData.filter((province) => {
+                return facets.some((f) => f.provinceId === province.id);
+              });
+              setProvinces(provincesWithFacets);
+            } else {
+              setProvinces(provincesData);
+            }
           }
         } catch (err) {
-          setMunicipalities([]);
+          console.error("📍 [LOCATION_PICKER] Exception loading provinces:", err);
+          setProvinces([]);
         }
+      })();
+    }
+  }, [facets, allProvinces]);
+
+  // Load municipalities when a province is selected - use allMunicipalities if provided
+  useEffect(() => {
+    if (modalStep === "municipality" && selectedProvince) {
+      if (allMunicipalities.length > 0) {
+        // Use provided all municipalities filtered by selected province
+        const filteredMunicipalities = allMunicipalities.filter(
+          (m) => m.provinceId === selectedProvince.id
+        );
+        setMunicipalities(filteredMunicipalities);
+      } else {
+        // Fallback: fetch from DB if not provided
+        (async () => {
+          try {
+            const { data, error } = await supabase
+              .from("municipalities")
+              .select("id, name, imageUrl")
+              .eq("provinceId", selectedProvince.id)
+              .eq("isActive", true)
+              .order("name");
+            if (error) {
+              setMunicipalities([]);
+            } else {
+              const municipalitiesData = data || [];
+              // If facets provided, filter to only show municipalities that have facets
+              // Otherwise show all municipalities
+              if (facets.length > 0) {
+                const municipalitiesWithFacets = municipalitiesData.filter((municipality) => {
+                  return facets.some(
+                    (f) =>
+                      f.provinceId === selectedProvince.id &&
+                      f.municipalityId === municipality.id
+                  );
+                });
+                setMunicipalities(municipalitiesWithFacets);
+              } else {
+                setMunicipalities(municipalitiesData);
+              }
+            }
+          } catch (err) {
+            setMunicipalities([]);
+          }
+        })();
       }
-    })();
-  }, [modalStep, selectedProvince, facets]);
+    }
+  }, [modalStep, selectedProvince, facets, allMunicipalities]);
 
   // Load initial data if provided
   useEffect(() => {
@@ -146,6 +180,16 @@ export default function SearchLocationPicker({
 
   const handleMunicipalitySelect = (municipality: Municipality) => {
     if (selectedProvince) {
+      // Check if location is enabled (data-driven)
+      const locationKey = `${selectedProvince.id}::${municipality.id}`;
+      if (enabledLocationKeys.size > 0 && !enabledLocationKeys.has(locationKey)) {
+        console.log("Location is disabled", locationKey);
+        // Location is disabled, show toast and prevent selection
+        toast.info("Questo filtro non si adatta ai tuoi filtri attuali");
+        onDisabledFilterPress?.();
+        return;
+      }
+
       setSelectedMunicipalityId(municipality.id);
       onSelect({
         province: selectedProvince.name,
@@ -234,7 +278,10 @@ export default function SearchLocationPicker({
                 <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
               <ScaledTextInput
-                containerClassName="bg-background"
+                containerClassName="bg-background flex-1 rounded-full"
+                containerStyle={{
+                  borderRadius: s(50),
+                }}
                 className="text-foreground"
                 style={{
                   backgroundColor: "transparent",
@@ -276,10 +323,21 @@ export default function SearchLocationPicker({
                 >
                   {topSix.map((p) => {
                     const active = selectedProvince?.id === p.id;
+                    // Check if province has at least one enabled location
+                    const hasEnabledLocation = Array.from(enabledLocationKeys).some(key => 
+                      key.startsWith(`${p.id}::`)
+                    );
+                    const isEnabled = enabledLocationKeys.size === 0 || hasEnabledLocation;
                     return (
                       <TouchableOpacity
                         key={p.id}
                         onPress={() => {
+                          if (!isEnabled) {
+                            console.log("Province is disabled", p.id);
+                            toast.info("Questo filtro non si adatta ai tuoi filtri attuali");
+                            onDisabledFilterPress?.();
+                            return;
+                          }
                           setSelectedProvince(p);
                           setSearch("");
                         }}
@@ -287,7 +345,9 @@ export default function SearchLocationPicker({
                           width: "32%",
                           overflow: "hidden",
                           height: mvs(90),
+                          opacity: isEnabled ? 1 : 0.5,
                         }}
+                        disabled={!isEnabled}
                       >
                         {p.imageUrl ? (
                           <Image
@@ -360,11 +420,37 @@ export default function SearchLocationPicker({
                     modalStep === "province"
                       ? selectedProvince?.id === item.id
                       : selectedMunicipalityId === item.id;
+                  
+                  // Check if location is enabled
+                  let isEnabled = true;
+                  if (modalStep === "province") {
+                    // Check if province has at least one enabled location
+                    const hasEnabledLocation = Array.from(enabledLocationKeys).some(key => 
+                      key.startsWith(`${item.id}::`)
+                    );
+                    isEnabled = enabledLocationKeys.size === 0 || hasEnabledLocation;
+                  } else {
+                    // Check if municipality location is enabled
+                    if (selectedProvince) {
+                      const locationKey = `${selectedProvince.id}::${item.id}`;
+                      isEnabled = enabledLocationKeys.size === 0 || enabledLocationKeys.has(locationKey);
+                    }
+                  }
+
                   return (
                     <Pressable
                       key={item.id}
                       className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
+                      style={{
+                        opacity: isEnabled ? 1 : 0.5,
+                      }}
                       onPress={() => {
+                        if (!isEnabled) {
+                          console.log("Municipality is disabled", item.id);
+                          toast.info("Questo filtro non si adatta ai tuoi filtri attuali");
+                          onDisabledFilterPress?.();
+                          return;
+                        }
                         if (modalStep === "province") {
                           setSelectedProvince(item);
                           setSelectedMunicipalityId(null);
@@ -374,6 +460,7 @@ export default function SearchLocationPicker({
                           handleMunicipalitySelect(item);
                         }
                       }}
+                      disabled={!isEnabled}
                     >
                       <View className="flex-row items-center gap-3 px-6">
                         <View className="flex-1">
@@ -425,6 +512,16 @@ export default function SearchLocationPicker({
               <TouchableOpacity
                 onPress={() => {
                   if (selectedProvince) {
+                    // Check if province has at least one enabled location
+                    const hasEnabledLocation = Array.from(enabledLocationKeys).some(key => 
+                      key.startsWith(`${selectedProvince.id}::`)
+                    );
+                    if (enabledLocationKeys.size > 0 && !hasEnabledLocation) {
+                      console.log("Province is disabled", selectedProvince.id);
+                      toast.info("Questo filtro non si adatta ai tuoi filtri attuali");
+                      onDisabledFilterPress?.();
+                      return;
+                    }
                     setModalStep("municipality");
                     setSearch("");
                   }

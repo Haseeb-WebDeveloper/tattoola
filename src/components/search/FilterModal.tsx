@@ -1,9 +1,13 @@
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { getFacets } from "@/services/facet.service";
+import { fetchTattooStyles } from "@/services/style.service";
+import { fetchServices } from "@/services/services.service";
 import { useSearchStore } from "@/stores/searchStore";
-import type { Facets } from "@/types/facets";
+import type { Facets, StyleFacet, ServiceFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
+import { toast } from "sonner-native";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -40,6 +44,11 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     municipality: string;
   } | null>(null);
   const [tempFacets, setTempFacets] = useState<Facets | null>(null);
+  // Store all available filters from database
+  const [allStyles, setAllStyles] = useState<StyleFacet[]>([]);
+  const [allServices, setAllServices] = useState<ServiceFacet[]>([]);
+  const [allProvinces, setAllProvinces] = useState<Array<{ id: string; name: string; imageUrl?: string | null }>>([]);
+  const [allMunicipalities, setAllMunicipalities] = useState<Array<{ id: string; name: string; provinceId: string; imageUrl?: string | null }>>([]);
   // Separate loading states for each filter type
   const [isLoadingStyles, setIsLoadingStyles] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -53,6 +62,50 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   // Snap points for the bottom sheet (90% of screen height)
   const snapPoints = useMemo(() => ["80%"], []);
+
+  // Fetch all available filters from database when modal opens
+  useEffect(() => {
+    if (visible) {
+      const fetchAllFilters = async () => {
+        try {
+          // Fetch all styles
+          const styles = await fetchTattooStyles();
+          setAllStyles(styles.map(s => ({
+            id: s.id,
+            name: s.name,
+            imageUrl: s.imageUrl,
+          })));
+
+          // Fetch all services
+          const services = await fetchServices();
+          setAllServices(services.map(s => ({
+            id: s.id,
+            name: s.name,
+            category: s.category,
+          })));
+
+          // Fetch all provinces
+          const { data: provincesData } = await supabase
+            .from("provinces")
+            .select("id, name, imageUrl")
+            .eq("isActive", true)
+            .order("name");
+          setAllProvinces(provincesData || []);
+
+          // Fetch all municipalities
+          const { data: municipalitiesData } = await supabase
+            .from("municipalities")
+            .select("id, name, provinceId, imageUrl")
+            .eq("isActive", true)
+            .order("name");
+          setAllMunicipalities(municipalitiesData || []);
+        } catch (error) {
+          console.error("Error fetching all filters:", error);
+        }
+      };
+      fetchAllFilters();
+    }
+  }, [visible]);
 
   // Load facets when modal opens
   useEffect(() => {
@@ -292,6 +345,29 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     loadFacetsForFilters(tempFilters, "service");
   };
 
+  // Handler for when user tries to select a disabled filter
+  const handleDisabledFilterPress = () => {
+    toast.info("Questo filtro non si adatta ai tuoi filtri attuali");
+  };
+
+  // Calculate enabled filter sets
+  const enabledStyleIds = useMemo(() => {
+    if (!tempFacets) return new Set<string>();
+    return new Set(tempFacets.styles.map(s => s.id));
+  }, [tempFacets]);
+
+  const enabledServiceIds = useMemo(() => {
+    if (!tempFacets) return new Set<string>();
+    return new Set(tempFacets.services.map(s => s.id));
+  }, [tempFacets]);
+
+  const enabledLocationKeys = useMemo(() => {
+    if (!tempFacets) return new Set<string>();
+    return new Set(
+      tempFacets.locations.map(l => `${l.provinceId}::${l.municipalityId}`)
+    );
+  }, [tempFacets]);
+
   const handleApply = () => {
     // Update filters and location display
     updateFilters(tempFilters);
@@ -384,6 +460,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               selectedIds={tempFilters.styleIds}
               onSelectionChange={handleStyleChange}
               facets={tempFacets?.styles || []}
+              allStyles={allStyles}
+              enabledStyleIds={enabledStyleIds}
+              onDisabledFilterPress={handleDisabledFilterPress}
               isLoading={isLoadingStyles}
               onConfirm={handleStyleConfirm}
             />
@@ -425,6 +504,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               selectedIds={tempFilters.serviceIds}
               onSelectionChange={handleServiceChange}
               facets={tempFacets?.services || []}
+              allServices={allServices}
+              enabledServiceIds={enabledServiceIds}
+              onDisabledFilterPress={handleDisabledFilterPress}
               isLoading={isLoadingServices}
               onConfirm={handleServiceConfirm}
             />
@@ -437,7 +519,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
           />
 
           {/* Location Filter Section */}
-          <View style={{ marginBottom: mvs(18) }}>
+          {/* <View style={{ marginBottom: mvs(18) }}>
             <View
               className="flex-row items-center justify-between"
               style={{ marginBottom: mvs(10) }}
@@ -497,7 +579,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               </ScaledText>
               <SVGIcons.ChevronDown width={s(14)} height={s(14)} />
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           {/* Action Buttons */}
           <View className="flex-row gap-4" style={{ marginTop: mvs(12) }}>
@@ -549,6 +631,10 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
         initialProvinceId={tempFilters.provinceId}
         initialMunicipalityId={tempFilters.municipalityId}
         facets={tempFacets?.locations || []}
+        allProvinces={allProvinces}
+        allMunicipalities={allMunicipalities}
+        enabledLocationKeys={enabledLocationKeys}
+        onDisabledFilterPress={handleDisabledFilterPress}
         isLoading={isLoadingLocations}
       />
     </>

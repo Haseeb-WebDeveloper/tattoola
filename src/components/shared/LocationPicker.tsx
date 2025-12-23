@@ -217,7 +217,10 @@ export default function LocationPicker({
                 <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
               <ScaledTextInput
-                containerClassName="bg-background"
+                containerClassName="bg-background flex-1 rounded-full"
+                containerStyle={{
+                  borderRadius: s(50),
+                }}
                 className="text-foreground"
                 style={{
                   backgroundColor: "transparent",
