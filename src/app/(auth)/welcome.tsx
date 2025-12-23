@@ -75,12 +75,12 @@ export default function WelcomeScreen() {
             justifyContent: "center",
             alignItems: "center",
             paddingHorizontal: s(24),
-            paddingTop: mvs(150),
+            paddingTop: mvs(300),
           }}
         >
           {/* Logo in the middle */}
           <View style={{ alignItems: "center" }}>
-            <SVGIcons.LogoLight  width={s(100)}  height={s(60)} />
+            <SVGIcons.LogoLight  width={s(150)}  height={s(70)} />
           </View>
         </View>
 
@@ -88,7 +88,7 @@ export default function WelcomeScreen() {
         <View
           style={{
             paddingHorizontal: s(24),
-            paddingBottom: mvs(60),
+            paddingBottom: mvs(70),
           }}
         >
           <Pressable

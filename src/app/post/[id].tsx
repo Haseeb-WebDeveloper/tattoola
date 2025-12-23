@@ -1235,14 +1235,15 @@ export default function PostDetailScreen() {
               eliminato definitivamente.
             </ScaledText>
             <View
-              className="flex-row justify-center"
-              style={{ columnGap: s(10) }}
+              className="w-full"
+              style={{ flexDirection: "column", gap: s(12) }}
             >
               <TouchableOpacity
                 onPress={handleDelete}
                 disabled={deleting}
                 className="flex-row items-center justify-center rounded-full border-primary"
                 style={{
+                  width: "100%",
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
@@ -1265,6 +1266,7 @@ export default function PostDetailScreen() {
                 disabled={deleting}
                 className="flex-row items-center justify-center rounded-full"
                 style={{
+                  width: "100%",
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),

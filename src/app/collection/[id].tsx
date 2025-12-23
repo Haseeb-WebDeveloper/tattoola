@@ -33,7 +33,8 @@ import { toast } from "sonner-native";
 const { width: screenWidth } = Dimensions.get("window");
 // Responsive spacing based on screen width (reference width 375)
 const REF_WIDTH = 375;
-const GAP = Math.max(6, Math.round((8 * screenWidth) / REF_WIDTH));
+// Increase base gaps for clearer visual spacing and center alignment
+const GAP = Math.max(10, Math.round((14 * screenWidth) / REF_WIDTH));
 const H_PADDING = Math.max(24, Math.round((32 * screenWidth) / REF_WIDTH));
 
 
@@ -346,7 +347,9 @@ export default function CollectionDetailsScreen() {
 
   // Layout depends on edit mode: 1 column while editing for reliable DnD
   const NUM_COLUMNS = editMode ? 1 : 2;
-  const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
+  const POST_WIDTH = NUM_COLUMNS === 1
+    ? (screenWidth - H_PADDING)
+    : ((screenWidth - H_PADDING - GAP) / NUM_COLUMNS);
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
   // Check if this is the "Preferiti" collection (case-insensitive)
@@ -750,7 +753,7 @@ export default function CollectionDetailsScreen() {
               <View
                 style={{
                   marginTop: GAP,
-                  marginBottom: GAP,
+                  marginBottom: GAP * 2,
                   alignItems: "center",
                 }}
               >
@@ -795,6 +798,7 @@ export default function CollectionDetailsScreen() {
           contentContainerStyle={{
             paddingHorizontal: H_PADDING / 2,
             paddingBottom: 20,
+            alignItems: NUM_COLUMNS === 1 ? "center" : undefined,
           }}
           dragItemOverflow={true}
           activationDistance={editMode ? 0 : 999999}

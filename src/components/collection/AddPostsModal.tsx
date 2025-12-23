@@ -92,7 +92,7 @@ export default function AddPostsModal({
             }}
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ gap: mvs(16), marginBottom: mvs(130) }}>
+            <View style={{ marginBottom: mvs(130) }}>
               {/* Create new post card */}
               <TouchableOpacity
                 onPress={handleCreatePost}
@@ -105,7 +105,8 @@ export default function AddPostsModal({
                   alignItems: "center",
                   justifyContent: "center",
                   paddingHorizontal: s(10),
-                  paddingVertical: mvs(50),
+                  paddingVertical: mvs(60),
+                  marginBottom: mvs(24),
                 }}
                 className="border-primary bg-tat-darkMaroon"
               >
@@ -114,7 +115,7 @@ export default function AddPostsModal({
                   allowScaling={false}
                   variant="md"
                   className="text-foreground text-center font-neueLight"
-                  style={{ marginTop: mvs(8) }}
+                  style={{ marginTop: mvs(12) }}
                 >
                   Crea un nuovo post
                 </ScaledText>
@@ -126,7 +127,7 @@ export default function AddPostsModal({
                     activeOpacity={1}
                     key={p.id}
                     onPress={() => onToggle(p.id)}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", marginBottom: mvs(24) }}
                   >
                     <View
                       className="relative w-full rounded-lg overflow-hidden"
