@@ -254,7 +254,7 @@ export default function LocationPicker({
                   className="text-gray font-neueSemibold"
                   style={{ paddingHorizontal: s(20), paddingBottom: mvs(6) }}
                 >
-                  Città più popolari
+                  Province piu poplari
                 </ScaledText>
                 <View
                   className="flex-row flex-wrap bg-background"
@@ -317,55 +317,38 @@ export default function LocationPicker({
                     ? "Altre province"
                     : `Comuni in ${selectedProvince?.name || "provincia selezionata"}`}
               </ScaledText>
-              {listFiltered.length === 0 ? (
-                <View
-                  style={{
-                    paddingHorizontal: s(20),
-                    paddingVertical: mvs(40),
-                  }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="lg"
-                    className="text-center text-gray font-neueLight"
+              {listFiltered.map((item) => {
+                const isActive =
+                  modalStep === "province"
+                    ? selectedProvince?.id === item.id
+                    : selectedMunicipalityId === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
+                    onPress={() => {
+                      if (modalStep === "province") {
+                        setSelectedProvince(item);
+                        setSelectedMunicipalityId(null);
+                        setSearch("");
+                      } else {
+                        setSelectedMunicipalityId(item.id);
+                        handleMunicipalitySelect(item);
+                      }
+                    }}
                   >
-                    Nessun risultato trovato
-                  </ScaledText>
-                </View>
-              ) : (
-                listFiltered.map((item) => {
-                  const isActive =
-                    modalStep === "province"
-                      ? selectedProvince?.id === item.id
-                      : selectedMunicipalityId === item.id;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
-                      onPress={() => {
-                        if (modalStep === "province") {
-                          setSelectedProvince(item);
-                          setSelectedMunicipalityId(null);
-                          setSearch("");
-                        } else {
-                          setSelectedMunicipalityId(item.id);
-                          handleMunicipalitySelect(item);
-                        }
-                      }}
-                    >
-                      <View className="flex-row items-center gap-3 px-6">
-                        <ScaledText
-                          allowScaling={false}
-                          variant="md"
-                          className="text-foreground font-montserratLight"
-                        >
-                          {item.name}
-                        </ScaledText>
-                      </View>
-                    </Pressable>
-                  );
-                })
-              )}
+                    <View className="flex-row items-center gap-3 px-6">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-foreground font-montserratLight"
+                      >
+                        {item.name}
+                      </ScaledText>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
 

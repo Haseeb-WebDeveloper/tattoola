@@ -569,7 +569,7 @@ export default function StylesSettingsScreen() {
             </ScaledText>
 
             {/* Action Buttons */}
-            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+            <View style={{ gap: mvs(4) }} className="flex-col justify-center">
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}

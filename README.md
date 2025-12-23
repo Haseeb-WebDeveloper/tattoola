@@ -51,7 +51,7 @@ Join our community of developers creating universal apps.
 
 
 
-eas update --branch preview --message "ui refactored search functionality is rebuilt and optimized the user and studio profile screens"
+eas update --branch preview --message "ui refactored"
 
 eas build --profile development --platform android
 
@@ -83,7 +83,9 @@ npx eas-cli build --platform android --profile production --auto-submit
 npx eas-cli submit --platform android --profile production
 
 <!-- For setting the version code and version name for ios -->
-eas build:version:set --platform iosapi-0000000000000000000-111111-aaaaaabbbbbb.json
+eas build:version:set --platform ios 
+
+api-0000000000000000000-111111-aaaaaabbbbbb.json
 
 
 

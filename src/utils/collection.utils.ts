@@ -102,8 +102,10 @@ export async function isTuttiCollection(
  * @returns true if the collection is a system collection, false otherwise
  */
 export function isSystemCollection(collectionName: string): boolean {
+  console.log("collectionName", collectionName);
   if (!collectionName) return false;
   const normalizedName = collectionName.toLowerCase().trim();
+  console.log("normalizedName", normalizedName);
   return (
     normalizedName === "tutti" ||
     normalizedName === "preferiti" ||
