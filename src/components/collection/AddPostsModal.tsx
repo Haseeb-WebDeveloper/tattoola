@@ -1,11 +1,11 @@
-import React from "react";
-import { Image, Modal, ScrollView, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import React from "react";
+import { Image, Modal, ScrollView, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type SimplePost = {
   id: string;
@@ -104,7 +104,6 @@ export default function AddPostsModal({
                   borderStyle: "dashed",
                   alignItems: "center",
                   justifyContent: "center",
-                  // aspectRatio: 1,
                   paddingHorizontal: s(10),
                   paddingVertical: mvs(50),
                 }}

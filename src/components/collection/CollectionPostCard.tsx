@@ -45,7 +45,7 @@ export default function CollectionPostCard({
       return thumbnailUrl;
     }
 
-    // If it's a video and we have a mediaUrl, generate thumbnail from video URL
+    // If it's a video and we have a mediaUrl, generate thumbnail from video URL 
     if (mediaType === "VIDEO" && mediaUrl) {
       return cloudinaryService.getVideoThumbnailFromUrl(mediaUrl);
     }
