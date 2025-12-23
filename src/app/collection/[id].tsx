@@ -1,11 +1,5 @@
-import { CollectionHeader } from "@/components/collection/CollectionHeader";
 import { CollectionModals } from "@/components/collection/CollectionModals";
-import { CollectionPostsGrid } from "@/components/collection/CollectionPostsGrid";
-import AddPostsModal from "@/components/collection/AddPostsModal";
 import CollectionPostCard from "@/components/collection/CollectionPostCard";
-import DeleteCollectionModal from "@/components/collection/DeleteCollectionModal";
-import DeleteConfirmModal from "@/components/collection/DeleteConfirmModal";
-import EditCollectionNameModal from "@/components/collection/EditCollectionNameModal";
 import { CustomToast } from "@/components/ui/CustomToast";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -21,8 +15,8 @@ import {
 } from "@/services/collection.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { CollectionPostInterface } from "@/types/collection";
-import { clearProfileCache } from "@/utils/database";
 import { isSystemCollection } from "@/utils/collection.utils";
+import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -34,7 +28,6 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLLECTION_NAME } from "@/constants/limits";
 import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -771,6 +764,7 @@ export default function CollectionDetailsScreen() {
                     height: mvs(253),
                     opacity: isArtistFavFull ? 0.5 : 1,
                     pointerEvents: isArtistFavFull ? "none" : "auto",
+
                   }}
                 >
                   <SVGIcons.AddRed width={s(32)} height={s(32)} />

@@ -2,8 +2,8 @@ import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import {
-  fetchArtistSelfProfile,
-  toggleFollow,
+    fetchArtistSelfProfile,
+    toggleFollow,
 } from "@/services/profile.service";
 import { prefetchStudioProfile } from "@/services/studio.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
@@ -15,14 +15,13 @@ import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Linking,
-  Modal,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    Linking,
+    Modal,
+    TouchableOpacity,
+    View
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Banner } from "./Banner";
 import { BodyPartsSection } from "./BodyPartsSection";
 import { CollectionsSection } from "./CollectionsSection";
@@ -180,7 +179,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           zIndex: 10,
           paddingHorizontal: s(12),
           paddingVertical: mvs(12),
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backgroundColor: "rgba(255, 255, 255, 0.3)",
           borderRadius: s(100),
         }}
       >

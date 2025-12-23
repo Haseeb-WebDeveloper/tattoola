@@ -9,8 +9,8 @@ import { useAuth } from "@/providers/AuthProvider";
 import { FeedEntry } from "@/services/feed.service";
 import { prefetchUserProfile } from "@/services/prefetch.service";
 import {
-  fetchUserSummaryCached,
   fetchArtistProfileSummary,
+  fetchUserSummaryCached,
 } from "@/services/profile.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { useChatInboxStore } from "@/stores/chatInboxStore";
@@ -483,7 +483,7 @@ export default function HomeScreen() {
         >
           {/* <SVGIcons.Flash  /> */}
         </View>
-        <SVGIcons.LogoLight />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
         <TouchableOpacity
           onPress={() => router.push("/(auth)/help" as any)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

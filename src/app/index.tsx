@@ -1,5 +1,5 @@
 import { SVGIcons } from "@/constants/svg";
-import { mvs } from "@/utils/scale";
+import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { View } from "react-native";
@@ -48,7 +48,7 @@ export default function IndexScreen() {
       className="flex-col items-center justify-center bg-background"
     >
       <View className="items-center justify-center">
-        <SVGIcons.LogoLight />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
       </View>
     </View>
   );

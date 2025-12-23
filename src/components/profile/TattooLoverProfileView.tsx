@@ -4,10 +4,10 @@ import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScaledText } from "../ui/ScaledText";
@@ -59,7 +59,7 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
         style={{
           height: s(80),
           paddingHorizontal: s(16),
-          paddingTop: Math.max(insets.top, mvs(6)),
+          // paddingTop: Math.max(insets.top, mvs(6)),
         }}
       >
         {/* Back button */}
@@ -70,7 +70,7 @@ export const TattooLoverProfileView: React.FC<TattooLoverProfileViewProps> = ({
           style={{
             width: s(32),
             height: s(32),
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(255, 255, 255, 0.3)",
           }}
         >
           <SVGIcons.ChevronLeft width={s(13)} height={s(13)} />

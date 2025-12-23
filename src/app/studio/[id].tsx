@@ -1,19 +1,19 @@
 import {
-  Banner,
-  ServicesSection,
-  StudioFAQs,
-  StudioPhotos,
-  StudioSkeleton,
-  StylesSection,
+    Banner,
+    ServicesSection,
+    StudioFAQs,
+    StudioPhotos,
+    StudioSkeleton,
+    StylesSection,
 } from "@/components/profile";
 import StudioOverview from "@/components/profile/StudioOverview";
 import ArtistCard from "@/components/search/ArtistCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import {
-  fetchStudioMembersForPublicProfileCached,
-  fetchStudioPublicProfileCached,
-  fetchStudioSummaryCached,
+    fetchStudioMembersForPublicProfileCached,
+    fetchStudioPublicProfileCached,
+    fetchStudioSummaryCached,
 } from "@/services/studio.service";
 import type { ArtistSearchResult, StudioSummary } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
@@ -21,8 +21,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Linking, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StudioScreen() {
   const { id, initialStudio: initialStudioParam } = useLocalSearchParams<{
@@ -192,7 +192,7 @@ export default function StudioScreen() {
             style={{
               paddingHorizontal: s(12),
               paddingVertical: mvs(12),
-              backgroundColor: "rgba(0, 0, 0, 0.50)",
+              backgroundColor: "rgba(255, 255, 255, 0.30)",
               borderRadius: s(100),
               position: "absolute",
               top: mvs(8),

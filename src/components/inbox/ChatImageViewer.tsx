@@ -125,15 +125,13 @@ const ZoomableImage: React.FC<{
     panGesture
   );
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ] as any,
+  }));
 
   return (
     <GestureDetector gesture={composedGesture}>
@@ -228,9 +226,9 @@ export const ChatImageViewer: React.FC<ChatImageViewerProps> = ({
               }}
             >
               {downloading ? (
-                <SVGIcons.Loading width={s(20)} height={s(20)} />
+                <SVGIcons.Loading width={s(16)} height={s(16)} />
               ) : (
-                <SVGIcons.Download width={s(20)} height={s(20)} />
+                <SVGIcons.Download width={s(16)} height={s(16)} />
               )}
             </TouchableOpacity>
 
@@ -243,7 +241,7 @@ export const ChatImageViewer: React.FC<ChatImageViewerProps> = ({
                 height: s(40),
               }}
             >
-              <SVGIcons.Close width={s(20)} height={s(20)} />
+              <SVGIcons.Close width={s(12)} height={s(12)} opacity={0.8} />
             </TouchableOpacity>
           </View>
 

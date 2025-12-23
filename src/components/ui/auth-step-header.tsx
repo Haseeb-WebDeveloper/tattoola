@@ -32,7 +32,7 @@ export default function AuthStepHeader({ onClose }: AuthStepHeaderProps = {}) {
         >
           <SVGIcons.Close width={s(12)} height={s(12)} />
         </TouchableOpacity>
-        <SVGIcons.LogoLight />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
         <View style={{ width: s(24), height: s(24) }} />
       </View>
       <View className="h-px bg-[#A49A99] mt-4 opacity-50" />

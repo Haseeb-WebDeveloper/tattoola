@@ -66,7 +66,7 @@ export function UnsavedChangesModal({
           {/* Action Buttons */}
           <View
             style={{
-              flexDirection: "row",
+                flexDirection: "column",
               gap: s(12),
               width: "100%",
             }}
@@ -75,7 +75,7 @@ export function UnsavedChangesModal({
             <TouchableOpacity
               onPress={onContinueEditing}
               style={{
-                flex: 1,
+                  width: "100%",
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
@@ -85,7 +85,6 @@ export function UnsavedChangesModal({
                 paddingVertical: mvs(14),
                 paddingHorizontal: s(18),
                 gap: s(6),
-                minWidth: 0, // Allow flex to shrink
               }}
             >
               <SVGIcons.PenRed
@@ -107,13 +106,12 @@ export function UnsavedChangesModal({
             <TouchableOpacity
               onPress={onDiscardChanges}
               style={{
-                flex: 1,
+                  width: "100%",
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: s(999),
                 paddingVertical: mvs(14),
                 paddingHorizontal: s(18),
-                minWidth: 0, // Allow flex to shrink
               }}
             >
               <ScaledText
