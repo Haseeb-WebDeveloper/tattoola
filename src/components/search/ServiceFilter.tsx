@@ -19,9 +19,6 @@ type ServiceFilterProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   facets: ServiceFacet[];
-  allServices: ServiceFacet[];
-  enabledServiceIds: Set<string>;
-  onDisabledFilterPress?: () => void;
   isLoading?: boolean;
   onConfirm?: () => void;
 };
@@ -30,9 +27,6 @@ export default function ServiceFilter({
   selectedIds,
   onSelectionChange,
   facets,
-  allServices,
-  enabledServiceIds,
-  onDisabledFilterPress,
   isLoading = false,
   onConfirm,
 }: ServiceFilterProps) {
@@ -49,21 +43,10 @@ export default function ServiceFilter({
   } | null>(null);
 
   const toggleService = (serviceId: string) => {
-    // Allow deselection even if disabled (user might have selected it before it became disabled)
-    if (selectedIds.includes(serviceId)) {
-      const newSelectedIds = selectedIds.filter((id) => id !== serviceId);
-      onSelectionChange(newSelectedIds);
-      return;
-    }
+    const newSelectedIds = selectedIds.includes(serviceId)
+      ? selectedIds.filter((id) => id !== serviceId)
+      : [...selectedIds, serviceId];
 
-    // Check if service is enabled (data-driven) before allowing selection
-    if (!enabledServiceIds.has(serviceId)) {
-      // Service is disabled, show toast and prevent selection
-      onDisabledFilterPress?.();
-      return;
-    }
-
-    const newSelectedIds = [...selectedIds, serviceId];
     onSelectionChange(newSelectedIds);
   };
 
@@ -102,11 +85,11 @@ export default function ServiceFilter({
     selectedIds.length === 0
       ? "Tutti"
       : selectedIds.length === 1
-        ? allServices.find((s) => s.id === selectedIds[0])?.name || facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        ? facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
         : `${selectedIds.length} selezionati`;
 
-  // Show all available services (not just data-driven facets)
-  const availableFacets = allServices.length > 0 ? allServices : facets;
+  // Show all available facets
+  const availableFacets = facets;
 
   return (
     <>
@@ -240,7 +223,6 @@ export default function ServiceFilter({
           ) : (
             availableFacets.map((facet) => {
               const isSelected = selectedIds.includes(facet.id);
-              const isEnabled = enabledServiceIds.has(facet.id);
               return (
                 <Pressable
                   key={facet.id}
@@ -249,7 +231,6 @@ export default function ServiceFilter({
                   style={{
                     paddingVertical: mvs(14),
                     paddingHorizontal: s(20),
-                    opacity: isEnabled ? 1 : 0.5,
                   }}
                 >
                   <View className="flex-row items-center justify-between">
@@ -274,7 +255,6 @@ export default function ServiceFilter({
                         left: 10,
                         right: 10,
                       }}
-                      disabled={!isEnabled}
                     >
                       {isSelected ? (
                         <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />

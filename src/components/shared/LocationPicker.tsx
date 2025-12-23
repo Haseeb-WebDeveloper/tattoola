@@ -260,8 +260,11 @@ export default function LocationPicker({
                   className="flex-row flex-wrap bg-background"
                   style={{ gap: s(1) }}
                 >
-                  {topSix.map((p) => {
+                  {topSix.map((p, index) => {
                     const active = selectedProvince?.id === p.id;
+                    const isRightColumn = (index + 1) % 3 === 0;
+                    const isBottomRow = index >= 3;
+
                     return (
                       <TouchableOpacity
                         key={p.id}
@@ -270,31 +273,29 @@ export default function LocationPicker({
                           setSearch("");
                         }}
                         style={{
-                          width: "32%",
-                          overflow: "hidden",
-                          height: mvs(90),
+                          width: "33.333%",
+                          height: mvs(100),
+                          justifyContent: "center",
+                          alignItems: "center",
+                          padding: s(12),
+                          borderRightWidth: active ? 2 : isRightColumn ? 0 : 1,
+                          borderBottomWidth: active ? 2 : isBottomRow ? 0 : 1,
+                          borderLeftWidth: active ? 2 : 0,
+                          borderTopWidth: active ? 2 : 0,
+                          borderColor: active ? "#AE0E0E" : "#333",
                         }}
                       >
-                        {p.imageUrl ? (
-                          <Image
-                            source={{ uri: p.imageUrl }}
-                            className="w-full h-[75%]"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View className="w-full h-[70%] bg-gray/30" />
-                        )}
-                        <View
-                          className={`h-[25%] flex items-center justify-center ${active ? "bg-primary" : "bg-background"}`}
+                        <ScaledText
+                          allowScaling={false}
+                          className="text-center text-foreground font-neueLight"
+                          style={{
+                            fontSize: s(14),
+                            lineHeight: mvs(23),
+                            letterSpacing: 0,
+                          }}
                         >
-                          <ScaledText
-                            allowScaling={false}
-                            variant="11"
-                            className="text-center text-foreground font-neueLight"
-                          >
-                            {p.name}
-                          </ScaledText>
-                        </View>
+                          {p.name}
+                        </ScaledText>
                       </TouchableOpacity>
                     );
                   })}

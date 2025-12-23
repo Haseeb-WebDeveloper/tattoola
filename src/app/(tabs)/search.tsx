@@ -40,22 +40,17 @@ export default function SearchScreen() {
   useEffect(() => {
     // Initialize search and facets on mount
     const initialize = async () => {
-      const { filters: currentFilters, setLocation } =
+      const { filters: currentFilters, updateFilters, setLocation } =
         useSearchStore.getState();
 
-      // Set Milano as default province for display and search, but don't update filters
-      // Filters remain empty until user manually selects a location
+      // Set Milano as default province if no province filter is set
       if (!currentFilters.provinceId && MOST_POPULAR_PROVINCES_IDS.length > 0) {
         const milano = MOST_POPULAR_PROVINCES_IDS[0];
-        // Only set location display, don't update filters
+        updateFilters({ provinceId: milano.id });
         setLocation(milano.name, "");
-        // Pass defaultProvinceId to search but keep filters empty
-        // search() will reload facets at the end (facets will use empty filters, not default province)
-        await search(undefined, milano.id);
-      } else {
-        // If filters already set, search() will reload facets at the end
-        await search();
       }
+
+      await Promise.all([search(), loadFacets()]);
     };
     initialize();
   }, []);
@@ -92,7 +87,6 @@ export default function SearchScreen() {
       municipalityId: data.municipalityId,
     });
     setLocation(data.province, data.municipality);
-    // search() will reload facets at the end with the updated location filter
     searchStore();
   };
 
@@ -142,7 +136,7 @@ export default function SearchScreen() {
         className="items-center justify-center flex-1"
         style={{ paddingTop: mvs(100) }}
       >
-        {/* <View
+        <View
           className="flex-row items-center justify-center"
           style={{ gap: s(4) }}
         >
@@ -153,6 +147,7 @@ export default function SearchScreen() {
           >
             Nessun risultato trovato
           </ScaledText>
+          {/* <SVGIcons.SafeAlert width={s(12)} height={s(12)} /> */}
         </View>
         <ScaledText
           allowScaling={false}
@@ -168,6 +163,7 @@ export default function SearchScreen() {
             onPress={handleRefresh}
             className="flex-row items-center"
           >
+            {/* Fallback to generic reload or try again, since SVGIcons.Refresh doesn't exist */}
             <ScaledText
               allowScaling={false}
               variant="body2"
@@ -190,64 +186,8 @@ export default function SearchScreen() {
               </ScaledText>
             </TouchableOpacity>
           )}
-        </View> */}
+        </View>
       </View>
-      // <View
-      //   className="items-center justify-center flex-1"
-      //   style={{ paddingTop: mvs(100) }}
-      // >
-      //   <View
-      //     className="flex-row items-center justify-center"
-      //     style={{ gap: s(4) }}
-      //   >
-      //     <ScaledText
-      //       allowScaling={false}
-      //       variant="lg"
-      //       className="text-center text-gray font-neueBold"
-      //     >
-      //       Nessun risultato trovato
-      //     </ScaledText>
-      //     {/* <SVGIcons.SafeAlert width={s(12)} height={s(12)} /> */}
-      //   </View>
-      //   <ScaledText
-      //     allowScaling={false}
-      //     variant="body2"
-      //     className="text-center text-gray font-neueLight"
-      //     style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
-      //   >
-      //     Prova a modificare i filtri
-      //     {areFiltersActive() ? " o reimposta i filtri" : ""}.
-      //   </ScaledText>
-      //   <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
-      //     <TouchableOpacity
-      //       onPress={handleRefresh}
-      //       className="flex-row items-center"
-      //     >
-      //       {/* Fallback to generic reload or try again, since SVGIcons.Refresh doesn't exist */}
-      //       <ScaledText
-      //         allowScaling={false}
-      //         variant="body2"
-      //         className="text-center text-primary font-neueLight"
-      //       >
-      //         Riprova
-      //       </ScaledText>
-      //     </TouchableOpacity>
-      //     {areFiltersActive() && (
-      //       <TouchableOpacity
-      //         onPress={handleResetFilters}
-      //         className="flex-row items-center"
-      //       >
-      //         <ScaledText
-      //           allowScaling={false}
-      //           variant="body2"
-      //           className="text-center text-primary font-neueLight"
-      //         >
-      //           Reimposta filtri
-      //         </ScaledText>
-      //       </TouchableOpacity>
-      //     )}
-      //   </View>
-      // </View>
     );
   };
 
@@ -318,7 +258,7 @@ export default function SearchScreen() {
               {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
             </View>
             <View className="flex-row items-center">
-              <SVGIcons.LogoLight />
+              <SVGIcons.LogoLight width={s(90)} height={s(50)} />
             </View>
 
             {/* Filter Button */}
@@ -506,6 +446,7 @@ export default function SearchScreen() {
         initialMunicipalityId={filters.municipalityId}
         facets={facets?.locations || []}
         isLoading={isLoadingFacets}
+        entityType={activeTab}
       />
     </View>
   );

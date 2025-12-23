@@ -9,19 +9,16 @@ import { supabase } from "@/utils/supabase";
 type SearchArtistsParams = {
   filters: SearchFilters;
   page?: number;
-  defaultProvinceId?: string | null;
 };
 
 type SearchStudiosParams = {
   filters: SearchFilters;
   page?: number;
-  defaultProvinceId?: string | null;
 };
 
 export async function searchArtists({
   filters,
   page = 0,
-  defaultProvinceId,
 }: SearchArtistsParams): Promise<{
   data: ArtistSearchResult[];
   hasMore: boolean;
@@ -123,15 +120,13 @@ export async function searchArtists({
     }
 
     // Apply location filter - query to get artist IDs that match location
-    // Use defaultProvinceId if filters.provinceId is not set
-    const effectiveProvinceId = filters.provinceId || defaultProvinceId;
-    if (effectiveProvinceId || filters.municipalityId) {
+    if (filters.provinceId || filters.municipalityId) {
       let locationQuery = supabase
         .from("user_locations")
         .select("userId");
       
-      if (effectiveProvinceId) {
-        locationQuery = locationQuery.eq("provinceId", effectiveProvinceId);
+      if (filters.provinceId) {
+        locationQuery = locationQuery.eq("provinceId", filters.provinceId);
       }
       if (filters.municipalityId) {
         locationQuery = locationQuery.eq("municipalityId", filters.municipalityId);
@@ -421,7 +416,6 @@ export async function searchArtists({
 export async function searchStudios({
   filters,
   page = 0,
-  defaultProvinceId,
 }: SearchStudiosParams): Promise<{
   data: StudioSearchResult[];
   hasMore: boolean;
@@ -520,15 +514,13 @@ export async function searchStudios({
     }
 
     // Apply location filter - query to get studio IDs that match location
-    // Use defaultProvinceId if filters.provinceId is not set
-    const effectiveProvinceId = filters.provinceId || defaultProvinceId;
-    if (effectiveProvinceId || filters.municipalityId) {
+    if (filters.provinceId || filters.municipalityId) {
       let locationQuery = supabase
         .from("studio_locations")
         .select("studioId");
       
-      if (effectiveProvinceId) {
-        locationQuery = locationQuery.eq("provinceId", effectiveProvinceId);
+      if (filters.provinceId) {
+        locationQuery = locationQuery.eq("provinceId", filters.provinceId);
       }
       if (filters.municipalityId) {
         locationQuery = locationQuery.eq("municipalityId", filters.municipalityId);
@@ -665,4 +657,3 @@ export async function searchAll({
     };
   }
 }
-

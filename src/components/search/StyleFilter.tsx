@@ -20,9 +20,6 @@ type StyleFilterProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   facets: StyleFacet[];
-  allStyles: StyleFacet[];
-  enabledStyleIds: Set<string>;
-  onDisabledFilterPress?: () => void;
   isLoading?: boolean;
   onConfirm?: () => void;
 };
@@ -31,9 +28,6 @@ export default function StyleFilter({
   selectedIds,
   onSelectionChange,
   facets,
-  allStyles,
-  enabledStyleIds,
-  onDisabledFilterPress,
   isLoading = false,
   onConfirm,
 }: StyleFilterProps) {
@@ -49,21 +43,10 @@ export default function StyleFilter({
   } | null>(null);
 
   const toggleStyle = (styleId: string) => {
-    // Allow deselection even if disabled (user might have selected it before it became disabled)
-    if (selectedIds.includes(styleId)) {
-      const newSelectedIds = selectedIds.filter((id) => id !== styleId);
-      onSelectionChange(newSelectedIds);
-      return;
-    }
+    const newSelectedIds = selectedIds.includes(styleId)
+      ? selectedIds.filter((id) => id !== styleId)
+      : [...selectedIds, styleId];
 
-    // Check if style is enabled (data-driven) before allowing selection
-    if (!enabledStyleIds.has(styleId)) {
-      // Style is disabled, show toast and prevent selection
-      onDisabledFilterPress?.();
-      return;
-    }
-
-    const newSelectedIds = [...selectedIds, styleId];
     onSelectionChange(newSelectedIds);
   };
 
@@ -100,11 +83,11 @@ export default function StyleFilter({
     selectedIds.length === 0
       ? "Tutti"
       : selectedIds.length === 1
-        ? allStyles.find((s) => s.id === selectedIds[0])?.name || facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        ? facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
         : `${selectedIds.length} selezionati`;
 
-  // Show all available styles (not just data-driven facets)
-  const availableFacets = allStyles.length > 0 ? allStyles : facets;
+  // Show all available facets
+  const availableFacets = facets;
 
   return (
     <>
@@ -238,7 +221,6 @@ export default function StyleFilter({
           ) : (
             availableFacets.map((facet) => {
               const isSelected = selectedIds.includes(facet.id);
-              const isEnabled = enabledStyleIds.has(facet.id);
               return (
                 <Pressable
                   key={facet.id}
@@ -247,7 +229,6 @@ export default function StyleFilter({
                   style={{
                     paddingHorizontal: s(20),
                     paddingVertical: mvs(12),
-                    opacity: isEnabled ? 1 : 0.5,
                   }}
                 >
                   <View className="flex-row items-center justify-between">
@@ -285,7 +266,6 @@ export default function StyleFilter({
                         left: 10,
                         right: 10,
                       }}
-                      disabled={!isEnabled}
                     >
                       {isSelected ? (
                         <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />
