@@ -83,7 +83,7 @@ npx eas-cli build --platform android --profile production --auto-submit
 npx eas-cli submit --platform android --profile production
 
 <!-- For setting the version code and version name for ios -->
-eas build:version:set --platform ios
+eas build:version:set --platform iosapi-0000000000000000000-111111-aaaaaabbbbbb.json
 
 
 

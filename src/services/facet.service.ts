@@ -396,9 +396,9 @@ async function getFilteredStudioIds(
 async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   const { filters, activeTab } = params;
 
-  // Get filtered IDs excluding style filter AND location filter (with caching)
-  // We want to show all styles regardless of location selection
-  const cacheKey = getCacheKey(filters, activeTab, true, false, true);
+  // Get filtered IDs excluding style filter (but applying location and service filters)
+  // For "high" compression mode, we apply location filters to show only relevant styles
+  const cacheKey = getCacheKey(filters, activeTab, true, false, false);
   let artistIds: string[];
   let studioIds: string[];
 
@@ -416,10 +416,10 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
 
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
-        ? getFilteredArtistIds(filters, true, false, true)
+        ? getFilteredArtistIds(filters, true, false, false)
         : Promise.resolve([]),
       shouldFetchStudios
-        ? getFilteredStudioIds(filters, true, false, true)
+        ? getFilteredStudioIds(filters, true, false, false)
         : Promise.resolve([]),
     ]);
     artistIds = fetchedArtistIds;
