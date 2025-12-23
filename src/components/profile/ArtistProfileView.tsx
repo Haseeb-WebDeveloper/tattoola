@@ -210,7 +210,6 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
           avatar={profileData?.user?.avatar}
           businessName={profileData?.artistProfile?.businessName}
           // For artist profiles: show only "Province (CODE)" or municipality label,
-          // never the raw street address.
           municipality={undefined}
           province={
             profileData?.location?.province
