@@ -13,7 +13,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     FlatList,
     KeyboardAvoidingView,
     Modal,
@@ -21,7 +20,7 @@ import {
     Pressable,
     ScrollView,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -342,12 +341,12 @@ export default function BodyPartsSettingsScreen() {
       >
         <View
           className="flex-1 justify-center items-center"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)", paddingHorizontal: s(16) }}
         >
           <View
             className="bg-[#fff] rounded-xl"
             style={{
-              width: s(342),
+              width: "100%",
               paddingHorizontal: s(24),
               paddingVertical: mvs(32),
             }}
@@ -378,7 +377,7 @@ export default function BodyPartsSettingsScreen() {
             </ScaledText>
 
             {/* Action Buttons */}
-            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+            <View style={{ gap: mvs(12) }} className="flex-col justify-center">
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}

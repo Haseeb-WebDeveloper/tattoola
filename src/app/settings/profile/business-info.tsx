@@ -1,12 +1,13 @@
+import LocationPicker from "@/components/shared/LocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
-import LocationPicker from "@/components/shared/LocationPicker";
 import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
+import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,6 @@ import {
     View,
 } from "react-native";
 import { toast } from "sonner-native";
-import * as DocumentPicker from "expo-document-picker";
 
 export default function BusinessInfoSettingsScreen() {
   const router = useRouter();
@@ -682,12 +682,12 @@ export default function BusinessInfoSettingsScreen() {
       >
         <View
           className="flex-1 justify-center items-center"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)", paddingHorizontal: s(16) }}
         >
           <View
             className="bg-[#fff] rounded-xl"
             style={{
-              width: s(342),
+              width: "100%",
               paddingHorizontal: s(24),
               paddingVertical: mvs(32),
             }}
@@ -711,7 +711,7 @@ export default function BusinessInfoSettingsScreen() {
             >
               Vuoi scartarle?
             </ScaledText>
-            <View style={{ gap: mvs(4) }} className="flex-row justify-center">
+            <View style={{ gap: mvs(12) }} className="flex-col justify-center">
               <TouchableOpacity
                 onPress={handleContinueEditing}
                 className="rounded-full border-2 items-center justify-center flex-row"
