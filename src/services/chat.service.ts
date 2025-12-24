@@ -1,12 +1,12 @@
 import {
-  ageOptions,
-  colorOptions,
-  sizeOptions,
+    ageOptions,
+    colorOptions,
+    sizeOptions,
 } from "@/constants/request-questions";
 import {
-  ConversationRole,
-  ConversationStatus,
-  MessageType,
+    ConversationRole,
+    ConversationStatus,
+    MessageType,
 } from "@/types/chat";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -204,6 +204,8 @@ export async function createPrivateRequestConversation(
     references?: string[]; // cloudinary urls
   }
 ): Promise<{ conversationId: string }> {
+  const isSelfRequest = senderId === receiverId;
+
   // Step 1: Verify both users exist
   const [senderExists, receiverExists] = await Promise.all([
     supabase.from("users").select("id").eq("id", senderId).maybeSingle(),
@@ -218,189 +220,136 @@ export async function createPrivateRequestConversation(
     throw new Error(`Receiver user ${receiverId} not found in users table`);
   }
 
-  // Step 2: Check for existing conversation
-  const existingConv = await checkExistingConversation(senderId, receiverId);
+  // Step 2: Determine actual roles of sender and receiver
+  const [senderRole, receiverRole] = await Promise.all([
+    determineUserConversationRole(senderId),
+    determineUserConversationRole(receiverId),
+  ]);
 
-  // Step 3: Determine if self-request
-  const isSelfRequest = senderId === receiverId;
-
-  // Step 4: Check receiver's accept requests setting (only if receiver is artist and not self-request)
+  // Enforce direction rules
   if (!isSelfRequest) {
-    const receiverRole = await determineUserConversationRole(receiverId);
-    if (receiverRole === "ARTIST") {
-      const artistProfile = await getArtistProfile(receiverId);
-      if (artistProfile && artistProfile.acceptPrivateRequests === false) {
-        const rejectionMsg =
-          artistProfile.rejectionMessage ||
-          "L'artista non può ricevere nuove richieste private in questo momento";
-        throw new Error(rejectionMsg);
-      }
+    if (receiverRole !== "ARTIST") {
+      throw new Error("Puoi inviare richieste private solo ad artisti");
+    }
+
+    if (senderRole === "ARTIST" && receiverRole !== "ARTIST") {
+      throw new Error(
+        "Gli artisti possono inviare richieste private solo ad altri artisti"
+      );
+    }
+
+    if (senderRole === "LOVER" && receiverRole !== "ARTIST") {
+      throw new Error(
+        "I Tattoo Lovers possono inviare richieste solo agli artisti"
+      );
     }
   }
 
-  // Step 5: Determine roles properly
-  const { senderRole, receiverRole } = await determineConversationRoles(
-    senderId,
-    receiverId,
-    isSelfRequest
-  );
+  // Step 3: Check receiver's accept requests setting (only if receiver is artist and not self-request)
+  if (!isSelfRequest && receiverRole === "ARTIST") {
+    const artistProfile = await getArtistProfile(receiverId);
+    if (artistProfile && artistProfile.acceptPrivateRequests === false) {
+      const rejectionMsg =
+        artistProfile.rejectionMessage ||
+        "L'artista non può ricevere nuove richieste private in questo momento";
+      throw new Error(rejectionMsg);
+    }
+  }
 
-  // Step 6: Create or reactivate conversation
+  // Step 4: Always create a fresh conversation (allows multiple requests)
   const now = new Date().toISOString();
-  let conversationId: string;
+  const conversationId = uuidv4();
 
-  if (existingConv) {
-    conversationId = existingConv.id;
+  // Receiver is always treated as the artist for conversation ownership
+  const artistId = receiverRole === "ARTIST" ? receiverId : senderRole === "ARTIST" ? senderId : null;
+  const loverId = artistId && artistId === senderId ? receiverId : senderId;
 
-    // Reactivate if conversation is closed/rejected
-    if (!["REQUESTED", "ACTIVE"].includes(existingConv.status)) {
-      const { error: updateErr } = await supabase
-        .from("conversations")
-        .update({
-          status: isSelfRequest ? "ACTIVE" : "REQUESTED",
-          requestedBy: senderId,
-          updatedAt: now,
-        })
-        .eq("id", conversationId);
+  const { error: convErr } = await supabase.from("conversations").insert({
+    id: conversationId,
+    artistId,
+    loverId,
+    status: isSelfRequest ? "ACTIVE" : "REQUESTED",
+    requestedBy: senderId,
+    createdAt: now,
+    updatedAt: now,
+  });
 
-      if (updateErr) {
-        throw new Error(updateErr.message);
-      }
-    }
-  } else {
-    // Create new conversation
-    conversationId = uuidv4();
-
-    // Determine which user should be artistId and which should be loverId
-    // For backward compatibility, we'll use the roles to determine this
-    // If sender is ARTIST, use sender as artistId; otherwise use receiver as artistId
-    const artistId = senderRole === "ARTIST" ? senderId : receiverId;
-    const loverId = senderRole === "ARTIST" ? receiverId : senderId;
-
-    const { error: convErr } = await supabase.from("conversations").insert({
-      id: conversationId,
-      artistId,
-      loverId,
-      status: isSelfRequest ? "ACTIVE" : "REQUESTED",
-      requestedBy: senderId,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    if (convErr) {
-      console.error("Conversation insert error:", convErr);
-      throw new Error(convErr.message);
-    }
+  if (convErr) {
+    console.error("Conversation insert error:", convErr);
+    throw new Error(convErr.message);
   }
 
-  // Step 7: Check if conversation_users already exist
-  const { data: existingCu } = await supabase
-    .from("conversation_users")
-    .select("userId")
-    .eq("conversationId", conversationId);
-
-  const existingUserIds = (existingCu || []).map((cu: any) => cu.userId);
-
-  // Step 8: Create conversation_users with proper roles
-  if (isSelfRequest) {
-    if (!existingUserIds.includes(senderId)) {
-      const { error: cuErr } = await supabase
-        .from("conversation_users")
-        .insert({
+  // Step 5: Create conversation users (receiver gets accept/reject controls)
+  const usersToInsert = isSelfRequest
+    ? [
+        {
           id: uuidv4(),
           conversationId,
           userId: senderId,
-          role: senderRole, // Use actual user role
-          canSend: true, // Auto-enabled for self-requests
-        });
-      if (cuErr) throw new Error(cuErr.message);
-    }
-  } else {
-    const usersToInsert = [];
-    if (!existingUserIds.includes(senderId)) {
-      usersToInsert.push({
-        id: uuidv4(),
-        conversationId,
-        userId: senderId,
-        role: senderRole, // Use actual sender role
-        canSend: false,
-      });
-    }
-    if (!existingUserIds.includes(receiverId)) {
-      usersToInsert.push({
-        id: uuidv4(),
-        conversationId,
-        userId: receiverId,
-        role: receiverRole, // Use actual receiver role
-        canSend: true,
-      });
-    }
-    if (usersToInsert.length > 0) {
-      const { error: cuErr } = await supabase
-        .from("conversation_users")
-        .insert(usersToInsert);
-      if (cuErr) throw new Error(cuErr.message);
-    }
-  }
-
-  // Step 9: Create PrivateRequest record (check if exists first)
-  const { data: existingPr } = await supabase
-    .from("private_requests")
-    .select("id")
-    .eq("conversationId", conversationId)
-    .maybeSingle();
-
-  if (!existingPr) {
-    const { error: prErr } = await supabase.from("private_requests").insert({
-      id: uuidv4(),
-      senderId,
-      receiverId,
-      conversationId: conversationId,
-      message: intake.desc || null,
-      status: isSelfRequest ? "ACCEPTED" : "PENDING",
-      createdAt: now,
-      updatedAt: now,
-    });
-    if (prErr) {
-      console.error("PrivateRequest insert error:", prErr);
-      // Don't throw - might be a race condition
-    }
-  }
-
-  // Step 10: Check if intake already exists
-  const { data: existingIntake } = await supabase
-    .from("conversation_intakes")
-    .select("id")
-    .eq("conversationId", conversationId)
-    .maybeSingle();
-
-  if (!existingIntake) {
-    // Create intake record
-    const { error: intakeErr } = await supabase
-      .from("conversation_intakes")
-      .insert({
-        id: uuidv4(),
-        conversationId,
-        createdByUserId: senderId,
-        schemaVersion: "v1",
-        questions: {
-          size: "Approximately what size would you like the tattoo to be?",
-          references:
-            "Can you post some examples of tattoos that resemble the result you'd like?",
-          color: "Would you like a color or black and white tattoo?",
-          description: "Describe your tattoo design in brief",
-          age: "Potresti confermare la tua età?",
+          role: senderRole,
+          canSend: true,
         },
-        answers: {
-          size: intake.size || null,
-          references: intake.references || [],
-          color: intake.color || null,
-          description: intake.desc || null,
-          isAdult: !!intake.isAdult,
+      ]
+    : [
+        {
+          id: uuidv4(),
+          conversationId,
+          userId: senderId,
+          role: senderRole,
+          canSend: false,
         },
-      });
-    if (intakeErr) throw new Error(intakeErr.message);
+        {
+          id: uuidv4(),
+          conversationId,
+          userId: receiverId,
+          role: receiverRole,
+          canSend: true,
+        },
+      ];
+
+  const { error: cuErr } = await supabase
+    .from("conversation_users")
+    .insert(usersToInsert as any);
+  if (cuErr) throw new Error(cuErr.message);
+
+  // Step 6: Create PrivateRequest record (one per conversation)
+  const { error: prErr } = await supabase.from("private_requests").insert({
+    id: uuidv4(),
+    senderId,
+    receiverId,
+    conversationId,
+    message: intake.desc || null,
+    status: isSelfRequest ? "ACCEPTED" : "PENDING",
+    createdAt: now,
+    updatedAt: now,
+  });
+  if (prErr) {
+    console.error("PrivateRequest insert error:", prErr);
   }
+
+  // Step 7: Create intake record
+  const { error: intakeErr } = await supabase.from("conversation_intakes").insert({
+    id: uuidv4(),
+    conversationId,
+    createdByUserId: senderId,
+    schemaVersion: "v1",
+    questions: {
+      size: "Approximately what size would you like the tattoo to be?",
+      references:
+        "Can you post some examples of tattoos that resemble the result you'd like?",
+      color: "Would you like a color or black and white tattoo?",
+      description: "Describe your tattoo design in brief",
+      age: "Potresti confermare la tua età?",
+    },
+    answers: {
+      size: intake.size || null,
+      references: intake.references || [],
+      color: intake.color || null,
+      description: intake.desc || null,
+      isAdult: !!intake.isAdult,
+    },
+  });
+  if (intakeErr) throw new Error(intakeErr.message);
 
   // console.log("intake record inserted");
 

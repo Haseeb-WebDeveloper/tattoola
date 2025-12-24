@@ -91,7 +91,7 @@ export default function EmailConfirmationScreen() {
             >
               <SVGIcons.Close className="w-8 h-8" />
             </TouchableOpacity>
-            <SVGIcons.LogoLight className="h-10" />
+            <SVGIcons.LogoLight height={s(50)} width={s(90)} />
             <View className="w-10" />
           </View>
           <View className="h-px bg-[#A49A99] mt-4 opacity-50" />

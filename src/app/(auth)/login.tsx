@@ -157,7 +157,7 @@ function LoginScreenContent() {
           </TouchableOpacity>
 
           {/* Logo */}
-          <SVGIcons.LogoLight style={{ height: s(50) }} />
+          <SVGIcons.LogoLight height={s(50)} width={s(90)} />
 
           {/* Help Icon */}
           <TouchableOpacity
