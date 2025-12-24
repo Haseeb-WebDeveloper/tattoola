@@ -1,5 +1,4 @@
 import ScaledText from "@/components/ui/ScaledText";
-import { SVGIcons } from "@/constants/svg";
 import { mvs, s, scaledFont } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -77,14 +76,7 @@ export default function WelcomeScreen() {
             paddingBottom: mvs(40),
           }}
         >
-          {/* Logo and tagline */}
-          <View style={{ alignItems: "center", marginBottom: mvs(130) }}>
-            <View style={{ alignItems: "center", justifyContent: "center", marginBottom: mvs(8) }}>
-              <SVGIcons.Logo height={s(70)} width={s(150)} />
-            </View>
-           
-          </View>
-
+         
           {/* Start button */}
           <Pressable
             onPress={() => router.replace('/(tabs)' as any)}

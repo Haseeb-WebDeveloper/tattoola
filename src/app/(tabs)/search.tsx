@@ -7,14 +7,17 @@ import SearchLocationPicker from "@/components/shared/SearchLocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import { MOST_POPULAR_PROVINCES_IDS } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
+import { getCurrentUserLocation } from "@/services/profile.service";
 import { useSearchStore } from "@/stores/searchStore";
 import type { SearchTab } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Easing, FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
 
 export default function SearchScreen() {
+  const { user } = useAuth();
   const {
     activeTab,
     setActiveTab,
@@ -37,23 +40,97 @@ export default function SearchScreen() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Animated red dot for active filters on Menu icon
+  const filtersActive = useMemo(
+    () =>
+      (filters.styleIds && filters.styleIds.length > 0) ||
+      (filters.serviceIds && filters.serviceIds.length > 0),
+    [filters.styleIds, filters.serviceIds]
+  );
+  const dotAnim = useRef(new Animated.Value(0)).current;
+  const dotOpacity = dotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.6, 1],
+  });
+  const dotScale = dotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.25],
+  });
+
   useEffect(() => {
-    // Initialize search and facets on mount
-    const initialize = async () => {
-      const { filters: currentFilters, updateFilters, setLocation } =
+    let loop: Animated.CompositeAnimation | null = null;
+    if (filtersActive) {
+      loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(dotAnim, {
+            toValue: 1,
+            duration: 850,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotAnim, {
+            toValue: 0,
+            duration: 850,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      loop.start();
+    } else {
+      dotAnim.stopAnimation();
+      dotAnim.setValue(0);
+    }
+
+    return () => {
+      if (loop) loop.stop();
+    };
+  }, [filtersActive, dotAnim]);
+
+  useEffect(() => {
+    // Keep search location in sync with auth state (guest → Milano, logged-in → profile location)
+    let isMounted = true;
+    const applyLocation = async () => {
+      const { updateFilters, setLocation, search: searchStore } =
         useSearchStore.getState();
 
-      // Set Milano as default province if no province filter is set
-      if (!currentFilters.provinceId && MOST_POPULAR_PROVINCES_IDS.length > 0) {
-        const milano = MOST_POPULAR_PROVINCES_IDS[0];
-        updateFilters({ provinceId: milano.id });
-        setLocation(milano.name, "");
+      const useMilanoFallback = () => {
+        if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
+          const milano = MOST_POPULAR_PROVINCES_IDS[0];
+          updateFilters({ provinceId: milano.id, municipalityId: null }, { skipLoadFacets: true });
+          setLocation(milano.name, "");
+        } else {
+          updateFilters({ provinceId: null, municipalityId: null }, { skipLoadFacets: true });
+          setLocation("", "");
+        }
+      };
+
+      if (user) {
+        const userLocation = await getCurrentUserLocation();
+        if (!isMounted) return;
+
+        if (userLocation) {
+          // For logged-in users, only use province (not municipality) to show all results in their province
+          updateFilters({
+            provinceId: userLocation.provinceId,
+            municipalityId: null,
+          }, { skipLoadFacets: true });
+          setLocation(userLocation.province, "");
+        } else {
+          useMilanoFallback();
+        }
+      } else {
+        useMilanoFallback();
       }
 
-      await Promise.all([search(), loadFacets()]);
+      await searchStore();
     };
-    initialize();
-  }, []);
+
+    applyLocation();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -71,23 +148,28 @@ export default function SearchScreen() {
     setActiveTab(tab);
   };
 
-  const handleLocationSelect = (data: {
+  const handleLocationSelect = async (data: {
     province: string;
     provinceId: string;
     municipality: string;
     municipalityId: string;
   }) => {
-    const {
-      updateFilters,
-      setLocation,
-      search: searchStore,
-    } = useSearchStore.getState();
-    updateFilters({
-      provinceId: data.provinceId,
-      municipalityId: data.municipalityId,
-    });
-    setLocation(data.province, data.municipality);
-    searchStore();
+    const store = useSearchStore.getState();
+
+    // Update filters without triggering an extra facets load; search() will reload facets
+    store.updateFilters(
+      {
+        provinceId: data.provinceId,
+        municipalityId: data.municipalityId,
+      },
+      { skipLoadFacets: true }
+    );
+
+    // Set location display
+    store.setLocation(data.province, data.municipality);
+
+    // Trigger search which will update the results (and facets)
+    await store.search();
   };
 
   // Combine results based on active tab
@@ -111,12 +193,11 @@ export default function SearchScreen() {
   }, []);
 
   // Helper: check if filters are applied (not default/empty)
+  // Only checks styles and services filters (excludes location filters)
   const areFiltersActive = () => {
     return (
       (filters.styleIds && filters.styleIds.length > 0) ||
-      (filters.serviceIds && filters.serviceIds.length > 0) ||
-      (filters.provinceId && filters.provinceId.length > 0) ||
-      (filters.municipalityId && filters.municipalityId.length > 0)
+      (filters.serviceIds && filters.serviceIds.length > 0)
     );
   };
 
@@ -132,62 +213,64 @@ export default function SearchScreen() {
     if (combinedResults.length > 0) return null;
 
     return (
+      // <View
+      //   className="items-center justify-center flex-1"
+      //   style={{ paddingTop: mvs(100) }}
+      // >
+      //   <View
+      //     className="flex-row items-center justify-center"
+      //     style={{ gap: s(4) }}
+      //   >
+      //     <ScaledText
+      //       allowScaling={false}
+      //       variant="lg"
+      //       className="text-center text-gray font-neueBold"
+      //     >
+      //       Nessun risultato trovato
+      //     </ScaledText>
+      //   </View>
+      //   <ScaledText
+      //     allowScaling={false}
+      //     variant="body2"
+      //     className="text-center text-gray font-neueLight"
+      //     style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
+      //   >
+      //     Prova a modificare i filtri
+      //     {areFiltersActive() ? " o reimposta i filtri" : ""}.
+      //   </ScaledText>
+      //   <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
+      //     <TouchableOpacity
+      //       onPress={handleRefresh}
+      //       className="flex-row items-center"
+      //     >
+      //       <ScaledText
+      //         allowScaling={false}
+      //         variant="body2"
+      //         className="text-center text-primary font-neueLight"
+      //       >
+      //         Riprova
+      //       </ScaledText>
+      //     </TouchableOpacity>
+      //     {areFiltersActive() && (
+      //       <TouchableOpacity
+      //         onPress={handleResetFilters}
+      //         className="flex-row items-center"
+      //       >
+      //         <ScaledText
+      //           allowScaling={false}
+      //           variant="body2"
+      //           className="text-center text-primary font-neueLight"
+      //         >
+      //           Reimposta filtri
+      //         </ScaledText>
+      //       </TouchableOpacity>
+      //     )}
+      //   </View>
+      // </View>
       <View
         className="items-center justify-center flex-1"
         style={{ paddingTop: mvs(100) }}
-      >
-        <View
-          className="flex-row items-center justify-center"
-          style={{ gap: s(4) }}
-        >
-          <ScaledText
-            allowScaling={false}
-            variant="lg"
-            className="text-center text-gray font-neueBold"
-          >
-            Nessun risultato trovato
-          </ScaledText>
-          {/* <SVGIcons.SafeAlert width={s(12)} height={s(12)} /> */}
-        </View>
-        <ScaledText
-          allowScaling={false}
-          variant="body2"
-          className="text-center text-gray font-neueLight"
-          style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
-        >
-          Prova a modificare i filtri
-          {areFiltersActive() ? " o reimposta i filtri" : ""}.
-        </ScaledText>
-        <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
-          <TouchableOpacity
-            onPress={handleRefresh}
-            className="flex-row items-center"
-          >
-            {/* Fallback to generic reload or try again, since SVGIcons.Refresh doesn't exist */}
-            <ScaledText
-              allowScaling={false}
-              variant="body2"
-              className="text-center text-primary font-neueLight"
-            >
-              Riprova
-            </ScaledText>
-          </TouchableOpacity>
-          {areFiltersActive() && (
-            <TouchableOpacity
-              onPress={handleResetFilters}
-              className="flex-row items-center"
-            >
-              <ScaledText
-                allowScaling={false}
-                variant="body2"
-                className="text-center text-primary font-neueLight"
-              >
-                Reimposta filtri
-              </ScaledText>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      ></View>
     );
   };
 
@@ -227,7 +310,8 @@ export default function SearchScreen() {
         : "Artisti";
 
   const locationText = shouldShowCount
-    ? `${totalResults} ${typeLabel}` + (locationDisplay ? " in Provincia di" : "")
+    ? `${totalResults} ${typeLabel}` +
+      (locationDisplay ? " in Provincia di" : "")
     : typeLabel + (locationDisplay ? " in Provincia di" : "");
 
   return (
@@ -258,12 +342,30 @@ export default function SearchScreen() {
               {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
             </View>
             <View className="flex-row items-center">
-              <SVGIcons.LogoLight height={s(50)} width={s(90)} />
+              <SVGIcons.LogoLight width={s(90)} height={s(50)} />
             </View>
 
             {/* Filter Button */}
             <TouchableOpacity onPress={() => setShowFilterModal(true)}>
-              <SVGIcons.Menu width={s(20)} height={s(20)} />
+              <View style={{ width: s(20), height: s(20) }}>
+                <SVGIcons.Menu width={s(20)} height={s(20)} />
+                {/* Subtle blinking red dot when styles/services filters are active */}
+                {filtersActive && (
+                  <Animated.View
+                    style={{
+                      position: "absolute",
+                      top: s(2),
+                      right: s(1),
+                      width: s(6),
+                      height: s(6),
+                      borderRadius: s(3),
+                      backgroundColor: "#AE0E0E",
+                      opacity: dotOpacity,
+                      transform: [{ scale: dotScale }],
+                    }}
+                  />
+                )}
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -446,6 +548,7 @@ export default function SearchScreen() {
         initialMunicipalityId={filters.municipalityId}
         facets={facets?.locations || []}
         isLoading={isLoadingFacets}
+        entityType={activeTab}
       />
     </View>
   );

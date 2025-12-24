@@ -265,6 +265,8 @@ import HelpQuestion from "@/assets/icons/help-question.svg";
 // @ts-ignore
 import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
 // @ts-ignore
+import FilterListRed from "@/assets/icons/filter-list-red.svg";
+// @ts-ignore
 import StudioPremium from "@/assets/icons/studio-premium.svg";
 
 export const SVGIcons = {
@@ -401,6 +403,7 @@ export const SVGIcons = {
   HelpArticle,
   HelpQuestion,
   GuestUserProfile,
+  FilterListRed,
   StudioPremium,
 };
 

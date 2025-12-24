@@ -142,7 +142,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
           className="absolute flex-row items-center justify-center z-10"
           pointerEvents="none"
           style={{
-            top: s(0),
+            top: s(1),
             right: s(2),
             paddingLeft: s(8),
             paddingRight: s(8),
@@ -168,7 +168,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
           <ScaledText
             allowScaling={false}
             variant="11"
-            className="text-error font-neueMedium"
+            className="text-[#AE0E0E] font-neueMedium"
             style={{
               fontFamily: "NeueHaasDisplay",
               fontWeight: "500",
