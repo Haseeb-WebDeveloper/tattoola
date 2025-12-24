@@ -1,5 +1,4 @@
 import ScaledText from "@/components/ui/ScaledText";
-import { SVGIcons } from "@/constants/svg";
 import { mvs, s, scaledFont } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -56,7 +55,7 @@ export default function WelcomeScreen() {
         {/* Dark background overlay for bottom section and cards area */}
         <LinearGradient
           colors={["#0A020200", "#0A0101", "#0A0101"]}
-          locations={[0.1, 0.6, 1]}
+          locations={[0.1, 0.9, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={{
@@ -75,39 +74,27 @@ export default function WelcomeScreen() {
             justifyContent: "center",
             alignItems: "center",
             paddingHorizontal: s(24),
-            paddingTop: mvs(300),
+            paddingTop: mvs(600),
           }}
         >
-          {/* Logo in the middle */}
-          <View style={{ alignItems: "center" }}>
-            <SVGIcons.LogoLight  width={s(150)}  height={s(70)} />
-          </View>
-        </View>
-
-        {/* Start button at the bottom */}
-        <View
-          style={{
-            paddingHorizontal: s(24),
-            paddingBottom: mvs(70),
-          }}
-        >
+         
+          {/* Start button */}
           <Pressable
-            onPress={() => router.push("/(tabs)" as any)}
+            onPress={() => router.replace('/(tabs)' as any)}
             style={{
-              width: "100%",
+              backgroundColor: '#C61E1E',
+              borderRadius: s(24),
               height: mvs(48),
-              backgroundColor: "#AE0E0E",
-              borderRadius: 90,
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
+              alignSelf: 'center',
+              width: '100%',
             }}
           >
             <ScaledText
               allowScaling={false}
               className="text-white font-neueSemibold"
-              style={{
-                fontSize: scaledFont(18),
-              }}
+              style={{ fontSize: scaledFont(16) }}
             >
               Start
             </ScaledText>

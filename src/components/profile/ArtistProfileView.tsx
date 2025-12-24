@@ -143,13 +143,18 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
 
       if (profileError) {
         console.error("Error fetching artist profile:", profileError);
-        // If error, proceed anyway (user might not be an artist)
-        router.push(`/user/${profileData.user.id}/request/size` as any);
+      }
+
+      // Block requests to non-artists
+      if (!artistProfile) {
+        // Artists cannot send to tattoo lovers; lovers can only send to artists
+        // We still show a friendly message even if the current user isn't an artist.
+        toast.error("Le richieste private possono essere inviate solo agli artisti");
         return;
       }
 
       // Only check acceptPrivateRequests if user has artist profile
-      if (artistProfile && artistProfile.acceptPrivateRequests === false) {
+      if (artistProfile.acceptPrivateRequests === false) {
         // Show rejection modal
         const rejectionMsg =
           artistProfile.rejectionMessage ||

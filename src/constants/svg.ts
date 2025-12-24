@@ -267,6 +267,7 @@ import HelpQuestion from "@/assets/icons/help-question.svg";
 // @ts-ignore
 import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
 // @ts-ignore
+// @ts-ignore
 import StudioPremium from "@/assets/icons/studio-premium.svg";
 
 export const SVGIcons = {

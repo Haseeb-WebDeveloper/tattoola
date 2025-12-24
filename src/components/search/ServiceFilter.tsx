@@ -4,17 +4,16 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchServices } from "@/services/services.service";
 import type { ServiceFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
-import { toast } from "sonner-native";
+import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type ServiceFilterProps = {
   selectedIds: string[];
@@ -257,6 +256,7 @@ export default function ServiceFilter({
                     paddingHorizontal: s(20),
                     opacity: isAvailable ? 1 : 0.5,
                   }}
+                  disabled={!isAvailable}
                 >
                   <View className="flex-row items-center justify-between">
                     <TouchableOpacity

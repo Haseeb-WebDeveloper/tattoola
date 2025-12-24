@@ -133,6 +133,13 @@ export default function ChatThreadScreen() {
     user?.id,
   ]);
 
+  // Do not show presence for blocked conversations to avoid revealing status
+  const shouldShowPeerPresence = !!peer?.id && !isConversationBlocked;
+  const isPeerOnline =
+    shouldShowPeerPresence && peer?.id
+      ? onlineUserIds?.[peer.id]
+      : false;
+
   // Deduplicate messages by ID (safety check)
   // Reverse array for inverted FlatList (newest at index 0 = bottom of screen)
   const messages = React.useMemo(() => {
@@ -564,7 +571,7 @@ export default function ChatThreadScreen() {
                 {/* Online status indicator (hidden for blocked conversations) */}
                 {peer?.id && !isConversationBlocked && (
                   <View
-                    className={`rounded-full absolute right-0 top-0 ${onlineUserIds?.[peer.id] ? "bg-success" : "bg-error"}`}
+                    className={`rounded-full absolute right-0 top-0 ${isPeerOnline ? "bg-success" : "bg-error"}`}
                     style={{
                       width: s(10),
                       height: s(10),

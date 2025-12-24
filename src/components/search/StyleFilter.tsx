@@ -4,18 +4,17 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles } from "@/services/style.service";
 import type { StyleFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
-import { toast } from "sonner-native";
+import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Pressable,
-  ScrollView,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type StyleFilterProps = {
   selectedIds: string[];
@@ -255,6 +254,7 @@ export default function StyleFilter({
                     paddingVertical: mvs(12),
                     opacity: isAvailable ? 1 : 0.5,
                   }}
+                  disabled={!isAvailable}
                 >
                   <View className="flex-row items-center justify-between">
                     <TouchableOpacity
@@ -287,7 +287,7 @@ export default function StyleFilter({
                         <ScaledText
                           allowScaling={false}
                           variant="md"
-                          className="text-gray font-montserratSemibold"
+                          className="font-montserratSemibold text-gray"
                         >
                           {style.name}
                         </ScaledText>

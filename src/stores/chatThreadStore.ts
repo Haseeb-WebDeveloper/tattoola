@@ -1,4 +1,5 @@
 import { fetchMessagesPage, getTypingChannel, markReadUpTo, sendMessage, subscribeMessages } from "@/services/chat.service";
+import { MessageType } from "@/types/chat";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
@@ -17,7 +18,7 @@ type ThreadState = {
   currentUserId?: string;
   loadLatest(conversationId: string, userId?: string): Promise<void>;
   loadOlder(conversationId: string, userId?: string): Promise<void>;
-  optimisticSend(params: { conversationId: string; senderId: string; type: string; text?: string; mediaUrl?: string }): Promise<{ tempId: string }>;
+  optimisticSend(params: { conversationId: string; senderId: string; type: MessageType; text?: string; mediaUrl?: string }): Promise<{ tempId: string }>;
   confirmSend(conversationId: string, tempId: string, serverRow?: any): void;
   subscribe(conversationId: string, userId?: string): void;
   unsubscribe(conversationId: string): void;

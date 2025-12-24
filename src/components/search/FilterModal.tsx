@@ -2,8 +2,7 @@ import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import { getFacets } from "@/services/facet.service";
 import { useSearchStore } from "@/stores/searchStore";
-import type { Facets } from "@/types/facets";
-import type { ServiceFacet, StyleFacet } from "@/types/facets";
+import type { Facets, ServiceFacet, StyleFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import {
@@ -30,7 +29,7 @@ type FilterModalProps = {
 
 export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const insets = useSafeAreaInsets();
-  const { filters, updateFilters, search, activeTab, facets } =
+  const { filters, updateFilters, search, activeTab, facets, results } =
     useSearchStore();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
@@ -239,6 +238,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   const handleStyleChange = (styleIds: string[]) => {
     setTempFilters((prev) => ({ ...prev, styleIds }));
+    // No need to reload facets - we're using results-based filtering
   };
 
   const handleServiceChange = (serviceIds: string[]) => {
@@ -296,6 +296,10 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     [tempFacets?.services]
   );
 
+  // Compute result count and type label
+  const resultCount = activeTab === "artists" ? results.artists.length : results.studios.length;
+  const typeLabel = activeTab === "artists" ? "Artisti" : "Studi";
+
   return (
     <>
       <BottomSheetModal
@@ -331,6 +335,17 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
           }}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Result Count Header */}
+          <View style={{ marginBottom: mvs(20), alignItems: "center" }}>
+            <ScaledText
+              allowScaling={false}
+              variant="lg"
+              className="text-foreground font-neueBold"
+            >
+              {resultCount} {typeLabel}
+            </ScaledText>
+          </View>
+
           {/* Style Filter Section */}
           <View style={{ marginBottom: mvs(18) }}>
             <View
@@ -364,7 +379,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               allStyles={allStyles}
               availableStyleIds={availableStyleIds}
               isLoading={isLoadingStyles}
-              onConfirm={handleStyleConfirm}
             />
           </View>
 
@@ -407,7 +421,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               allServices={allServices}
               availableServiceIds={availableServiceIds}
               isLoading={isLoadingServices}
-              onConfirm={handleServiceConfirm}
             />
           </View>
 

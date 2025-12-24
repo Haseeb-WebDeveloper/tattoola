@@ -116,4 +116,3 @@ export type ArtistProfileSummary = {
   styles: { id: string; name: string }[];
   bannerMedia: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; order: number }[];
 };
-

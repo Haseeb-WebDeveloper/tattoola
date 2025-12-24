@@ -13,8 +13,8 @@ import { useSearchStore } from "@/stores/searchStore";
 import type { SearchTab } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Easing, FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
 
 export default function SearchScreen() {
   const { user } = useAuth();
@@ -39,6 +39,53 @@ export default function SearchScreen() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Animated red dot for active filters on Menu icon
+  const filtersActive = useMemo(
+    () =>
+      (filters.styleIds && filters.styleIds.length > 0) ||
+      (filters.serviceIds && filters.serviceIds.length > 0),
+    [filters.styleIds, filters.serviceIds]
+  );
+  const dotAnim = useRef(new Animated.Value(0)).current;
+  const dotOpacity = dotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.6, 1],
+  });
+  const dotScale = dotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.25],
+  });
+
+  useEffect(() => {
+    let loop: Animated.CompositeAnimation | null = null;
+    if (filtersActive) {
+      loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(dotAnim, {
+            toValue: 1,
+            duration: 850,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotAnim, {
+            toValue: 0,
+            duration: 850,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      loop.start();
+    } else {
+      dotAnim.stopAnimation();
+      dotAnim.setValue(0);
+    }
+
+    return () => {
+      if (loop) loop.stop();
+    };
+  }, [filtersActive, dotAnim]);
 
   useEffect(() => {
     // Initialize search and facets on mount
@@ -100,23 +147,28 @@ export default function SearchScreen() {
     setActiveTab(tab);
   };
 
-  const handleLocationSelect = (data: {
+  const handleLocationSelect = async (data: {
     province: string;
     provinceId: string;
     municipality: string;
     municipalityId: string;
   }) => {
-    const {
-      updateFilters,
-      setLocation,
-      search: searchStore,
-    } = useSearchStore.getState();
-    updateFilters({
-      provinceId: data.provinceId,
-      municipalityId: data.municipalityId,
-    });
-    setLocation(data.province, data.municipality);
-    searchStore();
+    const store = useSearchStore.getState();
+
+    // Update filters without triggering an extra facets load; search() will reload facets
+    store.updateFilters(
+      {
+        provinceId: data.provinceId,
+        municipalityId: data.municipalityId,
+      },
+      { skipLoadFacets: true }
+    );
+
+    // Set location display
+    store.setLocation(data.province, data.municipality);
+
+    // Trigger search which will update the results (and facets)
+    await store.search();
   };
 
   // Combine results based on active tab
@@ -140,12 +192,11 @@ export default function SearchScreen() {
   }, []);
 
   // Helper: check if filters are applied (not default/empty)
+  // Only checks styles and services filters (excludes location filters)
   const areFiltersActive = () => {
     return (
       (filters.styleIds && filters.styleIds.length > 0) ||
-      (filters.serviceIds && filters.serviceIds.length > 0) ||
-      (filters.provinceId && filters.provinceId.length > 0) ||
-      (filters.municipalityId && filters.municipalityId.length > 0)
+      (filters.serviceIds && filters.serviceIds.length > 0)
     );
   };
 
@@ -273,7 +324,7 @@ export default function SearchScreen() {
         {/* Header */}
         <View
           style={{
-            paddingTop: mvs(8),
+            paddingTop: mvs(8), 
             paddingHorizontal: s(16),
             paddingBottom: mvs(28),
           }}
@@ -294,11 +345,25 @@ export default function SearchScreen() {
             </View>
 
             {/* Filter Button */}
-            <TouchableOpacity onPress={() => setShowFilterModal(true)}>
-              {areFiltersActive() ? (
-                <SVGIcons.FilterListRed width={s(20)} height={s(20)} />
-              ) : (
-                <SVGIcons.Menu width={s(20)} height={s(20)} />
+            <TouchableOpacity 
+              onPress={() => setShowFilterModal(true)}
+              style={{ position: 'relative' }}
+            >
+              <SVGIcons.Menu width={s(20)} height={s(20)} />
+              {areFiltersActive() && (
+                <Animated.View
+                  style={{
+                    position: 'absolute',
+                    top: (0),
+                    right: s(0),
+                    width: s(6),
+                    height: s(6),
+                    borderRadius: s(4),
+                    backgroundColor: '#AE0E0E',
+                    opacity: dotOpacity,
+                    transform: [{ scale: dotScale }],
+                  }}
+                />
               )}
             </TouchableOpacity>
           </View>

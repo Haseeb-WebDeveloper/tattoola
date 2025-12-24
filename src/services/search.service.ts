@@ -1,8 +1,8 @@
 import { SEARCH_RESULTS_PER_PAGE } from "@/constants/limits";
 import type {
-    ArtistSearchResult,
-    SearchFilters,
-    StudioSearchResult,
+  ArtistSearchResult,
+  SearchFilters,
+  StudioSearchResult,
 } from "@/types/search";
 import { supabase } from "@/utils/supabase";
 

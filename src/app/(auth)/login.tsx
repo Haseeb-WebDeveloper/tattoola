@@ -8,12 +8,12 @@ import { useAuth } from "@/providers/AuthProvider";
 import type { FormErrors, LoginCredentials } from "@/types/auth";
 import { mvs, s, scaledVSize } from "@/utils/scale";
 import { LoginValidationSchema, ValidationUtils } from "@/utils/validation";
+import { ResizeMode, Video } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Dimensions,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -98,7 +98,7 @@ function LoginScreenContent() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background">
-        <LoadingSpinner message="Signing in..." overlay />
+        <LoadingSpinner message="Accesso in corso..." overlay />
       </SafeAreaView>
     );
   }
@@ -157,7 +157,7 @@ function LoginScreenContent() {
           </TouchableOpacity>
 
           {/* Logo */}
-          <SVGIcons.LogoLight  width={s(90)}  height={s(50)} />
+          <SVGIcons.LogoLight height={s(50)} width={s(90)} />
 
           {/* Help Icon */}
           <TouchableOpacity
@@ -173,10 +173,10 @@ function LoginScreenContent() {
         <View className="px-6" style={{ marginBottom: mvs(24) }}>
           <ScaledText
             allowScaling={false}
-            variant="xl"
+            variant="lg"
             className="text-foreground text-center font-neueSemibold"
           >
-            New Tattooler registration
+           Non sei ancora iscritto a Tattoola?
           </ScaledText>
         </View>
 
@@ -194,7 +194,7 @@ function LoginScreenContent() {
               variant="lg"
               className="text-foreground font-neueSemibold"
             >
-              New registration
+              Nuova registrazione
             </ScaledText>
             <SVGIcons.UserFilled width={s(20)} height={s(20)} />
           </TouchableOpacity>
@@ -217,7 +217,7 @@ function LoginScreenContent() {
               color: "#A49A99",
             }}
           >
-            Oppure
+           Oppure se sei già iscritto
           </ScaledText>
           <View className="flex-1 h-px bg-gray/30" />
         </View>
@@ -293,7 +293,7 @@ function LoginScreenContent() {
               variant="sm"
               className="text-gray font-neueLight"
             >
-              Forgot password?
+             Dimenticato la password?
             </ScaledText>
           </TouchableOpacity>
 
@@ -304,27 +304,30 @@ function LoginScreenContent() {
             onPress={handleLogin}
             disabled={loading}
             className="bg-primary rounded-full items-center w-full"
-            style={{ paddingVertical: mvs(12), marginBottom: mvs(40) }}
+            style={{ paddingVertical: mvs(12), marginBottom: mvs(20) }}
           >
             <ScaledText
               allowScaling={false}
               variant="lg"
               className="text-foreground font-neueSemibold"
             >
-              Sign in
+              Accedi
             </ScaledText>
           </TouchableOpacity>
         </View>
 
-        {/* Bottom image with artist text overlay */}
+        {/* Bottom video with artist text overlay */}
         <View
-          className="w-full relative"
+          className="w-full relative "
           style={{ marginTop: "auto", flex: 1, minHeight: scaledVSize(200) }}
         >
-          <Image
-            source={require("@/assets/auth/login-2.png")}
-            className="w-full h-full"
-            resizeMode="cover"
+          <Video
+            source={require("@/assets/video/artist welcome v1.mp4")}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay
+            isLooping
+            isMuted
           />
           <LinearGradient
             colors={["transparent", "rgba(0, 0, 0, 0.7)"]}
@@ -334,20 +337,35 @@ function LoginScreenContent() {
             pointerEvents="none"
           />
 
-          {/* Artist text overlay */}
+          {/* Artist text overlay with glass effect */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleArtistLogin}
-            style={StyleSheet.absoluteFillObject}
-            className="items-center justify-center"
+            style={[
+              StyleSheet.absoluteFillObject,
+              { justifyContent: "flex-end", alignItems: "center" },
+            ]}
+            className="items-center justify-center pb-12 "
           >
-            <ScaledText
-              allowScaling={false}
-              variant="xl"
-              className="text-foreground text-center font-neueSemibold"
+            <View
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                paddingHorizontal: s(20),
+                paddingVertical: mvs(9),
+                borderRadius: s(24),
+                borderWidth: 1,
+                borderColor: "rgba(255, 255, 255, 0.2)",
+                backdropFilter: "blur(20px)",
+              }}
             >
-              or are you an artist?
-            </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="lg"
+                className="text-foreground text-center font-neueSemibold"
+              >
+                Se invece sei un artista...
+              </ScaledText>
+            </View>
           </TouchableOpacity>
         </View>
       </KeyboardAwareScrollView>
