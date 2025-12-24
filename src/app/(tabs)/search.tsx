@@ -96,33 +96,34 @@ export default function SearchScreen() {
         setLocation,
       } = useSearchStore.getState();
 
-      // Set default location if no province filter is set
-      if (!currentFilters.provinceId) {
-        // For logged-in users, try to use their primary location
-        if (user) {
-          const userLocation = await getCurrentUserLocation();
-          if (userLocation) {
-            // Use user's primary location
-            updateFilters({
-              provinceId: userLocation.provinceId,
-              municipalityId: userLocation.municipalityId,
-            });
-            setLocation(userLocation.province, userLocation.municipality);
-          } else {
-            // User logged in but no primary location, fall back to Milano
-            if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
-              const milano = MOST_POPULAR_PROVINCES_IDS[0];
-              updateFilters({ provinceId: milano.id });
-              setLocation(milano.name, "");
-            }
-          }
+      // For logged-in users, try to use their primary location
+      if (user) {
+        const userLocation = await getCurrentUserLocation();
+        if (userLocation) {
+          // Use user's primary location (province only, not municipality)
+          updateFilters({
+            provinceId: userLocation.provinceId,
+            municipalityId: null, 
+          });
+          setLocation(userLocation.province, "");
         } else {
-          // Not logged in, use Milano as default
           if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
             const milano = MOST_POPULAR_PROVINCES_IDS[0];
-            updateFilters({ provinceId: milano.id });
+            updateFilters({ 
+              provinceId: milano.id,
+              municipalityId: null,
+            });
             setLocation(milano.name, "");
           }
+        }
+      } else {
+        if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
+          const milano = MOST_POPULAR_PROVINCES_IDS[0];
+          updateFilters({ 
+            provinceId: milano.id,
+            municipalityId: null,
+          });
+          setLocation(milano.name, "");
         }
       }
 
