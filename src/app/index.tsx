@@ -48,7 +48,7 @@ export default function IndexScreen() {
       className="flex-col items-center justify-center bg-background"
     >
       <View className="items-center justify-center">
-        <SVGIcons.LogoLight height={s(50)} width={s(90)} />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
       </View>
     </View>
   );

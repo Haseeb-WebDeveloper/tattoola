@@ -243,7 +243,6 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   const handleServiceChange = (serviceIds: string[]) => {
     setTempFilters((prev) => ({ ...prev, serviceIds }));
-    // No need to reload facets - we're using results-based filtering
   };
   const handleResetAll = () => {
     setTempFilters({
@@ -262,6 +261,15 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
     setTempFilters((prev) => ({ ...prev, serviceIds: [] }));
   };
 
+  // Confirm handlers: user finished choosing styles/services
+  const handleStyleConfirm = () => {
+    loadFacetsForFilters(tempFilters, "style");
+  };
+
+  const handleServiceConfirm = () => {
+    loadFacetsForFilters(tempFilters, "service");
+  };
+
   const handleApply = () => {
     // Update filters and location display
     updateFilters(tempFilters);
@@ -277,30 +285,20 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const hasActiveFilters =
     tempFilters.styleIds.length > 0 || tempFilters.serviceIds.length > 0;
 
-  // Show all styles - no conditional filtering
-  const availableStyleIds = useMemo(() => {
-    const styleIds = new Set<string>();
-    allStyles.forEach((style) => {
-      styleIds.add(style.id);
-    });
-    return styleIds;
-  }, [allStyles]);
+  // Create Sets of available filter IDs from facets
+  const availableStyleIds = useMemo(
+    () => new Set(tempFacets?.styles.map((s) => s.id) || []),
+    [tempFacets?.styles]
+  );
 
-  // Show all services - no conditional filtering
-  const availableServiceIds = useMemo(() => {
-    const serviceIds = new Set<string>();
-    allServices.forEach((service) => {
-      serviceIds.add(service.id);
-    });
-    return serviceIds;
-  }, [allServices]);
+  const availableServiceIds = useMemo(
+    () => new Set(tempFacets?.services.map((s) => s.id) || []),
+    [tempFacets?.services]
+  );
 
-  // Calculate result count based on active tab and current results
-  const resultCount = useMemo(() => {
-    return activeTab === "artists" ? results.artists.length : results.studios.length;
-  }, [activeTab, results.artists.length, results.studios.length]);
-
-  const typeLabel = activeTab === "studios" ? "studi" : "artisti";
+  // Compute result count and type label
+  const resultCount = activeTab === "artists" ? results.artists.length : results.studios.length;
+  const typeLabel = activeTab === "artists" ? "Artisti" : "Studi";
 
   return (
     <>

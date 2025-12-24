@@ -104,9 +104,8 @@ export default function InboxScreen() {
   // Memoized conversation item component for better performance
   const ConversationItem = memo(
     ({ item, onlineUserIds, router }: any) => {
-      // Do not reveal presence when the conversation is blocked
-      const showPresence = item.status !== "BLOCKED" && !!item.peerId;
-      const isOnline = showPresence && onlineUserIds?.[item.peerId];
+      const showPresence = item.status !== "BLOCKED";
+      const isOnline = showPresence ? onlineUserIds?.[item.peerId] : false;
 
       return (
         <TouchableOpacity
@@ -333,7 +332,7 @@ export default function InboxScreen() {
         >
           {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
         </View>
-        <SVGIcons.LogoLight height={s(50)} width={s(90)} />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
         <View className="items-center justify-center rounded-full">
           <View style={{ width: s(20), height: s(20) }} />
           {/* <SVGIcons.Menu width={s(20)} height={s(20)} /> */}

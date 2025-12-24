@@ -5,13 +5,14 @@ import ScaledText from "@/components/ui/ScaledText";
 import ScaledTextInput from "@/components/ui/ScaledTextInput";
 import { SVGIcons } from "@/constants/svg";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useSignupPermissions } from "@/hooks/useSignupPermissions";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { useArtistRegistrationV2Store } from "@/stores/artistRegistrationV2Store";
 import { isValid, step3Schema } from "@/utils/artistRegistrationValidation";
 import { mvs, s } from "@/utils/scale";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, Pressable, View } from "react-native";
+import { Alert, Image, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function ArtistStep3V2() {
@@ -25,40 +26,47 @@ export default function ArtistStep3V2() {
   } = useArtistRegistrationV2Store();
   const [focused, setFocused] = useState<"firstName" | "lastName" | null>(null);
   const { pickFiles, uploadToCloudinary } = useFileUpload();
+  const { pickProfileImage, isLoadingGallery } = useSignupPermissions();
   const [errors, setErrors] = useState<{
     firstName?: string;
     lastName?: string;
     avatar?: string;
   }>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   const handlePickAvatar = async () => {
-    const files = await pickFiles({
-      mediaType: "image",
-      allowsMultipleSelection: false,
-      quality: 0.8,
-      maxFiles: 1,
-      cloudinaryOptions: cloudinaryService.getAvatarUploadOptions(),
-    });
-    if (files.length > 0) {
-      // 1) Show local URI instantly for fast feedback
-      const localUri = files[0].uri;
-      setAvatar(localUri);
+    try {
+      setIsUploading(true);
+
+      // 1) Pick image with permission handling (only asks once)
+      const imageResult = await pickProfileImage();
+      if (!imageResult) {
+        // User cancelled or permission denied
+        return;
+      }
+
+      // 2) Show local URI instantly for fast feedback
+      setAvatar(imageResult.uri);
       setErrors((e) => ({ ...e, avatar: undefined }));
 
-      // 2) Upload in background and then replace with Cloudinary URL
-      (async () => {
-        const uploadedFiles = await uploadToCloudinary(
-          files,
-          cloudinaryService.getAvatarUploadOptions()
+      // 3) Upload to Cloudinary in background
+      const files = [{ uri: imageResult.uri, type: "image" }];
+      const uploadedFiles = await uploadToCloudinary(
+        files as any,
+        cloudinaryService.getAvatarUploadOptions()
+      );
+      const first = uploadedFiles[0];
+      if (first?.cloudinaryResult?.publicId) {
+        const transformedUrl = cloudinaryService.getAvatarUrl(
+          first.cloudinaryResult.publicId
         );
-        const first = uploadedFiles[0];
-        if (first?.cloudinaryResult?.publicId) {
-          const transformedUrl = cloudinaryService.getAvatarUrl(
-            first.cloudinaryResult.publicId
-          );
-          setAvatar(transformedUrl);
-        }
-      })();
+        setAvatar(transformedUrl);
+      }
+    } catch (error) {
+      console.error("Avatar pick error:", error);
+      Alert.alert("Errore", "Impossibile caricare la foto profilo. Riprova.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -140,8 +148,9 @@ export default function ArtistStep3V2() {
 
           <Pressable
             onPress={handlePickAvatar}
+            disabled={isUploading || isLoadingGallery}
             className="items-center rounded-full bg-black/40"
-            style={{ width: s(180), height: s(180) }}
+            style={{ width: s(180), height: s(180), opacity: isUploading || isLoadingGallery ? 0.5 : 1 }}
           >
             {step3?.avatar ? (
               <Image
@@ -169,7 +178,7 @@ export default function ArtistStep3V2() {
                     variant="md"
                     className="text-foreground font-neueBold"
                   >
-                    Carica immagine
+                    {isUploading || isLoadingGallery ? "Caricamento..." : "Carica immagine"}
                   </ScaledText>
                 </View>
               </View>

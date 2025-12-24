@@ -4,17 +4,17 @@ import { SVGIcons } from "@/constants/svg";
 import { formatMessageTimestamp } from "@/utils/formatMessageTimestamp";
 import { ms, mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Clipboard,
-  Image,
-  Linking,
-  Modal,
-  TouchableOpacity,
-  View,
+    Clipboard,
+    Image,
+    Linking,
+    Modal,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { isIntakeMessage } from "../../utils/utils";
 import { toast } from "sonner-native";
+import { isIntakeMessage } from "../../utils/utils";
 
 type Props = {
   item: any;
@@ -38,6 +38,16 @@ function MessageItem({ item, index, currentUserId, peerAvatar }: Props) {
     } catch {
       return "file";
     }
+  };
+
+  // Helper to drop the file extension for display purposes
+  const getFileBaseName = (url: string): string => {
+    const name = getFileName(url);
+    const lastDotIndex = name.lastIndexOf(".");
+
+    if (lastDotIndex <= 0) return name;
+
+    return name.slice(0, lastDotIndex);
   };
 
   // Helper to get file extension
@@ -92,7 +102,7 @@ function MessageItem({ item, index, currentUserId, peerAvatar }: Props) {
     if (!item.mediaUrl) return null;
 
     const fileExt = getFileExtension(item.mediaUrl);
-    const fileName = getFileName(item.mediaUrl);
+  const fileName = getFileBaseName(item.mediaUrl);
 
     // Image types
     const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
@@ -375,29 +385,6 @@ function MessageItem({ item, index, currentUserId, peerAvatar }: Props) {
                 {item.content}
               </ScaledText>
             </View>
-          )}
-
-          {/* Bubble tail for media messages */}
-          {isMine ? (
-            <SVGIcons.BubbleMe
-              width={s(24)}
-              height={s(24)}
-              style={{
-                position: "absolute",
-                bottom: s(-2),
-                right: s(-2),
-              }}
-            />
-          ) : (
-            <SVGIcons.BubbleYou
-              width={s(24)}
-              height={s(24)}
-              style={{
-                position: "absolute",
-                bottom: s(-2),
-                left: s(-2),
-              }}
-            />
           )}
         </View>
       );

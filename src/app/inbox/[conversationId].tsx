@@ -13,11 +13,11 @@ import {
   unblockUser,
 } from "@/services/chat.service";
 import cloudinaryService from "@/services/cloudinary.service";
+import { PermissionsService } from "@/services/permissions.service";
 import { useChatThreadStore } from "@/stores/chatThreadStore";
 import { usePresenceStore } from "@/stores/presenceStore";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
-import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -321,23 +321,16 @@ export default function ChatThreadScreen() {
 
   const handlePickFile = async () => {
     try {
-      // Request permission to access media library
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permissionResult.granted) {
-        toast.error("Autorizzazione negata per accedere alla galleria");
-        return;
-      }
-
-      // Launch image picker to select from gallery
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images", "videos"],
-        allowsEditing: false,
+      // Use permissions service - will only ask for permission once
+      const result = await PermissionsService.pickMediaFromGallery({
+        allowsMultipleSelection: false,
         quality: 1,
+        allowsEditing: false,
       });
 
-      if (result.canceled) return;
+      if (!result || result.canceled) {
+        return;
+      }
 
       const asset = result.assets[0];
 
@@ -411,7 +404,6 @@ export default function ChatThreadScreen() {
       if (originalConv) {
         setConv(originalConv);
       }
-      // Reset local state based on server
       try {
         const blocked = await isUserBlocked(user.id, peer.id);
         setIsBlockedByMe(!!blocked);
@@ -430,7 +422,6 @@ export default function ChatThreadScreen() {
       toast.success("Utente sbloccato");
       setIsBlockedByMe(false);
 
-      // Reload conversation to ensure we have the latest server state
       const updatedConv = await fetchConversationByIdWithPeer(
         user.id,
         conversationId
@@ -442,7 +433,6 @@ export default function ChatThreadScreen() {
       console.error("Error unblocking user:", error);
       toast.error("Sblocco dell'utente non riuscito");
 
-      // Revert optimistic update on error
       const originalConv = await fetchConversationByIdWithPeer(
         user.id,
         conversationId
@@ -450,7 +440,6 @@ export default function ChatThreadScreen() {
       if (originalConv) {
         setConv(originalConv);
       }
-      // Reset local state based on server
       try {
         const blocked = await isUserBlocked(user.id, peer.id);
         setIsBlockedByMe(!!blocked);
@@ -579,8 +568,8 @@ export default function ChatThreadScreen() {
                     height: s(36),
                   }}
                 />
-                {/* Online status indicator */}
-                {shouldShowPeerPresence && (
+                {/* Online status indicator (hidden for blocked conversations) */}
+                {peer?.id && !isConversationBlocked && (
                   <View
                     className={`rounded-full absolute right-0 top-0 ${isPeerOnline ? "bg-success" : "bg-error"}`}
                     style={{

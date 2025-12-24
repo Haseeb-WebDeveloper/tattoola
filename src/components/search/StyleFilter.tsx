@@ -14,6 +14,7 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type StyleFilterProps = {
   selectedIds: string[];
@@ -48,6 +49,9 @@ export default function StyleFilter({
   const toggleStyle = (styleId: string) => {
     // Check if style is available
     if (!availableStyleIds.has(styleId)) {
+      toast.error(
+        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+      );
       return;
     }
 
@@ -96,7 +100,7 @@ export default function StyleFilter({
           "1 selezionato"
         : `${selectedIds.length} selezionati`;
 
-  // Show all styles, not just available ones
+  // Show all styles, not just available facets
   const stylesToShow = allStyles.length > 0 ? allStyles : facets;
 
   return (
@@ -238,14 +242,17 @@ export default function StyleFilter({
                   onPress={() => {
                     if (isAvailable) {
                       toggleStyle(style.id);
+                    } else {
+                      toast.error(
+                        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                      );
                     }
                   }}
                   className="border-b border-gray/20"
                   style={{
                     paddingHorizontal: s(20),
                     paddingVertical: mvs(12),
-                    opacity: isAvailable ? 1 : 0.3,
-                    backgroundColor: isSelected ? "rgba(198, 30, 30, 0.2)" : "transparent",
+                    opacity: isAvailable ? 1 : 0.5,
                   }}
                   disabled={!isAvailable}
                 >
@@ -257,24 +264,25 @@ export default function StyleFilter({
                           handleStyleInfoPress(style, e);
                         } else {
                           e.stopPropagation();
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
                         }
                       }}
                       activeOpacity={isAvailable ? 0.7 : 1}
                       disabled={!isAvailable}
                     >
-                      <View style={{ position: "relative" }}>
-                        {style.imageUrl && (
-                          <Image
-                            source={{ uri: style.imageUrl }}
-                            style={{
-                              width: s(120),
-                              height: mvs(72),
-                              borderRadius: s(8),
-                            }}
-                            resizeMode="cover"
-                          />
-                        )}
-                      </View>
+                      {style.imageUrl && (
+                        <Image
+                          source={{ uri: style.imageUrl }}
+                          style={{
+                            width: s(120),
+                            height: mvs(72),
+                            borderRadius: s(8),
+                          }}
+                          resizeMode="cover"
+                        />
+                      )}
                       <View className="flex-1">
                         <ScaledText
                           allowScaling={false}
@@ -289,6 +297,10 @@ export default function StyleFilter({
                       onPress={() => {
                         if (isAvailable) {
                           toggleStyle(style.id);
+                        } else {
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
                         }
                       }}
                       hitSlop={{

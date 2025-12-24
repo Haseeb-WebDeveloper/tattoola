@@ -250,7 +250,7 @@ export default function UploadPreviewStep() {
           transform: [{ translateX: "-50%" }],
         }}
       >
-        <SVGIcons.LogoLight height={s(50)} width={s(90)} />
+        <SVGIcons.LogoLight style={{  width: s(90) , height: s(50) }} />
       </View>
       {/* Caption and user info near bottom like mockup */}
       <View className="absolute left-2 bottom-[60px]">

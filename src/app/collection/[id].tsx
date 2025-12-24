@@ -1,11 +1,5 @@
-import { CollectionHeader } from "@/components/collection/CollectionHeader";
 import { CollectionModals } from "@/components/collection/CollectionModals";
-import { CollectionPostsGrid } from "@/components/collection/CollectionPostsGrid";
-import AddPostsModal from "@/components/collection/AddPostsModal";
 import CollectionPostCard from "@/components/collection/CollectionPostCard";
-import DeleteCollectionModal from "@/components/collection/DeleteCollectionModal";
-import DeleteConfirmModal from "@/components/collection/DeleteConfirmModal";
-import EditCollectionNameModal from "@/components/collection/EditCollectionNameModal";
 import { CustomToast } from "@/components/ui/CustomToast";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -21,8 +15,8 @@ import {
 } from "@/services/collection.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { CollectionPostInterface } from "@/types/collection";
-import { clearProfileCache } from "@/utils/database";
 import { isSystemCollection } from "@/utils/collection.utils";
+import { clearProfileCache } from "@/utils/database";
 import { mvs, s } from "@/utils/scale";
 import { TrimText } from "@/utils/text-trim";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -34,13 +28,13 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLLECTION_NAME } from "@/constants/limits";
 import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 // Responsive spacing based on screen width (reference width 375)
 const REF_WIDTH = 375;
-const GAP = Math.max(6, Math.round((8 * screenWidth) / REF_WIDTH));
+// Increase base gaps for clearer visual spacing and center alignment
+const GAP = Math.max(10, Math.round((14 * screenWidth) / REF_WIDTH));
 const H_PADDING = Math.max(24, Math.round((32 * screenWidth) / REF_WIDTH));
 
 
@@ -353,21 +347,20 @@ export default function CollectionDetailsScreen() {
 
   // Layout depends on edit mode: 1 column while editing for reliable DnD
   const NUM_COLUMNS = editMode ? 1 : 2;
-  const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;
+  const POST_WIDTH = NUM_COLUMNS === 1
+    ? (screenWidth - H_PADDING)
+    : ((screenWidth - H_PADDING - GAP) / NUM_COLUMNS);
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
   // Check if this is the "Preferiti" collection (case-insensitive)
-  const collectionNameLower = collection?.name?.toLowerCase() || "";
+  const collectionNameLower = collection?.name?.toLowerCase().trim() || "";
   const isArtistFavCollection =
     !!collection && collectionNameLower === "preferiti";
   // Check if this is "Tutti" collection - completely non-editable
-  const isTuttiCollection =
-    !!collection && collectionNameLower === "tutti";
-  // Check if this is a system collection (Tutti or Preferiti)
-  const isSystemCol = !!collection && isSystemCollection(collection.name);
+  // Directly check the normalized name for consistency
+  const isSystemCol = !!collection && isSystemCollection(collectionNameLower);
   // Preferiti can edit posts but not name/delete. Tutti cannot edit at all.
-  const canEditPosts = isOwner && !isTuttiCollection; // Allow edit mode for Preferiti
-  const canEditName = isOwner && !isSystemCol; // Cannot edit name for any system collection
+  const canEditPosts = isOwner; // Allow edit mode for Preferiti
   const canDeleteCollection = isOwner && !isSystemCol; // Cannot delete any system collection
   const currentPostCount = collection?.postsCount ?? posts.length;
   const isArtistFavFull =
@@ -660,12 +653,12 @@ export default function CollectionDetailsScreen() {
             <SVGIcons.ChevronLeft width={16} height={16} />
           </TouchableOpacity>
 
-          <View className="items-center flex-1">
+          <View className="items-center justify-center flex-1">
             <View className="flex-row items-center justify-center">
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-foreground font-neueSemibold"
+                className="text-foreground font-neueSemibold text-center"
                 style={{
                   lineHeight: mvs(20),
                   borderBottomWidth: editMode ? mvs(0.5) : 0,
@@ -685,7 +678,7 @@ export default function CollectionDetailsScreen() {
             </View>
           </View>
 
-          {canEditPosts && !(editMode && isArtistFavCollection) && (
+          {canEditPosts && !(editMode && isArtistFavCollection) ? (
             <TouchableOpacity
               onPress={editMode ? handleDeleteCollection : handleToggleEditMode}
               style={{
@@ -705,7 +698,10 @@ export default function CollectionDetailsScreen() {
                 <SVGIcons.Edit width={20} height={20} />
               )}
             </TouchableOpacity>
-          )}
+          ):
+          // for space empty
+          <View style={{ width: 32 }} />
+          }
         </View>
 
         <View className="flex-col items-center pb-4 mt-1">
@@ -757,7 +753,7 @@ export default function CollectionDetailsScreen() {
               <View
                 style={{
                   marginTop: GAP,
-                  marginBottom: GAP,
+                  marginBottom: GAP * 2,
                   alignItems: "center",
                 }}
               >
@@ -771,6 +767,7 @@ export default function CollectionDetailsScreen() {
                     height: mvs(253),
                     opacity: isArtistFavFull ? 0.5 : 1,
                     pointerEvents: isArtistFavFull ? "none" : "auto",
+
                   }}
                 >
                   <SVGIcons.AddRed width={s(32)} height={s(32)} />
@@ -801,6 +798,7 @@ export default function CollectionDetailsScreen() {
           contentContainerStyle={{
             paddingHorizontal: H_PADDING / 2,
             paddingBottom: 20,
+            alignItems: NUM_COLUMNS === 1 ? "center" : undefined,
           }}
           dragItemOverflow={true}
           activationDistance={editMode ? 0 : 999999}

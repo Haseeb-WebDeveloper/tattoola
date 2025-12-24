@@ -13,6 +13,7 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type ServiceFilterProps = {
   selectedIds: string[];
@@ -48,6 +49,9 @@ export default function ServiceFilter({
   const toggleService = (serviceId: string) => {
     // Check if service is available
     if (!availableServiceIds.has(serviceId)) {
+      toast.error(
+        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+      );
       return;
     }
 
@@ -98,7 +102,7 @@ export default function ServiceFilter({
           "1 selezionato"
         : `${selectedIds.length} selezionati`;
 
-  // Show all services, not just available ones
+  // Show all services, not just available facets
   const servicesToShow = allServices.length > 0 ? allServices : facets;
 
   return (
@@ -240,14 +244,17 @@ export default function ServiceFilter({
                   onPress={() => {
                     if (isAvailable) {
                       toggleService(service.id);
+                    } else {
+                      toast.error(
+                        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                      );
                     }
                   }}
                   className="border-b border-gray/20"
                   style={{
                     paddingVertical: mvs(14),
                     paddingHorizontal: s(20),
-                    opacity: isAvailable ? 1 : 0.3,
-                    backgroundColor: isSelected ? "rgba(198, 30, 30, 0.2)" : "transparent",
+                    opacity: isAvailable ? 1 : 0.5,
                   }}
                   disabled={!isAvailable}
                 >
@@ -259,25 +266,30 @@ export default function ServiceFilter({
                           handleServiceInfoPress(service, e);
                         } else {
                           e.stopPropagation();
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
                         }
                       }}
                       activeOpacity={isAvailable ? 0.7 : 1}
                       disabled={!isAvailable}
                     >
-                      <View className="flex-row items-center gap-3">
-                        <ScaledText
-                          allowScaling={false}
-                          variant="sm"
-                          className="font-montserratMedium text-gray"
-                        >
-                          {service.name}
-                        </ScaledText>
-                      </View>
+                      <ScaledText
+                        allowScaling={false}
+                        variant="sm"
+                        className="text-gray font-montserratMedium"
+                      >
+                        {service.name}
+                      </ScaledText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
                         if (isAvailable) {
                           toggleService(service.id);
+                        } else {
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
                         }
                       }}
                       hitSlop={{

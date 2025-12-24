@@ -1,5 +1,6 @@
 import EditPostModal from "@/components/post/EditPostModal";
 import { UnsavedChangesModal } from "@/components/post/UnsavedChangesModal";
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { CustomToast } from "@/components/ui/CustomToast";
 import { ScaledText } from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
@@ -12,10 +13,11 @@ import {
   updatePost,
 } from "@/services/post.service";
 import {
-  toggleFollow,
-  fetchUserSummaryCached,
   fetchArtistProfileSummary,
+  fetchUserSummaryCached,
+  toggleFollow,
 } from "@/services/profile.service";
+import { fetchTattooStyles } from "@/services/style.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
 import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
@@ -135,6 +137,13 @@ export default function PostDetailScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  const [showStyleInfoModal, setShowStyleInfoModal] = useState(false);
+  const [fullStyleData, setFullStyleData] = useState<{
+    id: string;
+    name: string;
+    imageUrl?: string | null;
+    description?: string | null;
+  } | null>(null);
   const isSavingRef = useRef(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -339,6 +348,36 @@ export default function PostDetailScreen() {
     if (post.author.municipality) parts.push(post.author.municipality);
     if (post.author.province) parts.push(`(${post.author.province})`);
     return parts.join(" ");
+  };
+
+  const handleStyleInfoPress = async () => {
+    if (!post?.style) return;
+    
+    // Try to fetch full style data with description
+    try {
+      const fetchedStyles = await fetchTattooStyles();
+      const fullStyle = fetchedStyles.find((s) => s.id === post.style?.id);
+      if (fullStyle) {
+        setFullStyleData(fullStyle);
+      } else {
+        // Fallback to the style data we have
+        setFullStyleData({
+          id: post.style.id,
+          name: post.style.name,
+          imageUrl: post.style.imageUrl,
+          description: null,
+        });
+      }
+    } catch (error) {
+      // Fallback to the style data we have
+      setFullStyleData({
+        id: post.style.id,
+        name: post.style.name,
+        imageUrl: post.style.imageUrl,
+        description: null,
+      });
+    }
+    setShowStyleInfoModal(true);
   };
 
   const isOwnPost = user && post && user.id === post.author.id;
@@ -699,7 +738,7 @@ export default function PostDetailScreen() {
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         horizontal={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: isOwnPost ? mvs(80) : 32 }}
         enableOnAndroid={true}
         enableAutomaticScroll={false}
         bounces={false}
@@ -924,14 +963,18 @@ export default function PostDetailScreen() {
 
                 {/* Style tag */}
                 {post.style && (
-                  <View className="inline-flex self-start px-3 py-1 border rounded-full border-gray max-w-fit">
+                  <TouchableOpacity
+                    onPress={handleStyleInfoPress}
+                    activeOpacity={0.7}
+                    className="inline-flex self-start px-3 py-1 border rounded-full border-gray max-w-fit"
+                  >
                     <ScaledText
                       variant="sm"
                       className="text-gray font-neueLight"
                     >
                       {post.style.name}
                     </ScaledText>
-                  </View>
+                  </TouchableOpacity>
                 )}
               </View>
 
@@ -1084,13 +1127,11 @@ export default function PostDetailScreen() {
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
                   style={{
-                    maxHeight: mvs(160),
-                    height: isOwnPost ? mvs(160) : undefined,
+                    maxHeight: mvs(200),
                     flex: 1,
                   }}
                   contentContainerStyle={{ paddingRight: s(16) }}
                   scrollEnabled={true}
-                  // className="bg-red-500"
                 >
                   <View
                     className="flex-col items-start justify-star"
@@ -1135,68 +1176,65 @@ export default function PostDetailScreen() {
                       : null}
                   </View>
                 </KeyboardAwareScrollView>
-
-                {/* Fixed Edit/Delete buttons positioned 120px from top of likes section */}
-                {isOwnPost && (
-                  <View
-                    className="absolute flex-row items-center justify-between gap-2"
-                    style={{
-                      top: mvs(120),
-                      right: 0,
-                      left: 0,
-                      zIndex: 10,
-                    }}
-                    pointerEvents="box-none"
-                  >
-                    <TouchableOpacity
-                      onPress={handleEdit}
-                      className="flex-row items-center justify-center border rounded-full bg-background"
-                      style={{
-                        borderColor: "#D9D9D9",
-                        paddingVertical: mvs(5.919),
-                        paddingHorizontal: s(18),
-                        gap: s(5),
-                      }}
-                    >
-                      <SVGIcons.Edit width={s(14)} height={s(14)} />
-                      <ScaledText
-                        allowScaling={false}
-                        variant="sm"
-                        className="text-white font-montserratSemibold"
-                        style={{ fontSize: s(12) }}
-                      >
-                        Edit
-                      </ScaledText>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setShowDeleteModal(true)}
-                      className="flex-row items-center justify-center rounded-full"
-                      style={{
-                        paddingVertical: mvs(5.919),
-                        paddingHorizontal: s(18),
-                        gap: s(5),
-                      }}
-                    >
-                      <SVGIcons.Trash width={s(14)} height={s(14)} />
-                      <ScaledText
-                        allowScaling={false}
-                        variant="sm"
-                        className="font-montserratSemibold"
-                        style={{
-                          fontSize: s(12),
-                          color: "#AE0E0E",
-                        }}
-                      >
-                        Delete
-                      </ScaledText>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
             </View>
           </View>
         </LinearGradient>
       </KeyboardAwareScrollView>
+
+      {/* Fixed Edit/Delete buttons at bottom */}
+      {isOwnPost && !showEditModal && (
+        <View
+          className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between px-4"
+          style={{
+            paddingTop: mvs(12),
+            paddingBottom: mvs(24),
+            zIndex: 20,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleEdit}
+            className="flex-row items-center justify-center border rounded-full bg-background"
+            style={{
+              borderColor: "#d9d9d9bb",
+              paddingVertical: mvs(6),
+              paddingHorizontal: s(20),
+              gap: s(5),
+              borderWidth: s(0.7),
+            }}
+          >
+            <SVGIcons.Edit width={s(14)} height={s(14)} />
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="text-white font-montserratSemibold"
+            >
+              Edit
+            </ScaledText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowDeleteModal(true)}
+            className="flex-row items-center justify-center rounded-full"
+            style={{
+              paddingVertical: mvs(10.5),
+              paddingHorizontal: s(20),
+              gap: s(5),
+            }}
+          >
+            <SVGIcons.Trash width={s(14)} height={s(14)} />
+            <ScaledText
+              allowScaling={false}
+              variant="sm"
+              className="font-montserratSemibold"
+              style={{
+                color: "#AE0E0E",
+              }}
+            >
+              Delete
+            </ScaledText>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -1367,6 +1405,16 @@ export default function PostDetailScreen() {
         visible={showUnsavedChangesModal}
         onContinueEditing={() => setShowUnsavedChangesModal(false)}
         onDiscardChanges={handleDiscardChanges}
+      />
+
+      {/* Style Info Modal */}
+      <StyleInfoModal
+        visible={showStyleInfoModal}
+        style={fullStyleData}
+        onClose={() => {
+          setShowStyleInfoModal(false);
+          setFullStyleData(null);
+        }}
       />
     </View>
   );

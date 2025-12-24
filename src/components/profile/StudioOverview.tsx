@@ -69,7 +69,7 @@ export default function StudioOverview({
       ? encodeURIComponent(`${address}, ${municipality}, ${province}`)
       : encodeURIComponent(`${municipality}, ${province}`);
     const size = `${Math.round(s(150))}x${Math.round(mvs(100))}`;
-    const key = (process as any).env?.EXPO_PUBLIC_GOOGLE_MAPS_STATIC_KEY;
+    const key = process.env.EXPO_PUBLIC_GOOGLE_MAPS_STATIC_KEY;
     // If key exists, build Google Static Maps URL; otherwise return undefined to fallback UI
     return key
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${mapQuery}&zoom=13&size=${size}&scale=2&maptype=roadmap&markers=color:red%7C${mapQuery}&key=${key}`
@@ -157,7 +157,7 @@ export default function StudioOverview({
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueBold"
+                    className="text-foreground font-neueSemibold"
                     onPress={() => {
                       if (ownerId) {
                         router.push(`/user/${ownerId}` as any);
@@ -180,7 +180,7 @@ export default function StudioOverview({
                   <ScaledText
                     allowScaling={false}
                     variant="md"
-                    className="text-foreground font-neueBold"
+                    className="text-foreground font-neueSemibold"
                     style={{ marginTop: mvs(2) }}
                     onPress={() => {
                       if (ownerId) {

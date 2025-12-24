@@ -88,49 +88,48 @@ export default function SearchScreen() {
   }, [filtersActive, dotAnim]);
 
   useEffect(() => {
-    // Keep search location in sync with auth state (guest → Milano, logged-in → profile location)
-    let isMounted = true;
-    const applyLocation = async () => {
-      const { updateFilters, setLocation, search: searchStore } =
-        useSearchStore.getState();
+    // Initialize search and facets on mount
+    const initialize = async () => {
+      const {
+        filters: currentFilters,
+        updateFilters,
+        setLocation,
+      } = useSearchStore.getState();
 
-      const useMilanoFallback = () => {
-        if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
-          const milano = MOST_POPULAR_PROVINCES_IDS[0];
-          updateFilters({ provinceId: milano.id, municipalityId: null }, { skipLoadFacets: true });
-          setLocation(milano.name, "");
+      // Set default location if no province filter is set
+      if (!currentFilters.provinceId) {
+        // For logged-in users, try to use their primary location
+        if (user) {
+          const userLocation = await getCurrentUserLocation();
+          if (userLocation) {
+            // Use user's primary location
+            updateFilters({
+              provinceId: userLocation.provinceId,
+              municipalityId: userLocation.municipalityId,
+            });
+            setLocation(userLocation.province, userLocation.municipality);
+          } else {
+            // User logged in but no primary location, fall back to Milano
+            if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
+              const milano = MOST_POPULAR_PROVINCES_IDS[0];
+              updateFilters({ provinceId: milano.id });
+              setLocation(milano.name, "");
+            }
+          }
         } else {
-          updateFilters({ provinceId: null, municipalityId: null }, { skipLoadFacets: true });
-          setLocation("", "");
+          // Not logged in, use Milano as default
+          if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
+            const milano = MOST_POPULAR_PROVINCES_IDS[0];
+            updateFilters({ provinceId: milano.id });
+            setLocation(milano.name, "");
+          }
         }
-      };
-
-      if (user) {
-        const userLocation = await getCurrentUserLocation();
-        if (!isMounted) return;
-
-        if (userLocation) {
-          // For logged-in users, only use province (not municipality) to show all results in their province
-          updateFilters({
-            provinceId: userLocation.provinceId,
-            municipalityId: null,
-          }, { skipLoadFacets: true });
-          setLocation(userLocation.province, "");
-        } else {
-          useMilanoFallback();
-        }
-      } else {
-        useMilanoFallback();
       }
 
-      await searchStore();
+      await Promise.all([search(), loadFacets()]);
     };
-
-    applyLocation();
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id]);
+    initialize();
+  }, [user]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -325,7 +324,7 @@ export default function SearchScreen() {
         {/* Header */}
         <View
           style={{
-            paddingTop: mvs(8),
+            paddingTop: mvs(8), 
             paddingHorizontal: s(16),
             paddingBottom: mvs(28),
           }}
@@ -346,26 +345,26 @@ export default function SearchScreen() {
             </View>
 
             {/* Filter Button */}
-            <TouchableOpacity onPress={() => setShowFilterModal(true)}>
-              <View style={{ width: s(20), height: s(20) }}>
-                <SVGIcons.Menu width={s(20)} height={s(20)} />
-                {/* Subtle blinking red dot when styles/services filters are active */}
-                {filtersActive && (
-                  <Animated.View
-                    style={{
-                      position: "absolute",
-                      top: s(2),
-                      right: s(1),
-                      width: s(6),
-                      height: s(6),
-                      borderRadius: s(3),
-                      backgroundColor: "#AE0E0E",
-                      opacity: dotOpacity,
-                      transform: [{ scale: dotScale }],
-                    }}
-                  />
-                )}
-              </View>
+            <TouchableOpacity 
+              onPress={() => setShowFilterModal(true)}
+              style={{ position: 'relative' }}
+            >
+              <SVGIcons.Menu width={s(20)} height={s(20)} />
+              {areFiltersActive() && (
+                <Animated.View
+                  style={{
+                    position: 'absolute',
+                    top: (0),
+                    right: s(0),
+                    width: s(6),
+                    height: s(6),
+                    borderRadius: s(4),
+                    backgroundColor: '#AE0E0E',
+                    opacity: dotOpacity,
+                    transform: [{ scale: dotScale }],
+                  }}
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>

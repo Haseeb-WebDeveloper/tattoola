@@ -471,7 +471,7 @@ export default function HomeScreen() {
       <View
         className="absolute top-0 left-0 right-0 flex-row items-center justify-between"
         style={{
-          paddingTop: mvs(20),
+          paddingTop: mvs(8),
           paddingHorizontal: s(16),
           zIndex: 30,
           elevation: 30,
@@ -483,7 +483,7 @@ export default function HomeScreen() {
         >
           {/* <SVGIcons.Flash  /> */}
         </View>
-        <SVGIcons.LogoLight height={s(50)} width={s(90)} />
+        <SVGIcons.LogoLight width={s(90)} height={s(50)} />
         <TouchableOpacity
           onPress={() => router.push("/(auth)/help" as any)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -495,4 +495,4 @@ export default function HomeScreen() {
       </View>
     </View>
   );
-}
+} 

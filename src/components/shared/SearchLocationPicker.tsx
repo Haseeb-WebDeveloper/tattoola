@@ -71,17 +71,17 @@ export default function SearchLocationPicker({
   >(null);
   const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
   const [containerHeight, setContainerHeight] = useState(0);
-  const [displayCount, setDisplayCount] = useState(30); // Initial items to display for smoother feel
 
   // Memoize facet province IDs to avoid unnecessary recalculations
-  const facetProvinceIds = useMemo(() => new Set(facets.map((f) => f.provinceId)), [facets]);
+  const facetProvinceIds = useMemo(() => {
+    return new Set(facets.map((f) => f.provinceId));
+  }, [facets]);
 
   // Load provinces with count-based sorting depending on entityType (artists or studios)
   useEffect(() => {
     let isMounted = true;
 
     const loadProvinces = async () => {
-      // If there are no facet provinces, show none
       if (facetProvinceIds.size === 0) {
         setProvinces([]);
         return;
@@ -148,7 +148,7 @@ export default function SearchLocationPicker({
 
         if (!isMounted) return;
 
-        // Filter to provinces with facets and sort by entity count (desc), then name (asc)
+        // Filter to provinces with facets and sort by entity count
         const provincesWithFacets = (allProvinces || [])
           .filter((province) => facetProvinceIds.has(province.id))
           .sort((a, b) => {
@@ -181,98 +181,93 @@ export default function SearchLocationPicker({
     (async () => {
       if (modalStep === "municipality" && selectedProvince) {
         try {
-          const { data, error } = await supabase
+          // First, get all municipalities for this province
+          const { data: allMunicipalities, error: munError } = await supabase
             .from("municipalities")
             .select("id, name, imageUrl")
             .eq("provinceId", selectedProvince.id)
             .eq("isActive", true)
             .order("name");
-          if (error) {
+          
+          if (munError || !allMunicipalities) {
             setMunicipalities([]);
-          } else {
-            const municipalitiesData = data || [];
-            // Filter to only show municipalities that have facets (available locations)
-            const municipalitiesWithFacets = municipalitiesData.filter((municipality) => {
-              return facets.some(
-                (f) =>
-                  f.provinceId === selectedProvince.id &&
-                  f.municipalityId === municipality.id
-              );
-            });
-            setMunicipalities(municipalitiesWithFacets);
-
-            // Compute counts per municipality for the selected province
-            try {
-              if (municipalitiesWithFacets.length > 0) {
-                const targetMunicipalityIds = new Set(
-                  municipalitiesWithFacets.map((m) => m.id)
-                );
-
-                if (entityType === "artists") {
-                  const { data: artistLocs } = await supabase
-                    .from("user_locations")
-                    .select(`
-                      municipalityId,
-                      userId,
-                      users!inner(role)
-                    `)
-                    .eq("isPrimary", true)
-                    .eq("provinceId", selectedProvince.id)
-                    .eq("users.role", "ARTIST");
-
-                  const userIds = Array.from(
-                    new Set((artistLocs || []).map((l: any) => l.userId))
-                  );
-                  let activeUserIds = new Set<string>();
-                  if (userIds.length > 0) {
-                    const { data: subscriptions } = await supabase
-                      .from("user_subscriptions")
-                      .select("userId")
-                      .in("userId", userIds)
-                      .eq("status", "ACTIVE")
-                      .or(`endDate.is.null,endDate.gte.${new Date().toISOString()}`);
-                    activeUserIds = new Set(
-                      (subscriptions || []).map((s: any) => s.userId)
-                    );
-                  }
-
-                  const counts: Record<string, number> = {};
-                  (artistLocs || []).forEach((l: any) => {
-                    const mId = String(l.municipalityId || "");
-                    if (!mId || !targetMunicipalityIds.has(mId)) return;
-                    if (!activeUserIds.has(l.userId)) return;
-                    counts[mId] = (counts[mId] || 0) + 1;
-                  });
-                  setMunicipalityCounts(counts);
-                } else {
-                  const { data: studioLocs } = await supabase
-                    .from("studio_locations")
-                    .select(`
-                      municipalityId,
-                      studioId,
-                      studios!inner(isActive, isCompleted)
-                    `)
-                    .eq("isPrimary", true)
-                    .eq("provinceId", selectedProvince.id)
-                    .eq("studios.isActive", true)
-                    .eq("studios.isCompleted", true);
-
-                  const counts: Record<string, number> = {};
-                  (studioLocs || []).forEach((l: any) => {
-                    const mId = String(l.municipalityId || "");
-                    if (!mId || !targetMunicipalityIds.has(mId)) return;
-                    counts[mId] = (counts[mId] || 0) + 1;
-                  });
-                  setMunicipalityCounts(counts);
-                }
-              } else {
-                setMunicipalityCounts({});
-              }
-            } catch (countErr) {
-              setMunicipalityCounts({});
-            }
+            setMunicipalityCounts({});
+            return;
           }
+
+          let municipalitiesList: Municipality[] = [];
+          const counts: Record<string, number> = {};
+
+          if (entityType === "artists") {
+            // Get all artists in this province with their municipalities
+            const { data: artistLocs } = await supabase
+              .from("user_locations")
+              .select(`
+                municipalityId,
+                userId,
+                users!inner(role)
+              `)
+              .eq("isPrimary", true)
+              .eq("provinceId", selectedProvince.id)
+              .eq("users.role", "ARTIST");
+
+            // Get active user subscriptions
+            const userIds = Array.from(
+              new Set((artistLocs || []).map((l: any) => l.userId))
+            );
+            let activeUserIds = new Set<string>();
+            
+            if (userIds.length > 0) {
+              const { data: subscriptions } = await supabase
+                .from("user_subscriptions")
+                .select("userId")
+                .in("userId", userIds)
+                .eq("status", "ACTIVE")
+                .or(`endDate.is.null,endDate.gte.${new Date().toISOString()}`);
+              activeUserIds = new Set(
+                (subscriptions || []).map((s: any) => s.userId)
+              );
+            }
+
+            // Count artists per municipality
+            (artistLocs || []).forEach((l: any) => {
+              const mId = String(l.municipalityId || "");
+              if (!mId) return;
+              if (!activeUserIds.has(l.userId)) return;
+              counts[mId] = (counts[mId] || 0) + 1;
+            });
+
+            // Filter municipalities to only show those with artists
+            municipalitiesList = allMunicipalities.filter((m) => counts[m.id] > 0);
+          } else {
+            // Get all studios in this province with their municipalities
+            const { data: studioLocs } = await supabase
+              .from("studio_locations")
+              .select(`
+                municipalityId,
+                studioId,
+                studios!inner(isActive, isCompleted)
+              `)
+              .eq("isPrimary", true)
+              .eq("provinceId", selectedProvince.id)
+              .eq("studios.isActive", true)
+              .eq("studios.isCompleted", true);
+
+            // Count studios per municipality
+            (studioLocs || []).forEach((l: any) => {
+              const mId = String(l.municipalityId || "");
+              if (!mId) return;
+              counts[mId] = (counts[mId] || 0) + 1;
+            });
+
+            // Filter municipalities to only show those with studios
+            municipalitiesList = allMunicipalities.filter((m) => counts[m.id] > 0);
+          }
+
+          setMunicipalities(municipalitiesList);
+          setMunicipalityCounts(counts);
         } catch (err) {
+          console.error("Error loading municipalities:", err);
           setMunicipalities([]);
           setMunicipalityCounts({});
         }
@@ -297,6 +292,12 @@ export default function SearchLocationPicker({
     }
   }, [visible, initialMunicipalityId]);
 
+  const handleMunicipalitySelect = useCallback((municipality: Municipality) => {
+    if (selectedProvince) {
+      setSelectedMunicipalityId(municipality.id);
+    }
+  }, [selectedProvince]);
+
   const handleClose = useCallback(() => {
     setModalStep("province");
     setSearch("");
@@ -305,16 +306,11 @@ export default function SearchLocationPicker({
     onClose();
   }, [onClose]);
 
-  const handleMunicipalitySelect = useCallback((municipality: Municipality) => {
-    if (selectedProvince) {
-      setSelectedMunicipalityId(municipality.id);
-    }
-  }, [selectedProvince]);
-
   const handleApplySelection = useCallback(() => {
+   
+    
     if (selectedProvince && selectedMunicipalityId) {
       const municipality = municipalities.find((m) => m.id === selectedMunicipalityId);
-      if (!municipality) return;
       onSelect({
         province: selectedProvince.name,
         provinceId: selectedProvince.id,
@@ -322,7 +318,7 @@ export default function SearchLocationPicker({
         municipalityId: municipality.id,
       });
       handleClose();
-    }
+    } 
   }, [selectedProvince, selectedMunicipalityId, municipalities, onSelect, handleClose]);
 
   const handleBack = useCallback(() => {
@@ -342,11 +338,6 @@ export default function SearchLocationPicker({
   
   const isSearching = search.trim().length > 0;
 
-  // Reset display count when search or modalStep changes
-  useEffect(() => {
-    setDisplayCount(30);
-  }, [search, modalStep]);
-
   // Memoize filtered list
   const listFiltered = useMemo(() => {
     const list = modalStep === "province" ? provinces : municipalities;
@@ -358,45 +349,37 @@ export default function SearchLocationPicker({
         modalStep === "province" && !isSearching ? !topSixIds.has(r.id) : true
       );
     
-    // Sort "Altre province" alphabetically when not searching
+    // Sort "Altre province" alphabetically (for provinces that are not in top 6)
     if (modalStep === "province" && !isSearching) {
       return filtered.sort((a, b) => a.name.localeCompare(b.name));
     }
     
-    return filtered;
-  }, [modalStep, provinces, municipalities, search, isSearching, topSixIds]);
-
-  // Progressive display - only show first N items
-  const displayedItems = useMemo(() => {
-    return listFiltered.slice(0, displayCount);
-  }, [listFiltered, displayCount]);
-
-  const hasMoreItems = displayCount < listFiltered.length;
-
-  const loadMoreItems = useCallback(() => {
-    if (hasMoreItems) {
-      // Load in bigger chunks to reduce perceived stutter
-      setDisplayCount(prev => Math.min(prev + 30, listFiltered.length));
+    // Sort municipalities by count (descending - highest count first)
+    if (modalStep === "municipality") {
+      return filtered.sort((a, b) => {
+        const countA = municipalityCounts[a.id] || 0;
+        const countB = municipalityCounts[b.id] || 0;
+        if (countB !== countA) {
+          return countB - countA; // Higher count first
+        }
+        return a.name.localeCompare(b.name); // Alphabetical as tiebreaker
+      });
     }
-  }, [hasMoreItems, listFiltered.length]);
-
-  // Handle scroll to load more items
-  const handleScroll = useCallback((event: any) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 100;
     
-    // Check if user has scrolled near the bottom
-    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
-      loadMoreItems();
-    }
-  }, [loadMoreItems]);
+    return filtered;
+  }, [modalStep, provinces, municipalities, search, isSearching, topSixIds, municipalityCounts]);
 
-  // Ensure content fills the view; progressively load until scrollable
-  const handleContentSizeChange = useCallback((_: number, contentHeight: number) => {
-    if (hasMoreItems && contentHeight <= containerHeight + 20) {
-      loadMoreItems();
-    }
-  }, [hasMoreItems, containerHeight, loadMoreItems]);
+  // Simple scroll handlers (placeholder to avoid undefined refs)
+  const handleScroll = useCallback(() => {
+    // no-op: placeholder for potential infinite scroll logic
+  }, []);
+
+  const handleContentSizeChange = useCallback(() => {
+    // no-op: placeholder for potential scroll metrics usage
+  }, []);
+
+  const displayedItems = listFiltered;
+  const hasMoreItems = false;
 
   return (
     <Modal
@@ -698,7 +681,10 @@ export default function SearchLocationPicker({
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={handleApplySelection}
+                onPress={() => {
+                  console.log("🟢 [SearchLocationPicker] Applica button pressed");
+                  handleApplySelection();
+                }}
                 className={`rounded-full items-center flex-row gap-3 ${
                   selectedMunicipalityId ? "bg-primary" : "bg-gray/40"
                 }`}
@@ -706,8 +692,10 @@ export default function SearchLocationPicker({
                   paddingVertical: mvs(10.5),
                   paddingLeft: s(18),
                   paddingRight: s(20),
+                  opacity: selectedMunicipalityId ? 1 : 0.5,
                 }}
                 disabled={!selectedMunicipalityId}
+                activeOpacity={0.7}
               >
                 <ScaledText
                   allowScaling={false}

@@ -1,22 +1,25 @@
 export function formatMessageTimestamp(dateString: string | Date): string {
-
-  //  PARSE DATE SAFELY
-  let utcDate = new Date(dateString);
-  if (isNaN(utcDate.getTime())) {
-    // Supabase format: "2025-12-10T12:30:32.956"
-    const safe = String(dateString).replace(" ", "T");
-    utcDate = new Date(safe);
+  let raw = String(dateString).trim();
+  
+  // If already has timezone info (+00:00, Z, etc.), parse as-is
+  if (raw.match(/[+-]\d{2}:\d{2}$/) || raw.endsWith('Z')) {
+    var localDate = new Date(raw);
+  } else {
+    // Supabase format: "2025-12-10 12:30:32.956" - replace space with T and add Z for UTC
+    if (raw.match(/^\d{4}-\d{2}-\d{2} \d/)) {
+      raw = raw.replace(" ", "T") + "Z";
+    } 
+    // ISO format without timezone: "2025-12-10T12:30:32.956" - add Z for UTC
+    else if (raw.match(/^\d{4}-\d{2}-\d{2}T\d/) && !raw.endsWith('Z')) {
+      raw = raw + "Z";
+    }
+    var localDate = new Date(raw);
   }
 
-  if (isNaN(utcDate.getTime())) {
-    console.log("❌ STILL INVALID DATE:", dateString);
+  if (isNaN(localDate.getTime())) {
+    console.log("❌ INVALID DATE:", dateString);
     return "Invalid date";
   }
-
-  // 2) MANUAL TIMEZONE CONVERSION 
-  const tzOffsetMinutes = -utcDate.getTimezoneOffset(); 
-
-  const localDate = new Date(utcDate.getTime() + tzOffsetMinutes * 60 * 1000);
 
 
   // 3) Now normal logic works

@@ -1,35 +1,36 @@
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import {
-    addPostsToCollection,
-    createCollection,
-    fetchUserPosts,
-    reorderCollectionPosts,
-    updateCollectionName
+  addPostsToCollection,
+  createCollection,
+  fetchUserPosts,
+  reorderCollectionPosts,
+  updateCollectionName
 } from "@/services/collection.service";
 import { clearProfileCache } from "@/utils/database";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import DraggableFlatList, {
-    RenderItemParams,
-    ScaleDecorator,
+  RenderItemParams,
+  ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { toast } from "sonner-native";
 
 const { width: screenWidth } = Dimensions.get("window");
-const GAP = 8;
+// Increase grid gap for clearer spacing between images
+const GAP = 16;
 const NUM_COLUMNS = 2;
 const H_PADDING = 32;
 const POST_WIDTH = (screenWidth - H_PADDING - GAP) / NUM_COLUMNS;

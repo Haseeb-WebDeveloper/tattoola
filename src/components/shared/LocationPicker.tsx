@@ -6,7 +6,6 @@ import { mvs, s } from "@/utils/scale";
 import { supabase } from "@/utils/supabase";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   Platform,
   Pressable,
@@ -61,6 +60,7 @@ export default function SearchLocationPicker({
   );
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [municipalityCounts, setMunicipalityCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(
     null
@@ -103,9 +103,7 @@ export default function SearchLocationPicker({
             .eq("isPrimary", true)
             .eq("users.role", "ARTIST");
 
-          if (locError) {
-            console.error("📍 [LOCATION_PICKER] Error loading artist locations:", locError);
-          }
+        
 
           (artistLocations || []).forEach((loc: any) => {
             provinceEntityCount[loc.provinceId] = (provinceEntityCount[loc.provinceId] || 0) + 1;
@@ -123,9 +121,6 @@ export default function SearchLocationPicker({
             .eq("studios.isActive", true)
             .eq("studios.isCompleted", true);
 
-          if (studioLocError) {
-            console.error("📍 [LOCATION_PICKER] Error loading studio locations:", studioLocError);
-          }
 
           (studioLocations || []).forEach((loc: any) => {
             provinceEntityCount[loc.provinceId] = (provinceEntityCount[loc.provinceId] || 0) + 1;
@@ -138,11 +133,7 @@ export default function SearchLocationPicker({
           .select("id, name, imageUrl")
           .eq("isActive", true);
 
-        if (provError) {
-          console.error("📍 [LOCATION_PICKER] Error loading provinces:", provError);
-          if (isMounted) setProvinces([]);
-          return;
-        }
+      
 
         if (!isMounted) return;
 
@@ -160,7 +151,6 @@ export default function SearchLocationPicker({
 
         setProvinces(provincesWithFacets);
       } catch (err) {
-        console.error("📍 [LOCATION_PICKER] Exception loading provinces:", err);
         if (isMounted) setProvinces([]);
       } finally {
         if (isMounted) setIsLoadingProvinces(false);
@@ -179,28 +169,94 @@ export default function SearchLocationPicker({
     (async () => {
       if (modalStep === "municipality" && selectedProvince) {
         try {
-          const { data, error } = await supabase
+          // First, get all municipalities for this province
+          const { data: allMunicipalities, error: munError } = await supabase
             .from("municipalities")
             .select("id, name, imageUrl")
             .eq("provinceId", selectedProvince.id)
             .eq("isActive", true)
             .order("name");
-          if (error) {
+          
+          if (munError || !allMunicipalities) {
             setMunicipalities([]);
-          } else {
-            const municipalitiesData = data || [];
-            // Filter to only show municipalities that have facets (available locations)
-            const municipalitiesWithFacets = municipalitiesData.filter((municipality) => {
-              return facets.some(
-                (f) =>
-                  f.provinceId === selectedProvince.id &&
-                  f.municipalityId === municipality.id
-              );
-            });
-            setMunicipalities(municipalitiesWithFacets);
+            setMunicipalityCounts({});
+            return;
           }
+
+          let municipalitiesList: Municipality[] = [];
+          const counts: Record<string, number> = {};
+
+          if (entityType === "artists") {
+            // Get all artists in this province with their municipalities
+            const { data: artistLocs } = await supabase
+              .from("user_locations")
+              .select(`
+                municipalityId,
+                userId,
+                users!inner(role)
+              `)
+              .eq("isPrimary", true)
+              .eq("provinceId", selectedProvince.id)
+              .eq("users.role", "ARTIST");
+
+            // Get active user subscriptions
+            const userIds = Array.from(
+              new Set((artistLocs || []).map((l: any) => l.userId))
+            );
+            let activeUserIds = new Set<string>();
+            
+            if (userIds.length > 0) {
+              const { data: subscriptions } = await supabase
+                .from("user_subscriptions")
+                .select("userId")
+                .in("userId", userIds)
+                .eq("status", "ACTIVE")
+                .or(`endDate.is.null,endDate.gte.${new Date().toISOString()}`);
+              activeUserIds = new Set(
+                (subscriptions || []).map((s: any) => s.userId)
+              );
+            }
+
+            // Find municipalities with artists and count them
+            (artistLocs || []).forEach((l: any) => {
+              const mId = String(l.municipalityId || "");
+              if (mId && activeUserIds.has(l.userId)) {
+                counts[mId] = (counts[mId] || 0) + 1;
+              }
+            });
+
+            municipalitiesList = allMunicipalities.filter((m) => counts[m.id] > 0);
+          } else {
+            // Get all studios in this province with their municipalities
+            const { data: studioLocs } = await supabase
+              .from("studio_locations")
+              .select(`
+                municipalityId,
+                studioId,
+                studios!inner(isActive, isCompleted)
+              `)
+              .eq("isPrimary", true)
+              .eq("provinceId", selectedProvince.id)
+              .eq("studios.isActive", true)
+              .eq("studios.isCompleted", true);
+
+            // Find municipalities with studios and count them
+            (studioLocs || []).forEach((l: any) => {
+              const mId = String(l.municipalityId || "");
+              if (mId) {
+                counts[mId] = (counts[mId] || 0) + 1;
+              }
+            });
+
+            municipalitiesList = allMunicipalities.filter((m) => counts[m.id] > 0);
+          }
+
+          setMunicipalities(municipalitiesList);
+          setMunicipalityCounts(counts);
         } catch (err) {
+          console.error("Error loading municipalities:", err);
           setMunicipalities([]);
+          setMunicipalityCounts({});
         }
       }
     })();
@@ -223,6 +279,14 @@ export default function SearchLocationPicker({
     }
   }, [visible, initialMunicipalityId]);
 
+  const handleClose = useCallback(() => {
+    setModalStep("province");
+    setSearch("");
+    setSelectedProvince(null);
+    setSelectedMunicipalityId(null);
+    onClose();
+  }, [onClose]);
+
   const handleMunicipalitySelect = useCallback((municipality: Municipality) => {
     if (selectedProvince) {
       setSelectedMunicipalityId(municipality.id);
@@ -234,15 +298,25 @@ export default function SearchLocationPicker({
       });
       handleClose();
     }
-  }, [selectedProvince, onSelect]);
+  }, [selectedProvince, onSelect, handleClose]);
 
-  const handleClose = useCallback(() => {
-    setModalStep("province");
-    setSearch("");
-    setSelectedProvince(null);
-    setSelectedMunicipalityId(null);
-    onClose();
-  }, [onClose]);
+  const handleApplySelection = useCallback(() => {
+  
+    
+    if (selectedProvince && selectedMunicipalityId) {
+      const municipality = municipalities.find(
+        (m) => m.id === selectedMunicipalityId
+      );
+    
+      onSelect({
+        province: selectedProvince.name,
+        provinceId: selectedProvince.id,
+        municipality: municipality.name,
+        municipalityId: municipality.id,
+      });
+      handleClose();
+    } 
+  }, [selectedProvince, selectedMunicipalityId, municipalities, onSelect, handleClose]);
 
   const handleBack = useCallback(() => {
     if (modalStep === "municipality") {
@@ -266,12 +340,31 @@ export default function SearchLocationPicker({
     const list = modalStep === "province" ? provinces : municipalities;
     const searchLower = search.trim().toLowerCase();
     
-    return list
+    const filtered = list
       .filter((r) => r.name.toLowerCase().includes(searchLower))
       .filter((r) =>
         modalStep === "province" && !isSearching ? !topSixIds.has(r.id) : true
       );
-  }, [modalStep, provinces, municipalities, search, isSearching, topSixIds]);
+    
+    // Sort "Altre province" alphabetically (for provinces that are not in top 6)
+    if (modalStep === "province" && !isSearching) {
+      return filtered.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
+    // Sort municipalities by count (descending - highest count first)
+    if (modalStep === "municipality") {
+      return filtered.sort((a, b) => {
+        const countA = municipalityCounts[a.id] || 0;
+        const countB = municipalityCounts[b.id] || 0;
+        if (countB !== countA) {
+          return countB - countA; // Higher count first
+        }
+        return a.name.localeCompare(b.name); // Alphabetical as tiebreaker
+      });
+    }
+    
+    return filtered;
+  }, [modalStep, provinces, municipalities, search, isSearching, topSixIds, municipalityCounts]);
 
   return (
     <Modal
@@ -323,7 +416,10 @@ export default function SearchLocationPicker({
                 <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
               <ScaledTextInput
-                containerClassName="bg-background"
+                containerClassName="bg-background flex-1 rounded-full"
+                containerStyle={{
+                  borderRadius: s(50),
+                }}
                 className="text-foreground"
                 style={{
                   backgroundColor: "transparent",
@@ -357,7 +453,7 @@ export default function SearchLocationPicker({
                   className="text-gray font-neueSemibold"
                   style={{ paddingHorizontal: s(20), paddingBottom: mvs(12) }}
                 >
-                  Città più popolari
+                  Province piu poplari
                 </ScaledText>
                 <View
                   style={{ 
@@ -365,47 +461,45 @@ export default function SearchLocationPicker({
                     marginHorizontal: s(2),
                   }}
                 >
-                  <View className="flex-row flex-wrap">
-                    {topSix.map((p, index) => {
-                      const active = selectedProvince?.id === p.id;
-                      const isRightColumn = (index + 1) % 3 === 0;
-                      const isBottomRow = index >= 3;
-                      
-                      return (
-                        <TouchableOpacity
-                          key={p.id}
-                          onPress={() => {
-                            setSelectedProvince(p);
-                            setSearch("");
-                          }}
+                  {topSix.map((p, index) => {
+                    const active = selectedProvince?.id === p.id;
+                    const isRightColumn = (index + 1) % 3 === 0;
+                    const isBottomRow = index >= 3;
+
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        onPress={() => {
+                          setSelectedProvince(p);
+                          setSearch("");
+                        }}
+                        style={{
+                          width: "33.333%",
+                          height: mvs(100),
+                          justifyContent: "center",
+                          alignItems: "center",
+                          padding: s(12),
+                          borderRightWidth: active ? 2 : isRightColumn ? 0 : 1,
+                          borderBottomWidth: active ? 2 : isBottomRow ? 0 : 1,
+                          borderLeftWidth: active ? 2 : 0,
+                          borderTopWidth: active ? 2 : 0,
+                          borderColor: active ? "#AE0E0E" : "#333",
+                        }}
+                      >
+                        <ScaledText
+                          allowScaling={false}
+                          className="text-center text-foreground font-neueLight"
                           style={{
-                            width: '33.333%',
-                            height: mvs(100),
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            padding: s(12),
-                            borderRightWidth: active ? 2 : (isRightColumn ? 0 : 1),
-                            borderBottomWidth: active ? 2 : (isBottomRow ? 0 : 1),
-                            borderLeftWidth: active ? 2 : 0,
-                            borderTopWidth: active ? 2 : 0,
-                            borderColor: active ? '#AE0E0E' : '#333',
+                            fontSize: s(14),
+                            lineHeight: mvs(23),
+                            letterSpacing: 0,
                           }}
                         >
-                          <ScaledText
-                            allowScaling={false}
-                            className="text-center text-foreground font-neueLight"
-                            style={{
-                              fontSize: s(14),
-                              lineHeight: mvs(23),
-                              letterSpacing: 0,
-                            }}
-                          >
-                            {p.name}
-                          </ScaledText>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
+                          {p.name}
+                        </ScaledText>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
             )}
@@ -424,66 +518,38 @@ export default function SearchLocationPicker({
                     ? "Altre province"
                     : `Comuni in ${selectedProvince?.name || "provincia selezionata"}`}
               </ScaledText>
-              {isLoading ? (
-                <View
-                  style={{
-                    paddingHorizontal: s(20),
-                    paddingVertical: mvs(40),
-                  }}
-                >
-                  <ActivityIndicator size="small" color="#AE0E0E" />
-                </View>
-              ) : listFiltered.length === 0 ? (
-                <View
-                  style={{
-                    paddingHorizontal: s(20),
-                    paddingVertical: mvs(40),
-                  }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="lg"
-                    className="text-center text-gray font-neueLight"
+              {listFiltered.map((item) => {
+                const isActive =
+                  modalStep === "province"
+                    ? selectedProvince?.id === item.id
+                    : selectedMunicipalityId === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
+                    onPress={() => {
+                      if (modalStep === "province") {
+                        setSelectedProvince(item);
+                        setSelectedMunicipalityId(null);
+                        setSearch("");
+                      } else {
+                        setSelectedMunicipalityId(item.id);
+                        handleMunicipalitySelect(item);
+                      }
+                    }}
                   >
-                    Nessun risultato trovato
-                  </ScaledText>
-                </View>
-              ) : (
-                listFiltered.map((item) => {
-                  const isActive =
-                    modalStep === "province"
-                      ? selectedProvince?.id === item.id
-                      : selectedMunicipalityId === item.id;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
-                      onPress={() => {
-                        if (modalStep === "province") {
-                          setSelectedProvince(item);
-                          setSelectedMunicipalityId(null);
-                          setSearch("");
-                        } else {
-                          setSelectedMunicipalityId(item.id);
-                          handleMunicipalitySelect(item);
-                        }
-                      }}
-                    >
-                      <View className="flex-row items-center gap-3 px-6">
-                        <View className="flex-1">
-                          <ScaledText
-                            allowScaling={false}
-                            variant="md"
-                            className="text-foreground font-montserratLight"
-                          >
-                            {item.name}
-                          </ScaledText>
-                        </View>
-                      </View>
-                    </Pressable>
-                  );
-                })
-              )}
+                    <View className="flex-row items-center gap-3 px-6">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-foreground font-montserratLight"
+                      >
+                        {item.name}
+                      </ScaledText>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
 
@@ -495,6 +561,8 @@ export default function SearchLocationPicker({
               paddingTop: mvs(16),
               paddingBottom: Math.max(insets.bottom, mvs(20)),
               bottom: 0,
+              zIndex: 999,
+              pointerEvents: "auto",
             }}
           >
             <TouchableOpacity
@@ -543,7 +611,32 @@ export default function SearchLocationPicker({
                 <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
               </TouchableOpacity>
             ) : (
-              <View />
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("🔴 [DEBUG] Applica button pressed");
+                  handleApplySelection();
+                }}
+                className={`rounded-full items-center flex-row gap-3 ${
+                  selectedMunicipalityId ? "bg-primary" : "bg-gray/40"
+                }`}
+                style={{
+                  paddingVertical: mvs(10.5),
+                  paddingLeft: s(18),
+                  paddingRight: s(20),
+                  opacity: selectedMunicipalityId ? 1 : 0.5,
+                }}
+                disabled={!selectedMunicipalityId}
+                activeOpacity={0.7}
+              >
+                <ScaledText
+                  allowScaling={false}
+                  variant="md"
+                  className="text-foreground font-neueSemibold"
+                >
+                  Applica
+                </ScaledText>
+                <SVGIcons.ChevronRight width={s(13)} height={s(13)} />
+              </TouchableOpacity>
             )}
           </View>
         </View>

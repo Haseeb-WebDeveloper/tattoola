@@ -82,6 +82,18 @@ export default function CollectionFilterModal({
   const hasActiveFilters =
     selectedStyleIds.length > 0 || selectedServiceIds.length > 0;
 
+  // Create availableStyleIds from styleFacets (styles filtered by service selection)
+  const availableStyleIds = useMemo(
+    () => new Set(styleFacets.map((s) => s.id)),
+    [styleFacets]
+  );
+
+  // Create availableServiceIds from serviceFacets (services filtered by style selection)
+  const availableServiceIds = useMemo(
+    () => new Set(serviceFacets.map((s) => s.id)),
+    [serviceFacets]
+  );
+
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
@@ -140,6 +152,8 @@ export default function CollectionFilterModal({
             </TouchableOpacity>
           </View>
           <StyleFilter
+            allStyles={styleFacets}
+            availableStyleIds={availableStyleIds}
             selectedIds={selectedStyleIds}
             onSelectionChange={onChangeSelectedStyleIds}
             facets={styleFacets}
@@ -176,6 +190,8 @@ export default function CollectionFilterModal({
             selectedIds={selectedServiceIds}
             onSelectionChange={onChangeSelectedServiceIds}
             facets={serviceFacets}
+            allServices={serviceFacets}
+            availableServiceIds={availableServiceIds}
           />
         </View>
 

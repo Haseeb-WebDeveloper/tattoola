@@ -128,7 +128,14 @@ export default function RootLayout() {
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="(studio-invitation)" />
-                  <Stack.Screen name="post/[id]" />
+                  <Stack.Screen
+                    name="post/[id]"
+                    options={{
+                      gestureEnabled: false,
+                      animation: "fade",
+                      animationDuration: 300,
+                    }}
+                  />
                   <Stack.Screen name="user/[id]" />
                   <Stack.Screen name="collection/[id]" />
                 </Stack>
@@ -151,6 +158,7 @@ export default function RootLayout() {
                       shadowOpacity: 0.3,
                       shadowRadius: 12,
                       elevation: mvs(12),
+                      zIndex: 9999,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -166,8 +174,7 @@ export default function RootLayout() {
                       color: "#a1a1aa",
                       fontSize: mvs(12),
                       fontWeight: "400",
-                      backgroundColor: "#A49A99",
-                      fontFamily: "Montserrat-Regular",
+                      fontFamily: "NeueHaasDisplay-Light",
                     },
                     actionButtonStyle: {
                       backgroundColor: "#A49A99",

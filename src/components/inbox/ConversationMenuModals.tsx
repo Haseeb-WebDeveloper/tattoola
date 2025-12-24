@@ -3,12 +3,12 @@ import { SVGIcons } from "@/constants/svg";
 import { ms, mvs, s } from "@/utils/scale";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type ConversationMenuModalsProps = {
@@ -221,7 +221,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               variant="lg"
               className="text-foreground font-neueBold text-center"
             >
-              Segnala
+              Yes
             </ScaledText>
           </View>
 
@@ -298,7 +298,8 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           backgroundColor: "#FFF",
           borderTopLeftRadius: s(20),
           borderTopRightRadius: s(20),
-          width: "100%",
+          width: s(342),
+          marginHorizontal: s(16),
           paddingBottom: mvs(32),
         }}
       >
@@ -344,7 +345,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               color: "#000000",
             }}
           >
-            Una volta bloccata, non potrai inviare o ricevere messaggi.
+            Una volta bloccato, non potrai ricevere o inviare messaggi.
           </ScaledText>
 
           <View className="flex-row" style={{ gap: s(12) }}>
@@ -388,7 +389,8 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           backgroundColor: "#FFF",
           borderTopLeftRadius: s(20),
           borderTopRightRadius: s(20),
-          width: "100%",
+          width: s(342),
+          marginHorizontal: s(16),
           paddingBottom: mvs(32),
         }}
       >
@@ -408,7 +410,6 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
         </View>
 
         <View style={{ paddingHorizontal: s(24) }}>
-          {/* Title with Icon */}
           <View
             className="flex-row items-center justify-center self-center"
             style={{
@@ -481,7 +482,8 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
           backgroundColor: "#FFF",
           borderTopLeftRadius: s(20),
           borderTopRightRadius: s(20),
-          width: "100%",
+          width: s(342),
+          marginHorizontal: s(16),
           paddingBottom: mvs(32),
         }}
       >
@@ -516,7 +518,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
             className="font-neueBold text-center"
             style={{ color: "#000000", marginBottom: mvs(4) }}
           >
-            Are you sure you want to delete this chat?
+            Sei sicuro di voler eliminare questa chat?
           </ScaledText>
 
           <ScaledText
@@ -527,7 +529,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
               color: "#000000",
             }}
           >
-            Once deleted, the chat won’t be available
+            Una volta eliminata, la chat non sarà più disponibile
           </ScaledText>
 
           <View className="flex-row" style={{ gap: s(12) }}>
@@ -544,7 +546,7 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
                 variant="md"
                 className="font-neueBold text-foreground"
               >
-                Yes
+                Sì
               </ScaledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -598,9 +600,9 @@ const ConversationMenuModals = React.memo(function ConversationMenuModals({
                   ? renderBlockContent
                   : modalState === "unblock"
                     ? renderUnblockContent
-                    : modalState === "delete"
-                      ? renderDeleteContent
-                      : null}
+                  : modalState === "delete"
+                    ? renderDeleteContent
+                    : null}
           </TouchableOpacity>
         </TouchableOpacity>
       </KeyboardAvoidingView>

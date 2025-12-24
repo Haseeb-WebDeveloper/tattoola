@@ -71,9 +71,10 @@ export default function WelcomeScreen() {
         <View
           style={{
             flex: 1,
-            justifyContent: "flex-end",
+            justifyContent: "center",
+            alignItems: "center",
             paddingHorizontal: s(24),
-            paddingBottom: mvs(40),
+            paddingTop: mvs(600),
           }}
         >
          

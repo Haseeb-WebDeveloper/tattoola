@@ -199,6 +199,8 @@ import Unseen from "@/assets/icons/unseen.svg";
 // @ts-ignore
 import Menu from "@/assets/icons/menu.svg";
 // @ts-ignore
+import FilterListRed from "@/assets/icons/filter-list-red.svg";
+// @ts-ignore
 import CircleMenu from "@/assets/icons/circle-menu.svg";
 // @ts-ignore
 import CircleChevronRIght from "@/assets/icons/circle-chevron-right.svg";
@@ -265,7 +267,6 @@ import HelpQuestion from "@/assets/icons/help-question.svg";
 // @ts-ignore
 import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
 // @ts-ignore
-import FilterListRed from "@/assets/icons/filter-list-red.svg";
 // @ts-ignore
 import StudioPremium from "@/assets/icons/studio-premium.svg";
 
@@ -365,6 +366,7 @@ export const SVGIcons = {
   Seen,
   Unseen,
   Menu,
+  FilterListRed,
   CircleMenu,
   CircleChevronRIght,
   BubbleMe,
@@ -403,7 +405,6 @@ export const SVGIcons = {
   HelpArticle,
   HelpQuestion,
   GuestUserProfile,
-  FilterListRed,
   StudioPremium,
 };
 

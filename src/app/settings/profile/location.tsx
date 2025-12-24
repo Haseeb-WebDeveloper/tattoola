@@ -12,13 +12,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -762,7 +762,7 @@ export default function LocationSettingsScreen() {
             </ScaledText>
 
             {/* Action Buttons */}
-            <View style={{ rowGap: mvs(8) }}>
+            <View style={{ gap: mvs(12), flexDirection: 'column' }}>
               {/* Continue Editing Button */}
               <TouchableOpacity
                 onPress={handleContinueEditing}
@@ -1075,12 +1075,12 @@ function LocationEditModal({
       >
         <View
           className="items-center justify-center flex-1"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)", paddingHorizontal: s(16) }}
         >
           <View
             className="bg-[#fff] rounded-xl"
             style={{
-              width: "88%",
+              width: "100%",
               paddingHorizontal: s(24),
               paddingVertical: mvs(32),
             }}
