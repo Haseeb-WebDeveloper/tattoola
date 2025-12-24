@@ -180,11 +180,16 @@ export async function fetchArtistSelfProfile(
        artist_profiles(id,businessName,instagram,website,phone,bannerType,workArrangement,yearsExperience,studioAddress)`
     )
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (userQ.error) {
     console.error("❌ Error fetching user profile:", userQ.error);
     throw new Error(userQ.error.message);
+  }
+
+  if (!userQ.data) {
+    console.error("❌ User not found:", userId);
+    throw new Error(`User with id ${userId} not found`);
   }
 
   const userRow: any = userQ.data;

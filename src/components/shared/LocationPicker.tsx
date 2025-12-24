@@ -217,7 +217,10 @@ export default function LocationPicker({
                 <SVGIcons.Search width={s(20)} height={s(20)} />
               </View>
               <ScaledTextInput
-                containerClassName="bg-background"
+                containerClassName="bg-background flex-1 rounded-full"
+                containerStyle={{
+                  borderRadius: s(50),
+                }}
                 className="text-foreground"
                 style={{
                   backgroundColor: "transparent",
@@ -251,14 +254,17 @@ export default function LocationPicker({
                   className="text-gray font-neueSemibold"
                   style={{ paddingHorizontal: s(20), paddingBottom: mvs(6) }}
                 >
-                  Città più popolari
+                  Province piu poplari
                 </ScaledText>
                 <View
                   className="flex-row flex-wrap bg-background"
                   style={{ gap: s(1) }}
                 >
-                  {topSix.map((p) => {
+                  {topSix.map((p, index) => {
                     const active = selectedProvince?.id === p.id;
+                    const isRightColumn = (index + 1) % 3 === 0;
+                    const isBottomRow = index >= 3;
+
                     return (
                       <TouchableOpacity
                         key={p.id}
@@ -267,31 +273,29 @@ export default function LocationPicker({
                           setSearch("");
                         }}
                         style={{
-                          width: "32%",
-                          overflow: "hidden",
-                          height: mvs(90),
+                          width: "33.333%",
+                          height: mvs(100),
+                          justifyContent: "center",
+                          alignItems: "center",
+                          padding: s(12),
+                          borderRightWidth: active ? 2 : isRightColumn ? 0 : 1,
+                          borderBottomWidth: active ? 2 : isBottomRow ? 0 : 1,
+                          borderLeftWidth: active ? 2 : 0,
+                          borderTopWidth: active ? 2 : 0,
+                          borderColor: active ? "#AE0E0E" : "#333",
                         }}
                       >
-                        {p.imageUrl ? (
-                          <Image
-                            source={{ uri: p.imageUrl }}
-                            className="w-full h-[75%]"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View className="w-full h-[70%] bg-gray/30" />
-                        )}
-                        <View
-                          className={`h-[25%] flex items-center justify-center ${active ? "bg-primary" : "bg-background"}`}
+                        <ScaledText
+                          allowScaling={false}
+                          className="text-center text-foreground font-neueLight"
+                          style={{
+                            fontSize: s(14),
+                            lineHeight: mvs(23),
+                            letterSpacing: 0,
+                          }}
                         >
-                          <ScaledText
-                            allowScaling={false}
-                            variant="11"
-                            className="text-center text-foreground font-neueLight"
-                          >
-                            {p.name}
-                          </ScaledText>
-                        </View>
+                          {p.name}
+                        </ScaledText>
                       </TouchableOpacity>
                     );
                   })}
@@ -313,55 +317,38 @@ export default function LocationPicker({
                     ? "Altre province"
                     : `Comuni in ${selectedProvince?.name || "provincia selezionata"}`}
               </ScaledText>
-              {listFiltered.length === 0 ? (
-                <View
-                  style={{
-                    paddingHorizontal: s(20),
-                    paddingVertical: mvs(40),
-                  }}
-                >
-                  <ScaledText
-                    allowScaling={false}
-                    variant="lg"
-                    className="text-center text-gray font-neueLight"
+              {listFiltered.map((item) => {
+                const isActive =
+                  modalStep === "province"
+                    ? selectedProvince?.id === item.id
+                    : selectedMunicipalityId === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
+                    onPress={() => {
+                      if (modalStep === "province") {
+                        setSelectedProvince(item);
+                        setSelectedMunicipalityId(null);
+                        setSearch("");
+                      } else {
+                        setSelectedMunicipalityId(item.id);
+                        handleMunicipalitySelect(item);
+                      }
+                    }}
                   >
-                    Nessun risultato trovato
-                  </ScaledText>
-                </View>
-              ) : (
-                listFiltered.map((item) => {
-                  const isActive =
-                    modalStep === "province"
-                      ? selectedProvince?.id === item.id
-                      : selectedMunicipalityId === item.id;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      className={`py-4 border-b border-gray/20 ${isActive ? "bg-primary" : "bg-[#100C0C]"}`}
-                      onPress={() => {
-                        if (modalStep === "province") {
-                          setSelectedProvince(item);
-                          setSelectedMunicipalityId(null);
-                          setSearch("");
-                        } else {
-                          setSelectedMunicipalityId(item.id);
-                          handleMunicipalitySelect(item);
-                        }
-                      }}
-                    >
-                      <View className="flex-row items-center gap-3 px-6">
-                        <ScaledText
-                          allowScaling={false}
-                          variant="md"
-                          className="text-foreground font-montserratLight"
-                        >
-                          {item.name}
-                        </ScaledText>
-                      </View>
-                    </Pressable>
-                  );
-                })
-              )}
+                    <View className="flex-row items-center gap-3 px-6">
+                      <ScaledText
+                        allowScaling={false}
+                        variant="md"
+                        className="text-foreground font-montserratLight"
+                      >
+                        {item.name}
+                      </ScaledText>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
 

@@ -3,7 +3,9 @@ import { SVGIcons } from "@/constants/svg";
 import { getFacets } from "@/services/facet.service";
 import { useSearchStore } from "@/stores/searchStore";
 import type { Facets } from "@/types/facets";
+import type { ServiceFacet, StyleFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
+import { supabase } from "@/utils/supabase";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -34,6 +36,9 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   const [tempFilters, setTempFilters] = useState(filters);
   const [tempFacets, setTempFacets] = useState<Facets | null>(null);
+  // All active styles and services (for showing all filters)
+  const [allStyles, setAllStyles] = useState<StyleFacet[]>([]);
+  const [allServices, setAllServices] = useState<ServiceFacet[]>([]);
   // Separate loading states for each filter type
   const [isLoadingStyles, setIsLoadingStyles] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -43,6 +48,58 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
 
   // Snap points for the bottom sheet (90% of screen height)
   const snapPoints = useMemo(() => ["80%"], []);
+
+  // Load all active styles and services
+  useEffect(() => {
+    const loadAllFilters = async () => {
+      try {
+        const [stylesResult, servicesResult] = await Promise.all([
+          supabase
+            .from("tattoo_styles")
+            .select("id, name, imageUrl")
+            .eq("isActive", true)
+            .order("name"),
+          supabase
+            .from("services")
+            .select("id, name, category")
+            .eq("isActive", true)
+            .order("name"),
+        ]);
+
+        if (stylesResult.error) {
+          console.error("Error loading styles:", stylesResult.error);
+        } else {
+          const activeStyles: StyleFacet[] = (stylesResult.data || []).map(
+            (s) => ({
+              id: s.id,
+              name: s.name,
+              imageUrl: s.imageUrl || null,
+            })
+          );
+          setAllStyles(activeStyles);
+        }
+
+        if (servicesResult.error) {
+          console.error("Error loading services:", servicesResult.error);
+        } else {
+          const activeServices: ServiceFacet[] = (servicesResult.data || []).map(
+            (s) => ({
+              id: s.id,
+              name: s.name,
+              category: s.category,
+            })
+          );
+          setAllServices(activeServices);
+        }
+      } catch (error) {
+        console.error("Error loading all filters:", error);
+      }
+    };
+
+    if (visible) {
+      loadAllFilters();
+    }
+  }, [visible, activeTab]);
 
   // Load facets when modal opens
   useEffect(() => {
@@ -228,6 +285,17 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
   const hasActiveFilters =
     tempFilters.styleIds.length > 0 || tempFilters.serviceIds.length > 0;
 
+  // Create Sets of available filter IDs from facets
+  const availableStyleIds = useMemo(
+    () => new Set(tempFacets?.styles.map((s) => s.id) || []),
+    [tempFacets?.styles]
+  );
+
+  const availableServiceIds = useMemo(
+    () => new Set(tempFacets?.services.map((s) => s.id) || []),
+    [tempFacets?.services]
+  );
+
   return (
     <>
       <BottomSheetModal
@@ -293,6 +361,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               selectedIds={tempFilters.styleIds}
               onSelectionChange={handleStyleChange}
               facets={tempFacets?.styles || []}
+              allStyles={allStyles}
+              availableStyleIds={availableStyleIds}
               isLoading={isLoadingStyles}
               onConfirm={handleStyleConfirm}
             />
@@ -334,6 +404,8 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
               selectedIds={tempFilters.serviceIds}
               onSelectionChange={handleServiceChange}
               facets={tempFacets?.services || []}
+              allServices={allServices}
+              availableServiceIds={availableServiceIds}
               isLoading={isLoadingServices}
               onConfirm={handleServiceConfirm}
             />

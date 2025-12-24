@@ -7,6 +7,8 @@ import SearchLocationPicker from "@/components/shared/SearchLocationPicker";
 import ScaledText from "@/components/ui/ScaledText";
 import { MOST_POPULAR_PROVINCES_IDS } from "@/constants/limits";
 import { SVGIcons } from "@/constants/svg";
+import { useAuth } from "@/providers/AuthProvider";
+import { getCurrentUserLocation } from "@/services/profile.service";
 import { useSearchStore } from "@/stores/searchStore";
 import type { SearchTab } from "@/types/search";
 import { mvs, s } from "@/utils/scale";
@@ -15,6 +17,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
 
 export default function SearchScreen() {
+  const { user } = useAuth();
   const {
     activeTab,
     setActiveTab,
@@ -40,20 +43,46 @@ export default function SearchScreen() {
   useEffect(() => {
     // Initialize search and facets on mount
     const initialize = async () => {
-      const { filters: currentFilters, updateFilters, setLocation } =
-        useSearchStore.getState();
+      const {
+        filters: currentFilters,
+        updateFilters,
+        setLocation,
+      } = useSearchStore.getState();
 
-      // Set Milano as default province if no province filter is set
-      if (!currentFilters.provinceId && MOST_POPULAR_PROVINCES_IDS.length > 0) {
-        const milano = MOST_POPULAR_PROVINCES_IDS[0];
-        updateFilters({ provinceId: milano.id });
-        setLocation(milano.name, "");
+      // Set default location if no province filter is set
+      if (!currentFilters.provinceId) {
+        // For logged-in users, try to use their primary location
+        if (user) {
+          const userLocation = await getCurrentUserLocation();
+          if (userLocation) {
+            // Use user's primary location
+            updateFilters({
+              provinceId: userLocation.provinceId,
+              municipalityId: userLocation.municipalityId,
+            });
+            setLocation(userLocation.province, userLocation.municipality);
+          } else {
+            // User logged in but no primary location, fall back to Milano
+            if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
+              const milano = MOST_POPULAR_PROVINCES_IDS[0];
+              updateFilters({ provinceId: milano.id });
+              setLocation(milano.name, "");
+            }
+          }
+        } else {
+          // Not logged in, use Milano as default
+          if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
+            const milano = MOST_POPULAR_PROVINCES_IDS[0];
+            updateFilters({ provinceId: milano.id });
+            setLocation(milano.name, "");
+          }
+        }
       }
 
       await Promise.all([search(), loadFacets()]);
     };
     initialize();
-  }, []);
+  }, [user]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -132,62 +161,64 @@ export default function SearchScreen() {
     if (combinedResults.length > 0) return null;
 
     return (
+      // <View
+      //   className="items-center justify-center flex-1"
+      //   style={{ paddingTop: mvs(100) }}
+      // >
+      //   <View
+      //     className="flex-row items-center justify-center"
+      //     style={{ gap: s(4) }}
+      //   >
+      //     <ScaledText
+      //       allowScaling={false}
+      //       variant="lg"
+      //       className="text-center text-gray font-neueBold"
+      //     >
+      //       Nessun risultato trovato
+      //     </ScaledText>
+      //   </View>
+      //   <ScaledText
+      //     allowScaling={false}
+      //     variant="body2"
+      //     className="text-center text-gray font-neueLight"
+      //     style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
+      //   >
+      //     Prova a modificare i filtri
+      //     {areFiltersActive() ? " o reimposta i filtri" : ""}.
+      //   </ScaledText>
+      //   <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
+      //     <TouchableOpacity
+      //       onPress={handleRefresh}
+      //       className="flex-row items-center"
+      //     >
+      //       <ScaledText
+      //         allowScaling={false}
+      //         variant="body2"
+      //         className="text-center text-primary font-neueLight"
+      //       >
+      //         Riprova
+      //       </ScaledText>
+      //     </TouchableOpacity>
+      //     {areFiltersActive() && (
+      //       <TouchableOpacity
+      //         onPress={handleResetFilters}
+      //         className="flex-row items-center"
+      //       >
+      //         <ScaledText
+      //           allowScaling={false}
+      //           variant="body2"
+      //           className="text-center text-primary font-neueLight"
+      //         >
+      //           Reimposta filtri
+      //         </ScaledText>
+      //       </TouchableOpacity>
+      //     )}
+      //   </View>
+      // </View>
       <View
         className="items-center justify-center flex-1"
         style={{ paddingTop: mvs(100) }}
-      >
-        <View
-          className="flex-row items-center justify-center"
-          style={{ gap: s(4) }}
-        >
-          <ScaledText
-            allowScaling={false}
-            variant="lg"
-            className="text-center text-gray font-neueBold"
-          >
-            Nessun risultato trovato
-          </ScaledText>
-          {/* <SVGIcons.SafeAlert width={s(12)} height={s(12)} /> */}
-        </View>
-        <ScaledText
-          allowScaling={false}
-          variant="body2"
-          className="text-center text-gray font-neueLight"
-          style={{ marginTop: mvs(8), paddingHorizontal: s(40) }}
-        >
-          Prova a modificare i filtri
-          {areFiltersActive() ? " o reimposta i filtri" : ""}.
-        </ScaledText>
-        <View style={{ flexDirection: "row", gap: s(16), marginTop: mvs(8) }}>
-          <TouchableOpacity
-            onPress={handleRefresh}
-            className="flex-row items-center"
-          >
-            {/* Fallback to generic reload or try again, since SVGIcons.Refresh doesn't exist */}
-            <ScaledText
-              allowScaling={false}
-              variant="body2"
-              className="text-center text-primary font-neueLight"
-            >
-              Riprova
-            </ScaledText>
-          </TouchableOpacity>
-          {areFiltersActive() && (
-            <TouchableOpacity
-              onPress={handleResetFilters}
-              className="flex-row items-center"
-            >
-              <ScaledText
-                allowScaling={false}
-                variant="body2"
-                className="text-center text-primary font-neueLight"
-              >
-                Reimposta filtri
-              </ScaledText>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      ></View>
     );
   };
 
@@ -227,7 +258,8 @@ export default function SearchScreen() {
         : "Artisti";
 
   const locationText = shouldShowCount
-    ? `${totalResults} ${typeLabel}` + (locationDisplay ? " in Provincia di" : "")
+    ? `${totalResults} ${typeLabel}` +
+      (locationDisplay ? " in Provincia di" : "")
     : typeLabel + (locationDisplay ? " in Provincia di" : "");
 
   return (

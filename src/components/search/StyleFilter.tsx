@@ -4,6 +4,7 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles } from "@/services/style.service";
 import type { StyleFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
+import { toast } from "sonner-native";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -20,6 +21,8 @@ type StyleFilterProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   facets: StyleFacet[];
+  allStyles: StyleFacet[];
+  availableStyleIds: Set<string>;
   isLoading?: boolean;
   onConfirm?: () => void;
 };
@@ -28,6 +31,8 @@ export default function StyleFilter({
   selectedIds,
   onSelectionChange,
   facets,
+  allStyles,
+  availableStyleIds,
   isLoading = false,
   onConfirm,
 }: StyleFilterProps) {
@@ -43,6 +48,14 @@ export default function StyleFilter({
   } | null>(null);
 
   const toggleStyle = (styleId: string) => {
+    // Check if style is available
+    if (!availableStyleIds.has(styleId)) {
+      toast.error(
+        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+      );
+      return;
+    }
+
     const newSelectedIds = selectedIds.includes(styleId)
       ? selectedIds.filter((id) => id !== styleId)
       : [...selectedIds, styleId];
@@ -54,8 +67,8 @@ export default function StyleFilter({
     e.stopPropagation();
     // Try to fetch full style data with description
     try {
-      const allStyles = await fetchTattooStyles();
-      const fullStyle = allStyles.find((s) => s.id === style.id);
+      const fetchedStyles = await fetchTattooStyles();
+      const fullStyle = fetchedStyles.find((s) => s.id === style.id);
       if (fullStyle) {
         setFullStyleData(fullStyle);
       } else {
@@ -83,11 +96,13 @@ export default function StyleFilter({
     selectedIds.length === 0
       ? "Tutti"
       : selectedIds.length === 1
-        ? facets.find((s) => s.id === selectedIds[0])?.name || "1 selezionato"
+        ? allStyles.find((s) => s.id === selectedIds[0])?.name ||
+          facets.find((s) => s.id === selectedIds[0])?.name ||
+          "1 selezionato"
         : `${selectedIds.length} selezionati`;
 
-  // Show all available facets
-  const availableFacets = facets;
+  // Show all styles, not just available facets
+  const stylesToShow = allStyles.length > 0 ? allStyles : facets;
 
   return (
     <>
@@ -205,7 +220,7 @@ export default function StyleFilter({
             >
               <ActivityIndicator size="small" color="#AE0E0E" />
             </View>
-          ) : availableFacets.length === 0 ? (
+          ) : stylesToShow.length === 0 ? (
             <View
               className="items-center justify-center"
               style={{ paddingVertical: mvs(40) }}
@@ -219,27 +234,47 @@ export default function StyleFilter({
               </ScaledText>
             </View>
           ) : (
-            availableFacets.map((facet) => {
-              const isSelected = selectedIds.includes(facet.id);
+            stylesToShow.map((style) => {
+              const isSelected = selectedIds.includes(style.id);
+              const isAvailable = availableStyleIds.has(style.id);
               return (
                 <Pressable
-                  key={facet.id}
-                  onPress={() => toggleStyle(facet.id)}
+                  key={style.id}
+                  onPress={() => {
+                    if (isAvailable) {
+                      toggleStyle(style.id);
+                    } else {
+                      toast.error(
+                        "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                      );
+                    }
+                  }}
                   className="border-b border-gray/20"
                   style={{
                     paddingHorizontal: s(20),
                     paddingVertical: mvs(12),
+                    opacity: isAvailable ? 1 : 0.5,
                   }}
                 >
                   <View className="flex-row items-center justify-between">
                     <TouchableOpacity
                       className="flex-row items-center gap-3 flex-1"
-                      onPress={(e) => handleStyleInfoPress(facet, e)}
-                      activeOpacity={0.7}
+                      onPress={(e) => {
+                        if (isAvailable) {
+                          handleStyleInfoPress(style, e);
+                        } else {
+                          e.stopPropagation();
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
+                        }
+                      }}
+                      activeOpacity={isAvailable ? 0.7 : 1}
+                      disabled={!isAvailable}
                     >
-                      {facet.imageUrl && (
+                      {style.imageUrl && (
                         <Image
-                          source={{ uri: facet.imageUrl }}
+                          source={{ uri: style.imageUrl }}
                           style={{
                             width: s(120),
                             height: mvs(72),
@@ -254,18 +289,27 @@ export default function StyleFilter({
                           variant="md"
                           className="text-gray font-montserratSemibold"
                         >
-                          {facet.name}
+                          {style.name}
                         </ScaledText>
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => toggleStyle(facet.id)}
+                      onPress={() => {
+                        if (isAvailable) {
+                          toggleStyle(style.id);
+                        } else {
+                          toast.error(
+                            "Questo filtro non può essere attivo con i tuoi filtri attuali"
+                          );
+                        }
+                      }}
                       hitSlop={{
                         top: 10,
                         bottom: 10,
                         left: 10,
                         right: 10,
                       }}
+                      disabled={!isAvailable}
                     >
                       {isSelected ? (
                         <SVGIcons.CheckedCheckbox width={s(17)} height={s(17)} />

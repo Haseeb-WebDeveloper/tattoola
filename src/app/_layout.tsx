@@ -158,6 +158,7 @@ export default function RootLayout() {
                       shadowOpacity: 0.3,
                       shadowRadius: 12,
                       elevation: mvs(12),
+                      zIndex: 9999,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -173,8 +174,7 @@ export default function RootLayout() {
                       color: "#a1a1aa",
                       fontSize: mvs(12),
                       fontWeight: "400",
-                      backgroundColor: "#A49A99",
-                      fontFamily: "Montserrat-Regular",
+                      fontFamily: "NeueHaasDisplay-Light",
                     },
                     actionButtonStyle: {
                       backgroundColor: "#A49A99",

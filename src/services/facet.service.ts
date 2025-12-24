@@ -396,9 +396,9 @@ async function getFilteredStudioIds(
 async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
   const { filters, activeTab } = params;
 
-  // Get filtered IDs excluding style filter AND location filter (with caching)
-  // We want to show all styles regardless of location selection
-  const cacheKey = getCacheKey(filters, activeTab, true, false, true);
+  // Get filtered IDs excluding style filter (but applying location and service filters)
+  // For "high" compression mode, we apply location filters to show only relevant styles
+  const cacheKey = getCacheKey(filters, activeTab, true, false, false);
   let artistIds: string[];
   let studioIds: string[];
 
@@ -416,10 +416,10 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
 
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
-        ? getFilteredArtistIds(filters, true, false, true)
+        ? getFilteredArtistIds(filters, true, false, false)
         : Promise.resolve([]),
       shouldFetchStudios
-        ? getFilteredStudioIds(filters, true, false, true)
+        ? getFilteredStudioIds(filters, true, false, false)
         : Promise.resolve([]),
     ]);
     artistIds = fetchedArtistIds;
@@ -510,9 +510,9 @@ async function getStyleFacets(params: FacetParams): Promise<StyleFacet[]> {
 async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
   const { filters, activeTab } = params;
 
-  // Get filtered IDs excluding service filter AND location filter (with caching)
-  // We want to show all services regardless of location selection
-  const cacheKey = getCacheKey(filters, activeTab, false, true, true);
+  // Get filtered IDs excluding service filter (but applying style and location filters)
+  // Services should be filtered by location, just like styles are filtered by service and location
+  const cacheKey = getCacheKey(filters, activeTab, false, true, false);
   let artistIds: string[];
   let studioIds: string[];
 
@@ -530,10 +530,10 @@ async function getServiceFacets(params: FacetParams): Promise<ServiceFacet[]> {
 
     const [fetchedArtistIds, fetchedStudioIds] = await Promise.all([
       shouldFetchArtists
-        ? getFilteredArtistIds(filters, false, true, true)
+        ? getFilteredArtistIds(filters, false, true, false)
         : Promise.resolve([]),
       shouldFetchStudios
-        ? getFilteredStudioIds(filters, false, true, true)
+        ? getFilteredStudioIds(filters, false, true, false)
         : Promise.resolve([]),
     ]);
     artistIds = fetchedArtistIds;

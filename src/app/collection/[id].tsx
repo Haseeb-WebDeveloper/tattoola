@@ -353,17 +353,14 @@ export default function CollectionDetailsScreen() {
   const layoutKey = editMode ? "one-col" : "two-col";
   const isOwner = !!user && !!collection && collection.author?.id === user.id;
   // Check if this is the "Preferiti" collection (case-insensitive)
-  const collectionNameLower = collection?.name?.toLowerCase() || "";
+  const collectionNameLower = collection?.name?.toLowerCase().trim() || "";
   const isArtistFavCollection =
     !!collection && collectionNameLower === "preferiti";
   // Check if this is "Tutti" collection - completely non-editable
-  const isTuttiCollection =
-    !!collection && collectionNameLower === "tutti";
-  // Check if this is a system collection (Tutti or Preferiti)
-  const isSystemCol = !!collection && isSystemCollection(collection.name);
+  // Directly check the normalized name for consistency
+  const isSystemCol = !!collection && isSystemCollection(collectionNameLower);
   // Preferiti can edit posts but not name/delete. Tutti cannot edit at all.
-  const canEditPosts = isOwner && !isTuttiCollection; // Allow edit mode for Preferiti
-  const canEditName = isOwner && !isSystemCol; // Cannot edit name for any system collection
+  const canEditPosts = isOwner; // Allow edit mode for Preferiti
   const canDeleteCollection = isOwner && !isSystemCol; // Cannot delete any system collection
   const currentPostCount = collection?.postsCount ?? posts.length;
   const isArtistFavFull =
@@ -656,12 +653,12 @@ export default function CollectionDetailsScreen() {
             <SVGIcons.ChevronLeft width={16} height={16} />
           </TouchableOpacity>
 
-          <View className="items-center flex-1">
+          <View className="items-center justify-center flex-1">
             <View className="flex-row items-center justify-center">
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-foreground font-neueSemibold"
+                className="text-foreground font-neueSemibold text-center"
                 style={{
                   lineHeight: mvs(20),
                   borderBottomWidth: editMode ? mvs(0.5) : 0,
@@ -681,7 +678,7 @@ export default function CollectionDetailsScreen() {
             </View>
           </View>
 
-          {canEditPosts && !(editMode && isArtistFavCollection) && (
+          {canEditPosts && !(editMode && isArtistFavCollection) ? (
             <TouchableOpacity
               onPress={editMode ? handleDeleteCollection : handleToggleEditMode}
               style={{
@@ -701,7 +698,10 @@ export default function CollectionDetailsScreen() {
                 <SVGIcons.Edit width={20} height={20} />
               )}
             </TouchableOpacity>
-          )}
+          ):
+          // for space empty
+          <View style={{ width: 32 }} />
+          }
         </View>
 
         <View className="flex-col items-center pb-4 mt-1">

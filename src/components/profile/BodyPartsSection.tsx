@@ -62,7 +62,7 @@ export const BodyPartsSection: React.FC<BodyPartsSectionProps> = ({
             <ScaledText
               allowScaling={false}
               variant="11"
-              className="text-foreground/85 font-neueBold"
+              className="text-foreground/80 font-neueBold"
             >
               {bodyPart.name}
             </ScaledText>

@@ -30,9 +30,26 @@ function CollectionScreen() {
   const title = typeof name === "string" && name.length > 0 ? name : "";
 
   /* ---------------- FACETS ---------------- */
+  // Calculate style facets from artists filtered by service AND location (but not style)
+  // This ensures that when a service or location is selected, only styles available in matching artists are shown
   const styleFacets = useMemo<StyleFacet[]>(() => {
+    // Start with all artists, then apply filters (excluding style filter)
+    let artistsForStyleFacets = artists;
+    
+    // Apply service filter
+    if (selectedServiceIds.length > 0) {
+      artistsForStyleFacets = artistsForStyleFacets.filter((artist) =>
+        (artist.services || []).some((srv) =>
+          selectedServiceIds.includes(srv.id)
+        )
+      );
+    }
+    
+    // Note: Location filtering is handled by the artists array itself
+    // If artists are already filtered by location, this will automatically be reflected
+
     const map = new Map<string, StyleFacet>();
-    artists.forEach((artist) => {
+    artistsForStyleFacets.forEach((artist) => {
       artist.styles?.forEach((style) => {
         if (style?.id && !map.has(style.id)) {
           map.set(style.id, {
@@ -46,11 +63,26 @@ function CollectionScreen() {
     return Array.from(map.values()).sort((a, b) =>
       a.name.localeCompare(b.name)
     );
-  }, [artists]);
+  }, [artists, selectedServiceIds]);
 
+  // Calculate service facets from artists filtered by style AND location (but not service)
+  // This ensures that when a style or location is selected, only services available in matching artists are shown
   const serviceFacets = useMemo<ServiceFacet[]>(() => {
+    // Start with all artists, then apply filters (excluding service filter)
+    let artistsForServiceFacets = artists;
+    
+    // Apply style filter
+    if (selectedStyleIds.length > 0) {
+      artistsForServiceFacets = artistsForServiceFacets.filter((artist) =>
+        artist.styles?.some((s) => selectedStyleIds.includes(s.id))
+      );
+    }
+    
+    // Note: Location filtering is handled by the artists array itself
+    // If artists are already filtered by location, this will automatically be reflected
+
     const map = new Map<string, ServiceFacet>();
-    artists.forEach((artist) => {
+    artistsForServiceFacets.forEach((artist) => {
       (artist.services || [])?.forEach((service) => {
         if (service?.id && !map.has(service.id)) {
           map.set(service.id, {
@@ -64,7 +96,7 @@ function CollectionScreen() {
     return Array.from(map.values()).sort((a, b) =>
       a.name.localeCompare(b.name)
     );
-  }, [artists]);
+  }, [artists, selectedStyleIds]);
 
   /* ---------------- FILTER ---------------- */
   const filteredArtists = useMemo(() => {
