@@ -103,11 +103,10 @@ export default function SearchScreen() {
           // Use user's primary location (province only, not municipality)
           updateFilters({
             provinceId: userLocation.provinceId,
-            municipalityId: null, // Explicitly clear municipality
+            municipalityId: null, 
           });
           setLocation(userLocation.province, "");
         } else {
-          // User logged in but no primary location, fall back to Milano
           if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
             const milano = MOST_POPULAR_PROVINCES_IDS[0];
             updateFilters({ 
@@ -118,7 +117,6 @@ export default function SearchScreen() {
           }
         }
       } else {
-        // Not logged in (guest user), always use Milano as default
         if (MOST_POPULAR_PROVINCES_IDS.length > 0) {
           const milano = MOST_POPULAR_PROVINCES_IDS[0];
           updateFilters({ 
