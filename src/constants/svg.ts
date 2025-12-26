@@ -271,6 +271,8 @@ import GuestUserProfile from "@/assets/icons/GuestUserProfile.svg";
 // @ts-ignore
 // @ts-ignore
 import StudioPremium from "@/assets/icons/studio-premium.svg";
+// @ts-ignore
+import ArtistMaachine from "@/assets/icons/ArtistMaachine.svg";
 
 export const SVGIcons = {
   Close,
@@ -409,6 +411,7 @@ export const SVGIcons = {
   HelpQuestion,
   GuestUserProfile,
   StudioPremium,
+  ArtistMaachine,
 };
 
 export type SVGIconName = keyof typeof SVGIcons;
