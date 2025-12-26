@@ -245,12 +245,12 @@ export default function UploadPreviewStep() {
       <View
         className="absolute w-fit"
         style={{
-          top: s(10),
+          top: s(16),
           left: "50%",
           transform: [{ translateX: "-50%" }],
         }}
       >
-        <SVGIcons.LogoLight style={{  width: s(90) , height: s(50) }} />
+        <SVGIcons.LogoLight  width={s(90)} height={s(16)} />
       </View>
       {/* Caption and user info near bottom like mockup */}
       <View className="absolute left-2 bottom-[60px]">

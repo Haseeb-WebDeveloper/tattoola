@@ -2,8 +2,8 @@ import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import {
-  fetchArtistSelfProfile,
-  toggleFollow,
+  fetchArtistProfile,
+  toggleFollow
 } from "@/services/profile.service";
 import { prefetchStudioProfile } from "@/services/studio.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
@@ -53,25 +53,30 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   const [rejectionMessage, setRejectionMessage] = useState<string>("");
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // After initial paint, progressively enhance with full profile data
+
+  // Sync isFollowing state when data prop changes (e.g., when navigating back to profile)
+  useEffect(() => {
+    if (typeof data.isFollowing === "boolean") {
+      setIsFollowing(data.isFollowing);
+    }
+  }, [data.isFollowing]);
+
+  // After initial paint, progressively enhance with full profile data (and correct isFollowing)
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const detailed = await fetchArtistSelfProfile(
+        const detailed = await fetchArtistProfile(
           profileData.user.id,
-          false,
-          {
-            includeCollectionsAndBodyParts: true,
-          }
+          currentUserId
         );
 
         if (!cancelled && detailed) {
-          setProfileData((prev) => ({
-            ...detailed,
-            isFollowing: prev.isFollowing,
-          }));
+          setProfileData(detailed);
+          if (typeof detailed.isFollowing === "boolean") {
+            setIsFollowing(detailed.isFollowing);
+          }
           setIsHydrated(true);
         }
       } catch (err) {
@@ -82,7 +87,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [profileData.user.id]);
+  }, [profileData.user.id, currentUserId]);
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>

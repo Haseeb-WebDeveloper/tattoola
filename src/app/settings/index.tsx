@@ -39,20 +39,20 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
     {/* Main row of setting item */}
     {!iconRight ? (
       <View className="flex-row items-center flex-1 ">
-        {icon && <View style={{ marginRight: s(12) }}>{icon}</View>}
-        <View className="flex-row items-center flex-1" style={{ gap: s(24) }}>
+        <View className="flex-row items-center flex-1" style={{ gap: s(10) }}>
           <ScaledText
             allowScaling={false}
             variant="lg"
             className={`font-neueMedium ${isDanger && icon ? "text-error" : "text-white"}`}
-          >
+            >
             {title}
           </ScaledText>
+          {icon && <View >{icon}</View>}
           {value && (
             <ScaledText
-              allowScaling={false}
-              variant="md"
-              className="text-gray-300 font-neueLight"
+            allowScaling={false}
+            variant="md"
+            className="text-gray-300 font-neueLight"
             >
               {value}
             </ScaledText>
@@ -325,17 +325,17 @@ export default function SettingsScreen() {
           <SettingsItem title="Profilo" onPress={handleProfilePress} />
           <View className="bg-gray" style={{ height: s(0.5) }} />
           <SettingsItem title="Community" onPress={handleCommunityPress} />
-
           {user?.role === "ARTIST" && (
             <>
               <View className="bg-gray" style={{ height: s(0.5) }} />
               <SettingsItem
                 title="Studio"
+
                 onPress={handleStudioPress}
                 icon={
-                  <SVGIcons.DimondRed style={{ width: s(16), height: s(16) }} />
+                  <SVGIcons.DimondRed  width={s(16)} height={s(16)} />
                 }
-                iconRight={true}
+                // iconRight={true}
               />
             </>
           )}

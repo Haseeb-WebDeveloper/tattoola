@@ -348,7 +348,7 @@ export default function SearchScreen() {
               {/* <SVGIcons.Flash width={s(20)} height={s(20)} /> */}
             </View>
             <View className="flex-row items-center">
-              <SVGIcons.LogoLight width={s(90)} height={s(50)} />
+              {/* <SVGIcons.LogoLight width={s(90)} height={s(50)} /> */}
             </View>
 
             {/* Filter Button */}
