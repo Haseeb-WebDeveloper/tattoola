@@ -545,12 +545,16 @@ export default function SearchLocationPicker({
                   const labelType = entityType === "studios" ? "studi" : "artisti";
 
                   if (selectedMunicipality && count !== null) {
-                    // Prefer municipality name; fallback to province name if missing
-                    const placeName = (selectedMunicipality.name || selectedProvince?.name || "").toUpperCase();
+                    // Show municipality name as-is (normal case)
+                    const placeName = (selectedMunicipality.name || selectedProvince?.name || "");
                     return `${count} ${labelType} nel comune di ${placeName}`;
                   }
 
-                  return `Comuni in Provincia di  ${selectedProvince?.name.toUpperCase() || "PROVINCIA SELEZIONATA"}`;
+                  // Uppercase province name in municipality step header
+                  const provName = selectedProvince?.name
+                    ? selectedProvince.name.toUpperCase()
+                    : "PROVINCIA SELEZIONATA";
+                  return `Comuni in Provincia di ${provName}`;
                 })()}
               </ScaledText>
               {isLoading ? (

@@ -286,7 +286,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
                       variant="md"
                       className="text-white font-neueLight"
                     >
-                      Tattoo Artist residente in{" "}
+                      Tattoo Artist resident in{" "}
                     </ScaledText>
                     <ScaledText
                       allowScaling={false}

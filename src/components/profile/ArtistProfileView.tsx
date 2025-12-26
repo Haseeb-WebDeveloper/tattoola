@@ -15,6 +15,7 @@ import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Linking,
   Modal,
   TouchableOpacity,
@@ -148,8 +149,11 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
       // Block requests to non-artists
       if (!artistProfile) {
         // Artists cannot send to tattoo lovers; lovers can only send to artists
-        // We still show a friendly message even if the current user isn't an artist.
-        toast.error("Le richieste private possono essere inviate solo agli artisti");
+        // Show a friendly message
+        Alert.alert(
+          "Richiesta privata",
+          "Le richieste private possono essere inviate solo agli artisti"
+        );
         return;
       }
 

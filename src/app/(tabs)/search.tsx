@@ -29,10 +29,12 @@ export default function SearchScreen() {
     search,
     loadMore,
     loadFacets,
+    loadLocationFacets,
     locationDisplay,
     filters,
     resetFilters,
     facets,
+    locationFacets,
     isLoadingFacets,
   } = useSearchStore();
 
@@ -127,7 +129,8 @@ export default function SearchScreen() {
         }
       }
 
-      await Promise.all([search(), loadFacets()]);
+      // Load both filtered facets and unfiltered location facets
+      await Promise.all([search(), loadFacets(), loadLocationFacets()]);
     };
     initialize();
   }, [user]);
@@ -156,11 +159,14 @@ export default function SearchScreen() {
   }) => {
     const store = useSearchStore.getState();
 
-    // Update filters without triggering an extra facets load; search() will reload facets
+    // Reset style and service filters, update location
+    // Treat location as main filter - reset other filters when location changes
     store.updateFilters(
       {
         provinceId: data.provinceId,
         municipalityId: data.municipalityId,
+        styleIds: [],
+        serviceIds: [],
       },
       { skipLoadFacets: true }
     );
@@ -457,14 +463,16 @@ export default function SearchScreen() {
                     {(() => {
                       const province = locationDisplay?.province || "";
                       const municipality = locationDisplay?.municipality || "";
+                      const provincesingle = province.toUpperCase();
                       if (province && municipality) {
-                        const muniAbbrev = municipality
+                        const provinceAbbrev = province
                           .slice(0, 2)
                           .toUpperCase();
-                        return `${province.toUpperCase()} (${muniAbbrev})`;
+                        const muniAbbrev = municipality
+                        return ` ${muniAbbrev} (${provinceAbbrev})`;
                       }
-                      const single = province || municipality;
-                      return single.toUpperCase();
+                      const single = provincesingle || municipality;
+                      return single;
                     })()}
                   </ScaledText>
                 </TouchableOpacity>
@@ -546,7 +554,7 @@ export default function SearchScreen() {
         onSelect={handleLocationSelect}
         initialProvinceId={filters.provinceId}
         initialMunicipalityId={filters.municipalityId}
-        facets={facets?.locations || []}
+        facets={locationFacets?.locations || []}
         isLoading={isLoadingFacets}
         entityType={activeTab}
       />

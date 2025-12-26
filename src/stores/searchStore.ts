@@ -1,15 +1,15 @@
-import { getFacets } from "@/services/facet.service";
+import { getFacets, getLocationFacetsUnfiltered } from "@/services/facet.service";
 import { searchArtists, searchStudios } from "@/services/search.service";
 import type { Facets } from "@/types/facets";
-import type { SearchFilters, SearchResults, SearchTab, SearchTotals } from "@/types/search";
+import type { SearchFilters, SearchResults, SearchTab } from "@/types/search";
 import { create } from "zustand";
 
 type SearchState = {
   activeTab: SearchTab;
   filters: SearchFilters;
   results: SearchResults;
-  totals: SearchTotals;
   facets: Facets | null;
+  locationFacets: any | null; // Location facets without style/service filters
   page: number;
   isInitializing: boolean;
   isLoading: boolean;
@@ -31,6 +31,7 @@ type SearchState = {
   search: () => Promise<void>;
   loadMore: () => Promise<void>;
   loadFacets: () => Promise<void>;
+  loadLocationFacets: () => Promise<void>;
   resetSearch: () => void;
   resetFilters: () => void;
 };
@@ -49,11 +50,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     artists: [],
     studios: [],
   },
-  totals: {
-    artists: 0,
-    studios: 0,
-  },
   facets: null,
+  locationFacets: null,
   page: 0,
   isInitializing: true,
   isLoading: false,
@@ -118,10 +116,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
             artists: result.data,
             studios: results.studios, // Preserve existing studios data
           },
-          totals: {
-            artists: result.total,
-            studios: get().totals.studios,
-          },
           hasMore: result.hasMore,
           error: result.error || null,
           isLoading: false,
@@ -133,10 +127,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           results: {
             artists: results.artists, // Preserve existing artists data
             studios: result.data,
-          },
-          totals: {
-            artists: get().totals.artists,
-            studios: result.total,
           },
           hasMore: result.hasMore,
           error: result.error || null,
@@ -171,7 +161,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
             ...results,
             artists: [...results.artists, ...result.data],
           },
-          // totals stay the same; paging doesn't change total
           page: nextPage,
           hasMore: result.hasMore,
           isLoadingMore: false,
@@ -183,7 +172,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
             ...results,
             studios: [...results.studios, ...result.data],
           },
-          // totals stay the same; paging doesn't change total
           page: nextPage,
           hasMore: result.hasMore,
           isLoadingMore: false,
@@ -209,6 +197,17 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
   },
 
+  loadLocationFacets: async () => {
+    const { activeTab } = get();
+    try {
+      const locations = await getLocationFacetsUnfiltered(activeTab);
+      set({ locationFacets: { locations } });
+    } catch (error: any) {
+      console.error("Error loading location facets:", error);
+      set({ locationFacets: null });
+    }
+  },
+
   resetSearch: () => {
     set({
       activeTab: "artists",
@@ -216,10 +215,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       results: {
         artists: [],
         studios: [],
-      },
-      totals: {
-        artists: 0,
-        studios: 0,
       },
       facets: null,
       page: 0,
@@ -232,7 +227,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
 
   resetFilters: () => {
-    set({ filters: initialFilters, locationDisplay: null, totals: { artists: 0, studios: 0 } });
+    set({ filters: initialFilters, locationDisplay: null });
     get().search();
     get().loadFacets();
   },

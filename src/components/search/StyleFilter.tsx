@@ -4,14 +4,14 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchTattooStyles } from "@/services/style.service";
 import type { StyleFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
-import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Image,
+    Pressable,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -135,6 +135,15 @@ export default function StyleFilter({
         enableOverDrag={false}
         topInset={insets.top + mvs(80)}
         enableContentPanningGesture={false}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            opacity={0.5}
+            pressBehavior="close"
+          />
+        )}
         backgroundStyle={{
           backgroundColor: "#100C0C",
           borderTopLeftRadius: s(24),

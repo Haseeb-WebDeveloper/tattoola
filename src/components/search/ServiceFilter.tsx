@@ -4,13 +4,13 @@ import { SVGIcons } from "@/constants/svg";
 import { fetchServices } from "@/services/services.service";
 import type { ServiceFacet } from "@/types/facets";
 import { mvs, s } from "@/utils/scale";
-import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Pressable,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -137,6 +137,15 @@ export default function ServiceFilter({
         enableOverDrag={false}
         topInset={insets.top + mvs(8)}
         enableContentPanningGesture={false}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            opacity={0.5}
+            pressBehavior="close"
+          />
+        )}
         backgroundStyle={{
           backgroundColor: "#100C0C",
           borderTopLeftRadius: s(24),
