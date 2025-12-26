@@ -21,6 +21,8 @@ import SecurePerson from "@/assets/icons/secure-person.svg";
 // @ts-ignore
 import Follow from "@/assets/icons/follow.svg";
 // @ts-ignore
+import Following from "@/assets/icons/Following.svg";
+// @ts-ignore
 import User from "@/assets/icons/user.svg";
 // @ts-ignore
 import UserFilled from "@/assets/icons/user-filled.svg";
@@ -387,6 +389,7 @@ export const SVGIcons = {
   Users,
   UserArt,
   Follow,
+  Following,
   Smile,
   NoUser,
   Paypal,

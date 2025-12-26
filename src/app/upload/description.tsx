@@ -12,9 +12,8 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
@@ -164,6 +163,7 @@ export default function UploadDescriptionStep() {
               paddingVertical: s(12),
             }}
             placeholder="Scrivi una descrizione per il tuo post..."
+            placeholderTextColor={"#ffffff80"}
             value={caption || ""}
             onChangeText={(v) => setCaption(v)}
             onFocus={() => setIsFocused(true)}

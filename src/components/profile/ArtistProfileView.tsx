@@ -2,8 +2,8 @@ import StudioCard from "@/components/search/StudioCard";
 import ScaledText from "@/components/ui/ScaledText";
 import { SVGIcons } from "@/constants/svg";
 import {
-  fetchArtistSelfProfile,
-  toggleFollow,
+  fetchArtistProfile,
+  toggleFollow
 } from "@/services/profile.service";
 import { prefetchStudioProfile } from "@/services/studio.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
@@ -53,25 +53,30 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
   const [rejectionMessage, setRejectionMessage] = useState<string>("");
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // After initial paint, progressively enhance with full profile data
+
+  // Sync isFollowing state when data prop changes (e.g., when navigating back to profile)
+  useEffect(() => {
+    if (typeof data.isFollowing === "boolean") {
+      setIsFollowing(data.isFollowing);
+    }
+  }, [data.isFollowing]);
+
+  // After initial paint, progressively enhance with full profile data (and correct isFollowing)
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const detailed = await fetchArtistSelfProfile(
+        const detailed = await fetchArtistProfile(
           profileData.user.id,
-          false,
-          {
-            includeCollectionsAndBodyParts: true,
-          }
+          currentUserId
         );
 
         if (!cancelled && detailed) {
-          setProfileData((prev) => ({
-            ...detailed,
-            isFollowing: prev.isFollowing,
-          }));
+          setProfileData(detailed);
+          if (typeof detailed.isFollowing === "boolean") {
+            setIsFollowing(detailed.isFollowing);
+          }
           setIsHydrated(true);
         }
       } catch (err) {
@@ -82,7 +87,7 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [profileData.user.id]);
+  }, [profileData.user.id, currentUserId]);
 
   const handleSocialMediaPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -348,14 +353,22 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <TouchableOpacity
               onPress={handleFollowToggle}
               disabled={isTogglingFollow}
-              className={`flex-1 flex-row rounded-full items-center justify-center border bg-background  border-gray`}
+              className={`flex-1 flex-row rounded-full items-center justify-center border  ${
+                isFollowing ? "border-primary bg-[#140404]" : "border-gray bg-black"
+              }`}
               style={{ gap: s(8), paddingVertical: mvs(8) }}
             >
-              <SVGIcons.Follow width={s(14)} height={s(14)} />
+              {isFollowing ? (
+                <SVGIcons.Following width={s(14)} height={s(14)} />
+              ) : (
+                <SVGIcons.Follow width={s(14)} height={s(14)} />
+              )}
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-foreground font-neueMedium"
+                className={`font-neueMedium ${
+                  isFollowing ? "text-foreground" : "text-foreground"
+                }`}
               >
                 {isFollowing ? "Seguendo" : "Segui"}
               </ScaledText>
