@@ -19,6 +19,7 @@ import {
 } from "@/services/profile.service";
 import { fetchTattooStyles } from "@/services/style.service";
 import { useAuthRequiredStore } from "@/stores/authRequiredStore";
+import { useFeedStore } from "@/stores/feedStore";
 import { UserSummary } from "@/types/auth";
 import { mvs, s } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
@@ -131,6 +132,16 @@ export default function PostDetailScreen() {
   const [loading, setLoading] = useState(!parsedInitial);
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<PostDetail | null>(parsedInitial);
+  // Log initial likes and likesCount
+  React.useEffect(() => {
+    if (post) {
+      console.log('[Init] Likes:', post.likes?.map(l => l.userId), 'Count:', post.likes?.length, 'likesCount:', post.likesCount);
+      // If likesCount does not match likes.length, fix it for local state
+      if (post.likes && post.likes.length !== post.likesCount) {
+        setPost({ ...post, likesCount: post.likes.length });
+      }
+    }
+  }, [post]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -263,7 +274,14 @@ export default function PostDetailScreen() {
       }
       // Allow anonymous users to view posts (pass null if no user)
       const data = await fetchPostDetails(id, user?.id || null);
-      setPost(data);
+      // Log likes and likesCount after loading from API
+      console.log('[API] Likes:', data.likes?.map(l => l.userId), 'Count:', data.likes?.length, 'likesCount:', data.likesCount);
+      // If likesCount does not match likes.length, fix it for local state
+      if (data.likes && data.likes.length !== data.likesCount) {
+        setPost({ ...data, likesCount: data.likes.length });
+      } else {
+        setPost(data);
+      }
     } catch (err: any) {
       // Only show error if we don't have initial data to display
       if (!parsedInitial) {
@@ -283,6 +301,7 @@ export default function PostDetailScreen() {
     router.back();
   };
 
+  const upsertPost = useFeedStore((s) => s.upsertPost);
   const handleLike = async () => {
     if (!post) return;
 
@@ -293,22 +312,74 @@ export default function PostDetailScreen() {
     }
 
     const previous = post;
+    let newLikes;
+    if (!previous.isLiked) {
+      // Add current user to likes
+      newLikes = [
+        ...previous.likes,
+        {
+          id: user.id, // Use user id as unique key for now
+          userId: user.id,
+          username: user.username,
+          avatar: user.avatar,
+        },
+      ];
+    } else {
+      // Remove current user from likes
+      newLikes = previous.likes.filter((like) => like.userId !== user.id);
+    }
+    console.log('[Like] Optimistic likes:', newLikes.map(l => l.userId), 'Count:', newLikes.length);
     const optimistic: PostDetail = {
       ...previous,
       isLiked: !previous.isLiked,
-      likesCount: previous.isLiked
-        ? Math.max(previous.likesCount - 1, 0)
-        : previous.likesCount + 1,
+      likes: newLikes,
+      likesCount: newLikes.length,
     };
     setPost(optimistic);
 
     try {
       const result = await togglePostLike(previous.id, user.id);
-      setPost((curr) =>
-        curr
-          ? { ...curr, isLiked: result.isLiked, likesCount: result.likesCount }
-          : curr
-      );
+      setPost((curr) => {
+        if (!curr) return curr;
+        let updatedLikes;
+        if (result.isLiked) {
+          // Add current user to likes if not present
+          const alreadyLiked = curr.likes.some((like) => like.userId === user.id);
+          updatedLikes = alreadyLiked
+            ? curr.likes
+            : [
+                ...curr.likes,
+                {
+                  id: user.id,
+                  userId: user.id,
+                  username: user.username,
+                  avatar: user.avatar,
+                },
+              ];
+        } else {
+          // Remove current user from likes
+          updatedLikes = curr.likes.filter((like) => like.userId !== user.id);
+        }
+        console.log('[Like] Result likes:', updatedLikes.map(l => l.userId), 'Count:', updatedLikes.length);
+        return {
+          ...curr,
+          isLiked: result.isLiked,
+          likes: updatedLikes,
+          likesCount: updatedLikes.length,
+        };
+      });
+      // Update feed store so feed reflects the new like state
+      upsertPost({
+        ...previous,
+        isLiked: result.isLiked,
+        likesCount: result.likesCount,
+        likes: newLikes.map(like => ({
+          id: like.id,
+          userId: like.userId || "",
+          username: like.username,
+          avatar: like.avatar,
+        })),
+      });
     } catch (err: any) {
       setPost(previous);
       console.error("Failed to toggle like:", err);
