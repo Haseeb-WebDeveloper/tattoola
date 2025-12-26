@@ -22,7 +22,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
   const hasStudioPlan =
     subscriptionType === "STUDIO" || subscriptionType === "PREMIUM";
   const isStudioPremium = subscriptionType === "PREMIUM";
-  const badgeLabel = isStudioPremium ? "Studio Premium" : "Studio Profilo";
+  const badgeLabel = isStudioPremium ? "Premium Profilo" : "Studio Profilo";
 
   const handlePress = () => {
     prefetchUserProfile(artist.userId).catch(() => {
