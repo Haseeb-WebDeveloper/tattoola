@@ -17,11 +17,10 @@ import {
   KeyboardAvoidingView,
   Linking,
   Modal,
-  Platform,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { toast } from "sonner-native";
 
@@ -372,7 +371,7 @@ export default function SettingsSubscription() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      // behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="bg-background min-h-screen"
       style={{
         flex: 1,

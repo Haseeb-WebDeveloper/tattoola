@@ -82,7 +82,7 @@ export function HelpTabs({
           gap: s(6),
         }}
       >
-        <SVGIcons.MagicStick width={s(12)} height={s(12)} />
+        <SVGIcons.ArtistMaachine width={s(14)} height={s(14)} />
         <ScaledText
           allowScaling={false}
           variant="sm"

@@ -362,15 +362,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   Filtra per stile
                 </ScaledText>
               </View>
-              <TouchableOpacity onPress={handleResetStyle}>
-                <ScaledText
-                  allowScaling={false}
-                  variant="md"
-                  className="text-gray font-neueLight"
-                >
-                  Reimposta
-                </ScaledText>
-              </TouchableOpacity>
+            
             </View>
             <StyleFilter
               selectedIds={tempFilters.styleIds}
@@ -404,7 +396,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                   Filtra per servizio
                 </ScaledText>
               </View>
-              <TouchableOpacity activeOpacity={1} onPress={handleResetService}>
+              {/* <TouchableOpacity activeOpacity={1} onPress={handleResetService}>
                 <ScaledText
                   allowScaling={false}
                   variant="md"
@@ -412,7 +404,7 @@ export default function FilterModal({ visible, onClose }: FilterModalProps) {
                 >
                   Reimposta
                 </ScaledText>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
             <ServiceFilter
               selectedIds={tempFilters.serviceIds}

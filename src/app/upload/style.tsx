@@ -1,6 +1,6 @@
+import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import NextBackFooter from "@/components/ui/NextBackFooter";
 import { ScaledText } from "@/components/ui/ScaledText";
-import StyleInfoModal from "@/components/shared/StyleInfoModal";
 import { SVGIcons } from "@/constants/svg";
 import { useAuth } from "@/providers/AuthProvider";
 import { cloudinaryService } from "@/services/cloudinary.service";
