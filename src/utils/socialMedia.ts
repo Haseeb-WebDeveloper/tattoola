@@ -2,17 +2,40 @@
  * Utility functions for social media URL generation and validation
  */
 
-export const createInstagramUrl = (username: string): string => {
-  if (!username) return '';
-  const cleanUsername = username.replace(/^@/, '').trim();
-  return `https://instagram.com/${cleanUsername}`;
+export const createInstagramUrl = (input: string): string => {
+  if (!input) return '';
+  console.log("input", input);
+
+  const trimmed = input.trim();
+
+  // If it's already a full URL, return normalized version
+  if (trimmed.startsWith('http')) {
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  }
+
+  // Otherwise treat as username
+  const cleanUsername = trimmed.replace(/^@/, '');
+  
+
+  return `https://www.instagram.com/${cleanUsername}/`;
 };
 
-export const createTiktokUrl = (username: string): string => {
-  if (!username) return '';
-  const cleanUsername = username.replace(/^@/, '').trim();
-  return `https://tiktok.com/@${cleanUsername}`;
+export const createTiktokUrl = (input: string): string => {
+  if (!input) return '';
+
+  const trimmed = input.trim();
+
+  // If already a URL → normalize and return
+  if (trimmed.startsWith('http')) {
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  }
+
+  // Remove @ if present
+  const cleanUsername = trimmed.replace(/^@/, '');
+
+  return `https://www.tiktok.com/@${cleanUsername}`;
 };
+
 
 export const createWebsiteUrl = (url: string): string => {
   if (!url) return '';
