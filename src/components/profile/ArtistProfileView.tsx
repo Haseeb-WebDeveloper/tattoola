@@ -348,14 +348,22 @@ export const ArtistProfileView: React.FC<ArtistProfileViewProps> = ({
             <TouchableOpacity
               onPress={handleFollowToggle}
               disabled={isTogglingFollow}
-              className={`flex-1 flex-row rounded-full items-center justify-center border bg-background  border-gray`}
+              className={`flex-1 flex-row rounded-full items-center justify-center border  ${
+                isFollowing ? "border-primary bg-[#140404]" : "border-gray bg-black"
+              }`}
               style={{ gap: s(8), paddingVertical: mvs(8) }}
             >
-              <SVGIcons.Follow width={s(14)} height={s(14)} />
+              {isFollowing ? (
+                <SVGIcons.Following width={s(14)} height={s(14)} />
+              ) : (
+                <SVGIcons.Follow width={s(14)} height={s(14)} />
+              )}
               <ScaledText
                 allowScaling={false}
                 variant="lg"
-                className="text-foreground font-neueMedium"
+                className={`font-neueMedium ${
+                  isFollowing ? "text-foreground" : "text-foreground"
+                }`}
               >
                 {isFollowing ? "Seguendo" : "Segui"}
               </ScaledText>

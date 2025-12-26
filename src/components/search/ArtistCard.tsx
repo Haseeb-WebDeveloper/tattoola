@@ -136,22 +136,33 @@ function ArtistCard({ artist }: ArtistCardProps) {
 
   return (
     <View style={{ marginHorizontal: s(16), marginBottom: mvs(16), position: "relative" }}>
-      {/* Subscription Badge over the top edge of the card */}
+     
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={handlePress}
+        className="overflow-hidden border bg-background border-gray/50"
+        style={{
+          borderRadius: s(35),
+          borderWidth: s(0.5),
+        }}
+      >
+         {/* Subscription Badge over the top edge of the card */}
       {hasStudioPlan && (
         <View
           className="absolute flex-row items-center justify-center z-10"
           pointerEvents="none"
           style={{
-            top: s(1),
-            right: s(2),
+            top: s(0),
+            right: s(0),
             paddingLeft: s(8),
             paddingRight: s(8),
             paddingVertical: mvs(5),
             gap: s(4),
+            width: 130,
             borderBottomLeftRadius: s(12),
-            borderTopRightRadius: s(12),
-            borderTopWidth: 0.5,
-            borderRightWidth: 0.5,
+            borderTopRightRadius: s(35),
+            borderTopWidth: 0,
+            borderRightWidth: 0,
             borderBottomWidth: 0.5,
             borderLeftWidth: 0.5,
             borderColor: "rgba(164, 154, 153, 0.7)",
@@ -182,15 +193,6 @@ function ArtistCard({ artist }: ArtistCardProps) {
           </ScaledText>
         </View>
       )}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={handlePress}
-        className="overflow-hidden border bg-background border-gray/50"
-        style={{
-          borderRadius: s(35),
-          borderWidth: s(0.5),
-        }}
-      >
         {/* Top Section - Avatar, Name, Experience, Location */}
         <View style={{ padding: s(16), paddingBottom: mvs(8) }}>
           {/* Avatar and Name Row */}
