@@ -60,6 +60,8 @@ export const StylePills = ({
   return (
     <View className="flex-row flex-wrap gap-2" style={{ marginTop: mvs(8) }}>
       {validStyles.map((style) => {
+        // Use addEmojiWithStyle for consistent emoji logic, but split for gap
+        const { emoji, styleName } = addEmojiWithStyle(style.name);
         const PillContent = (
           <View
             className="relative rounded-full "
@@ -69,14 +71,26 @@ export const StylePills = ({
               justifyContent: "center",
               borderWidth: currentSize.borderWidth,
               borderColor: "#fff",
+              flexDirection: "row",
+              alignItems: "center",
             }}
           >
+            {emoji && (
+              <ScaledText
+                allowScaling={false}
+                variant={currentSize.textVariant}
+                className="text-white font-neueMedium"
+                style={{ marginRight: s(8) }}
+              >
+                {emoji}
+              </ScaledText>
+            )}
             <ScaledText
               allowScaling={false}
               variant={currentSize.textVariant}
               className="text-white font-neueMedium"
             >
-              {addEmojiWithStyle(style.name)}
+              {styleName}
             </ScaledText>
 
             {/* For fav we show icon */}

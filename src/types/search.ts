@@ -17,7 +17,7 @@ export type ArtistSearchResult = {
     municipality: string;
     address: string | null;
   } | null;
-  styles: { id: string; name: string; imageUrl?: string | null }[];
+  styles: { id: string; name: string; imageUrl?: string | null; isFavorite?: boolean }[];
   services?: { id: string; name: string }[];
   bannerMedia: {
     mediaUrl: string;
@@ -113,6 +113,6 @@ export type ArtistProfileSummary = {
     municipality: string;
     address: string | null;
   } | null;
-  styles: { id: string; name: string }[];
+  styles: { id: string; name: string; imageUrl?: string | null; isFavorite?: boolean }[];
   bannerMedia: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; order: number }[];
 };
