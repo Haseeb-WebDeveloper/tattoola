@@ -17,11 +17,15 @@ export const useAuthRequiredStore = create<AuthRequiredStore>()(
       message: "",
       isDismissible: true,
 
+
       // Instead of showing a blocking modal, immediately redirect
       // anonymous users to the Sign In screen when auth is required.
       show: (message: string, isDismissible = true) => {
         set({ isVisible: false, message, isDismissible });
-        router.push("/(auth)/login");
+        // Get current path for redirect
+        const currentPath = window.location.pathname + window.location.search;
+        // Use push instead of replace so back goes to previous page
+        router.push(`/(auth)/login?redirect=${encodeURIComponent(currentPath)}`);
       },
 
       hide: () => {

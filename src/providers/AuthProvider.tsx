@@ -374,8 +374,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         logger.error('Error checking for pending invitation token:', error);
       }
       
-      // After login, check profile completion and redirect accordingly
-      if (fullUser && fullUser.id && fullUser.role) {
+
+      // After login, check for redirect param in URL (web) or router params (native)
+      let redirected = false;
+      // Native: check router params
+      if (typeof window === 'undefined' && typeof global !== 'undefined') {
+        // No-op: handled in login screen
+      } else if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirect');
+        if (redirectTo) {
+          router.replace(redirectTo);
+          redirected = true;
+        }
+      }
+
+      if (!redirected && fullUser && fullUser.id && fullUser.role) {
         logger.log('Sign in result user role:', fullUser.role);
         const isVerified = fullUser.isVerified;
         logger.log('Sign in result user is verified:', isVerified);
