@@ -372,10 +372,10 @@ export async function searchArtists({
                 if (!a.isFavorite && b.isFavorite) return 1;
                 return a.order - b.order;
               })
-              // .slice(0, 2)
               .map((fs: any) => ({
                 id: fs.style?.id || "",
                 name: fs.style?.name || "",
+                isFavorite: !!fs.isFavorite,
               })) || [],
           bannerMedia:
             artist.bannerMedia
