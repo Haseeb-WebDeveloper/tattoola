@@ -155,7 +155,7 @@ function ArtistCard({ artist }: ArtistCardProps) {
             top: s(0),
             right: s(0),
             paddingLeft: s(8),
-            paddingRight: s(8),
+            paddingRight: s(12),
             paddingVertical: mvs(5),
             gap: s(4),
             width: 130,
