@@ -69,7 +69,7 @@ function LoginScreenContent() {
       // After login, redirect to previous page if present
       const redirectTo = params.redirect as string | undefined;
       if (redirectTo) {
-        router.replace(redirectTo);
+        router.replace(redirectTo as any);
       }
       // Otherwise, navigation will be handled by the auth context
     } catch (error) {
