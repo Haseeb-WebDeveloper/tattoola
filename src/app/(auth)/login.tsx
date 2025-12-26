@@ -24,8 +24,13 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
+
+import { useLocalSearchParams, useRouter } from "expo-router";
+
 function LoginScreenContent() {
   const { signIn, loading } = useAuth();
+  const router = useRouter();
+  const params = useLocalSearchParams();
   const [formData, setFormData] = useState<LoginCredentials>({
     email: "",
     password: "",
@@ -61,7 +66,12 @@ function LoginScreenContent() {
 
     try {
       await signIn(formData);
-      // Navigation will be handled by the auth context
+      // After login, redirect to previous page if present
+      const redirectTo = params.redirect as string | undefined;
+      if (redirectTo) {
+        router.replace(redirectTo);
+      }
+      // Otherwise, navigation will be handled by the auth context
     } catch (error) {
       const message =
         error instanceof Error
@@ -73,7 +83,7 @@ function LoginScreenContent() {
           message={message}
           iconType="error"
           onClose={() => toast.dismiss(toastId)}
-        />,
+        />, 
         { duration: 9000 }
       );
     }
@@ -92,7 +102,8 @@ function LoginScreenContent() {
   };
 
   const handleBackToWelcome = () => {
-    router.replace("/(auth)/welcome");
+    // If redirected from another page, go back to it
+    router.back();
   };
 
   if (loading) {

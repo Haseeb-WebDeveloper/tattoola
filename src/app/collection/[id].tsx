@@ -367,12 +367,9 @@ export default function CollectionDetailsScreen() {
     isArtistFavCollection && currentPostCount >= 4;
 
   useEffect(() => {
-    // Show auth modal for anonymous users when opening collection (dismissible so they can view)
-    if (!user) {
-      show("Sign in to view and manage collections", true);
-    }
+    // Only reload collection, do not show auth modal for guests
     reload();
-  }, [reload, show, user]);
+  }, [reload, user]);
 
   // Ensure fresh data whenever screen gains focus
   useFocusEffect(
