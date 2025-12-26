@@ -161,7 +161,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                           variant="md"
                           className="text-foreground font-neueLight"
                         >
-                          Tattoo Artist residente in{" "}
+                          Tattoo Artist resident in{" "}
                         </ScaledText>
                         <TouchableOpacity
                           disabled={!onBusinessNamePress}

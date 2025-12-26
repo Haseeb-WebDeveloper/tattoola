@@ -1,9 +1,9 @@
 import { SEARCH_FILTER_COMPRESSION } from "@/constants/limits";
 import type {
-  Facets,
-  LocationFacet,
-  ServiceFacet,
-  StyleFacet,
+    Facets,
+    LocationFacet,
+    ServiceFacet,
+    StyleFacet,
 } from "@/types/facets";
 import type { SearchFilters, SearchTab } from "@/types/search";
 import { supabase } from "@/utils/supabase";
@@ -822,6 +822,27 @@ async function getLocationFacets(
     .filter((facet): facet is LocationFacet => facet !== null);
 
   return validFacets;
+}
+
+/**
+ * Get location facets without applying style/service filters
+ * This ensures all locations are always shown in the location picker
+ */
+export async function getLocationFacetsUnfiltered(
+  activeTab: SearchTab
+): Promise<LocationFacet[]> {
+  // Create a params object with location filter only (no style/service filters)
+  const params: FacetParams = {
+    filters: {
+      styleIds: [],
+      serviceIds: [],
+      provinceId: null,
+      municipalityId: null,
+    },
+    activeTab,
+  };
+
+  return getLocationFacets(params);
 }
 
 /**

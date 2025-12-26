@@ -516,7 +516,7 @@ export default function SearchLocationPicker({
                   ? "Risultati della ricerca"
                   : modalStep === "province"
                     ? "Altre province"
-                    : `Comuni in ${selectedProvince?.name || "provincia selezionata"}`}
+                    : `Comuni in Provincia di ${selectedProvince?.name ? selectedProvince.name.toUpperCase() : "PROVINCIA SELEZIONATA"}`}
               </ScaledText>
               {listFiltered.map((item) => {
                 const isActive =
@@ -613,7 +613,6 @@ export default function SearchLocationPicker({
             ) : (
               <TouchableOpacity
                 onPress={() => {
-                  console.log("🔴 [DEBUG] Applica button pressed");
                   handleApplySelection();
                 }}
                 className={`rounded-full items-center flex-row gap-3 ${

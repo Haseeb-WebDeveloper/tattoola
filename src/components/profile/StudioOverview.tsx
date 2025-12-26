@@ -3,9 +3,8 @@ import { SVGIcons } from "@/constants/svg";
 import { buildGoogleMapsUrl } from "@/services/location.service";
 import { mvs, s } from "@/utils/scale";
 import {
-  createInstagramUrl,
   createTiktokUrl,
-  createWebsiteUrl,
+  createWebsiteUrl
 } from "@/utils/socialMedia";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -229,7 +228,7 @@ export default function StudioOverview({
           >
             {!!instagram && (
               <TouchableOpacity
-                onPress={() => openUrl(createInstagramUrl(instagram))}
+                onPress={() => openUrl(instagram)}
                 activeOpacity={0.8}
               >
                 <View
@@ -239,7 +238,7 @@ export default function StudioOverview({
                     height: s(41.5),
                     backgroundColor: "#AE0E0E80",
                     borderRadius: s(100),
-                  }}
+                  }} 
                 >
                   <SVGIcons.Instagram style={{ width: s(20), height: s(20) }} />
                 </View>
