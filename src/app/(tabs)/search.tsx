@@ -351,80 +351,85 @@ export default function SearchScreen() {
               {/* <SVGIcons.LogoLight width={s(90)} height={s(50)} /> */}
             </View>
 
-            {/* Filter Button */}
-            <TouchableOpacity 
-              onPress={() => setShowFilterModal(true)}
-              style={{ position: 'relative' }}
-            >
-              <SVGIcons.Menu width={s(20)} height={s(20)} />
-              {areFiltersActive() && (
-                <Animated.View
-                  style={{
-                    position: 'absolute',
-                    top: (0),
-                    right: s(0),
-                    width: s(6),
-                    height: s(6),
-                    borderRadius: s(4),
-                    backgroundColor: '#AE0E0E',
-                    opacity: dotOpacity,
-                    transform: [{ scale: dotScale }],
-                  }}
-                />
-              )}
-            </TouchableOpacity>
+           
           </View>
         </View>
 
         {/* Tabs */}
         <View
-          className="flex-row items-center justify-center"
+          className="flex-row items-center"
           style={{
             paddingHorizontal: s(16),
             marginBottom: mvs(20),
+            paddingLeft: s(12),
             gap: s(4),
+            justifyContent: 'space-between',
           }}
         >
-          <TouchableOpacity
-            onPress={() => handleTabPress("artists")}
-            className={`rounded-full items-center justify-center border border-gray ${
-              activeTab === "artists" ? "bg-primary border-primary" : ""
-            }`}
-            style={{
-              paddingVertical: mvs(3),
-              paddingHorizontal: s(18),
-            }}
-          >
-            <ScaledText
-              allowScaling={false}
-              variant="sm"
-              className={`font-neueLight ${
-                activeTab === "artists" ? "text-white" : "text-gray"
+          {/* Centered Tabs */}
+          <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', gap: s(4) }}>
+            <TouchableOpacity
+              onPress={() => handleTabPress("artists")}
+              className={`rounded-full items-center justify-center border border-gray ${
+                activeTab === "artists" ? "bg-primary border-primary" : ""
               }`}
+              style={{
+                paddingVertical: mvs(3),
+                paddingHorizontal: s(18),
+              }}
             >
-              Artisti
-            </ScaledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleTabPress("studios")}
-            className={`rounded-full items-center justify-center border border-gray ${
-              activeTab === "studios" ? "bg-primary border-primary" : ""
-            }`}
-            style={{
-              paddingVertical: mvs(3),
-              paddingHorizontal: s(18),
-            }}
-          >
-            <ScaledText
-              allowScaling={false}
-              variant="sm"
-              className={`font-neueLight ${
-                activeTab === "studios" ? "text-white" : "text-gray"
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className={`font-neueLight ${
+                  activeTab === "artists" ? "text-white" : "text-gray"
+                }`}
+              >
+                Artisti
+              </ScaledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleTabPress("studios")}
+              className={`rounded-full items-center justify-center border border-gray ${
+                activeTab === "studios" ? "bg-primary border-primary" : ""
               }`}
+              style={{
+                paddingVertical: mvs(3),
+                paddingHorizontal: s(18),
+              }}
             >
-              Studi
-            </ScaledText>
+              <ScaledText
+                allowScaling={false}
+                variant="sm"
+                className={`font-neueLight ${
+                  activeTab === "studios" ? "text-white" : "text-gray"
+                }`}
+              >
+                Studi
+              </ScaledText>
+            </TouchableOpacity>
+          </View>
+          {/* Filter Button on right */}
+          <TouchableOpacity 
+            onPress={() => setShowFilterModal(true)}
+            style={{ position: 'relative', marginLeft: s(8) }}
+          >
+            <SVGIcons.Menu width={s(20)} height={s(20)} />
+            {areFiltersActive() && (
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  top: (0),
+                  right: s(0),
+                  width: s(6),
+                  height: s(6),
+                  borderRadius: s(4),
+                  backgroundColor: '#AE0E0E',
+                  opacity: dotOpacity,
+                  transform: [{ scale: dotScale }],
+                }}
+              />
+            )}
           </TouchableOpacity>
         </View>
 
